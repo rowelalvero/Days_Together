@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper to get user's data
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Helper to check if a user is part of a couple.
+    // Checks both the user's registered coupleId and the structural coupleId format.
+    function isMemberOfCouple(coupleId) {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData(request.auth.uid).coupleId == coupleId) ||
+        coupleId.matches('^' + request.auth.uid + '_.*') ||
+        coupleId.matches('.*_' + request.auth.uid + '$')
+      );
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Allow user to manage their own profile
+      allow read, write: if isOwner(userId);
+      
+      // Allow partner to read user's profile for pairing verification, display names, and avatars
+      allow read: if isAuthenticated() && (
+        (resource != null && resource.data.partnerId == request.auth.uid) ||
+        (resource != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         getUserData(request.auth.uid).coupleId == resource.data.coupleId)
+      );
+    }
+
+    // Pairing Codes Collection
+    match /pairingCodes/{code} {
+      // Authenticated users can list/read codes during pairing
+      allow read, create: if isAuthenticated();
+      
+      // Only the creator can delete it when pairing finishes or is cancelled
+      allow delete: if isAuthenticated() && (
+        resource.data.creatorId == request.auth.uid
+      );
+    }
+
+    // Couples Collection & all nested subcollections (memories, bucket list, vault, notes, etc.)
+    match /couples/{coupleId} {
+      allow read, write: if isMemberOfCouple(coupleId);
+
+      match /{allSubcollections=**} {
+        allow read, write: if isMemberOfCouple(coupleId);
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper to fetch user data from Cloud Firestore
+    function getFirestoreUserData(userId) {
+      return firestore.get(/databases/(default)/documents/users/$(userId)).data;
+    }
+
+    // Helper to check if a user is part of a couple.
+    // Checks both the user's registered coupleId and the structural coupleId format.
+    function isMemberOfCouple(coupleId) {
+      return isAuthenticated() && (
+        (firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) && 
+         getFirestoreUserData(request.auth.uid).coupleId == coupleId) ||
+        coupleId.matches('^' + request.auth.uid + '_.*') ||
+        coupleId.matches('.*_' + request.auth.uid + '$')
+      );
+    }
+
+    // Secure couple shared storage path
+    match /couples/{coupleId}/{allPaths=**} {
+      allow read, write: if isMemberOfCouple(coupleId);
+    }
+  }
+}
