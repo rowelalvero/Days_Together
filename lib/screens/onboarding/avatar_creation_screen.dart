@@ -6,6 +6,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:days_together/services/permission_service.dart';
 
 class AvatarCreationScreen extends StatefulWidget {
   const AvatarCreationScreen({super.key});
@@ -200,6 +201,9 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
   }
 
   Future<void> _pickAvatar() async {
+    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    if (!hasPermission) return;
+
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,

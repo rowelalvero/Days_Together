@@ -9,11 +9,15 @@ import 'package:days_together/widgets/theme_selector.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/screens/onboarding/welcome_screen.dart';
 import 'package:days_together/screens/settings/relationship_profile_screen.dart';
+import 'package:days_together/services/permission_service.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
 
   Future<void> _pickAvatar(BuildContext context, RelationshipProvider rp, bool isYou) async {
+    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    if (!hasPermission) return;
+
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     if (pickedFile != null) {

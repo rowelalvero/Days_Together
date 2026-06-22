@@ -26,8 +26,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 
 import 'package:days_together/providers/relationship_provider.dart';
-
 import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/services/permission_service.dart';
 
 import 'package:days_together/widgets/glass_container.dart';
 
@@ -109,6 +109,9 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
   }
 
   Future<void> _pickAvatar(RelationshipProvider rp, bool isYou) async {
+    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    if (!hasPermission) return;
+
     final picker = ImagePicker();
 
     final pickedFile = await picker.pickImage(

@@ -7,6 +7,7 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/services/permission_service.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -92,6 +93,12 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final permissionService = PermissionService();
+    final hasPermission = source == ImageSource.camera
+        ? await permissionService.requestCameraPermission(context)
+        : await permissionService.requestPhotosPermission(context);
+    if (!hasPermission) return;
+
     try {
       final picked = await _picker.pickImage(
         source: source,
