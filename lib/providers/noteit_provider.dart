@@ -52,7 +52,9 @@ class NoteitProvider with ChangeNotifier {
       _syncSub?.cancel();
       _syncSub = null;
 
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
+      if (_coupleId != null &&
+          _userId != null &&
+          relationship.isFirebaseAvailable) {
         _initSupabaseSync();
       } else {
         _loadNotes();
@@ -69,38 +71,43 @@ class NoteitProvider with ChangeNotifier {
         .from('love_notes')
         .stream(primaryKey: ['id'])
         .eq('couple_id', _coupleId!)
-        .listen((dataList) {
-      _notes = dataList.map((data) {
-        final typeStr = data['type'] as String? ?? 'text';
-        final type = NoteitType.values.firstWhere(
-          (t) => t.name == typeStr,
-          orElse: () => NoteitType.text,
+        .listen(
+          (dataList) {
+            _notes = dataList.map((data) {
+              final typeStr = data['type'] as String? ?? 'text';
+              final type = NoteitType.values.firstWhere(
+                (t) => t.name == typeStr,
+                orElse: () => NoteitType.text,
+              );
+              final senderId = data['sender_id'] as String? ?? '';
+              final sender = (senderId == _userId) ? 'you' : 'partner';
+
+              return NoteitItem(
+                id: data['id'] as String,
+                type: type,
+                content: data['content'] as String?,
+                imageUrl: data['image_url'] as String?,
+                sender: sender,
+                createdAt: data['created_at'] != null
+                    ? DateTime.parse(data['created_at'] as String)
+                    : DateTime.now(),
+                backgroundColor: data['background_color'] != null
+                    ? Color(data['background_color'] as int)
+                    : null,
+              );
+            }).toList();
+
+            _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            _isLoading = false;
+            if (!_disposed) notifyListeners();
+
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('NoteitProvider: Supabase sync error: $err');
+            _loadNotes();
+          },
         );
-        final senderId = data['sender_id'] as String? ?? '';
-        final sender = (senderId == _userId) ? 'you' : 'partner';
-
-        return NoteitItem(
-          id: data['id'] as String,
-          type: type,
-          content: data['content'] as String?,
-          imageUrl: data['image_url'] as String?,
-          sender: sender,
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-          backgroundColor: data['background_color'] != null
-              ? Color(data['background_color'] as int)
-              : null,
-        );
-      }).toList();
-
-      _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
-
-      _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('NoteitProvider: Supabase sync error: $err');
-      _loadNotes();
-    });
   }
 
   Future<void> _loadNotes() async {
@@ -128,7 +135,8 @@ class NoteitProvider with ChangeNotifier {
     _notes = [
       NoteitItem(
         type: NoteitType.text,
-        content: 'Hi there! Welcome to Love Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
+        content:
+            'Hi there! Welcome to Love Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
         sender: 'partner',
         createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
         backgroundColor: const Color(0xFF9D4EDD),
@@ -154,9 +162,7 @@ class NoteitProvider with ChangeNotifier {
 
     if (_coupleId != null && _userId != null) {
       try {
-        await Supabase.instance.client
-            .from('love_notes')
-            .upsert({
+        await Supabase.instance.client.from('love_notes').upsert({
           'id': newItem.id,
           'couple_id': _coupleId,
           'type': 'drawing',
@@ -186,9 +192,7 @@ class NoteitProvider with ChangeNotifier {
 
     if (_coupleId != null && _userId != null) {
       try {
-        await Supabase.instance.client
-            .from('love_notes')
-            .upsert({
+        await Supabase.instance.client.from('love_notes').upsert({
           'id': newItem.id,
           'couple_id': _coupleId,
           'type': 'text',
@@ -238,9 +242,7 @@ class NoteitProvider with ChangeNotifier {
               .from('love-notes')
               .getPublicUrl(storagePath);
 
-          await Supabase.instance.client
-              .from('love_notes')
-              .upsert({
+          await Supabase.instance.client.from('love_notes').upsert({
             'id': noteId,
             'couple_id': _coupleId,
             'type': 'photo',
@@ -277,17 +279,14 @@ class NoteitProvider with ChangeNotifier {
 
     if (_coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('love_notes')
-            .delete()
-            .eq('id', id);
+        await Supabase.instance.client.from('love_notes').delete().eq('id', id);
 
         if (item.type == NoteitType.photo) {
           try {
             final storagePath = 'couples/$_coupleId/love_notes/$id.jpg';
-            await Supabase.instance.client.storage
-                .from('love-notes')
-                .remove([storagePath]);
+            await Supabase.instance.client.storage.from('love-notes').remove([
+              storagePath,
+            ]);
           } catch (_) {}
         }
       } catch (e) {
@@ -306,47 +305,24 @@ class NoteitProvider with ChangeNotifier {
     final List<Offset> stroke = [];
     for (double t = 0; t <= 2 * pi; t += 0.08) {
       double x = 150 + 70 * pow(sin(t), 3).toDouble();
-      double y = 150 - (55 * cos(t) - 22 * cos(2 * t) - 9 * cos(3 * t) - 4 * cos(4 * t));
+      double y =
+          150 -
+          (55 * cos(t) - 22 * cos(2 * t) - 9 * cos(3 * t) - 4 * cos(4 * t));
       stroke.add(Offset(x, y));
     }
     strokes.add(stroke);
     return _serializeStrokes(strokes);
   }
 
-  String _generateSmileyStrokes() {
-    final List<List<Offset>> strokes = [];
-    final List<Offset> face = [];
-    for (double t = 0; t <= 2 * pi; t += 0.1) {
-      double x = 150 + 60 * cos(t);
-      double y = 150 + 60 * sin(t);
-      face.add(Offset(x, y));
-    }
-    strokes.add(face);
-
-    strokes.add([
-      const Offset(130, 135),
-      const Offset(130, 137),
-    ]);
-
-    strokes.add([
-      const Offset(170, 135),
-      const Offset(170, 137),
-    ]);
-
-    final List<Offset> smile = [];
-    for (double t = 0.2; t <= pi - 0.2; t += 0.1) {
-      double x = 150 + 30 * cos(t);
-      double y = 155 + 25 * sin(t);
-      smile.add(Offset(x, y));
-    }
-    strokes.add(smile);
-
-    return _serializeStrokes(strokes);
-  }
-
   String _serializeStrokes(List<List<Offset>> strokes) {
     return strokes
-        .map((stroke) => stroke.map((p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}').join(';'))
+        .map(
+          (stroke) => stroke
+              .map(
+                (p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}',
+              )
+              .join(';'),
+        )
         .join('|');
   }
 

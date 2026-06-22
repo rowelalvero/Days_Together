@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,7 +7,6 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/widgets/glass_container.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -17,7 +15,8 @@ class NoteitScreen extends StatefulWidget {
   State<NoteitScreen> createState() => _NoteitScreenState();
 }
 
-class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderStateMixin {
+class _NoteitScreenState extends State<NoteitScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
 
@@ -34,7 +33,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
 
   // Photo state
   String? _pickedPhotoPath;
-
 
   final List<Color> _paletteColors = [
     const Color(0xFFFF4D6D), // pink
@@ -83,7 +81,13 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
 
   String _serializeDoodle() {
     return _doodleStrokes
-        .map((stroke) => stroke.map((p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}').join(';'))
+        .map(
+          (stroke) => stroke
+              .map(
+                (p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}',
+              )
+              .join(';'),
+        )
         .join('|');
   }
 
@@ -104,7 +108,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
       debugPrint('Error picking image: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -159,8 +162,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
     );
   }
 
-
-
   // 2. DOODLE CANVAS
   Widget _buildDoodleCanvas(LoveStoryTheme theme, NoteitProvider provider) {
     return Column(
@@ -176,7 +177,10 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                 tooltip: 'Undo last stroke',
               ),
               IconButton(
-                icon: Icon(Icons.delete_outline_rounded, color: theme.textColor),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: theme.textColor,
+                ),
                 onPressed: _clearDoodle,
                 tooltip: 'Clear canvas',
               ),
@@ -184,7 +188,10 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
               // Size selector indicator
               Text(
                 'Size:',
-                style: GoogleFonts.inter(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                style: GoogleFonts.inter(
+                  color: theme.textColor.withValues(alpha: 0.6),
+                  fontSize: 12,
+                ),
               ),
               SizedBox(
                 width: 90,
@@ -232,7 +239,11 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                       ),
                       boxShadow: [
                         if (isSelected)
-                          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1),
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.4),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
                       ],
                     ),
                   ),
@@ -253,9 +264,15 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   color: _doodleBgColor,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: theme.textColor.withValues(alpha: 0.15), width: 2),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.15),
+                    width: 2,
+                  ),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 15),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 15,
+                    ),
                   ],
                 ),
                 child: ClipRRect(
@@ -297,7 +314,11 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
             children: [
               Text(
                 'BG:',
-                style: GoogleFonts.inter(color: theme.textColor.withValues(alpha: 0.6), fontSize: 11, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                  color: theme.textColor.withValues(alpha: 0.6),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(width: 8),
               ..._canvasBgColors.map((bg) {
@@ -313,7 +334,9 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                         color: bg,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSel ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
+                          color: isSel
+                              ? theme.accentColor
+                              : theme.textColor.withValues(alpha: 0.2),
                           width: isSel ? 2 : 1,
                         ),
                       ),
@@ -356,12 +379,17 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
               icon: const Icon(Icons.send_rounded),
               label: Text(
                 'Send to Partner',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
@@ -429,7 +457,10 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                   fontStyle: FontStyle.italic,
                 ),
                 border: InputBorder.none,
-                counterStyle: const TextStyle(color: Colors.white60, fontSize: 10),
+                counterStyle: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 10,
+                ),
               ),
             ),
           ),
@@ -460,7 +491,9 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                         color: bg,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSel ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
+                          color: isSel
+                              ? theme.accentColor
+                              : theme.textColor.withValues(alpha: 0.2),
                           width: isSel ? 2 : 1,
                         ),
                       ),
@@ -500,12 +533,17 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
               icon: const Icon(Icons.send_rounded),
               label: Text(
                 'Send Note to Partner',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
@@ -568,22 +606,34 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 OutlinedButton.icon(
-                                  onPressed: () => _pickImage(ImageSource.gallery),
-                                  icon: const Icon(Icons.photo_library_outlined),
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.gallery),
+                                  icon: const Icon(
+                                    Icons.photo_library_outlined,
+                                  ),
                                   label: const Text('Gallery'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: theme.textColor,
-                                    side: BorderSide(color: theme.textColor.withValues(alpha: 0.3)),
+                                    side: BorderSide(
+                                      color: theme.textColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 OutlinedButton.icon(
-                                  onPressed: () => _pickImage(ImageSource.camera),
+                                  onPressed: () =>
+                                      _pickImage(ImageSource.camera),
                                   icon: const Icon(Icons.camera_alt_outlined),
                                   label: const Text('Camera'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: theme.textColor,
-                                    side: BorderSide(color: theme.textColor.withValues(alpha: 0.3)),
+                                    side: BorderSide(
+                                      color: theme.textColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -594,12 +644,19 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                     : Stack(
                         children: [
                           Positioned.fill(
-                            child: _pickedPhotoPath != null && File(_pickedPhotoPath!).existsSync()
+                            child:
+                                _pickedPhotoPath != null &&
+                                    File(_pickedPhotoPath!).existsSync()
                                 ? Image.file(
                                     File(_pickedPhotoPath!),
                                     fit: BoxFit.cover,
                                   )
-                                : const Center(child: Icon(Icons.image, color: Colors.white24)),
+                                : const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      color: Colors.white24,
+                                    ),
+                                  ),
                           ),
                           Positioned(
                             top: 12,
@@ -611,9 +668,14 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                                   color: Colors.black45,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                               ),
-                              onPressed: () => setState(() => _pickedPhotoPath = null),
+                              onPressed: () =>
+                                  setState(() => _pickedPhotoPath = null),
                             ),
                           ),
                         ],
@@ -645,12 +707,17 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                 icon: const Icon(Icons.send_rounded),
                 label: Text(
                   'Send Photo to Partner',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.accentColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
             ),
@@ -667,11 +734,17 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history_toggle_off_rounded, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
+            Icon(
+              Icons.history_toggle_off_rounded,
+              size: 48,
+              color: theme.textColor.withValues(alpha: 0.3),
+            ),
             const SizedBox(height: 16),
             Text(
               'No love notes exchanged yet.',
-              style: GoogleFonts.inter(color: theme.textColor.withValues(alpha: 0.5)),
+              style: GoogleFonts.inter(
+                color: theme.textColor.withValues(alpha: 0.5),
+              ),
             ),
           ],
         ),
@@ -696,12 +769,29 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
               context: context,
               builder: (ctx) => AlertDialog(
                 backgroundColor: theme.backgroundColor,
-                title: Text('Delete Note?', style: GoogleFonts.playfairDisplay(color: theme.textColor, fontWeight: FontWeight.bold)),
-                content: Text('Are you sure you want to delete this shared note from history?', style: GoogleFonts.inter(color: theme.textColor.withValues(alpha: 0.8))),
+                title: Text(
+                  'Delete Note?',
+                  style: GoogleFonts.playfairDisplay(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  'Are you sure you want to delete this shared note from history?',
+                  style: GoogleFonts.inter(
+                    color: theme.textColor.withValues(alpha: 0.8),
+                  ),
+                ),
                 actions: [
-                  TextButton(child: const Text('Cancel'), onPressed: () => Navigator.pop(ctx)),
                   TextButton(
-                    child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                  TextButton(
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
                     onPressed: () {
                       Navigator.pop(ctx);
                       provider.deleteNote(item.id);
@@ -713,11 +803,10 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
           },
           child: Container(
             decoration: BoxDecoration(
-              color: item.backgroundColor ?? Colors.white.withValues(alpha: 0.05),
+              color:
+                  item.backgroundColor ?? Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: theme.textColor.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
@@ -733,7 +822,10 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                     top: 6,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black45,
                         borderRadius: BorderRadius.circular(8),
@@ -787,7 +879,11 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
               ),
               child: Text(
                 item.sender == 'you' ? 'Sent by You' : 'Received from Partner',
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -841,7 +937,9 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
             return const Center(child: CircularProgressIndicator());
           },
           errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+            return const Center(
+              child: Icon(Icons.broken_image, color: Colors.grey),
+            );
           },
         );
       }
@@ -966,7 +1064,9 @@ class ScaleDrawingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant ScaleDrawingPainter oldDelegate) {
-    return oldDelegate.strokes != strokes || oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+    return oldDelegate.strokes != strokes ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }
 
@@ -984,4 +1084,3 @@ List<List<Offset>> _deserializeStrokes(String? data) {
     return [];
   }
 }
-
