@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/vault_item_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:days_together/services/permission_service.dart';
 
 class VaultProvider with ChangeNotifier {
   static const String _storageKey = 'vault_items';
@@ -160,8 +162,10 @@ class VaultProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addPhoto() async {
+  Future<void> addPhoto(BuildContext context) async {
     if (!_isUnlocked) return;
+    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    if (!hasPermission) return;
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,

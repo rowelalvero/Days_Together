@@ -380,7 +380,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
   }
 
   Future<void> _pickImage() async {
-    final path = await context.read<TimelineProvider>().pickImage();
+    final path = await context.read<TimelineProvider>().pickImage(context);
     if (path != null) setState(() => _imagePath = path);
   }
 

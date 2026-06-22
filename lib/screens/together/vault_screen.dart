@@ -282,7 +282,7 @@ class _VaultContentScreen extends StatelessWidget {
             Text('Add your first secret.', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontStyle: FontStyle.italic)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () => vault.addPhoto(),
+              onPressed: () => vault.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
               label: const Text('Add Photo'),
               style: ElevatedButton.styleFrom(
@@ -349,7 +349,7 @@ class _VaultContentScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => vault.addPhoto(),
+              onPressed: () => vault.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
               label: const Text('Add Photo'),
               style: ElevatedButton.styleFrom(

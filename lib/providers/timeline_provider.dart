@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/repositories/timeline_repository.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/permission_service.dart';
 
 class TimelineProvider with ChangeNotifier {
   final TimelineRepository _repository = TimelineRepository();
@@ -370,7 +371,10 @@ class TimelineProvider with ChangeNotifier {
     }
   }
 
-  Future<String?> pickImage() async {
+  Future<String?> pickImage(BuildContext context) async {
+    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    if (!hasPermission) return null;
+
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,

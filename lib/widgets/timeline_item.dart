@@ -830,7 +830,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   }
 
   Future<void> _changeImage() async {
-    final path = await context.read<TimelineProvider>().pickImage();
+    final path = await context.read<TimelineProvider>().pickImage(context);
     if (path != null) setState(() => _newImagePath = path);
   }
 
