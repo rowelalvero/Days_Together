@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "934433996310",
+    "project_id": "days-together-2f484",
+    "storage_bucket": "days-together-2f484.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934433996310:android:88a4565c4ef1459aeb3f37",
+        "android_client_info": {
+          "package_name": "com.szacheo.days_together"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBRClLClfNThXgN4GQzs5xF_6IX163u4CE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

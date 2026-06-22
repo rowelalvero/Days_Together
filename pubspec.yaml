@@ -27,6 +27,8 @@ dependencies:
   confetti: ^0.8.0
   google_fonts: ^6.2.1
   flutter_local_notifications: ^18.0.1
+  firebase_core: ^4.11.0
+  firebase_messaging: ^16.4.0
   qr_flutter: ^4.1.0
   gal: ^2.3.2
   supabase_flutter: ^2.6.0
