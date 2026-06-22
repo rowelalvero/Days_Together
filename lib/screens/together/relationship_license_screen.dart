@@ -2077,7 +2077,7 @@ class _LicenseFront extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('MMMM dd, yyyy');
+    final dateFormat = DateFormat('MMM dd, yyyy');
 
     final dobStr = holderBirthdate != null
         ? dateFormat.format(holderBirthdate!)

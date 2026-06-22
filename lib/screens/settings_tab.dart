@@ -54,12 +54,12 @@ class SettingsTab extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 32),
               _buildAvatarRow(context, rp, theme, true),
               const SizedBox(height: 20),
               _buildNameField(yourController, 'Your Name', theme),
               if (partnerJoined) ...[
-                const SizedBox(height: 30),
+                const SizedBox(height: 32),
                 _buildAvatarRow(context, rp, theme, false),
                 const SizedBox(height: 20),
                 _buildNameField(partnerController, "Partner's Name", theme),
@@ -134,7 +134,7 @@ class SettingsTab extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(color: theme.accentColor, shape: BoxShape.circle),
               child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
             ),
@@ -163,10 +163,11 @@ class SettingsTab extends StatelessWidget {
   }
 
   void _showLogoutConfirmation(BuildContext context, RelationshipProvider rp) {
+    final theme = Provider.of<ThemeProvider>(context, listen: false).currentLoveTheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF10122B),
+        backgroundColor: theme.primaryColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Row(
           children: [
@@ -193,7 +194,7 @@ class SettingsTab extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              'Keep Logged In',
               style: GoogleFonts.inter(
                 color: Colors.white54,
                 fontWeight: FontWeight.w600,
@@ -248,7 +249,7 @@ class SettingsTab extends StatelessWidget {
                 color: theme.textColor,
               ),
             ),
-            const SizedBox(height: 30),
+             const SizedBox(height: 32),
             _buildLiquidProfileCard(rp, theme, context),
             const SizedBox(height: 40),
             _buildSectionHeader('Experience'),
@@ -263,7 +264,7 @@ class SettingsTab extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 30),
+             const SizedBox(height: 32),
             _buildSectionHeader('Connection'),
             _buildModernTile(
               icon: Icons.favorite_outline_rounded,
@@ -285,7 +286,7 @@ class SettingsTab extends StatelessWidget {
               subtitle: 'Sign out of this session',
               onTap: () => _showLogoutConfirmation(context, rp),
             ),
-            const SizedBox(height: 50),
+             const SizedBox(height: 48),
             Center(
               child: Opacity(
                 opacity: 0.2,
@@ -295,7 +296,7 @@ class SettingsTab extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 100),
+            const SizedBox(height: 96),
           ],
         ),
       ),
@@ -322,7 +323,7 @@ class SettingsTab extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 25),
+           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
@@ -364,7 +365,7 @@ class SettingsTab extends StatelessWidget {
               child: path == null ? const Icon(Icons.person, color: Colors.white24) : null,
             ),
           ),
-          const SizedBox(height: 10),
+           const SizedBox(height: 8),
           Text(
             name,
             textAlign: TextAlign.center,
@@ -381,9 +382,9 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 15),
+      padding: const EdgeInsets.only(left: 4, bottom: 16),
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.inter(
@@ -407,9 +408,9 @@ class SettingsTab extends StatelessWidget {
       opacity: 0.03,
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         leading: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: Colors.white70, size: 20),
         ),
@@ -433,8 +434,8 @@ class SettingsTab extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(10),
+         leading: Container(
+          padding: const EdgeInsets.all(8),
           decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
           child: const Icon(Icons.star_rounded, color: Colors.white, size: 20),
         ),

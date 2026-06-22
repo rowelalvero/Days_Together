@@ -72,7 +72,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color(0xFF10122B),
+          backgroundColor: theme.primaryColor,
           title: const Text('Vault Locked', style: TextStyle(color: Colors.white)),
           content: const Text(
             'You need to set up your Vault PIN under the "Together" tab first before you can save letters here.',
@@ -96,7 +96,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         context: context,
         builder: (dialogContext) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF10122B),
+            backgroundColor: theme.primaryColor,
             title: const Text('Enter Vault PIN', style: TextStyle(color: Colors.white)),
             content: TextField(
               controller: pinController,
@@ -174,12 +174,12 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
           ),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 40),
+              padding: const EdgeInsets.only(bottom: 48),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildAppBar(context),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   if (memories.isEmpty)
                     _buildNoMemoriesState(theme)
                   else ...[
@@ -203,7 +203,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
 
   Widget _buildAppBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           IconButton(
@@ -246,7 +246,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
           children: [
             const SizedBox(height: 40),
             Icon(Icons.palette_outlined, size: 64, color: Colors.white30),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             const Text(
               'No memories found!',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
@@ -269,8 +269,8 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
@@ -279,7 +279,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedMemoryId,
-          dropdownColor: const Color(0xFF10122B),
+          dropdownColor: theme.primaryColor,
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
           items: memories.map((m) {
@@ -311,7 +311,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
 
   Widget _buildActionButtons(dynamic theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SizedBox(
         width: double.infinity,
         height: 52,
@@ -341,7 +341,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         child: Column(
           children: [
             const CircularProgressIndicator(color: Colors.pinkAccent),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
               '✍️ Writing your love story...',
               style: TextStyle(
@@ -358,7 +358,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
 
   Widget _buildLetterCard(dynamic theme) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),

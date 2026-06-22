@@ -10,6 +10,8 @@ import 'package:days_together/widgets/add_item_dialog.dart';
 import 'package:days_together/widgets/timeline_item.dart';
 import 'package:days_together/widgets/shake_to_hug.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/storybook_view.dart';
+import 'package:days_together/widgets/ruler_picker_scrubber.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animations/animations.dart';
@@ -79,7 +81,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
 
   Widget _buildBottomNavBar(dynamic theme) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       child: GlassContainer(
         height: 70,
         borderRadius: 35,
@@ -208,9 +210,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildLiquidHeader(rp, theme),
-            const SizedBox(height: 35),
+            const SizedBox(height: 36),
             _buildDetailedGlassCounter(rp, theme),
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
             _buildMetricGrid(rp, theme),
             const SizedBox(height: 40),
             _buildSectionTitle('Upcoming Joy', theme),
@@ -367,7 +369,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
     return GlassContainer(
       width: double.infinity,
-      padding: const EdgeInsets.all(35),
+      padding: const EdgeInsets.all(32),
       opacity: 0.12,
       child: Column(
         children: [
@@ -389,7 +391,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               color: theme.accentColor.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -400,10 +402,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
               _buildTimeUnit('${age['days']}', 'DAYS', theme),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 32),
           GlassContainer(
             borderRadius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             opacity: 0.05,
             child: Text(
               '${age['hours'].toString().padLeft(2, '0')} : ${age['minutes'].toString().padLeft(2, '0')} : ${age['seconds'].toString().padLeft(2, '0')}',
@@ -528,8 +530,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
           final m = milestones[index];
           return GlassContainer(
             width: 190,
-            margin: const EdgeInsets.only(right: 15),
-            padding: const EdgeInsets.all(15),
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -662,8 +664,32 @@ class _HomeDashboardState extends State<HomeDashboard> {
 // TIMELINE TAB
 // ──────────────────────────────────────────────
 
-class TimelineTab extends StatelessWidget {
+class TimelineTab extends StatefulWidget {
   const TimelineTab({super.key});
+
+  @override
+  State<TimelineTab> createState() => _TimelineTabState();
+}
+
+class _TimelineTabState extends State<TimelineTab> {
+  bool _isStorybookMode = false;
+  int _currentScrubIndex = 0;
+  late PageController _pageController;
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentScrubIndex);
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _showEditTitleDialog(
     BuildContext context,
@@ -716,100 +742,186 @@ class TimelineTab extends StatelessWidget {
     final rp = context.watch<RelationshipProvider>();
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
+    final items = timelineProvider.timelineItems;
 
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 140,
-          floating: true,
-          pinned: false, // Changed to false to let it fade/scroll away
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          flexibleSpace: FlexibleSpaceBar(
-            centerTitle: true,
-            collapseMode: CollapseMode.parallax,
-            title: GestureDetector(
-              onTap: () => _showEditTitleDialog(context, rp, theme),
-              child: Text(
-                rp.storyTitle,
-                style: GoogleFonts.playfairDisplay(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (timelineProvider.timelineItems.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: _buildEmptyState(context, theme),
-          )
-        else
-          SliverToBoxAdapter(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 2,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.0),
-                            Colors.white24,
-                            Colors.white24,
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
+    if (_currentScrubIndex >= items.length && items.isNotEmpty) {
+      _currentScrubIndex = items.length - 1;
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              if (_isStorybookMode)
+                StorybookView(
+                  items: items,
+                  pageController: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentScrubIndex = index;
+                    });
+                  },
+                )
+              else
+                CustomScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: 140,
+                      floating: true,
+                      pinned: false,
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      flexibleSpace: FlexibleSpaceBar(
+                        centerTitle: true,
+                        collapseMode: CollapseMode.parallax,
+                        title: GestureDetector(
+                          onTap: () => _showEditTitleDialog(context, rp, theme),
+                          child: Text(
+                            rp.storyTitle,
+                            style: GoogleFonts.playfairDisplay(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
+                          ),
                         ),
                       ),
                     ),
+                    if (items.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _buildEmptyState(context, theme),
+                      )
+                    else
+                      SliverToBoxAdapter(
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: Container(
+                                  width: 2,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.0),
+                                        Colors.white24,
+                                        Colors.white24,
+                                        Colors.white.withValues(alpha: 0.0),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            ReorderableListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: items.length,
+                              onReorder: (oldIndex, newIndex) {
+                                timelineProvider.reorderTimelineItems(oldIndex, newIndex);
+                              },
+                              proxyDecorator: (child, index, animation) {
+                                return AnimatedBuilder(
+                                  animation: animation,
+                                  builder: (context, child) {
+                                    final double animValue = Curves.easeInOut.transform(
+                                      animation.value,
+                                    );
+                                    final double scale = lerpDouble(1, 1.05, animValue)!;
+                                    return Transform.scale(
+                                      scale: scale,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: child,
+                                );
+                              },
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                return TimelineItemWidget(
+                                  key: ValueKey(item.id),
+                                  item: item,
+                                  index: index,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                  ],
+                ),
+              if (items.isNotEmpty)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: SafeArea(
+                    child: FloatingActionButton.small(
+                      heroTag: 'storybookModeToggle',
+                      onPressed: () {
+                        setState(() {
+                          _isStorybookMode = !_isStorybookMode;
+                        });
+                        if (_isStorybookMode) {
+                          _pageController = PageController(initialPage: _currentScrubIndex);
+                        } else {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (_scrollController.hasClients) {
+                              _scrollController.animateTo(
+                                (_currentScrubIndex * 230.0).clamp(0.0, _scrollController.position.maxScrollExtent),
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                              );
+                            }
+                          });
+                        }
+                      },
+                      backgroundColor: theme.accentColor,
+                      foregroundColor: Colors.white,
+                      child: Icon(_isStorybookMode ? Icons.auto_awesome_motion_rounded : Icons.auto_stories_rounded),
+                    ),
                   ),
                 ),
-                ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: timelineProvider.timelineItems.length,
-                  onReorder: (oldIndex, newIndex) {
-                    timelineProvider.reorderTimelineItems(oldIndex, newIndex);
-                  },
-                  proxyDecorator: (child, index, animation) {
-                    return AnimatedBuilder(
-                      animation: animation,
-                      builder: (context, child) {
-                        final double animValue = Curves.easeInOut.transform(
-                          animation.value,
-                        );
-                        final double scale = lerpDouble(1, 1.05, animValue)!;
-                        return Transform.scale(
-                          scale: scale,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: child,
+            ],
+          ),
+        ),
+        if (items.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 96),
+            child: RulerPickerScrubber(
+              items: items,
+              selectedIndex: _currentScrubIndex,
+              onIndexChanged: (index) {
+                setState(() {
+                  _currentScrubIndex = index;
+                });
+                if (_isStorybookMode) {
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                  );
+                } else {
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(
+                      (index * 230.0).clamp(0.0, _scrollController.position.maxScrollExtent),
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
                     );
-                  },
-                  itemBuilder: (context, index) {
-                    final item = timelineProvider.timelineItems[index];
-                    return TimelineItemWidget(
-                      key: ValueKey(item.id),
-                      item: item,
-                      index: index,
-                    );
-                  },
-                ),
-              ],
+                  }
+                }
+              },
             ),
           ),
-        const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
     );
   }
@@ -821,7 +933,7 @@ class TimelineTab extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(30),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.05),
               shape: BoxShape.circle,

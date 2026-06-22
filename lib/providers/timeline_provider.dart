@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -54,6 +55,24 @@ class TimelineProvider with ChangeNotifier {
         .eq('couple_id', _coupleId!)
         .listen((dataList) {
       _timelineItems = dataList.map((data) {
+        final rawComments = data['comments'];
+        List<CommentData> parsedComments = [];
+        if (rawComments != null) {
+          if (rawComments is List) {
+            parsedComments = rawComments
+                .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+                .toList();
+          } else if (rawComments is String) {
+            try {
+              final decoded = jsonDecode(rawComments);
+              if (decoded is List) {
+                parsedComments = decoded
+                    .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+                    .toList();
+              }
+            } catch (_) {}
+          }
+        }
         return TimelineItemData(
           id: data['id'] as String,
           title: data['title'] ?? '',
@@ -67,6 +86,7 @@ class TimelineProvider with ChangeNotifier {
           mood: data['mood'] ?? '😍',
           photoUrls: List<String>.from(data['photo_urls'] ?? []),
           isPinned: data['is_pinned'] ?? false,
+          comments: parsedComments,
         );
       }).toList();
 
@@ -131,11 +151,23 @@ class TimelineProvider with ChangeNotifier {
           'mood': item.mood,
           'photo_urls': item.photoUrls,
           'is_pinned': item.isPinned,
+          'comments': item.comments.map((c) => c.toJson()).toList(),
         };
 
-        await Supabase.instance.client
-            .from('timeline_items')
-            .upsert(dbData);
+        try {
+          await Supabase.instance.client
+              .from('timeline_items')
+              .upsert(dbData);
+        } catch (e) {
+          if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+            final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
+            await Supabase.instance.client
+                .from('timeline_items')
+                .upsert(fallbackData);
+          } else {
+            rethrow;
+          }
+        }
       } catch (e) {
         debugPrint('TimelineProvider.addTimelineItem Supabase error: $e');
         _timelineItems.add(item);
@@ -189,11 +221,23 @@ class TimelineProvider with ChangeNotifier {
           'mood': updatedItem.mood,
           'photo_urls': updatedItem.photoUrls,
           'is_pinned': updatedItem.isPinned,
+          'comments': updatedItem.comments.map((c) => c.toJson()).toList(),
         };
 
-        await Supabase.instance.client
-            .from('timeline_items')
-            .upsert(dbData);
+        try {
+          await Supabase.instance.client
+              .from('timeline_items')
+              .upsert(dbData);
+        } catch (e) {
+          if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+            final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
+            await Supabase.instance.client
+                .from('timeline_items')
+                .upsert(fallbackData);
+          } else {
+            rethrow;
+          }
+        }
       } catch (e) {
         debugPrint('TimelineProvider.updateTimelineItem Supabase error: $e');
         _timelineItems[index] = updatedItem;
@@ -323,6 +367,48 @@ class TimelineProvider with ChangeNotifier {
     } catch (e, st) {
       debugPrint('TimelineProvider._persistLocalOnly failed: $e\n$st');
     }
+  }
+
+  Future<void> addCommentToItem(String itemId, String content, String authorName) async {
+    final index = _timelineItems.indexWhere((item) => item.id == itemId);
+    if (index == -1) return;
+
+    final updatedComments = List<CommentData>.from(_timelineItems[index].comments)
+      ..add(CommentData(
+        authorName: authorName,
+        content: content,
+        date: DateTime.now(),
+      ));
+
+    final updatedItem = _timelineItems[index].copyWith(comments: updatedComments);
+    await updateTimelineItem(itemId, updatedItem);
+  }
+
+  Future<void> deleteCommentFromItem(String itemId, String commentId) async {
+    final index = _timelineItems.indexWhere((item) => item.id == itemId);
+    if (index == -1) return;
+
+    final updatedComments = _timelineItems[index].comments
+        .where((c) => c.id != commentId)
+        .toList();
+
+    final updatedItem = _timelineItems[index].copyWith(comments: updatedComments);
+    await updateTimelineItem(itemId, updatedItem);
+  }
+
+  Future<void> togglePinComment(String itemId, String commentId) async {
+    final index = _timelineItems.indexWhere((item) => item.id == itemId);
+    if (index == -1) return;
+
+    final updatedComments = _timelineItems[index].comments.map((c) {
+      if (c.id == commentId) {
+        return c.copyWith(isPinned: !c.isPinned);
+      }
+      return c;
+    }).toList();
+
+    final updatedItem = _timelineItems[index].copyWith(comments: updatedComments);
+    await updateTimelineItem(itemId, updatedItem);
   }
 
   @override

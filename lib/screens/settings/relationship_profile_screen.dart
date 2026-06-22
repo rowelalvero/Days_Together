@@ -162,7 +162,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(3),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
@@ -602,7 +602,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'Cancel',
+                        partnerJoined ? 'Keep Connected' : 'Keep Request',
                         style: GoogleFonts.inter(
                           color: Colors.white54,
                           fontWeight: FontWeight.bold,

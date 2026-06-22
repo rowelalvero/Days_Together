@@ -60,14 +60,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF10122B),
+                color: theme.primaryColor,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
                 ),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +147,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             data: Theme.of(context).copyWith(
                               colorScheme: ColorScheme.dark(
                                 primary: theme.accentColor,
-                                surface: const Color(0xFF10122B),
+                                surface: theme.secondaryColor,
                               ),
                             ),
                             child: child!,
@@ -287,7 +287,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 _buildHeader(context),
                 _buildCalendar(theme, calendarProvider),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 Expanded(
                   child: _buildEventList(theme, calendarProvider),
                 ),
@@ -306,7 +306,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -354,7 +354,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
@@ -465,7 +465,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   bucketItems.isNotEmpty || giftItems.isNotEmpty || vaultItems.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

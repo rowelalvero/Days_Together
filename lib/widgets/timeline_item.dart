@@ -4,6 +4,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/comments_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
@@ -55,7 +56,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
       child: SlideTransition(
         position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)),
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+          margin: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,7 +64,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
                 Expanded(
                   child: isLeft
                       ? Padding(
-                          padding: const EdgeInsets.only(right: 15),
+                          padding: const EdgeInsets.only(right: 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -76,7 +77,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
                 Expanded(
                   child: !isLeft
                       ? Padding(
-                          padding: const EdgeInsets.only(left: 15),
+                          padding: const EdgeInsets.only(left: 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -283,6 +284,11 @@ class MemoryDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
+    final timelineProvider = context.watch<TimelineProvider>();
+    final currentItem = timelineProvider.timelineItems.firstWhere(
+      (i) => i.id == item.id,
+      orElse: () => item,
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -293,7 +299,7 @@ class MemoryDetailScreen extends StatelessWidget {
             CustomScrollView(
               slivers: [
                 SliverAppBar(
-                  expandedHeight: item.imagePath != null || item.networkImageUrl != null ? 350 : 120,
+                  expandedHeight: currentItem.imagePath != null || currentItem.networkImageUrl != null ? 350 : 120,
                   pinned: true,
                   backgroundColor: Colors.transparent,
                   leading: IconButton(
@@ -302,28 +308,31 @@ class MemoryDetailScreen extends StatelessWidget {
                   ),
                   actions: [
                     IconButton(
+                      icon: Icon(Icons.chat_bubble_outline_rounded, color: theme.accentColor, size: 24),
+                      onPressed: () {
+                        CommentsSidebar.show(context, currentItem);
+                      },
+                    ),
+                    IconButton(
                       icon: Icon(Icons.edit_note_rounded, color: theme.accentColor, size: 28),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => _EditItemDialog(item: item),
+                            builder: (_) => _EditItemDialog(item: currentItem),
                           ),
-                        ).then((_) {
-                          // Note: Navigator.pop on Edit will come back here, 
-                          // Provider will refresh UI.
-                        });
+                        );
                       },
                     ),
                     const SizedBox(width: 8),
                   ],
                   flexibleSpace: FlexibleSpaceBar(
-                    background: item.imagePath != null || item.networkImageUrl != null
+                    background: currentItem.imagePath != null || currentItem.networkImageUrl != null
                         ? Stack(
                             fit: StackFit.expand,
                             children: [
                               Image(
-                                image: _getImageProvider(item),
+                                image: _getImageProvider(currentItem),
                                 fit: BoxFit.cover,
                               ),
                               Container(
@@ -345,7 +354,7 @@ class MemoryDetailScreen extends StatelessWidget {
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 96),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -357,7 +366,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    item.title,
+                                    currentItem.title,
                                     style: GoogleFonts.playfairDisplay(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
@@ -370,14 +379,14 @@ class MemoryDetailScreen extends StatelessWidget {
                                       Icon(Icons.calendar_today_rounded, size: 14, color: theme.accentColor),
                                       const SizedBox(width: 6),
                                       Text(
-                                        DateFormat('MMMM dd, yyyy').format(item.date),
+                                        DateFormat('MMMM dd, yyyy').format(currentItem.date),
                                         style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
                                       ),
                                       const SizedBox(width: 12),
                                       Icon(Icons.access_time_rounded, size: 14, color: theme.accentColor),
                                       const SizedBox(width: 6),
                                       Text(
-                                        DateFormat.jm().format(item.date),
+                                        DateFormat.jm().format(currentItem.date),
                                         style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
                                       ),
                                     ],
@@ -391,18 +400,18 @@ class MemoryDetailScreen extends StatelessWidget {
                                 color: Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(18),
                               ),
-                              child: Text(item.mood, style: const TextStyle(fontSize: 28)),
+                              child: Text(currentItem.mood, style: const TextStyle(fontSize: 28)),
                             ),
                           ],
                         ),
-                        if (item.location != null && item.location!.isNotEmpty) ...[
+                        if (currentItem.location != null && currentItem.location!.isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Row(
                             children: [
                               const Icon(Icons.location_on_rounded, size: 16, color: Colors.white54),
                               const SizedBox(width: 6),
                               Text(
-                                item.location!,
+                                currentItem.location!,
                                 style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
                               ),
                             ],
@@ -415,12 +424,44 @@ class MemoryDetailScreen extends StatelessWidget {
                           borderRadius: 30,
                           opacity: 0.08,
                           child: Text(
-                            item.description,
+                            currentItem.description,
                             style: GoogleFonts.lora(
                               fontSize: 18,
                               color: Colors.white.withValues(alpha: 0.9),
                               height: 1.8,
                               fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () => CommentsSidebar.show(context, currentItem),
+                            child: GlassContainer(
+                              borderRadius: 20,
+                              opacity: 0.15,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.chat_bubble_outline_rounded, size: 16, color: theme.accentColor),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${currentItem.comments.length}',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'chats',
+                                    style: GoogleFonts.inter(color: Colors.white70, fontSize: 11),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -518,7 +559,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                       _buildTextField('Story', _descriptionController, theme, maxLines: 6),
                       const SizedBox(height: 40),
                       _buildDeleteButton(context, theme),
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 96),
                     ],
                   ),
                 ),
@@ -723,7 +764,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           final confirmed = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              backgroundColor: const Color(0xFF1A1B41),
+              backgroundColor: theme.secondaryColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text('Delete Memory?', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
               actions: [

@@ -5,6 +5,56 @@ import 'package:uuid/uuid.dart';
 /// fields. This lets callers clear a previously-set nullable field.
 const Object _unset = Object();
 
+class CommentData {
+  final String id;
+  final String authorName;
+  final String content;
+  final DateTime date;
+  final bool isPinned;
+
+  CommentData({
+    String? id,
+    required this.authorName,
+    required this.content,
+    required this.date,
+    this.isPinned = false,
+  }) : id = id ?? const Uuid().v4();
+
+  CommentData copyWith({
+    String? id,
+    String? authorName,
+    String? content,
+    DateTime? date,
+    bool? isPinned,
+  }) {
+    return CommentData(
+      id: id ?? this.id,
+      authorName: authorName ?? this.authorName,
+      content: content ?? this.content,
+      date: date ?? this.date,
+      isPinned: isPinned ?? this.isPinned,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'authorName': authorName,
+        'content': content,
+        'date': date.toIso8601String(),
+        'isPinned': isPinned,
+      };
+
+  factory CommentData.fromJson(Map<String, dynamic> json) {
+    return CommentData(
+      id: json['id'] as String?,
+      authorName: json['authorName'] as String? ?? 'Someone',
+      content: json['content'] as String? ?? '',
+      date: DateTime.parse(json['date'] as String),
+      isPinned: json['isPinned'] as bool? ?? false,
+    );
+  }
+}
+
 class TimelineItemData {
   String id;
   String title;
@@ -18,6 +68,7 @@ class TimelineItemData {
   String mood;
   List<String> photoUrls; // Up to 3 photos
   bool isPinned; // Featured on widget
+  List<CommentData> comments;
 
   TimelineItemData({
     String? id,
@@ -32,6 +83,7 @@ class TimelineItemData {
     this.mood = '😍',
     this.photoUrls = const [],
     this.isPinned = false,
+    this.comments = const [],
   }) : id = id ?? const Uuid().v4();
 
   /// Returns a copy with the given fields replaced.
@@ -52,6 +104,7 @@ class TimelineItemData {
     String? mood,
     List<String>? photoUrls,
     bool? isPinned,
+    List<CommentData>? comments,
   }) {
     return TimelineItemData(
       id: id ?? this.id,
@@ -72,6 +125,7 @@ class TimelineItemData {
       mood: mood ?? this.mood,
       photoUrls: photoUrls ?? this.photoUrls,
       isPinned: isPinned ?? this.isPinned,
+      comments: comments ?? this.comments,
     );
   }
 
@@ -88,6 +142,7 @@ class TimelineItemData {
     'mood': mood,
     'photoUrls': photoUrls,
     'isPinned': isPinned,
+    'comments': comments.map((c) => c.toJson()).toList(),
   };
 
   factory TimelineItemData.fromJson(Map<String, dynamic> json) {
@@ -104,6 +159,9 @@ class TimelineItemData {
       mood: json['mood'] as String? ?? '😍',
       photoUrls: List<String>.from(json['photoUrls'] as List? ?? []),
       isPinned: json['isPinned'] as bool? ?? false,
+      comments: (json['comments'] as List? ?? [])
+          .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

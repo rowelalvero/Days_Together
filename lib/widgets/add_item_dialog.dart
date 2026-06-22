@@ -74,7 +74,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                         _buildTextField('Description', _descriptionController, theme, hint: 'Write the story...', maxLines: 4),
                         const SizedBox(height: 32),
                         if (_isImageCard) _buildImageButton(theme),
-                        const SizedBox(height: 100),
+                        const SizedBox(height: 96),
                       ],
                     ),
                   ),
@@ -166,7 +166,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
 
   Widget _buildTextPreview(LoveStoryTheme theme) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -207,7 +207,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                           colorScheme: ColorScheme.dark(
                             primary: theme.accentColor,
                             onPrimary: Colors.white,
-                            surface: const Color(0xFF10122B),
+                            surface: theme.secondaryColor,
                           ),
                         ),
                         child: child!,
@@ -245,7 +245,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                           colorScheme: ColorScheme.dark(
                             primary: theme.accentColor,
                             onPrimary: Colors.white,
-                            surface: const Color(0xFF10122B),
+                            surface: theme.secondaryColor,
                           ),
                         ),
                         child: child!,

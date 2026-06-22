@@ -44,10 +44,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10122B),
+                  color: theme.primaryColor,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
                   ),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
@@ -110,7 +110,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                       colorScheme: ColorScheme.dark(
                                         primary: theme.accentColor,
                                         onPrimary: Colors.white,
-                                        surface: const Color(0xFF10122B),
+                                        surface: theme.secondaryColor,
                                         onSurface: Colors.white,
                                       ),
                                     ),
@@ -166,7 +166,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                     data: Theme.of(context).copyWith(
                                       colorScheme: ColorScheme.dark(
                                         primary: theme.accentColor,
-                                        surface: const Color(0xFF10122B),
+                                        surface: theme.secondaryColor,
                                       ),
                                     ),
                                     child: child!,
@@ -220,7 +220,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 48,
                       child: ElevatedButton(
                         onPressed: () {
                           if (_titleController.text.trim().isNotEmpty && _selectedDate != null) {
@@ -310,7 +310,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
 
   Widget _buildAppBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           IconButton(
@@ -349,7 +349,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     final sortedList = provider.upcomingReminders;
     return ListView.builder(
       itemCount: sortedList.length,
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 96),
       itemBuilder: (context, index) {
         final reminder = sortedList[index];
         return _buildReminderCard(reminder, theme, provider);
@@ -472,7 +472,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            backgroundColor: const Color(0xFF10122B),
+                            backgroundColor: theme.primaryColor,
                             title: const Text('Delete Reminder?', style: TextStyle(color: Colors.white)),
                             content: const Text(
                               'Are you sure you want to delete this reminder?',

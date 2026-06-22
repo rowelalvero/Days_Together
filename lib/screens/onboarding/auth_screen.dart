@@ -116,16 +116,16 @@ class _AuthScreenState extends State<AuthScreen> {
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
                   Text(
                     _isSignUp ? 'Create Account' : 'Welcome Back',
                     style: TextStyle(
@@ -310,7 +310,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               },
                             ),
                           ],
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 32),
                           // Submit Button
                           SizedBox(
                             height: 56,
@@ -345,7 +345,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           Row(
                             children: [
                               Expanded(
@@ -374,7 +374,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           // Google Sign In Button
                           SizedBox(
                             height: 56,

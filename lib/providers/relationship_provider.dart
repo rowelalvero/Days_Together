@@ -294,6 +294,7 @@ class RelationshipProvider with ChangeNotifier {
             if (_coupleId != null) {
               _isPaired = true;
               _coupleSub?.cancel();
+              _licenseSub?.cancel();
               _syncLocalDetailsToCloud();
 
               _coupleSub = Supabase.instance.client

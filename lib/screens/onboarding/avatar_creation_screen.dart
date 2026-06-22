@@ -44,7 +44,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
         decoration: BoxDecoration(gradient: themeProvider.currentGradient),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -52,7 +52,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 Text(
                   "Let's put a face\nto the name.",
                   style: TextStyle(
@@ -64,7 +64,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   'This is how your partner will see you.',
                   style: TextStyle(
@@ -122,10 +122,10 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                   controller: _yourNameController,
                   hint: 'Enter your name',
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 48),
                 SizedBox(
                   width: double.infinity,
-                  height: 60,
+                  height: 56,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _completeSetup,
                     style: ElevatedButton.styleFrom(
@@ -179,7 +179,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
             letterSpacing: 1.5,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           style: const TextStyle(color: Colors.white, fontSize: 16),

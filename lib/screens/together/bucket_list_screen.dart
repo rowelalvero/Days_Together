@@ -52,10 +52,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF10122B),
+                color: theme.primaryColor,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
                 ),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
@@ -119,7 +119,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                     colorScheme: ColorScheme.dark(
                                       primary: theme.accentColor,
                                       onPrimary: Colors.white,
-                                      surface: const Color(0xFF10122B),
+                                      surface: theme.secondaryColor,
                                       onSurface: Colors.white,
                                     ),
                                   ),
@@ -185,7 +185,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                     data: Theme.of(context).copyWith(
                                       colorScheme: ColorScheme.dark(
                                         primary: theme.accentColor,
-                                        surface: const Color(0xFF10122B),
+                                        surface: theme.secondaryColor,
                                       ),
                                     ),
                                     child: child!,
@@ -343,7 +343,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
 
   Widget _buildAppBar(BuildContext context, dynamic theme, BucketListProvider provider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           IconButton(
@@ -381,7 +381,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
   Widget _buildProgressCard(dynamic theme, BucketListProvider provider) {
     if (provider.totalItems == 0) return const SizedBox.shrink();
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
@@ -402,7 +402,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
@@ -451,7 +451,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
       ),
       child: ReorderableListView.builder(
         itemCount: provider.items.length,
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
         onReorder: provider.reorderItems,
         itemBuilder: (context, index) {
           final item = provider.items[index];
@@ -543,7 +543,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    backgroundColor: const Color(0xFF10122B),
+                    backgroundColor: theme.primaryColor,
                     title: const Text('Delete Adventure?', style: TextStyle(color: Colors.white)),
                     content: const Text(
                       'Are you sure you want to remove this dream from your bucket list?',

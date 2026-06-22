@@ -37,7 +37,7 @@ class ThemeSelectorScreen extends StatelessWidget {
         decoration: BoxDecoration(gradient: themeProvider.currentGradient),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -320,29 +320,29 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
       children: [
         // Color Slot Selector
         _buildSectionLabel('Color Slots', theme),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _buildColorSlots(settings, theme),
         const SizedBox(height: 24),
 
         // Color Palette
         _buildSectionLabel('Pick a Color', theme),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _buildColorPalette(themeProvider, settings),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
 
         // Hex Input
         _buildHexInput(themeProvider, theme),
-        const SizedBox(height: 30),
+        const SizedBox(height: 32),
 
         // Dark / Light toggle
         _buildSectionLabel('Mode', theme),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _buildDarkLightToggle(themeProvider, settings, theme),
-        const SizedBox(height: 30),
+        const SizedBox(height: 32),
 
         // Font Selector
         _buildSectionLabel('Font Family', theme),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _buildFontSelector(themeProvider, settings, theme),
         const SizedBox(height: 40),
       ],
@@ -583,9 +583,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
               ? settings.customFont
               : 'Montserrat',
           isExpanded: true,
-          dropdownColor: theme.isDark
-              ? const Color(0xFF1A1B41)
-              : const Color(0xFFFFF0F5),
+          dropdownColor: theme.secondaryColor,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
             color: theme.textColor.withValues(alpha: 0.5),
