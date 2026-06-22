@@ -60,7 +60,7 @@ class NotificationService {
         'token': token,
         'device_type': Platform.isIOS ? 'ios' : 'android',
         'updated_at': DateTime.now().toIso8601String(),
-      });
+      }, onConflict: 'token');
       debugPrint('NotificationService: Token synced successfully.');
     } catch (e) {
       debugPrint('NotificationService: Failed to sync token to Supabase: $e');
