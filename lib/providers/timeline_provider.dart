@@ -288,6 +288,14 @@ class TimelineProvider with ChangeNotifier {
       }
     }
 
+    // Update local state first for immediate UI response
+    _timelineItems.removeAt(index);
+    for (var i = 0; i < _timelineItems.length; i++) {
+      _timelineItems[i].position = i;
+    }
+    notifyListeners();
+    await _persist();
+
     if (_coupleId != null) {
       try {
         await Supabase.instance.client
@@ -302,7 +310,8 @@ class TimelineProvider with ChangeNotifier {
               .remove([storagePath]);
         } catch (_) {}
 
-        final remaining = _timelineItems.where((i) => i.id != id).toList();
+        // Update positions of remaining items in the database
+        final remaining = List<TimelineItemData>.from(_timelineItems);
         for (var i = 0; i < remaining.length; i++) {
           await Supabase.instance.client
               .from('timeline_items')
@@ -311,18 +320,7 @@ class TimelineProvider with ChangeNotifier {
         }
       } catch (e) {
         debugPrint('TimelineProvider.deleteTimelineItem Supabase error: $e');
-        _timelineItems.removeAt(index);
-        for (var i = 0; i < _timelineItems.length; i++) {
-          _timelineItems[i].position = i;
-        }
-        await _persist();
       }
-    } else {
-      _timelineItems.removeAt(index);
-      for (var i = 0; i < _timelineItems.length; i++) {
-        _timelineItems[i].position = i;
-      }
-      await _persist();
     }
   }
 
