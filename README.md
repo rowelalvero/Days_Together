@@ -2,10 +2,14 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-^3.10.0-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Portfolio](https://img.shields.io/badge/Developer%20Portfolio-Vercel-black?logo=vercel&logoColor=white)](https://myportfolio-vxf8.vercel.app/)
 [![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web-blue)](#)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](#)
 
 **Days Together** is a beautiful, premium, and real-time synchronized relationship timeline and shared memory space designed exclusively for couples (2 users). Built with **Flutter (Dart)** and backed by a robust **Supabase** backend with real-time stream synchronization, it provides a safe, gorgeous, and interactive vault for a couple's shared journey.
+
+Check out my developer portfolio [here](https://myportfolio-vxf8.vercel.app/) to view more projects and details.
+
 
 ---
 
