@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 const Object _unset = Object();
 
@@ -1735,22 +1736,20 @@ class RelationshipProvider with ChangeNotifier {
   }
 
   Future<void> signInWithGoogle() async {
-    // TODO: Paste your Web Client ID from the Google Cloud Console Credentials page (required for Android):
-    // https://console.cloud.google.com/apis/credentials
-    const webClientId = String.fromEnvironment(
+    // Read from dotenv or fallback to build environment
+    final webClientId = dotenv.env['GOOGLE_CLIENT_ID_WEB'] ?? const String.fromEnvironment(
       'GOOGLE_CLIENT_ID_WEB',
       defaultValue: '1043515146762-s4pm3ed9r5aqface2457jafleen4q1tg.apps.googleusercontent.com',
     );
 
-    // TODO: Paste your iOS Client ID from the Google Cloud Console Credentials page (required for iOS):
-    const iosClientId = String.fromEnvironment(
+    final iosClientId = dotenv.env['GOOGLE_CLIENT_ID_IOS'] ?? const String.fromEnvironment(
       'GOOGLE_CLIENT_ID_IOS',
       defaultValue: 'YOUR_IOS_CLIENT_ID',
     );
 
     final googleSignIn = GoogleSignIn(
-      serverClientId: webClientId == 'YOUR_WEB_CLIENT_ID' ? null : webClientId,
-      clientId: iosClientId == 'YOUR_IOS_CLIENT_ID' ? null : iosClientId,
+      serverClientId: webClientId == 'YOUR_WEB_CLIENT_ID' || webClientId.isEmpty ? null : webClientId,
+      clientId: iosClientId == 'YOUR_IOS_CLIENT_ID' || iosClientId.isEmpty ? null : iosClientId,
     );
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {

@@ -100,16 +100,17 @@ Ensure your Supabase project contains the appropriate tables and storage buckets
 - **Storage Buckets:** `avatars`, `vault-photos`.
 
 ### 2. Configure Environment Variables
-Client IDs and Supabase credentials are secured using build-time environment declarations.
-Create or pass the following environment configurations when compiling/running:
+Create a `.env` file in the root of the project with the following keys:
 
-```bash
-flutter run \
-  --dart-define=SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL \
-  --dart-define=SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```env
+SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
+SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+GOOGLE_CLIENT_ID_WEB=YOUR_GOOGLE_WEB_CLIENT_ID
+GOOGLE_CLIENT_ID_IOS=YOUR_GOOGLE_IOS_CLIENT_ID
 ```
 
-Alternatively, configure your local IDE (`launch.json` in VS Code or Run Configuration in Android Studio) to pass these declarations.
+*(Note: The `.env` file has been added to `.gitignore` to prevent credentials from being committed to source control.)*
+
 
 ### 3. Fetch Dependencies
 Install the required packages:

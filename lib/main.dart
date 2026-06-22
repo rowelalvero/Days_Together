@@ -16,18 +16,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
+    await dotenv.load(fileName: ".env");
     await Supabase.initialize(
-      url: 'https://njrdvhvftgpvcmckzeqh.supabase.co',
-      publishableKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcmR2aHZmdGdwdmNtY2t6ZXFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MTE4MDUsImV4cCI6MjA5NzI4NzgwNX0.5m9MAVeQi0zytbUO3PLrhRQ1rYgIWyywOCyjpAK8O9M',
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
   } catch (e) {
     debugPrint('Supabase failed to initialize: $e');
   }
+
   runApp(
     MultiProvider(
       providers: [
