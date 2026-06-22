@@ -73,7 +73,8 @@ class NoteitProvider with ChangeNotifier {
         .eq('couple_id', _coupleId!)
         .listen(
           (dataList) {
-            _notes = dataList.map((data) {
+            final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
+            _notes = filteredList.map((data) {
               final typeStr = data['type'] as String? ?? 'text';
               final type = NoteitType.values.firstWhere(
                 (t) => t.name == typeStr,
