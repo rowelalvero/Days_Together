@@ -13,6 +13,7 @@ class NotificationService {
   FirebaseMessaging get _fcm => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  bool _tokenSynced = false;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -48,6 +49,8 @@ class NotificationService {
   }
 
   Future<void> syncTokenToSupabase([String? explicitToken]) async {
+    if (_tokenSynced && explicitToken == null) return;
+
     try {
       final token = explicitToken ?? await _fcm.getToken();
       if (token == null) return;
@@ -61,6 +64,7 @@ class NotificationService {
         'device_type': Platform.isIOS ? 'ios' : 'android',
         'updated_at': DateTime.now().toIso8601String(),
       }, onConflict: 'token');
+      _tokenSynced = true;
       debugPrint('NotificationService: Token synced successfully.');
     } catch (e) {
       debugPrint('NotificationService: Failed to sync token to Supabase: $e');
