@@ -35,9 +35,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
   // Photo state
   String? _pickedPhotoPath;
 
-  // Widget Simulator state
-  bool _showPartnerWidget = true; // true = show partner note to you, false = show your note to partner
-  bool _paperAirplaneFlying = false;
 
   final List<Color> _paletteColors = [
     const Color(0xFFFF4D6D), // pink
@@ -60,7 +57,7 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -108,18 +105,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
     }
   }
 
-  void _triggerAirplaneAnimation() {
-    setState(() {
-      _paperAirplaneFlying = true;
-    });
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) {
-        setState(() {
-          _paperAirplaneFlying = false;
-        });
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +133,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
           unselectedLabelColor: theme.textColor.withValues(alpha: 0.5),
           isScrollable: true,
           tabs: const [
-            Tab(text: '📱 Widget'),
             Tab(text: '🎨 Doodle'),
             Tab(text: '📝 Text Note'),
             Tab(text: '📸 Photo'),
@@ -164,7 +148,6 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
           child: TabBarView(
             controller: _tabController,
             children: [
-              _buildWidgetSimulator(theme, provider),
               _buildDoodleCanvas(theme, provider),
               _buildStickyNoteEditor(theme, provider),
               _buildPhotoPicker(theme, provider),
@@ -176,408 +159,7 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
     );
   }
 
-  // 1. WIDGET SIMULATOR
-  Widget _buildWidgetSimulator(LoveStoryTheme theme, NoteitProvider provider) {
-    final activeItem = _showPartnerWidget ? provider.latestReceived : provider.latestSent;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Column(
-        children: [
-          // Widget configuration switch
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: theme.textColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _showPartnerWidget = true),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _showPartnerWidget ? theme.accentColor : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Received (Partner)',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          color: _showPartnerWidget ? Colors.white : theme.textColor.withValues(alpha: 0.6),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => _showPartnerWidget = false),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: !_showPartnerWidget ? theme.accentColor : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Sent (You)',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          color: !_showPartnerWidget ? Colors.white : theme.textColor.withValues(alpha: 0.6),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Visual Mockup Phone
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Phone Outer Frame
-              Container(
-                width: 250,
-                height: 470,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E2F),
-                  borderRadius: BorderRadius.circular(36),
-                  border: Border.all(color: Colors.grey.shade800, width: 8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 24,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Stack(
-                    children: [
-                      // Wallpaper
-                      Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0xFF2C3E50), Color(0xFF000000)],
-                          ),
-                        ),
-                      ),
-                      // Stars Wallpaper effect
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _MockStarsPainter(),
-                        ),
-                      ),
-
-                      // Status Bar
-                      Positioned(
-                        top: 6,
-                        left: 16,
-                        right: 16,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '11:11',
-                              style: GoogleFonts.inter(
-                                color: Colors.white70,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Row(
-                              children: [
-                                Icon(Icons.wifi, color: Colors.white70, size: 10),
-                                SizedBox(width: 4),
-                                Icon(Icons.battery_5_bar_rounded, color: Colors.white70, size: 10),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Clock Widget
-                      Positioned(
-                        top: 36,
-                        left: 0,
-                        right: 0,
-                        child: Column(
-                          children: [
-                            Text(
-                              '11:11 PM',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                            Text(
-                              'Wednesday, June 17',
-                              style: GoogleFonts.inter(
-                                color: Colors.white70,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Love Notes Simulated Home Widget
-                      Positioned(
-                        top: 105,
-                        left: 20,
-                        right: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 4, bottom: 4),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.favorite_rounded,
-                                    size: 10,
-                                    color: theme.accentColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Love Notes Widget',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white.withValues(alpha: 0.6),
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              height: 180,
-                              width: 210,
-                              decoration: BoxDecoration(
-                                color: activeItem != null && activeItem.backgroundColor != null
-                                    ? activeItem.backgroundColor!.withValues(alpha: 0.95)
-                                    : Colors.white.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: activeItem == null
-                                    ? Center(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(16.0),
-                                          child: Text(
-                                            _showPartnerWidget
-                                                ? 'Waiting for partner note... 😴'
-                                                : 'No notes sent yet. Swipe to doodle!',
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.inter(
-                                              color: Colors.white.withValues(alpha: 0.5),
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : _buildWidgetContent(activeItem),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // App Icons row
-                      Positioned(
-                        bottom: 30,
-                        left: 20,
-                        right: 20,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildMockAppIcon(Icons.phone_rounded, Colors.green),
-                            _buildMockAppIcon(Icons.chat_bubble_rounded, Colors.blue),
-                            _buildMockAppIcon(Icons.music_note_rounded, const Color(0xFF1DB954)),
-                            _buildMockAppIcon(Icons.wb_sunny_rounded, Colors.orange),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Flying Paper Airplane Animation overlay
-              if (_paperAirplaneFlying)
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: -150.0, end: 350.0),
-                  duration: const Duration(milliseconds: 1200),
-                  builder: (context, val, child) {
-                    double angle = -pi / 6;
-                    double verticalVal = 180 + sin(val / 50) * 40;
-                    return Positioned(
-                      left: val,
-                      top: verticalVal,
-                      child: Transform.rotate(
-                        angle: angle,
-                        child: Icon(
-                          Icons.send_rounded,
-                          color: theme.accentColor,
-                          size: 32,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 30),
-
-          // Simulation Control Button
-          GlassContainer(
-            borderRadius: 20,
-            opacity: 0.08,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              children: [
-                Text(
-                  'Simulation Control',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Since this is a local device app, you can trigger a simulated incoming note from your partner to watch the widget update!',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: theme.textColor.withValues(alpha: 0.6),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      _triggerAirplaneAnimation();
-                      Future.delayed(const Duration(milliseconds: 600), () {
-                        provider.simulatePartnerResponse();
-                        setState(() {
-                          _showPartnerWidget = true; // Switch view to received widget
-                        });
-                      });
-                    },
-                    icon: const Icon(Icons.flight_takeoff_rounded),
-                    label: const Text('Simulate Partner Response'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.accentColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMockAppIcon(IconData icon, Color color) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Icon(icon, color: Colors.white, size: 20),
-    );
-  }
-
-  Widget _buildWidgetContent(NoteitItem item) {
-    if (item.type == NoteitType.drawing) {
-      return CustomPaint(
-        painter: ScaleDrawingPainter(
-          strokes: _deserializeStrokes(item.content),
-          color: Colors.white,
-          strokeWidth: 3.5,
-        ),
-      );
-    } else if (item.type == NoteitType.text) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        alignment: Alignment.center,
-        child: Text(
-          item.content ?? '',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.lora(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontStyle: FontStyle.italic,
-            color: Colors.white,
-            height: 1.4,
-          ),
-        ),
-      );
-    } else {
-      // Photo
-      if (item.imagePath != null) {
-        return Image.file(
-          File(item.imagePath!),
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-        );
-      } else if (item.imageUrl != null) {
-        return Image.network(
-          item.imageUrl!,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return const Center(child: CircularProgressIndicator());
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
-          },
-        );
-      }
-      return Container(color: Colors.grey);
-    }
-  }
 
   // 2. DOODLE CANVAS
   Widget _buildDoodleCanvas(LoveStoryTheme theme, NoteitProvider provider) {
@@ -763,18 +345,17 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                 }
                 provider.sendDrawing(_serializeDoodle(), _doodleBgColor);
                 _clearDoodle();
-                _tabController.animateTo(0); // Switch to widget tab
-                _triggerAirplaneAnimation();
+                _tabController.animateTo(3); // Switch to History tab
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Doodle sent directly to widget! 🚀'),
+                    content: Text('Doodle sent to partner! 🚀'),
                     backgroundColor: Colors.green,
                   ),
                 );
               },
               icon: const Icon(Icons.send_rounded),
               label: Text(
-                'Send to Partner Widget',
+                'Send to Partner',
                 style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
               ),
               style: ElevatedButton.styleFrom(
@@ -908,11 +489,10 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                 }
                 provider.sendText(_textController.text.trim(), _stickyBgColor);
                 _textController.clear();
-                _tabController.animateTo(0); // Go back to widget tab
-                _triggerAirplaneAnimation();
+                _tabController.animateTo(3); // Switch to History tab
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Sticky note sent directly to widget! 🚀'),
+                    content: Text('Note sent to partner! 🚀'),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -1014,10 +594,12 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                     : Stack(
                         children: [
                           Positioned.fill(
-                            child: Image.file(
-                              File(_pickedPhotoPath!),
-                              fit: BoxFit.cover,
-                            ),
+                            child: _pickedPhotoPath != null && File(_pickedPhotoPath!).existsSync()
+                                ? Image.file(
+                                    File(_pickedPhotoPath!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : const Center(child: Icon(Icons.image, color: Colors.white24)),
                           ),
                           Positioned(
                             top: 12,
@@ -1052,18 +634,17 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
                   setState(() {
                     _pickedPhotoPath = null;
                   });
-                  _tabController.animateTo(0); // Switch to widget
-                  _triggerAirplaneAnimation();
+                  _tabController.animateTo(3); // Switch to History tab
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Photo sent directly to widget! 📸🚀'),
+                      content: Text('Photo sent to partner! 📸🚀'),
                       backgroundColor: Colors.green,
                     ),
                   );
                 },
                 icon: const Icon(Icons.send_rounded),
                 label: Text(
-                  'Send Photo to Widget',
+                  'Send Photo to Partner',
                   style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -1214,6 +795,59 @@ class _NoteitScreenState extends State<NoteitScreen> with SingleTickerProviderSt
       ),
     );
   }
+
+  Widget _buildWidgetContent(NoteitItem item) {
+    if (item.type == NoteitType.drawing) {
+      return CustomPaint(
+        painter: ScaleDrawingPainter(
+          strokes: _deserializeStrokes(item.content),
+          color: Colors.white,
+          strokeWidth: 3.5,
+        ),
+      );
+    } else if (item.type == NoteitType.text) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.center,
+        child: Text(
+          item.content ?? '',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lora(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontStyle: FontStyle.italic,
+            color: Colors.white,
+            height: 1.4,
+          ),
+        ),
+      );
+    } else {
+      // Photo
+      if (item.imagePath != null && File(item.imagePath!).existsSync()) {
+        return Image.file(
+          File(item.imagePath!),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } else if (item.imageUrl != null) {
+        return Image.network(
+          item.imageUrl!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return const Center(child: CircularProgressIndicator());
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
+          },
+        );
+      }
+      return Container(color: Colors.grey);
+    }
+  }
 }
 
 // ── CUSTOM CUSTOM PAINTERS ──
@@ -1351,19 +985,3 @@ List<List<Offset>> _deserializeStrokes(String? data) {
   }
 }
 
-class _MockStarsPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rand = Random(42);
-    final paint = Paint()..color = Colors.white70;
-    for (int i = 0; i < 40; i++) {
-      final dx = rand.nextDouble() * size.width;
-      final dy = rand.nextDouble() * size.height;
-      final r = rand.nextDouble() * 1.5;
-      canvas.drawCircle(Offset(dx, dy), r, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

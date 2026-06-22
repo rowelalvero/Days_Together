@@ -501,22 +501,6 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                         fontStyle: FontStyle.italic,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        provider.simulatePartnerAnswer(
-                          'I love the way you laugh, it lights up my entire world! ❤️',
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Simulate Partner Answer (Offline Test)'),
-                    ),
                   ],
                 ),
               ),

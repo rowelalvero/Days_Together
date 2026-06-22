@@ -2154,10 +2154,19 @@ class _LicenseFront extends StatelessWidget {
                                             ),
                                           ),
                                         )
-                                      : Image.file(
-                                          File(holderAvatar!),
-                                          fit: BoxFit.cover,
-                                        ))
+                                      : (File(holderAvatar!).existsSync()
+                                          ? Image.file(
+                                              File(holderAvatar!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Container(
+                                              color: Colors.white10,
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                color: Colors.white30,
+                                                size: 28,
+                                              ),
+                                            )))
                                   : Container(
                                       color: Colors.white10,
                                       child: const Icon(

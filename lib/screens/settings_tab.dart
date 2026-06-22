@@ -126,9 +126,13 @@ class SettingsTab extends StatelessWidget {
             backgroundImage: path != null
                 ? (path.startsWith('http')
                     ? NetworkImage(path) as ImageProvider
-                    : FileImage(File(path)))
+                    : (File(path).existsSync()
+                        ? FileImage(File(path))
+                        : null))
                 : null,
-            child: path == null ? const Icon(Icons.person, size: 40, color: Colors.white30) : null,
+            child: path == null || (!path.startsWith('http') && !File(path).existsSync())
+                ? const Icon(Icons.person, size: 40, color: Colors.white30)
+                : null,
           ),
           Positioned(
             right: 0,
@@ -360,9 +364,13 @@ class SettingsTab extends StatelessWidget {
               backgroundImage: path != null
                   ? (path.startsWith('http')
                       ? NetworkImage(path) as ImageProvider
-                      : FileImage(File(path)))
+                      : (File(path).existsSync()
+                          ? FileImage(File(path))
+                          : null))
                   : null,
-              child: path == null ? const Icon(Icons.person, color: Colors.white24) : null,
+              child: path == null || (!path.startsWith('http') && !File(path).existsSync())
+                  ? const Icon(Icons.person, color: Colors.white24)
+                  : null,
             ),
           ),
            const SizedBox(height: 8),

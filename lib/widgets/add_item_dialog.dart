@@ -129,14 +129,30 @@ class _AddItemDialogState extends State<AddItemDialog> {
           flex: 2,
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                image: _imagePath != null
-                    ? DecorationImage(image: FileImage(File(_imagePath!)), fit: BoxFit.cover)
-                    : const DecorationImage(image: AssetImage('assets/images/placeholder.jpg'), fit: BoxFit.cover),
-              ),
-            ),
+            child: _imagePath != null && File(_imagePath!).existsSync()
+                ? Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(image: FileImage(File(_imagePath!)), fit: BoxFit.cover),
+                    ),
+                  )
+                : Container(
+                    width: double.infinity,
+                    color: Colors.white.withValues(alpha: 0.05),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_photo_alternate_outlined, color: Colors.white30, size: 40),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No photo selected',
+                            style: GoogleFonts.montserrat(color: Colors.white30, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
           ),
         ),
         Expanded(

@@ -15,11 +15,13 @@ import 'package:intl/intl.dart';
 class TimelineItemWidget extends StatefulWidget {
   final TimelineItemData item;
   final int index;
+  final bool isSelected;
 
   const TimelineItemWidget({
     super.key,
     required this.item,
     required this.index,
+    this.isSelected = false,
   });
 
   @override
@@ -151,16 +153,38 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
   }
 
   Widget _buildCenterPoint(dynamic theme) {
+    final isSelected = widget.isSelected;
     return SizedBox(
       width: 40,
       child: Center(
-        child: Container(
-          width: 12,
-          height: 12,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          width: isSelected ? 15.0 : 10.0,
+          height: isSelected ? 15.0 : 10.0,
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: theme.accentColor.withValues(alpha: 0.5), blurRadius: 10, spreadRadius: 2)],
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: theme.accentColor.withValues(alpha: 0.8),
+                      blurRadius: 16,
+                      spreadRadius: 4,
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: theme.accentColor.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                    )
+                  ],
           ),
         ),
       ),
@@ -788,9 +812,17 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   }
 
   ImageProvider _getImageProvider() {
-    if (_newImagePath != null) return FileImage(File(_newImagePath!));
-    if (widget.item.imagePath != null && widget.item.imagePath!.isNotEmpty) return FileImage(File(widget.item.imagePath!));
-    if (widget.item.networkImageUrl != null && widget.item.networkImageUrl!.isNotEmpty) return NetworkImage(widget.item.networkImageUrl!);
+    if (_newImagePath != null) {
+      final file = File(_newImagePath!);
+      if (file.existsSync()) return FileImage(file);
+    }
+    if (widget.item.imagePath != null && widget.item.imagePath!.isNotEmpty) {
+      final file = File(widget.item.imagePath!);
+      if (file.existsSync()) return FileImage(file);
+    }
+    if (widget.item.networkImageUrl != null && widget.item.networkImageUrl!.isNotEmpty) {
+      return NetworkImage(widget.item.networkImageUrl!);
+    }
     return const AssetImage('assets/images/placeholder.jpg');
   }
 

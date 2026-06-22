@@ -13,6 +13,7 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/storybook_view.dart';
 import 'package:days_together/widgets/ruler_picker_scrubber.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:animations/animations.dart';
 import 'package:intl/intl.dart';
@@ -251,9 +252,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 backgroundImage: partnerJoined && rp.partnerAvatarPath != null
                     ? (rp.partnerAvatarPath!.startsWith('http')
                         ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
-                        : FileImage(File(rp.partnerAvatarPath!)))
+                        : (File(rp.partnerAvatarPath!).existsSync()
+                            ? FileImage(File(rp.partnerAvatarPath!))
+                            : null))
                     : null,
-                child: !partnerJoined || rp.partnerAvatarPath == null
+                child: !partnerJoined ||
+                        rp.partnerAvatarPath == null ||
+                        (!rp.partnerAvatarPath!.startsWith('http') &&
+                            !File(rp.partnerAvatarPath!).existsSync())
                     ? const Icon(Icons.person, color: Colors.white70)
                     : null,
               ),
@@ -676,6 +682,52 @@ class _TimelineTabState extends State<TimelineTab> {
   int _currentScrubIndex = 0;
   late PageController _pageController;
   late ScrollController _scrollController;
+  bool _isManualListScrolling = false;
+
+  void _onTimelineScrollNotification(ScrollNotification notification, int itemsCount) {
+    if (itemsCount == 0) return;
+
+    if (notification is ScrollStartNotification) {
+      if (notification.dragDetails != null) {
+        _isManualListScrolling = true;
+      }
+    } else if (notification is ScrollUpdateNotification) {
+      if (_isManualListScrolling && _scrollController.hasClients) {
+        int targetIndex = (_scrollController.offset / 230.0).round();
+        targetIndex = targetIndex.clamp(0, itemsCount - 1);
+
+        if (targetIndex != _currentScrubIndex) {
+          final direction = targetIndex > _currentScrubIndex ? 1 : -1;
+          final start = _currentScrubIndex;
+          final end = targetIndex;
+
+          for (int i = start + direction; i != end + direction; i += direction) {
+            HapticFeedback.selectionClick();
+          }
+
+          setState(() {
+            _currentScrubIndex = targetIndex;
+          });
+        }
+      }
+    } else if (notification is ScrollEndNotification) {
+      if (_isManualListScrolling) {
+        _isManualListScrolling = false;
+        if (_scrollController.hasClients) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isManualListScrolling) {
+              final targetOffset = _currentScrubIndex * 230.0;
+              _scrollController.animateTo(
+                targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+              );
+            }
+          });
+        }
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -758,107 +810,117 @@ class _TimelineTabState extends State<TimelineTab> {
                   items: items,
                   pageController: _pageController,
                   onPageChanged: (index) {
-                    setState(() {
-                      _currentScrubIndex = index;
-                    });
+                    if (index != _currentScrubIndex) {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _currentScrubIndex = index;
+                      });
+                    }
                   },
                 )
               else
-                CustomScrollView(
-                  controller: _scrollController,
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverAppBar(
-                      expandedHeight: 140,
-                      floating: true,
-                      pinned: false,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      flexibleSpace: FlexibleSpaceBar(
-                        centerTitle: true,
-                        collapseMode: CollapseMode.parallax,
-                        title: GestureDetector(
-                          onTap: () => _showEditTitleDialog(context, rp, theme),
-                          child: Text(
-                            rp.storyTitle,
-                            style: GoogleFonts.playfairDisplay(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 24,
+                NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    _onTimelineScrollNotification(notification, items.length);
+                    return false; // Let it bubble up
+                  },
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      SliverAppBar(
+                        expandedHeight: 140,
+                        floating: true,
+                        pinned: false,
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        flexibleSpace: FlexibleSpaceBar(
+                          centerTitle: true,
+                          collapseMode: CollapseMode.parallax,
+                          title: GestureDetector(
+                            onTap: () => _showEditTitleDialog(context, rp, theme),
+                            child: Text(
+                              rp.storyTitle,
+                              style: GoogleFonts.playfairDisplay(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 24,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    if (items.isEmpty)
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _buildEmptyState(context, theme),
-                      )
-                    else
-                      SliverToBoxAdapter(
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: Container(
-                                  width: 2,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.white.withValues(alpha: 0.0),
-                                        Colors.white24,
-                                        Colors.white24,
-                                        Colors.white.withValues(alpha: 0.0),
-                                      ],
+                      if (items.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _buildEmptyState(context, theme),
+                        )
+                      else
+                        SliverToBoxAdapter(
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    width: 2,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.white.withValues(alpha: 0.0),
+                                          Colors.white24,
+                                          Colors.white24,
+                                          Colors.white.withValues(alpha: 0.0),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: items.length,
-                              onReorder: (oldIndex, newIndex) {
-                                timelineProvider.reorderTimelineItems(oldIndex, newIndex);
-                              },
-                              proxyDecorator: (child, index, animation) {
-                                return AnimatedBuilder(
-                                  animation: animation,
-                                  builder: (context, child) {
-                                    final double animValue = Curves.easeInOut.transform(
-                                      animation.value,
-                                    );
-                                    final double scale = lerpDouble(1, 1.05, animValue)!;
-                                    return Transform.scale(
-                                      scale: scale,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: child,
-                                      ),
-                                    );
-                                  },
-                                  child: child,
-                                );
-                              },
-                              itemBuilder: (context, index) {
-                                final item = items[index];
-                                return TimelineItemWidget(
-                                  key: ValueKey(item.id),
-                                  item: item,
-                                  index: index,
-                                );
-                              },
-                            ),
-                          ],
+                              ReorderableListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: items.length,
+                                onReorder: (oldIndex, newIndex) {
+                                  timelineProvider.reorderTimelineItems(oldIndex, newIndex);
+                                },
+                                proxyDecorator: (child, index, animation) {
+                                  return AnimatedBuilder(
+                                    animation: animation,
+                                    builder: (context, child) {
+                                      final double animValue = Curves.easeInOut.transform(
+                                        animation.value,
+                                      );
+                                      final double scale = lerpDouble(1, 1.05, animValue)!;
+                                      return Transform.scale(
+                                        scale: scale,
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: child,
+                                  );
+                                },
+                                itemBuilder: (context, index) {
+                                  final item = items[index];
+                                  return TimelineItemWidget(
+                                    key: ValueKey(item.id),
+                                    item: item,
+                                    index: index,
+                                    isSelected: index == _currentScrubIndex,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
-                  ],
+                      const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                    ],
+                  ),
                 ),
               if (items.isNotEmpty)
                 Positioned(

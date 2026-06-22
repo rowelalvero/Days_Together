@@ -288,50 +288,6 @@ class DailyMoodProvider with ChangeNotifier {
     _persistQuestion();
   }
 
-  Future<void> simulatePartnerAnswer(String answer) async {
-    if (_coupleId != null) {
-      try {
-        final partnerKey = _partnerId ?? 'partner_simulator';
-        final response = await Supabase.instance.client
-            .from('daily_questions')
-            .select('answers')
-            .eq('couple_id', _coupleId!)
-            .eq('date', _todayString)
-            .maybeSingle();
-
-        final Map<String, dynamic> answers = {};
-        if (response != null && response['answers'] != null) {
-          answers.addAll(Map<String, dynamic>.from(response['answers']));
-        }
-        answers[partnerKey] = answer;
-
-        await Supabase.instance.client
-            .from('daily_questions')
-            .upsert({
-          'couple_id': _coupleId,
-          'date': _todayString,
-          'question': _todayQuestion?.question ?? _generateTodayQuestion().question,
-          'answers': answers,
-        });
-      } catch (e) {
-        debugPrint('DailyMoodProvider.simulatePartnerAnswer Supabase error: $e');
-        _simulateLocalPartnerAnswer(answer);
-      }
-    } else {
-      _simulateLocalPartnerAnswer(answer);
-    }
-  }
-
-  void _simulateLocalPartnerAnswer(String answer) {
-    if (_todayQuestion == null) return;
-    _todayQuestion = DailySyncQuestion(
-      question: _todayQuestion!.question,
-      myAnswer: _todayQuestion!.myAnswer,
-      partnerAnswer: answer,
-      date: _todayQuestion!.date,
-    );
-    _persistQuestion();
-  }
 
   Future<void> _persistMoods() async {
     await _persistLocalMoodsOnly();

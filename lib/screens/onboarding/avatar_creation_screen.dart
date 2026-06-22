@@ -88,14 +88,14 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                           color: theme.accentColor.withValues(alpha: 0.5),
                           width: 3,
                         ),
-                        image: _avatarPath != null
+                        image: _avatarPath != null && File(_avatarPath!).existsSync()
                             ? DecorationImage(
                                 image: FileImage(File(_avatarPath!)),
                                 fit: BoxFit.cover,
                               )
                             : null,
                       ),
-                      child: _avatarPath == null
+                      child: _avatarPath == null || !File(_avatarPath!).existsSync()
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [

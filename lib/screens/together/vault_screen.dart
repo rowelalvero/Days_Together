@@ -325,7 +325,7 @@ class _VaultContentScreen extends StatelessWidget {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: item.imagePath != null
+                    child: item.imagePath != null && File(item.imagePath!).existsSync()
                         ? Image.file(File(item.imagePath!), fit: BoxFit.cover)
                         : (item.imageUrl != null
                             ? Image.network(

@@ -128,7 +128,7 @@ class NoteitProvider with ChangeNotifier {
     _notes = [
       NoteitItem(
         type: NoteitType.text,
-        content: 'Hi there! Welcome to Love Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to my widget simulator!',
+        content: 'Hi there! Welcome to Love Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
         sender: 'partner',
         createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
         backgroundColor: const Color(0xFF9D4EDD),
@@ -163,7 +163,7 @@ class NoteitProvider with ChangeNotifier {
           'content': strokes,
           'sender_id': _userId,
           'created_at': DateTime.now().toIso8601String(),
-          'background_color': bgColor.toARGB32(),
+          'background_color': bgColor.toARGB32().toSigned(32),
         });
       } catch (e) {
         debugPrint('NoteitProvider.sendDrawing Supabase error: $e');
@@ -195,7 +195,7 @@ class NoteitProvider with ChangeNotifier {
           'content': text,
           'sender_id': _userId,
           'created_at': DateTime.now().toIso8601String(),
-          'background_color': bgColor.toARGB32(),
+          'background_color': bgColor.toARGB32().toSigned(32),
         });
       } catch (e) {
         debugPrint('NoteitProvider.sendText Supabase error: $e');
@@ -297,78 +297,6 @@ class NoteitProvider with ChangeNotifier {
       }
     } else {
       _notes.removeAt(index);
-      await _persist();
-    }
-  }
-
-  Future<void> simulatePartnerResponse() async {
-    final random = Random();
-    final typeIndex = random.nextInt(3);
-
-    final String mockId = const Uuid().v4();
-    NoteitType mockType;
-    String? mockContent;
-    Color mockBgColor;
-
-    if (typeIndex == 0) {
-      mockType = NoteitType.drawing;
-      mockContent = _generateHeartStrokes();
-      mockBgColor = const Color(0xFFFF85A1);
-    } else if (typeIndex == 1) {
-      mockType = NoteitType.text;
-      final messages = [
-        "Missing you extra today! 💕",
-        "Thinking of you... Have an amazing day! 🥰",
-        "Sending you hugs and kisses from afar! 💋",
-        "You are my absolute favorite person. ❤️",
-        "Hope this little note brings a smile to your face! ☀️",
-      ];
-      final colors = [
-        const Color(0xFF10002B),
-        const Color(0xFF590D22),
-        const Color(0xFF03045E),
-        const Color(0xFF1A1B41),
-      ];
-      mockContent = messages[random.nextInt(messages.length)];
-      mockBgColor = colors[random.nextInt(colors.length)];
-    } else {
-      mockType = NoteitType.drawing;
-      mockContent = _generateSmileyStrokes();
-      mockBgColor = const Color(0xFF00B4D8);
-    }
-
-    if (_coupleId != null) {
-      try {
-        await Supabase.instance.client
-            .from('love_notes')
-            .upsert({
-          'id': mockId,
-          'couple_id': _coupleId,
-          'type': mockType.name,
-          'content': mockContent,
-          'sender_id': null, // partner simulator
-          'created_at': DateTime.now().toIso8601String(),
-          'background_color': mockBgColor.toARGB32(),
-        });
-      } catch (e) {
-        debugPrint('NoteitProvider.simulatePartnerResponse Supabase error: $e');
-        _notes.insert(0, NoteitItem(
-          id: mockId,
-          type: mockType,
-          content: mockContent,
-          sender: 'partner',
-          backgroundColor: mockBgColor,
-        ));
-        await _persist();
-      }
-    } else {
-      _notes.insert(0, NoteitItem(
-        id: mockId,
-        type: mockType,
-        content: mockContent,
-        sender: 'partner',
-        backgroundColor: mockBgColor,
-      ));
       await _persist();
     }
   }

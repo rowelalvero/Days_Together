@@ -25,13 +25,13 @@ class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
   late ScrollController _scrollController;
   final double _tickWidth = 32.0;
   bool _isManualScrolling = false;
-  int _lastHapticIndex = -1;
+  int _lastNotifiedIndex = -1;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _lastHapticIndex = widget.selectedIndex;
+    _lastNotifiedIndex = widget.selectedIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToIndex(widget.selectedIndex, animate: false);
     });
@@ -40,8 +40,11 @@ class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
   @override
   void didUpdateWidget(covariant RulerPickerScrubber oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedIndex != widget.selectedIndex && !_isManualScrolling) {
-      _scrollToIndex(widget.selectedIndex);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _lastNotifiedIndex = widget.selectedIndex;
+      if (!_isManualScrolling) {
+        _scrollToIndex(widget.selectedIndex);
+      }
     }
   }
 
@@ -54,8 +57,7 @@ class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
   void _scrollToIndex(int index, {bool animate = true}) {
     if (!_scrollController.hasClients || widget.items.isEmpty) return;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final targetOffset = (index * _tickWidth) + (_tickWidth / 2) - (screenWidth / 2);
+    final targetOffset = index * _tickWidth;
 
     if (animate) {
       _scrollController.animateTo(
@@ -79,27 +81,27 @@ class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
       }
     } else if (notification is ScrollUpdateNotification) {
       if (_isManualScrolling) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        // Calculate which index is closest to center
-        final centerScrollOffset = _scrollController.offset + (screenWidth / 2);
-        int targetIndex = ((centerScrollOffset - (_tickWidth / 2)) / _tickWidth).round();
+        int targetIndex = (_scrollController.offset / _tickWidth).round();
         targetIndex = targetIndex.clamp(0, widget.items.length - 1);
 
-        if (targetIndex != widget.selectedIndex) {
-          widget.onIndexChanged(targetIndex);
-          if (targetIndex != _lastHapticIndex) {
+        if (targetIndex != _lastNotifiedIndex) {
+          final direction = targetIndex > _lastNotifiedIndex ? 1 : -1;
+          final start = _lastNotifiedIndex;
+          final end = targetIndex;
+
+          for (int i = start + direction; i != end + direction; i += direction) {
+            widget.onIndexChanged(i);
             HapticFeedback.selectionClick();
-            _lastHapticIndex = targetIndex;
           }
+          _lastNotifiedIndex = targetIndex;
         }
       }
     } else if (notification is ScrollEndNotification) {
       if (_isManualScrolling) {
         _isManualScrolling = false;
-        // Snap to nearest index
-        Future.delayed(const Duration(milliseconds: 50), () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_isManualScrolling) {
-            _scrollToIndex(widget.selectedIndex);
+            _scrollToIndex(_lastNotifiedIndex);
           }
         });
       }

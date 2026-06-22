@@ -10,6 +10,7 @@ import 'package:days_together/screens/together/calendar_screen.dart';
 import 'package:days_together/screens/together/relationship_license_screen.dart';
 import 'package:days_together/screens/together/topic_cards_screen.dart';
 import 'package:days_together/screens/together/noteit_screen.dart';
+import 'package:days_together/screens/together/love_chat_screen.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -162,6 +163,20 @@ class TogetherTab extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => const NoteitScreen(),
+                      ),
+                    ),
+                  ),
+                  _buildFeatureCard(
+                    context: context,
+                    theme: theme,
+                    emoji: '💬',
+                    title: 'Love Chat',
+                    subtitle: 'Connected messaging.',
+                    color: Colors.pinkAccent,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const LoveChatScreen(),
                       ),
                     ),
                   ),

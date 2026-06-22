@@ -159,7 +159,12 @@ class TimelineProvider with ChangeNotifier {
               .from('timeline_items')
               .upsert(dbData);
         } catch (e) {
-          if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+          final errorStr = e.toString().toLowerCase();
+          if (errorStr.contains('comments') &&
+              (errorStr.contains('column') ||
+               errorStr.contains('pgrst204') ||
+               errorStr.contains('does not exist') ||
+               errorStr.contains('not found'))) {
             final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
             await Supabase.instance.client
                 .from('timeline_items')
@@ -229,7 +234,12 @@ class TimelineProvider with ChangeNotifier {
               .from('timeline_items')
               .upsert(dbData);
         } catch (e) {
-          if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+          final errorStr = e.toString().toLowerCase();
+          if (errorStr.contains('comments') &&
+              (errorStr.contains('column') ||
+               errorStr.contains('pgrst204') ||
+               errorStr.contains('does not exist') ||
+               errorStr.contains('not found'))) {
             final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
             await Supabase.instance.client
                 .from('timeline_items')

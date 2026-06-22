@@ -176,9 +176,11 @@ class RelationshipProfileScreen extends StatelessWidget {
             backgroundImage: path != null
                 ? (path.startsWith('http')
                     ? NetworkImage(path) as ImageProvider
-                    : FileImage(File(path)))
+                    : (File(path).existsSync()
+                        ? FileImage(File(path))
+                        : null))
                 : null,
-            child: path == null
+            child: path == null || (!path.startsWith('http') && !File(path).existsSync())
                 ? const Icon(Icons.person, color: Colors.white70, size: 36)
                 : null,
           ),

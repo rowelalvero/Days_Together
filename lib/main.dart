@@ -9,6 +9,7 @@ import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/topic_cards_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/onboarding/welcome_screen.dart';
 import 'package:days_together/screens/onboarding/pairing_selection_screen.dart';
@@ -77,6 +78,11 @@ void main() async {
         ),
         ChangeNotifierProxyProvider<RelationshipProvider, NoteitProvider>(
           create: (_) => NoteitProvider(),
+          update: (_, relationship, provider) =>
+              provider!..updateRelationship(relationship),
+        ),
+        ChangeNotifierProxyProvider<RelationshipProvider, LoveChatProvider>(
+          create: (_) => LoveChatProvider(),
           update: (_, relationship, provider) =>
               provider!..updateRelationship(relationship),
         ),
