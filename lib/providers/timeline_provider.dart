@@ -21,6 +21,9 @@ class TimelineProvider with ChangeNotifier {
   String? _userId;
   StreamSubscription? _syncSub;
 
+  // Track locally deleted items to prevent them from re-appearing from the Supabase stream
+  final Set<String> _locallyDeletedIds = {};
+
   List<TimelineItemData> get timelineItems => List.unmodifiable(_timelineItems);
   bool get isLoading => _isLoading;
 
@@ -54,7 +57,13 @@ class TimelineProvider with ChangeNotifier {
         .stream(primaryKey: ['id'])
         .eq('couple_id', _coupleId!)
         .listen((dataList) {
-      _timelineItems = dataList.map((data) {
+      // Filter out locally deleted items to handle stream filter/delete timing issues
+      final activeDataList = dataList.where((data) {
+        final id = data['id'] as String;
+        return !_locallyDeletedIds.contains(id);
+      }).toList();
+
+      _timelineItems = activeDataList.map((data) {
         final rawComments = data['comments'];
         List<CommentData> parsedComments = [];
         if (rawComments != null) {
@@ -279,6 +288,10 @@ class TimelineProvider with ChangeNotifier {
       debugPrint('TimelineProvider.deleteTimelineItem: id $id not found');
       return;
     }
+
+    // Add to locally deleted set to prevent stream updates from bringing it back
+    _locallyDeletedIds.add(id);
+
     final item = _timelineItems[index];
     if (item.imagePath != null) {
       try {

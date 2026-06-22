@@ -802,7 +802,10 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           );
           if (confirmed == true && context.mounted) {
             await context.read<TimelineProvider>().deleteTimelineItem(widget.item.id);
-            if (context.mounted) Navigator.pop(context);
+            if (context.mounted) {
+              Navigator.pop(context); // Pop the Edit dialog
+              Navigator.pop(context); // Pop the Detail screen
+            }
           }
         },
         icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
