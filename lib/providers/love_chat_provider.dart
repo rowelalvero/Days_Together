@@ -130,6 +130,20 @@ class LoveChatProvider with ChangeNotifier {
           'sender_id': _userId,
           'created_at': DateTime.now().toIso8601String(),
         });
+
+        // Trigger push notification to partner
+        try {
+          await Supabase.instance.client.functions.invoke(
+            'send-push-notification',
+            body: {
+              'sender_id': _userId,
+              'title': 'New Love Note 💖',
+              'body': content.length > 50 ? '${content.substring(0, 47)}...' : content,
+            },
+          );
+        } catch (fcmError) {
+          debugPrint('LoveChatProvider: Failed to trigger push notification: $fcmError');
+        }
       } catch (e) {
         debugPrint('LoveChatProvider.sendMessage Supabase error: $e');
       }

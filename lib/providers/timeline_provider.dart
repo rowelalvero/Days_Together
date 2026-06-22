@@ -173,6 +173,20 @@ class TimelineProvider with ChangeNotifier {
             rethrow;
           }
         }
+
+        // Trigger push notification to partner
+        try {
+          await Supabase.instance.client.functions.invoke(
+            'send-push-notification',
+            body: {
+              'sender_id': _userId,
+              'title': 'New Memory Shared 📸',
+              'body': 'A new memory was added: ${item.title}',
+            },
+          );
+        } catch (fcmError) {
+          debugPrint('TimelineProvider: Failed to trigger push notification: $fcmError');
+        }
       } catch (e) {
         debugPrint('TimelineProvider.addTimelineItem Supabase error: $e');
         _timelineItems.add(item);

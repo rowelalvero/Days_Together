@@ -229,6 +229,20 @@ class DailyMoodProvider with ChangeNotifier {
           'note': note,
           'created_at': DateTime.now().toIso8601String(),
         });
+
+        // Trigger push notification to partner
+        try {
+          await Supabase.instance.client.functions.invoke(
+            'send-push-notification',
+            body: {
+              'sender_id': _userId,
+              'title': 'Mood Updated 💖',
+              'body': 'Your partner just logged their mood!',
+            },
+          );
+        } catch (fcmError) {
+          debugPrint('DailyMoodProvider: Failed to trigger push notification: $fcmError');
+        }
       } catch (e) {
         debugPrint('DailyMoodProvider.logMood Supabase error: $e');
         _logLocalMood(nextMood);
@@ -268,6 +282,20 @@ class DailyMoodProvider with ChangeNotifier {
           'question': _todayQuestion?.question ?? _generateTodayQuestion().question,
           'answers': answers,
         });
+
+        // Trigger push notification to partner
+        try {
+          await Supabase.instance.client.functions.invoke(
+            'send-push-notification',
+            body: {
+              'sender_id': _userId,
+              'title': 'Daily Sync Answered 💬',
+              'body': 'Your partner answered today\'s sync question!',
+            },
+          );
+        } catch (fcmError) {
+          debugPrint('DailyMoodProvider: Failed to trigger push notification: $fcmError');
+        }
       } catch (e) {
         debugPrint('DailyMoodProvider.answerDailyQuestion Supabase error: $e');
         _answerLocal(answer);
