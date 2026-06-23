@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/screens/settings_tab.dart';
 import 'package:days_together/screens/studio_tab.dart';
 import 'package:days_together/screens/together_tab.dart';
@@ -13,11 +13,18 @@ import 'package:days_together/widgets/shake_to_hug.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/storybook_view.dart';
 import 'package:days_together/widgets/ruler_picker_scrubber.dart';
+import 'package:days_together/widgets/dashboard/detailed_days_counter.dart';
+import 'package:days_together/widgets/dashboard/insights_banner.dart';
+import 'package:days_together/widgets/dashboard/partner_presence_card.dart';
+import 'package:days_together/widgets/dashboard/milestone_card.dart';
+import 'package:days_together/widgets/dashboard/memory_highlight_carousel.dart';
+import 'package:days_together/widgets/dashboard/relationship_statistics.dart';
+import 'package:days_together/widgets/dashboard/bento_grid.dart';
+import 'package:days_together/widgets/dashboard/recent_activity_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:animations/animations.dart';
-import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 
@@ -114,6 +121,46 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
             decoration: BoxDecoration(gradient: themeProvider.currentGradient),
             child: Stack(
               children: [
+                // Ambient Glow Blobs
+                Positioned(
+                  top: -100,
+                  left: -100,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.primaryColor.withValues(alpha: 0.15),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 100,
+                  right: -100,
+                  child: Container(
+                    width: 350,
+                    height: 350,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.accentColor.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
+                      child: Container(color: Colors.transparent),
+                    ),
+                  ),
+                ),
+                // Custom Grid Overlay Painter
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: DashboardGridPainter(),
+                  ),
+                ),
+                // Screen Pages Content
                 Positioned.fill(
                   child: PageTransitionSwitcher(
                     duration: const Duration(milliseconds: 400),
@@ -363,22 +410,6 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final rp = context.watch<RelationshipProvider>();
@@ -389,461 +420,57 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildLiquidHeader(rp, theme),
-            const SizedBox(height: 36),
-            _buildDetailedGlassCounter(rp, theme),
-            const SizedBox(height: 32),
-            _buildMetricGrid(rp, theme),
-            const SizedBox(height: 40),
-            _buildSectionTitle('Upcoming Joy', theme),
+            DetailedDaysCounter(relationshipProvider: rp, theme: theme),
             const SizedBox(height: 16),
-            _buildUpcomingMilestones(rp, theme),
-            const SizedBox(height: 40),
-            _buildSectionTitle('Latest Chapter', theme),
+            InsightsBanner(
+              timelineProvider: tp,
+              bucketProvider: context.watch<BucketListProvider>(),
+              relationshipProvider: rp,
+              theme: theme,
+            ),
             const SizedBox(height: 16),
-            _buildQuickMemorySnapshot(tp, theme),
-            const SizedBox(height: 120),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLiquidHeader(RelationshipProvider rp, dynamic theme) {
-    final partnerJoined = rp.partnerId != null;
-
-    return Row(
-      children: [
-        Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.accentColor.withValues(alpha: 0.5),
-                  width: 2,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundColor: Colors.white12,
-                backgroundImage: partnerJoined && rp.partnerAvatarPath != null
-                    ? (rp.partnerAvatarPath!.startsWith('http')
-                        ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
-                        : (File(rp.partnerAvatarPath!).existsSync()
-                            ? FileImage(File(rp.partnerAvatarPath!))
-                            : null))
-                    : null,
-                child: !partnerJoined ||
-                        rp.partnerAvatarPath == null ||
-                        (!rp.partnerAvatarPath!.startsWith('http') &&
-                            !File(rp.partnerAvatarPath!).existsSync())
-                    ? const Icon(Icons.person, color: Colors.white70)
-                    : null,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: PartnerPresenceCard(relationshipProvider: rp, theme: theme)),
+                const SizedBox(width: 12),
+                Expanded(child: MilestoneCard(relationshipProvider: rp, theme: theme)),
+              ],
             ),
-            Positioned(
-              right: 2,
-              bottom: 2,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: partnerJoined
-                      ? (rp.isPartnerOnline ? Colors.greenAccent : Colors.grey)
-                      : Colors.grey,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: theme.backgroundColor, width: 2),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (partnerJoined) ...[
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                const Icon(Icons.bookmark_rounded, color: Colors.pinkAccent, size: 16),
+                const SizedBox(width: 8),
                 Text(
-                  rp.partnerName ?? 'Partner',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: theme.textColor,
-                    fontWeight: FontWeight.w700,
+                  'Latest Captured Memories',
+                  style: GoogleFonts.playfairDisplay(
                     fontSize: 16,
-                  ),
-                ),
-                Text(
-                  rp.isPartnerOnline ? 'Active Now' : 'Offline',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: theme.textColor.withValues(alpha: 0.4),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ] else ...[
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'Waiting for your partner to join',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          color: theme.textColor,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    _ThreeDotLoader(
-                      style: GoogleFonts.inter(
-                        color: theme.textColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  'Waiting to connect...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: theme.textColor.withValues(alpha: 0.4),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionTitle(String title, dynamic theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
-        ),
-        Icon(
-          Icons.arrow_forward_ios_rounded,
-          size: 14,
-          color: theme.textColor.withValues(alpha: 0.3),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailedGlassCounter(RelationshipProvider rp, dynamic theme) {
-    final age = rp.preciseAge;
-
-    return GlassContainer(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      opacity: 0.12,
-      child: Column(
-        children: [
-          Text(
-            NumberFormat('#,###').format(rp.totalDays),
-            style: GoogleFonts.montserrat(
-              fontSize: 88,
-              fontWeight: FontWeight.w800,
-              color: theme.textColor,
-              letterSpacing: -5,
             ),
-          ),
-          Text(
-            'DAYS TOGETHER',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 6,
-              color: theme.accentColor.withValues(alpha: 0.8),
+            const SizedBox(height: 12),
+            MemoryHighlightCarousel(timelineProvider: tp, theme: theme),
+            const SizedBox(height: 24),
+            RelationshipStatistics(
+              theme: theme,
             ),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildTimeUnit('${age['years']}', 'YEARS', theme),
-              _buildTimeUnitDivider(theme),
-              _buildTimeUnit('${age['months']}', 'MONTHS', theme),
-              _buildTimeUnitDivider(theme),
-              _buildTimeUnit('${age['days']}', 'DAYS', theme),
-            ],
-          ),
-          const SizedBox(height: 32),
-          GlassContainer(
-            borderRadius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            opacity: 0.05,
-            child: Text(
-              '${age['hours'].toString().padLeft(2, '0')} : ${age['minutes'].toString().padLeft(2, '0')} : ${age['seconds'].toString().padLeft(2, '0')}',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 18,
-                color: theme.textColor.withValues(alpha: 0.8),
-                fontWeight: FontWeight.w500,
-                letterSpacing: 2,
-              ),
+            const SizedBox(height: 24),
+            BentoGrid(
+              theme: theme,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeUnit(String value, String label, dynamic theme) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: GoogleFonts.playfairDisplay(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
-        ),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
-            color: theme.textColor.withValues(alpha: 0.3),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimeUnitDivider(dynamic theme) {
-    return Container(
-      height: 25,
-      width: 1,
-      color: theme.textColor.withValues(alpha: 0.1),
-    );
-  }
-
-  Widget _buildMetricGrid(RelationshipProvider rp, dynamic theme) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                '${rp.totalMonths}',
-                'TOTAL MONTHS',
-                theme,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildMetricCard('${rp.years}', 'YEARS TOGETHER', theme),
-            ),
+            const SizedBox(height: 24),
+            RecentActivityFeed(timelineProvider: tp, theme: theme),
+            const SizedBox(height: 120), // Bottom navigation padding
           ],
         ),
-        const SizedBox(height: 16),
-        _buildMetricCard(
-          NumberFormat('#,###').format(rp.totalHours),
-          'TOTAL HOURS SHARED',
-          theme,
-          fullWidth: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMetricCard(
-    String value,
-    String label,
-    dynamic theme, {
-    bool fullWidth = false,
-  }) {
-    return GlassContainer(
-      width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: theme.textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
-              color: theme.accentColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUpcomingMilestones(RelationshipProvider rp, dynamic theme) {
-    final milestones = rp.nextMilestones;
-    if (milestones.isEmpty) return const SizedBox();
-
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: milestones.length,
-        itemBuilder: (context, index) {
-          final m = milestones[index];
-          return GlassContainer(
-            width: 190,
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  m.title,
-                  style: GoogleFonts.inter(
-                    color: theme.textColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Stack(
-                      children: [
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            value: m.progress,
-                            strokeWidth: 2,
-                            backgroundColor: Colors.white10,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.accentColor,
-                            ),
-                          ),
-                        ),
-                        const Positioned.fill(
-                          child: Center(
-                            child: Icon(
-                              Icons.favorite,
-                              size: 10,
-                              color: Colors.white54,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${m.daysUntil} days left',
-                      style: GoogleFonts.inter(
-                        color: theme.accentColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildQuickMemorySnapshot(TimelineProvider tp, dynamic theme) {
-    if (tp.timelineItems.isEmpty) {
-      return GlassContainer(
-        width: double.infinity,
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.auto_awesome_rounded,
-              color: Colors.white24,
-              size: 40,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No memories yet.',
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-    final latest = tp.timelineItems.first;
-    return GlassContainer(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 55,
-            height: 55,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(latest.mood, style: const TextStyle(fontSize: 24)),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  latest.title,
-                  style: GoogleFonts.inter(
-                    color: theme.textColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                ),
-                Text(
-                  DateFormat('MMMM dd, yyyy').format(latest.date),
-                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: Colors.white.withValues(alpha: 0.2),
-          ),
-        ],
       ),
     );
   }
@@ -1279,4 +906,23 @@ class _ThreeDotLoaderState extends State<_ThreeDotLoader> {
       style: widget.style,
     );
   }
+}
+
+class DashboardGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.015)
+      ..strokeWidth = 1.0;
+    const double step = 32.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
