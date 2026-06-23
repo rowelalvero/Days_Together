@@ -98,20 +98,28 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
             ],
           ),
           const SizedBox(height: 24),
-          // Ticking stopwatch grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 6,
-            childAspectRatio: 0.85,
-            children: [
-              _buildUnit('Yr', age['years'] ?? 0),
-              _buildUnit('Mo', age['months'] ?? 0),
-              _buildUnit('Day', age['days'] ?? 0),
-              _buildUnit('Hr', age['hours'] ?? 0, useMono: true),
-              _buildUnit('Min', age['minutes'] ?? 0, useMono: true),
-              _buildUnit('Sec', age['seconds'] ?? 0, useMono: true),
-            ],
+          // Ticking stopwatch horizontal bar
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.05),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildUnit('Yr', age['years'] ?? 0),
+                _buildUnit('Mo', age['months'] ?? 0),
+                _buildUnit('Day', age['days'] ?? 0),
+                _buildUnit('Hr', age['hours'] ?? 0),
+                _buildUnit('Min', age['minutes'] ?? 0),
+                _buildUnit('Sec', age['seconds'] ?? 0),
+              ],
+            ),
           ),
           const Divider(color: Colors.white10, height: 24),
           Row(
@@ -133,34 +141,31 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
     );
   }
 
-  Widget _buildUnit(String label, int val, {bool useMono = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          val.toString().padLeft(2, '0'),
-          style: useMono
-              ? GoogleFonts.jetBrainsMono(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.pinkAccent,
-                )
-              : GoogleFonts.playfairDisplay(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            color: Colors.white38,
-            fontWeight: FontWeight.w600,
+  Widget _buildUnit(String label, int val) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            val.toString(),
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              color: Colors.white30,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
