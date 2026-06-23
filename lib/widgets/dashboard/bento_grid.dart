@@ -716,7 +716,7 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF132225), // Lighter dark cyan transparent capsule
+                    color: const Color(0xFF2E1720), // Lighter dark pink transparent capsule
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -724,7 +724,7 @@ class BentoGrid extends StatelessWidget {
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF06B6D4), // Cyan/Teal
+                      color: const Color(0xFFF43F5E), // Pink
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -735,14 +735,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF06B6D4).withValues(alpha: 0.3),
+                      color: const Color(0xFFF43F5E).withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
                   child: const Center(
                     child: Icon(
                       Icons.chat_bubble_outline_rounded,
-                      color: Color(0xFF06B6D4),
+                      color: Color(0xFFF43F5E),
                       size: 13,
                     ),
                   ),
@@ -755,7 +755,7 @@ class BentoGrid extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF06B6D4),
+                color: const Color(0xFFF43F5E),
               ),
             ),
             const SizedBox(height: 14),
@@ -778,7 +778,7 @@ class BentoGrid extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 10,
-                      color: const Color(0xFF06B6D4),
+                      color: const Color(0xFFF43F5E),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -791,14 +791,14 @@ class BentoGrid extends StatelessWidget {
                       style: GoogleFonts.jetBrainsMono(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF06B6D4),
+                        color: const Color(0xFFF43F5E),
                       ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFF06B6D4),
+                      color: Color(0xFFF43F5E),
                     ),
                   ],
                 ),
@@ -2027,7 +2027,7 @@ class BentoGrid extends StatelessWidget {
 
     return Row(
       children: [
-        const Icon(Icons.maps_ugc_rounded, color: Colors.cyanAccent, size: 16),
+        const Icon(Icons.maps_ugc_rounded, color: Colors.pinkAccent, size: 16),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
