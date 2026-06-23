@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:days_together/widgets/glass_permission_dialog.dart';
@@ -18,7 +19,15 @@ class PermissionService {
   }
 
   Future<bool> requestPhotosPermission(BuildContext context) async {
-    final permission = Permission.photos;
+    Permission permission = Permission.photos;
+
+    if (Platform.isAndroid) {
+      final sdkInt = _getAndroidSdkInt();
+      if (sdkInt < 33) {
+        permission = Permission.storage;
+      }
+    }
+
     return _handlePermissionRequest(
       context,
       permission,
@@ -26,6 +35,17 @@ class PermissionService {
       'We need access to your photos to choose memory cards and backgrounds.',
       Icons.photo_library_rounded,
     );
+  }
+
+  int _getAndroidSdkInt() {
+    try {
+      final versionString = Platform.operatingSystemVersion;
+      final apiMatch = RegExp(r'API\s+(\d+)').firstMatch(versionString);
+      if (apiMatch != null) {
+        return int.parse(apiMatch.group(1)!);
+      }
+    } catch (_) {}
+    return 0;
   }
 
   Future<bool> requestNotificationPermission(BuildContext context) async {

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,7 +51,9 @@ class VaultProvider with ChangeNotifier {
       _syncSub?.cancel();
       _syncSub = null;
 
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
+      if (_coupleId != null &&
+          _userId != null &&
+          relationship.isFirebaseAvailable) {
         _initSupabaseSync();
       } else {
         _loadItems();
@@ -69,31 +70,37 @@ class VaultProvider with ChangeNotifier {
         .from('vault_items')
         .stream(primaryKey: ['id'])
         .eq('couple_id', _coupleId!)
-        .listen((dataList) {
-      _items = dataList.map((data) {
-        final typeIndex = data['type'] as int? ?? 0;
-        final type = (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
-            ? VaultItemType.values[typeIndex]
-            : VaultItemType.photo;
+        .listen(
+          (dataList) {
+            _items = dataList.map((data) {
+              final typeIndex = data['type'] as int? ?? 0;
+              final type =
+                  (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+                  ? VaultItemType.values[typeIndex]
+                  : VaultItemType.photo;
 
-        return VaultItem(
-          id: data['id'] as String,
-          type: type,
-          content: data['content'] as String?,
-          imageUrl: data['image_url'] as String?,
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+              return VaultItem(
+                id: data['id'] as String,
+                type: type,
+                content: data['content'] as String?,
+                imageUrl: data['image_url'] as String?,
+                createdAt: data['created_at'] != null
+                    ? DateTime.parse(data['created_at'] as String)
+                    : DateTime.now(),
+              );
+            }).toList();
+
+            _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            _isLoading = false;
+            if (!_disposed) notifyListeners();
+
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('VaultProvider: Supabase sync error: $err');
+            _loadItems();
+          },
         );
-      }).toList();
-
-      _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
-
-      _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('VaultProvider: Supabase sync error: $err');
-      _loadItems();
-    });
   }
 
   Future<void> _loadState() async {
@@ -164,7 +171,9 @@ class VaultProvider with ChangeNotifier {
 
   Future<void> addPhoto(BuildContext context) async {
     if (!_isUnlocked) return;
-    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
     if (!hasPermission) return;
     try {
       final picked = await _picker.pickImage(
@@ -201,9 +210,7 @@ class VaultProvider with ChangeNotifier {
               .from('vault-photos')
               .getPublicUrl(storagePath);
 
-          await Supabase.instance.client
-              .from('vault_items')
-              .upsert({
+          await Supabase.instance.client.from('vault_items').upsert({
             'id': photoId,
             'couple_id': _coupleId,
             'type': VaultItemType.photo.index,
@@ -226,16 +233,11 @@ class VaultProvider with ChangeNotifier {
 
   Future<void> addLetter(String content) async {
     if (!_isUnlocked) return;
-    final item = VaultItem(
-      type: VaultItemType.letter,
-      content: content,
-    );
+    final item = VaultItem(type: VaultItemType.letter, content: content);
 
     if (_coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('vault_items')
-            .upsert({
+        await Supabase.instance.client.from('vault_items').upsert({
           'id': item.id,
           'couple_id': _coupleId,
           'type': VaultItemType.letter.index,
@@ -277,9 +279,9 @@ class VaultProvider with ChangeNotifier {
         if (item.type == VaultItemType.photo) {
           try {
             final storagePath = 'couples/$_coupleId/vault_photos/$id.jpg';
-            await Supabase.instance.client.storage
-                .from('vault-photos')
-                .remove([storagePath]);
+            await Supabase.instance.client.storage.from('vault-photos').remove([
+              storagePath,
+            ]);
           } catch (_) {}
         }
       } catch (e) {

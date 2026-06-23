@@ -26,6 +26,7 @@ class TogetherTab extends StatelessWidget {
     final dailyMood = context.watch<DailyMoodProvider>();
 
     return SafeArea(
+      bottom: false,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
@@ -50,6 +51,7 @@ class TogetherTab extends StatelessWidget {
             const SizedBox(height: 35),
             Expanded(
               child: GridView.count(
+                padding: const EdgeInsets.only(bottom: 120),
                 crossAxisCount: 2,
                 crossAxisSpacing: 18,
                 mainAxisSpacing: 18,

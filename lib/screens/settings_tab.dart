@@ -244,8 +244,9 @@ class SettingsTab extends StatelessWidget {
     final rp = context.watch<RelationshipProvider>();
 
     return SafeArea(
+      bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,6 +9,7 @@ import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/repositories/timeline_repository.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TimelineProvider with ChangeNotifier {
   final TimelineRepository _repository = TimelineRepository();
@@ -17,6 +17,33 @@ class TimelineProvider with ChangeNotifier {
   List<TimelineItemData> _timelineItems = [];
   bool _isLoading = true;
   bool _disposed = false;
+  bool _isAscending = true;
+  int _currentScrubIndex = 0;
+
+  bool get isAscending => _isAscending;
+  int get currentScrubIndex => _currentScrubIndex;
+
+  void setCurrentScrubIndex(int index, {bool notify = true}) {
+    if (_timelineItems.isEmpty) {
+      _currentScrubIndex = 0;
+    } else {
+      _currentScrubIndex = index.clamp(0, _timelineItems.length - 1);
+    }
+    if (notify && !_disposed) {
+      notifyListeners();
+    }
+  }
+
+  void _clampCurrentScrubIndex({bool notify = false}) {
+    if (_timelineItems.isEmpty) {
+      _currentScrubIndex = 0;
+    } else {
+      _currentScrubIndex = _currentScrubIndex.clamp(0, _timelineItems.length - 1);
+    }
+    if (notify && !_disposed) {
+      notifyListeners();
+    }
+  }
 
   String? _coupleId;
   String? _userId;
@@ -29,7 +56,40 @@ class TimelineProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
 
   TimelineProvider() {
-    _loadTimeline();
+    _loadSortOrder().then((_) => _loadTimeline());
+  }
+
+  Future<void> _loadSortOrder() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isAscending = prefs.getBool('timeline_is_ascending') ?? true;
+    } catch (_) {}
+  }
+
+  Future<void> toggleSortOrder() async {
+    final oldItem = _timelineItems.isNotEmpty && _currentScrubIndex < _timelineItems.length
+        ? _timelineItems[_currentScrubIndex]
+        : null;
+    _isAscending = !_isAscending;
+    _timelineItems.sort((a, b) => _isAscending
+        ? a.date.compareTo(b.date)
+        : b.date.compareTo(a.date));
+    for (var i = 0; i < _timelineItems.length; i++) {
+      _timelineItems[i].position = i;
+    }
+    if (oldItem != null) {
+      final newIndex = _timelineItems.indexWhere((item) => item.id == oldItem.id);
+      if (newIndex != -1) {
+        _currentScrubIndex = newIndex;
+      }
+    }
+    _clampCurrentScrubIndex();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('timeline_is_ascending', _isAscending);
+    } catch (_) {}
+    await _persistLocalOnly();
   }
 
   void updateRelationship(RelationshipProvider relationship) {
@@ -40,7 +100,9 @@ class TimelineProvider with ChangeNotifier {
       _syncSub?.cancel();
       _syncSub = null;
 
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
+      if (_coupleId != null &&
+          _userId != null &&
+          relationship.isFirebaseAvailable) {
         _initSupabaseSync();
       } else {
         _loadTimeline();
@@ -57,58 +119,74 @@ class TimelineProvider with ChangeNotifier {
         .from('timeline_items')
         .stream(primaryKey: ['id'])
         .eq('couple_id', _coupleId!)
-        .listen((dataList) {
-      // Filter out locally deleted items to handle stream filter/delete timing issues
-      final activeDataList = dataList.where((data) {
-        final id = data['id'] as String;
-        return !_locallyDeletedIds.contains(id);
-      }).toList();
+        .listen(
+          (dataList) {
+            // Filter out locally deleted items to handle stream filter/delete timing issues
+            final activeDataList = dataList.where((data) {
+              final id = data['id'] as String;
+              return !_locallyDeletedIds.contains(id);
+            }).toList();
 
-      _timelineItems = activeDataList.map((data) {
-        final rawComments = data['comments'];
-        List<CommentData> parsedComments = [];
-        if (rawComments != null) {
-          if (rawComments is List) {
-            parsedComments = rawComments
-                .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
-                .toList();
-          } else if (rawComments is String) {
-            try {
-              final decoded = jsonDecode(rawComments);
-              if (decoded is List) {
-                parsedComments = decoded
-                    .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
-                    .toList();
+            _timelineItems = activeDataList.map((data) {
+              final rawComments = data['comments'];
+              List<CommentData> parsedComments = [];
+              if (rawComments != null) {
+                if (rawComments is List) {
+                  parsedComments = rawComments
+                      .map(
+                        (c) => CommentData.fromJson(c as Map<String, dynamic>),
+                      )
+                      .toList();
+                } else if (rawComments is String) {
+                  try {
+                    final decoded = jsonDecode(rawComments);
+                    if (decoded is List) {
+                      parsedComments = decoded
+                          .map(
+                            (c) =>
+                                CommentData.fromJson(c as Map<String, dynamic>),
+                          )
+                          .toList();
+                    }
+                  } catch (_) {}
+                }
               }
-            } catch (_) {}
-          }
-        }
-        return TimelineItemData(
-          id: data['id'] as String,
-          title: data['title'] ?? '',
-          description: data['description'] ?? '',
-          location: data['location'] as String?,
-          imagePath: data['image_path'] as String?,
-          networkImageUrl: data['network_image_url'] as String?,
-          date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-          isImageCard: data['is_image_card'] ?? false,
-          position: data['position'] ?? 0,
-          mood: data['mood'] ?? '😍',
-          photoUrls: List<String>.from(data['photo_urls'] ?? []),
-          isPinned: data['is_pinned'] ?? false,
-          comments: parsedComments,
+              return TimelineItemData(
+                id: data['id'] as String,
+                title: data['title'] ?? '',
+                description: data['description'] ?? '',
+                location: data['location'] as String?,
+                imagePath: data['image_path'] as String?,
+                networkImageUrl: data['network_image_url'] as String?,
+                date: data['date'] != null
+                    ? DateTime.parse(data['date'] as String)
+                    : DateTime.now(),
+                isImageCard: data['is_image_card'] ?? false,
+                position: data['position'] ?? 0,
+                mood: data['mood'] ?? '😍',
+                photoUrls: List<String>.from(data['photo_urls'] ?? []),
+                isPinned: data['is_pinned'] ?? false,
+                comments: parsedComments,
+              );
+            }).toList();
+
+            _timelineItems.sort((a, b) => _isAscending
+                ? a.date.compareTo(b.date)
+                : b.date.compareTo(a.date));
+            for (var i = 0; i < _timelineItems.length; i++) {
+              _timelineItems[i].position = i;
+            }
+            _clampCurrentScrubIndex();
+            _isLoading = false;
+            if (!_disposed) notifyListeners();
+
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('TimelineProvider: Supabase sync error: $err');
+            _loadTimeline();
+          },
         );
-      }).toList();
-
-      _timelineItems.sort((a, b) => a.position.compareTo(b.position));
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
-
-      _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('TimelineProvider: Supabase sync error: $err');
-      _loadTimeline();
-    });
   }
 
   Future<void> _loadTimeline() async {
@@ -117,6 +195,13 @@ class TimelineProvider with ChangeNotifier {
 
     try {
       _timelineItems = await _repository.loadTimelineItems();
+      _timelineItems.sort((a, b) => _isAscending
+          ? a.date.compareTo(b.date)
+          : b.date.compareTo(a.date));
+      for (var i = 0; i < _timelineItems.length; i++) {
+        _timelineItems[i].position = i;
+      }
+      _clampCurrentScrubIndex();
     } catch (e, st) {
       debugPrint('TimelineProvider._loadTimeline failed: $e\n$st');
       _timelineItems = [];
@@ -147,6 +232,13 @@ class TimelineProvider with ChangeNotifier {
           }
         }
 
+        // Calculate chronological position of this item
+        final sortedList = List<TimelineItemData>.from(_timelineItems)..add(item);
+        sortedList.sort((a, b) => _isAscending
+            ? a.date.compareTo(b.date)
+            : b.date.compareTo(a.date));
+        final calculatedPosition = sortedList.indexOf(item);
+
         final Map<String, dynamic> dbData = {
           'id': item.id,
           'couple_id': _coupleId,
@@ -157,7 +249,7 @@ class TimelineProvider with ChangeNotifier {
           'network_image_url': downloadUrl ?? item.networkImageUrl,
           'date': item.date.toIso8601String(),
           'is_image_card': item.isImageCard,
-          'position': item.position,
+          'position': calculatedPosition,
           'mood': item.mood,
           'photo_urls': item.photoUrls,
           'is_pinned': item.isPinned,
@@ -165,17 +257,16 @@ class TimelineProvider with ChangeNotifier {
         };
 
         try {
-          await Supabase.instance.client
-              .from('timeline_items')
-              .upsert(dbData);
+          await Supabase.instance.client.from('timeline_items').upsert(dbData);
         } catch (e) {
           final errorStr = e.toString().toLowerCase();
           if (errorStr.contains('comments') &&
               (errorStr.contains('column') ||
-               errorStr.contains('pgrst204') ||
-               errorStr.contains('does not exist') ||
-               errorStr.contains('not found'))) {
-            final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
+                  errorStr.contains('pgrst204') ||
+                  errorStr.contains('does not exist') ||
+                  errorStr.contains('not found'))) {
+            final fallbackData = Map<String, dynamic>.from(dbData)
+              ..remove('comments');
             await Supabase.instance.client
                 .from('timeline_items')
                 .upsert(fallbackData);
@@ -195,21 +286,39 @@ class TimelineProvider with ChangeNotifier {
             },
           );
         } catch (fcmError) {
-          debugPrint('TimelineProvider: Failed to trigger push notification: $fcmError');
+          debugPrint(
+            'TimelineProvider: Failed to trigger push notification: $fcmError',
+          );
         }
       } catch (e) {
         debugPrint('TimelineProvider.addTimelineItem Supabase error: $e');
         _timelineItems.add(item);
+        _timelineItems.sort((a, b) => _isAscending
+            ? a.date.compareTo(b.date)
+            : b.date.compareTo(a.date));
+        for (var i = 0; i < _timelineItems.length; i++) {
+          _timelineItems[i].position = i;
+        }
+        _clampCurrentScrubIndex();
         await _persist();
       }
     } else {
       _timelineItems.add(item);
+      _timelineItems.sort((a, b) => _isAscending
+          ? a.date.compareTo(b.date)
+          : b.date.compareTo(a.date));
+      for (var i = 0; i < _timelineItems.length; i++) {
+        _timelineItems[i].position = i;
+      }
+      _clampCurrentScrubIndex();
       await _persist();
     }
   }
 
   Future<void> updateTimelineItem(
-      String id, TimelineItemData updatedItem) async {
+    String id,
+    TimelineItemData updatedItem,
+  ) async {
     final index = _timelineItems.indexWhere((item) => item.id == id);
     if (index == -1) {
       debugPrint('TimelineProvider.updateTimelineItem: id $id not found');
@@ -219,10 +328,12 @@ class TimelineProvider with ChangeNotifier {
     if (_coupleId != null) {
       try {
         String? downloadUrl = updatedItem.networkImageUrl;
-        if (updatedItem.imagePath != null && updatedItem.imagePath != _timelineItems[index].imagePath) {
+        if (updatedItem.imagePath != null &&
+            updatedItem.imagePath != _timelineItems[index].imagePath) {
           final file = File(updatedItem.imagePath!);
           if (await file.exists()) {
-            final storagePath = 'couples/$_coupleId/timeline/${updatedItem.id}.jpg';
+            final storagePath =
+                'couples/$_coupleId/timeline/${updatedItem.id}.jpg';
             await Supabase.instance.client.storage
                 .from('timeline')
                 .upload(
@@ -236,6 +347,19 @@ class TimelineProvider with ChangeNotifier {
           }
         }
 
+        // Calculate chronological position of this item
+        final sortedList = List<TimelineItemData>.from(_timelineItems);
+        final idx = sortedList.indexWhere((item) => item.id == updatedItem.id);
+        if (idx != -1) {
+          sortedList[idx] = updatedItem;
+        } else {
+          sortedList.add(updatedItem);
+        }
+        sortedList.sort((a, b) => _isAscending
+            ? a.date.compareTo(b.date)
+            : b.date.compareTo(a.date));
+        final calculatedPosition = sortedList.indexOf(updatedItem);
+
         final Map<String, dynamic> dbData = {
           'id': updatedItem.id,
           'couple_id': _coupleId,
@@ -246,7 +370,7 @@ class TimelineProvider with ChangeNotifier {
           'network_image_url': downloadUrl,
           'date': updatedItem.date.toIso8601String(),
           'is_image_card': updatedItem.isImageCard,
-          'position': updatedItem.position,
+          'position': calculatedPosition,
           'mood': updatedItem.mood,
           'photo_urls': updatedItem.photoUrls,
           'is_pinned': updatedItem.isPinned,
@@ -254,17 +378,16 @@ class TimelineProvider with ChangeNotifier {
         };
 
         try {
-          await Supabase.instance.client
-              .from('timeline_items')
-              .upsert(dbData);
+          await Supabase.instance.client.from('timeline_items').upsert(dbData);
         } catch (e) {
           final errorStr = e.toString().toLowerCase();
           if (errorStr.contains('comments') &&
               (errorStr.contains('column') ||
-               errorStr.contains('pgrst204') ||
-               errorStr.contains('does not exist') ||
-               errorStr.contains('not found'))) {
-            final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
+                  errorStr.contains('pgrst204') ||
+                  errorStr.contains('does not exist') ||
+                  errorStr.contains('not found'))) {
+            final fallbackData = Map<String, dynamic>.from(dbData)
+              ..remove('comments');
             await Supabase.instance.client
                 .from('timeline_items')
                 .upsert(fallbackData);
@@ -275,10 +398,24 @@ class TimelineProvider with ChangeNotifier {
       } catch (e) {
         debugPrint('TimelineProvider.updateTimelineItem Supabase error: $e');
         _timelineItems[index] = updatedItem;
+        _timelineItems.sort((a, b) => _isAscending
+            ? a.date.compareTo(b.date)
+            : b.date.compareTo(a.date));
+        for (var i = 0; i < _timelineItems.length; i++) {
+          _timelineItems[i].position = i;
+        }
+        _clampCurrentScrubIndex();
         await _persist();
       }
     } else {
       _timelineItems[index] = updatedItem;
+      _timelineItems.sort((a, b) => _isAscending
+          ? a.date.compareTo(b.date)
+          : b.date.compareTo(a.date));
+      for (var i = 0; i < _timelineItems.length; i++) {
+        _timelineItems[i].position = i;
+      }
+      _clampCurrentScrubIndex();
       await _persist();
     }
   }
@@ -307,6 +444,7 @@ class TimelineProvider with ChangeNotifier {
     for (var i = 0; i < _timelineItems.length; i++) {
       _timelineItems[i].position = i;
     }
+    _clampCurrentScrubIndex();
     notifyListeners();
     await _persist();
 
@@ -319,9 +457,9 @@ class TimelineProvider with ChangeNotifier {
 
         try {
           final storagePath = 'couples/$_coupleId/timeline/$id.jpg';
-          await Supabase.instance.client.storage
-              .from('timeline')
-              .remove([storagePath]);
+          await Supabase.instance.client.storage.from('timeline').remove([
+            storagePath,
+          ]);
         } catch (_) {}
 
         // Update positions of remaining items in the database
@@ -356,23 +494,28 @@ class TimelineProvider with ChangeNotifier {
               .update({'position': i})
               .eq('id', _timelineItems[i].id);
         }
+        _clampCurrentScrubIndex();
       } catch (e) {
         debugPrint('TimelineProvider.reorderTimelineItems Supabase error: $e');
         for (var i = 0; i < _timelineItems.length; i++) {
           _timelineItems[i].position = i;
         }
+        _clampCurrentScrubIndex();
         await _persist();
       }
     } else {
       for (var i = 0; i < _timelineItems.length; i++) {
         _timelineItems[i].position = i;
       }
+      _clampCurrentScrubIndex();
       await _persist();
     }
   }
 
   Future<String?> pickImage(BuildContext context) async {
-    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
     if (!hasPermission) return null;
 
     try {
@@ -408,18 +551,26 @@ class TimelineProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addCommentToItem(String itemId, String content, String authorName) async {
+  Future<void> addCommentToItem(
+    String itemId,
+    String content,
+    String authorName,
+  ) async {
     final index = _timelineItems.indexWhere((item) => item.id == itemId);
     if (index == -1) return;
 
-    final updatedComments = List<CommentData>.from(_timelineItems[index].comments)
-      ..add(CommentData(
-        authorName: authorName,
-        content: content,
-        date: DateTime.now(),
-      ));
+    final updatedComments =
+        List<CommentData>.from(_timelineItems[index].comments)..add(
+          CommentData(
+            authorName: authorName,
+            content: content,
+            date: DateTime.now(),
+          ),
+        );
 
-    final updatedItem = _timelineItems[index].copyWith(comments: updatedComments);
+    final updatedItem = _timelineItems[index].copyWith(
+      comments: updatedComments,
+    );
     await updateTimelineItem(itemId, updatedItem);
   }
 
@@ -431,7 +582,9 @@ class TimelineProvider with ChangeNotifier {
         .where((c) => c.id != commentId)
         .toList();
 
-    final updatedItem = _timelineItems[index].copyWith(comments: updatedComments);
+    final updatedItem = _timelineItems[index].copyWith(
+      comments: updatedComments,
+    );
     await updateTimelineItem(itemId, updatedItem);
   }
 
@@ -446,7 +599,9 @@ class TimelineProvider with ChangeNotifier {
       return c;
     }).toList();
 
-    final updatedItem = _timelineItems[index].copyWith(comments: updatedComments);
+    final updatedItem = _timelineItems[index].copyWith(
+      comments: updatedComments,
+    );
     await updateTimelineItem(itemId, updatedItem);
   }
 

@@ -13,6 +13,7 @@ import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/onboarding/welcome_screen.dart';
 import 'package:days_together/screens/onboarding/pairing_selection_screen.dart';
+import 'package:days_together/screens/onboarding/loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -131,11 +132,13 @@ class MyApp extends StatelessWidget {
         ),
         cardColor: theme.cardColor,
       ),
-      home: relationshipProvider.userId != null
-          ? (relationshipProvider.isPaired
-              ? const LoveStoryScreen()
-              : const PairingSelectionScreen())
-          : const WelcomeScreen(),
+      home: !relationshipProvider.isInitialized
+          ? const LoadingScreen()
+          : (relationshipProvider.userId != null
+              ? (relationshipProvider.isPaired
+                  ? const LoveStoryScreen()
+                  : const PairingSelectionScreen())
+              : const WelcomeScreen()),
     );
   }
 }

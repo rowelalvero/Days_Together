@@ -24,6 +24,9 @@ class MilestoneInfo {
 }
 
 class RelationshipProvider with ChangeNotifier {
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
+
   DateTime? _startDate;
   TimeOfDay? _startTime;
   String? _partnerName;
@@ -198,6 +201,9 @@ class RelationshipProvider with ChangeNotifier {
       _partnerJoinDate = DateTime.parse(partnerJoinDateStr);
     }
 
+    if (!isFirebaseAvailable) {
+      _isInitialized = true;
+    }
     notifyListeners();
   }
 
@@ -225,9 +231,13 @@ class RelationshipProvider with ChangeNotifier {
           _partnerJoinDate = null;
           _presenceChannel?.unsubscribe();
           _presenceChannel = null;
+          _isInitialized = true;
           notifyListeners();
           return;
         }
+
+        _isInitialized = false;
+        notifyListeners();
 
         _userId = user.id;
 
@@ -245,6 +255,8 @@ class RelationshipProvider with ChangeNotifier {
                       'couple_id': null,
                     });
                   } catch (_) {}
+                  _isInitialized = true;
+                  notifyListeners();
                   return;
                 }
 
@@ -706,6 +718,8 @@ class RelationshipProvider with ChangeNotifier {
                         },
                       );
                 }
+                _isInitialized = true;
+                notifyListeners();
               },
               onError: (error) {
                 debugPrint('Supabase users stream error: $error');
@@ -1894,6 +1908,9 @@ class RelationshipProvider with ChangeNotifier {
           ? null
           : iosClientId,
     );
+    try {
+      await googleSignIn.signOut();
+    } catch (_) {}
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
       throw 'Sign in aborted by user';
@@ -1963,6 +1980,10 @@ class RelationshipProvider with ChangeNotifier {
 
     if (isFirebaseAvailable) {
       await Supabase.instance.client.auth.signOut();
+      try {
+        final googleSignIn = GoogleSignIn();
+        await googleSignIn.signOut();
+      } catch (_) {}
     }
 
     notifyListeners();

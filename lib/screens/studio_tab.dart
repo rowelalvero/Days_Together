@@ -153,6 +153,7 @@ class StudioTab extends StatelessWidget {
     final rp = context.watch<RelationshipProvider>();
 
     return SafeArea(
+      bottom: false,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -186,6 +187,7 @@ class StudioTab extends StatelessWidget {
             const SizedBox(height: 20),
             Expanded(
               child: ListView(
+                padding: const EdgeInsets.only(bottom: 120),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   _buildStudioCard(
