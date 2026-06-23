@@ -25,7 +25,14 @@ Enhance the Flutter app's Home Dashboard with a visually striking, premium glass
 
 The redesigned dashboard will reside in `lib/widgets/dashboard/` to maintain modularity:
 
-### 3.1 `insights_banner.dart`
+### 3.1 `detailed_days_counter.dart`
+*   **Description**: Displays the total days together and a real-time ticking 6-unit stopwatch grid (Years, Months, Days, Hours, Minutes, Seconds).
+*   **Top Badge**: Displays `"LOVED WITHOUT LIMITS SINCE ${startDate.year}"` with a rotating `Sparkles` icon.
+*   **Main Display**: Large, bold count of total days together with a gradient text for `"Days"`.
+*   **Ticking Grid**: Standard 6-column layout. The Hours, Minutes, and Seconds update live in real-time. Values are styled in a monospace font (JetBrains Mono) with dim metadata labels (`Yr`, `Mo`, `Day`, `Hr`, `Min`, `Sec`) below them.
+*   **Sync Footer**: Pulsing Clock icon with the description `"Co-Synched Clock live counter updating frame state..."`.
+
+### 3.2 `insights_banner.dart`
 *   **Description**: Auto-scrolling horizontal banner showing dynamic statistics and tips.
 *   **Data Sources**:
     *   Total memories from `TimelineProvider`
@@ -34,22 +41,22 @@ The redesigned dashboard will reside in `lib/widgets/dashboard/` to maintain mod
     *   Unread chat messages count from `LoveChatProvider`
 *   **Logic**: Loops every 6 seconds using a periodic `Timer`. Tapping chevrons enables manual navigation.
 
-### 3.2 `partner_presence_card.dart`
+### 3.3 `partner_presence_card.dart`
 *   **Description**: Displays partner's avatar, online indicator status, custom status text, and triggers love taps.
 *   **Avatar Pulse**: Pulsing ring utilizing standard Flutter animation controllers. Emerald green if `relationshipProvider.isPartnerOnline` is true, otherwise grey.
 *   **Editable Status**: Displays partner's status (`relationshipProvider.partnerConditions` / `relationshipProvider.yourConditions`). Allows clicking to edit the user's status via a dialog, saving to `relationshipProvider.setConditionsAndDateIssued(...)`.
 *   **Love Tap**: Glass button with glowing heart. Tapping triggers a local floating heart animation overlay (`burst_hearts.dart`) and appends a beacon message to `LoveChatProvider`.
 *   **Demo Toggle**: Adds a small local button to toggle the simulated online state.
-
-### 3.3 `milestone_card.dart`
+ 
+### 3.4 `milestone_card.dart`
 *   **Description**: Displays the next relationship milestone progress.
 *   **UI**: Renders a circular progress indicator with a custom text percentage and days-left countdown, matching the web card style.
-
-### 3.4 `memory_highlight_carousel.dart`
+ 
+### 3.5 `memory_highlight_carousel.dart`
 *   **Description**: Horizontal swipeable carousel of recent memories.
 *   **UI**: Each card shows memory title, date, location, and a mood emoji. Uses `PageController`. Displays the memory image if `imagePath` or `networkImageUrl` is present.
-
-### 3.5 `relationship_statistics.dart`
+ 
+### 3.6 `relationship_statistics.dart`
 *   **Description**: A 2x3 grid displaying key metrics.
 *   *   **Total Memories**: `timelineProvider.timelineItems.length`
     *   **Total Photos**: Count of photos in memories + photos in `VaultProvider`
@@ -57,8 +64,8 @@ The redesigned dashboard will reside in `lib/widgets/dashboard/` to maintain mod
     *   **Bucket Completed**: Completion fraction `${completedItems}/${totalItems}`
     *   **Capsules**: Total capsules from `TimeCapsuleProvider`
     *   **Shared Notes**: Total notes from `NoteitProvider`
-
-### 3.6 `bento_grid.dart`
+ 
+### 3.7 `bento_grid.dart`
 *   **Description**: Displays 9 quick-access preview cards in a single-column list.
 *   **Preview Cards**:
     1.  **NoteIt Workspace**: Displays latest note content, author, and timestamp.
@@ -70,8 +77,8 @@ The redesigned dashboard will reside in `lib/widgets/dashboard/` to maintain mod
     7.  **Time Capsules**: Displays nearest locked capsule and a live ticking countdown.
     8.  **Crypto Vault**: Displays document list (masked) and lock state.
     9.  **Love Chat Space**: Displays last message preview, sender, relative time, and unread bubble.
-
-### 3.7 `recent_activity_feed.dart`
+ 
+### 3.8 `recent_activity_feed.dart`
 *   **Description**: Renders dynamic feed events from all providers.
 
 ---
