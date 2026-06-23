@@ -71,7 +71,7 @@ The redesigned dashboard will reside in `lib/widgets/dashboard/` to maintain mod
     1.  **NoteIt Workspace**: Displays latest note content, author, and timestamp.
     2.  **Calendar Timeline**: Displays next event, date, countdown, and a "SOON" badge.
     3.  **Daily Mood**: Displays side-by-side mood emojis with a "SYNCED" glow connector.
-    4.  **Emotional Map**: Embedded mini `LineChart` sparkline drawn using `fl_chart` based on `DailyMoodProvider.recentMoods`.
+    4.  **Emotional Map**: Mini sparkline trend chart. Styled exactly like the React project's SVG sparkline: a smooth, curved line with a gradient area fill below it, a highlighted active pulsing point dot, and no grid lines or axes. It dynamically plots the real mood history from `DailyMoodProvider.recentMoods` (scaling the values to fit the card bounding box, with a fallback curve if less than 2 moods have been logged).
     5.  **Daily Sync Question**: Displays active sync question and answer status badges for both users.
     6.  **Bucket List**: Displays completions progress bar and next target goal.
     7.  **Time Capsules**: Displays nearest locked capsule and a live ticking countdown.
