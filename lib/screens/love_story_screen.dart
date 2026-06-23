@@ -433,13 +433,15 @@ class _HomeDashboardState extends State<HomeDashboard> {
               theme: theme,
             ),
             const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: PartnerPresenceCard(relationshipProvider: rp, theme: theme)),
-                const SizedBox(width: 12),
-                Expanded(child: MilestoneCard(relationshipProvider: rp, theme: theme)),
-              ],
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: PartnerPresenceCard(relationshipProvider: rp, theme: theme)),
+                  const SizedBox(width: 12),
+                  Expanded(child: MilestoneCard(relationshipProvider: rp, theme: theme)),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Row(
