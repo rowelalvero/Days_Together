@@ -50,63 +50,61 @@ class MilestoneCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: Row(
-              children: [
-                // Circular Progress Indicator
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 58,
-                      height: 58,
-                      child: CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 4.5,
-                        backgroundColor: Colors.white10,
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
-                      ),
+          Row(
+            children: [
+              // Circular Progress Indicator
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 58,
+                    height: 58,
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 4.5,
+                      backgroundColor: Colors.white10,
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
                     ),
-                    const Icon(
-                      Icons.favorite,
-                      color: Colors.pinkAccent,
-                      size: 16,
+                  ),
+                  const Icon(
+                    Icons.favorite,
+                    color: Colors.pinkAccent,
+                    size: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              // Text details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      daysUntil > 0 
+                          ? '$daysUntil days remaining' 
+                          : 'Happening today!',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.white54,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 14),
-                // Text details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        daysUntil > 0 
-                            ? '$daysUntil days remaining' 
-                            : 'Happening today!',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: Colors.white54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           const Divider(color: Colors.white10, height: 16),
           Row(

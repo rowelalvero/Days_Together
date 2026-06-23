@@ -15,7 +15,6 @@ import 'package:days_together/widgets/storybook_view.dart';
 import 'package:days_together/widgets/ruler_picker_scrubber.dart';
 import 'package:days_together/widgets/dashboard/detailed_days_counter.dart';
 import 'package:days_together/widgets/dashboard/insights_banner.dart';
-import 'package:days_together/widgets/dashboard/partner_presence_card.dart';
 import 'package:days_together/widgets/dashboard/milestone_card.dart';
 import 'package:days_together/widgets/dashboard/memory_highlight_carousel.dart';
 import 'package:days_together/widgets/dashboard/relationship_statistics.dart';
@@ -433,16 +432,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               theme: theme,
             ),
             const SizedBox(height: 16),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: PartnerPresenceCard(relationshipProvider: rp, theme: theme)),
-                  const SizedBox(width: 12),
-                  Expanded(child: MilestoneCard(relationshipProvider: rp, theme: theme)),
-                ],
-              ),
-            ),
+            MilestoneCard(relationshipProvider: rp, theme: theme),
             const SizedBox(height: 24),
             Row(
               children: [
