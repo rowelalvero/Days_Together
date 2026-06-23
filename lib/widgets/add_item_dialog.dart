@@ -99,7 +99,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           ),
           Text(
             'New Memory',
-            style: GoogleFonts.playfairDisplay(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveItem,
@@ -147,7 +147,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                           const SizedBox(height: 8),
                           Text(
                             'No photo selected',
-                            style: GoogleFonts.montserrat(color: Colors.white30, fontSize: 12),
+                            style: GoogleFonts.inter(color: Colors.white30, fontSize: 12),
                           ),
                         ],
                       ),
@@ -163,13 +163,13 @@ class _AddItemDialogState extends State<AddItemDialog> {
               children: [
                 Text(
                   _titleController.text.isEmpty ? 'Title' : _titleController.text,
-                  style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _descriptionController.text.isEmpty ? 'Description...' : _descriptionController.text,
-                  style: GoogleFonts.montserrat(color: Colors.white60, fontSize: 11),
+                  style: GoogleFonts.inter(color: Colors.white60, fontSize: 11),
                   maxLines: 2,
                 ),
               ],
@@ -188,12 +188,12 @@ class _AddItemDialogState extends State<AddItemDialog> {
         children: [
           Text(
             _titleController.text.isEmpty ? 'Title' : _titleController.text,
-            style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 12),
           Text(
             _descriptionController.text.isEmpty ? 'Your beautiful story goes here...' : _descriptionController.text,
-            style: GoogleFonts.playfairDisplay(color: Colors.white70, fontSize: 14, fontStyle: FontStyle.italic, height: 1.5),
+            style: GoogleFonts.spaceGrotesk(color: Colors.white70, fontSize: 14, fontStyle: FontStyle.italic, height: 1.5),
             maxLines: 5,
           ),
         ],
@@ -205,7 +205,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('WHEN DID IT HAPPEN?', style: GoogleFonts.montserrat(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        Text('WHEN DID IT HAPPEN?', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -241,7 +241,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                       const SizedBox(width: 12),
                       Text(
                         DateFormat('MMM dd, yyyy').format(_selectedDate),
-                        style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
                       ),
                     ],
                   ),
@@ -279,7 +279,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                       const SizedBox(width: 12),
                       Text(
                         _selectedTime.format(context),
-                        style: GoogleFonts.montserrat(color: Colors.white, fontSize: 13),
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
                       ),
                     ],
                   ),
@@ -299,7 +299,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Include a Photo', style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w600)),
+          Text('Include a Photo', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
           Switch.adaptive(
             value: _isImageCard,
             activeTrackColor: theme.accentColor,
@@ -314,7 +314,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('HOW DID IT FEEL?', style: GoogleFonts.montserrat(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        Text('HOW DID IT FEEL?', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -343,7 +343,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: GoogleFonts.montserrat(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+        Text(label.toUpperCase(), style: GoogleFonts.inter(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 12),
         GlassContainer(
           borderRadius: 20,
@@ -351,7 +351,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           child: TextField(
             controller: controller,
             maxLines: maxLines,
-            style: GoogleFonts.montserrat(color: Colors.white),
+            style: GoogleFonts.inter(color: Colors.white),
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: hint,

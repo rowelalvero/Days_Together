@@ -33,7 +33,7 @@ class RecentActivityFeed extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'Recent Activity Log',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

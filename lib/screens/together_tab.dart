@@ -34,7 +34,7 @@ class TogetherTab extends StatelessWidget {
           children: [
             Text(
               'Together',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -42,7 +42,7 @@ class TogetherTab extends StatelessWidget {
             ),
             Text(
               'Every moment shared is a memory.',
-              style: GoogleFonts.montserrat(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 color: theme.textColor.withValues(alpha: 0.6),
                 fontWeight: FontWeight.w500,
@@ -222,7 +222,7 @@ class TogetherTab extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.montserrat(
+                  style: GoogleFonts.inter(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -231,7 +231,7 @@ class TogetherTab extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: GoogleFonts.montserrat(
+                  style: GoogleFonts.inter(
                     color: theme.textColor.withValues(alpha: 0.5),
                     fontSize: 11,
                     fontWeight: FontWeight.w500,

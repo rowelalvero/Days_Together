@@ -79,7 +79,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           const SizedBox(width: 16),
           Text(
             'Relationship Profile',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -117,7 +117,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           if (partnerJoined) ...[
             Text(
               '${rp.yourName ?? 'You'} & ${rp.partnerName ?? 'Partner'}',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -136,7 +136,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           ] else ...[
             Text(
               rp.yourName ?? 'You',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -492,7 +492,7 @@ class RelationshipProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   code,
-                  style: GoogleFonts.montserrat(
+                  style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -578,7 +578,7 @@ class RelationshipProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 partnerJoined ? 'Unlink Relationship' : 'Cancel Registry Request',
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,

@@ -315,7 +315,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
         title: Text(
           'Relationship License',
 
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
 
             color: theme.textColor,
@@ -1031,7 +1031,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -1106,7 +1106,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                   const SizedBox(height: 40),
                   Text(
                     'No License Found',
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.spaceGrotesk(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,
@@ -1169,7 +1169,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -1212,7 +1212,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     const SizedBox(height: 24),
                     Text(
                       partnerJoined ? 'Waiting for Partner' : 'Waiting for Partner to Join',
-                      style: GoogleFonts.playfairDisplay(
+                      style: GoogleFonts.spaceGrotesk(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -1315,7 +1315,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'License Application',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -2243,7 +2243,7 @@ class _LicenseFront extends StatelessWidget {
                   children: [
                     Text(
                       holderName.toUpperCase(),
-                      style: GoogleFonts.playfairDisplay(
+                      style: GoogleFonts.spaceGrotesk(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -3254,7 +3254,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
           Text(
             'Edit ID Card Info',
 
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 22,
 
               fontWeight: FontWeight.bold,
@@ -4097,7 +4097,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
         title: Text(
           widget.title,
 
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
 
             color: widget.theme.textColor,

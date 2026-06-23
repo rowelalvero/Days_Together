@@ -279,7 +279,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
         const SizedBox(height: 8),
         Text(
           widget.item.description,
-          style: GoogleFonts.playfairDisplay(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white70, height: 1.5),
+          style: GoogleFonts.spaceGrotesk(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white70, height: 1.5),
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
         ),
@@ -391,7 +391,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     currentItem.title,
-                                    style: GoogleFonts.playfairDisplay(
+                                    style: GoogleFonts.spaceGrotesk(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
@@ -607,7 +607,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           ),
           Text(
             'Edit Memory',
-            style: GoogleFonts.playfairDisplay(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveChanges,

@@ -52,7 +52,7 @@ class SettingsTab extends StatelessWidget {
             children: [
               Text(
                 'Personalize Your Story',
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -183,7 +183,7 @@ class SettingsTab extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               'Log Out',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -252,7 +252,7 @@ class SettingsTab extends StatelessWidget {
           children: [
             Text(
               'Settings',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,

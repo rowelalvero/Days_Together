@@ -440,7 +440,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 const SizedBox(width: 8),
                 Text(
                   'Latest Captured Memories',
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.spaceGrotesk(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -668,7 +668,7 @@ class _TimelineTabState extends State<TimelineTab> {
                                 onTap: () => _showEditTitleDialog(context, rp, theme),
                                 child: Text(
                                   rp.storyTitle,
-                                  style: GoogleFonts.playfairDisplay(
+                                  style: GoogleFonts.spaceGrotesk(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     fontSize: 24,
@@ -810,7 +810,7 @@ class _TimelineTabState extends State<TimelineTab> {
           Text(
             'Your story begins here.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.bold,

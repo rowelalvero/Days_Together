@@ -21,7 +21,7 @@ class ThemeSelectorScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Themes',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -253,9 +253,8 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
 
   // Available fonts
   static const List<String> _availableFonts = [
-    'Montserrat',
     'Inter',
-    'Playfair Display',
+    'Space Grotesk',
     'Roboto',
     'Lato',
     'Poppins',
@@ -581,7 +580,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
         child: DropdownButton<String>(
           value: _availableFonts.contains(settings.customFont)
               ? settings.customFont
-              : 'Montserrat',
+              : 'Inter',
           isExpanded: true,
           dropdownColor: theme.secondaryColor,
           icon: Icon(

@@ -191,7 +191,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         children: [
                           Text(
                             'Add Custom Card',
-                            style: GoogleFonts.playfairDisplay(
+                            style: GoogleFonts.spaceGrotesk(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: theme.textColor,
@@ -367,7 +367,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
       appBar: AppBar(
         title: Text(
           'Topic Cards',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -557,7 +557,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
           const SizedBox(height: 24),
           Text(
             isFav ? 'No Favorited Topics' : 'No custom topics yet',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -795,7 +795,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                   Text(
                     'Conversation Deck',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.spaceGrotesk(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,
@@ -906,7 +906,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                                 backgroundColor: theme.backgroundColor,
                                 title: Text(
                                   'Delete Card?',
-                                  style: GoogleFonts.playfairDisplay(
+                                  style: GoogleFonts.spaceGrotesk(
                                     fontWeight: FontWeight.bold,
                                     color: theme.textColor,
                                   ),
@@ -947,7 +947,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                   Text(
                     card.question,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.playfairDisplay(
+                    style: GoogleFonts.spaceGrotesk(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,

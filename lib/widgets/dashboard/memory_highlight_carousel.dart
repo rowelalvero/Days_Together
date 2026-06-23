@@ -279,7 +279,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
           Expanded(
             child: Text(
               item.description,
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.spaceGrotesk(
                 fontSize: 12,
                 fontStyle: FontStyle.italic,
                 color: Colors.white70,

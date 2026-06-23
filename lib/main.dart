@@ -105,7 +105,7 @@ class MyApp extends StatelessWidget {
     try {
       return GoogleFonts.getTextTheme(fontName, baseTheme);
     } catch (_) {
-      return GoogleFonts.montserratTextTheme(baseTheme);
+      return GoogleFonts.interTextTheme(baseTheme);
     }
   }
 

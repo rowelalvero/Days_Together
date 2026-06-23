@@ -77,7 +77,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     children: [
                       Text(
                         existingEvent == null ? '✨ New Event' : '📝 Edit Event',
-                        style: GoogleFonts.playfairDisplay(
+                        style: GoogleFonts.spaceGrotesk(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -316,7 +316,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           Text(
             DateFormat('MMMM yyyy').format(_focusedDay),
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,

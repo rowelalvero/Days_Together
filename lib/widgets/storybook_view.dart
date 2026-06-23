@@ -197,7 +197,7 @@ class _StorybookViewState extends State<StorybookView> {
                             item.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.playfairDisplay(
+                            style: GoogleFonts.spaceGrotesk(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,

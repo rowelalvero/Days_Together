@@ -486,7 +486,7 @@ class BentoGrid extends StatelessWidget {
       children: [
         Text(
           '"${question.question}"',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontSize: 13,
             fontStyle: FontStyle.italic,
             fontWeight: FontWeight.w600,

@@ -193,7 +193,7 @@ class AppSettings {
     this.customSecondaryColor = 0xFFC44569,
     this.customBackgroundColor = 0xFF2C003E,
     this.customAccentColor = 0xFFFFB5C5,
-    this.customFont = 'Montserrat',
+    this.customFont = 'Inter',
     this.customIsDark = true,
   });
 
@@ -266,7 +266,7 @@ class AppSettings {
       customSecondaryColor: json['customSecondaryColor'] as int? ?? 0xFFC44569,
       customBackgroundColor: json['customBackgroundColor'] as int? ?? 0xFF2C003E,
       customAccentColor: json['customAccentColor'] as int? ?? 0xFFFFB5C5,
-      customFont: json['customFont'] as String? ?? 'Montserrat',
+      customFont: json['customFont'] as String? ?? 'Inter',
       customIsDark: json['customIsDark'] as bool? ?? true,
     );
   }

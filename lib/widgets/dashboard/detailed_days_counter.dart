@@ -75,7 +75,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
             children: [
               Text(
                 NumberFormat('#,###').format(totalDays),
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.spaceGrotesk(
                   fontSize: 54,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -88,7 +88,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                 ).createShader(bounds),
                 child: Text(
                   'Days',
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.spaceGrotesk(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,

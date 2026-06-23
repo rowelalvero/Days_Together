@@ -127,7 +127,7 @@ class _NoteitScreenState extends State<NoteitScreen>
       appBar: AppBar(
         title: Text(
           'Love Notes',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.spaceGrotesk(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -421,7 +421,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         children: [
           Text(
             'Write Sticky Note',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -568,7 +568,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         children: [
           Text(
             'Upload a Photo',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -778,7 +778,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                 backgroundColor: theme.backgroundColor,
                 title: Text(
                   'Delete Note?',
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.spaceGrotesk(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                   ),
