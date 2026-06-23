@@ -164,25 +164,29 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
             overflow: TextOverflow.ellipsis,
           ),
           const Divider(color: Colors.white10, height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'REALTIME SYNC',
                 style: GoogleFonts.inter(fontSize: 9, color: Colors.greenAccent, fontWeight: FontWeight.bold),
               ),
-              ElevatedButton.icon(
-                onPressed: () => _triggerLoveTap(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isTapped ? Colors.pink : Colors.white12,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                ),
-                icon: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 14),
-                label: Text(
-                  _isTapped ? 'Tapped!' : 'Love Tap',
-                  style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _triggerLoveTap(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isTapped ? Colors.pink : Colors.white12,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  icon: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 14),
+                  label: Text(
+                    _isTapped ? 'Tapped!' : 'Love Tap',
+                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
