@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -191,7 +191,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         children: [
                           Text(
                             'Add Custom Card',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: AppTypography.sectionHeader(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: theme.textColor,
@@ -206,7 +206,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                       const SizedBox(height: 16),
                       Text(
                         'CATEGORY',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.caption(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: theme.textColor.withValues(alpha: 0.6),
@@ -226,7 +226,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                           child: DropdownButton<String>(
                             value: selectedCategory,
                             dropdownColor: theme.backgroundColor,
-                            style: GoogleFonts.inter(
+                            style: AppTypography.body(
                               color: theme.textColor,
                               fontWeight: FontWeight.bold,
                             ),
@@ -256,7 +256,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                       const SizedBox(height: 20),
                       Text(
                         'YOUR QUESTION / TOPIC PROMPT',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.caption(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: theme.textColor.withValues(alpha: 0.6),
@@ -266,7 +266,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                       TextFormField(
                         controller: questionController,
                         maxLines: 4,
-                        style: GoogleFonts.inter(color: theme.textColor),
+                        style: AppTypography.body(color: theme.textColor),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please write a prompt!';
@@ -276,7 +276,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         decoration: InputDecoration(
                           hintText:
                               'e.g., What is a dream you have that you are too scared to pursue?',
-                          hintStyle: GoogleFonts.inter(
+                          hintStyle: AppTypography.body(
                             color: theme.textColor.withValues(alpha: 0.4),
                           ),
                           filled: true,
@@ -334,7 +334,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                           ),
                           child: Text(
                             'Add to Deck',
-                            style: GoogleFonts.inter(
+                            style: AppTypography.body(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -367,7 +367,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
       appBar: AppBar(
         title: Text(
           'Topic Cards',
-          style: GoogleFonts.spaceGrotesk(
+          style: AppTypography.sectionHeader(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -435,7 +435,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                           child: Center(
                             child: Text(
                               cat,
-                              style: GoogleFonts.inter(
+                              style: AppTypography.caption(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: isSelected
@@ -557,7 +557,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
           const SizedBox(height: 24),
           Text(
             isFav ? 'No Favorited Topics' : 'No custom topics yet',
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.sectionHeader(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -569,7 +569,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
             isFav
                 ? 'Tap the heart icon on any card back to save deep prompts for later discussion!'
                 : 'Fill this category with custom prompts tailored to your relationship!',
-            style: GoogleFonts.inter(
+            style: AppTypography.body(
               fontSize: 14,
               color: theme.textColor.withValues(alpha: 0.6),
               height: 1.5,
@@ -784,18 +784,17 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                   Text(
                     card.category.toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.caption(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
                       color: const Color(0xFFD4AF37),
-                    ),
+                    ).copyWith(letterSpacing: 2),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     'Conversation Deck',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: AppTypography.sectionHeader(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,
@@ -815,12 +814,11 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                     ),
                     child: Text(
                       'TAP TO REVEAL',
-                      style: GoogleFonts.inter(
+                      style: AppTypography.caption(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
                         color: theme.textColor.withValues(alpha: 0.6),
-                      ),
+                      ).copyWith(letterSpacing: 1.5),
                     ),
                   ),
                 ],
@@ -883,7 +881,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         ),
                         child: Text(
                           card.category,
-                          style: GoogleFonts.inter(
+                          style: AppTypography.caption(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: theme.accentColor,
@@ -906,14 +904,14 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                                 backgroundColor: theme.backgroundColor,
                                 title: Text(
                                   'Delete Card?',
-                                  style: GoogleFonts.spaceGrotesk(
+                                  style: AppTypography.cardTitle(
                                     fontWeight: FontWeight.bold,
                                     color: theme.textColor,
                                   ),
                                 ),
                                 content: Text(
                                   'Are you sure you want to delete this custom topic card?',
-                                  style: GoogleFonts.inter(
+                                  style: AppTypography.body(
                                     color: theme.textColor.withValues(
                                       alpha: 0.8,
                                     ),
@@ -947,7 +945,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                   Text(
                     card.question,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: AppTypography.sectionHeader(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,

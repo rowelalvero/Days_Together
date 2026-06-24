@@ -14,7 +14,7 @@ import 'package:days_together/screens/together/vault_screen.dart';
 import 'package:days_together/screens/together/bucket_list_screen.dart';
 import 'package:days_together/screens/together/gift_reminders_screen.dart';
 import 'package:days_together/screens/love_story_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -77,7 +77,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     children: [
                       Text(
                         existingEvent == null ? '✨ New Event' : '📝 Edit Event',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: AppTypography.pageTitle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -316,7 +316,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           Text(
             DateFormat('MMMM yyyy').format(_focusedDay),
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.pageTitle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,

@@ -24,7 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:animations/animations.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 
 class LoveStoryScreen extends StatefulWidget {
@@ -74,7 +74,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
                   const SizedBox(width: 10),
                   Text(
                     'Press back again to exit',
-                    style: GoogleFonts.inter(
+                    style: AppTypography.body(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -440,7 +440,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 const SizedBox(width: 8),
                 Text(
                   'Latest Captured Memories',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: AppTypography.cardTitle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -668,7 +668,7 @@ class _TimelineTabState extends State<TimelineTab> {
                                 onTap: () => _showEditTitleDialog(context, rp, theme),
                                 child: Text(
                                   rp.storyTitle,
-                                  style: GoogleFonts.spaceGrotesk(
+                                  style: AppTypography.sectionHeader(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     fontSize: 24,
@@ -810,7 +810,7 @@ class _TimelineTabState extends State<TimelineTab> {
           Text(
             'Your story begins here.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.sectionHeader(
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.bold,
@@ -820,7 +820,7 @@ class _TimelineTabState extends State<TimelineTab> {
           Text(
             'Every date, every laugh, and every small moment is a chapter in your book. Start capturing your memories together.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: AppTypography.body(
               color: Colors.white.withValues(alpha: 0.5),
               fontSize: 15,
               height: 1.6,
@@ -849,7 +849,7 @@ class _TimelineTabState extends State<TimelineTab> {
                 const SizedBox(width: 8),
                 Text(
                   'Capture first memory',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  style: AppTypography.body(fontWeight: FontWeight.bold),
                 ),
               ],
             ),

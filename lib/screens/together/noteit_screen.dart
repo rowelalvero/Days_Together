@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -126,8 +126,8 @@ class _NoteitScreenState extends State<NoteitScreen>
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          'Love Notes',
-          style: GoogleFonts.spaceGrotesk(
+          'Doodle Notes',
+          style: AppTypography.pageTitle(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -195,7 +195,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               // Size selector indicator
               Text(
                 'Size:',
-                style: GoogleFonts.inter(
+                style: AppTypography.body(
                   color: theme.textColor.withValues(alpha: 0.6),
                   fontSize: 12,
                 ),
@@ -321,7 +321,7 @@ class _NoteitScreenState extends State<NoteitScreen>
             children: [
               Text(
                 'BG:',
-                style: GoogleFonts.inter(
+                style: AppTypography.bodyLarge(
                   color: theme.textColor.withValues(alpha: 0.6),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -386,7 +386,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               icon: const Icon(Icons.send_rounded),
               label: Text(
                 'Send to Partner',
-                style: GoogleFonts.inter(
+                style: AppTypography.bodyLarge(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
@@ -421,7 +421,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         children: [
           Text(
             'Write Sticky Note',
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.sectionHeader(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -450,7 +450,7 @@ class _NoteitScreenState extends State<NoteitScreen>
             child: TextField(
               controller: _textController,
               maxLines: 6,
-              style: GoogleFonts.lora(
+              style: AppTypography.lora(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 fontStyle: FontStyle.italic,
@@ -478,7 +478,7 @@ class _NoteitScreenState extends State<NoteitScreen>
             children: [
               Text(
                 'CARD BG:',
-                style: GoogleFonts.inter(
+                style: AppTypography.bodyLarge(
                   color: theme.textColor.withValues(alpha: 0.6),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -540,7 +540,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               icon: const Icon(Icons.send_rounded),
               label: Text(
                 'Send Note to Partner',
-                style: GoogleFonts.inter(
+                style: AppTypography.bodyLarge(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),
@@ -568,7 +568,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         children: [
           Text(
             'Upload a Photo',
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.sectionHeader(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -603,7 +603,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                             Text(
                               'Select a photo to send directly\nto your partner\'s screen.',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
+                              style: AppTypography.body(
                                 fontSize: 13,
                                 color: theme.textColor.withValues(alpha: 0.5),
                               ),
@@ -714,7 +714,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                 icon: const Icon(Icons.send_rounded),
                 label: Text(
                   'Send Photo to Partner',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.bodyLarge(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -748,8 +748,8 @@ class _NoteitScreenState extends State<NoteitScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'No love notes exchanged yet.',
-              style: GoogleFonts.inter(
+              'No doodle notes exchanged yet.',
+              style: AppTypography.body(
                 color: theme.textColor.withValues(alpha: 0.5),
               ),
             ),
@@ -778,14 +778,14 @@ class _NoteitScreenState extends State<NoteitScreen>
                 backgroundColor: theme.backgroundColor,
                 title: Text(
                   'Delete Note?',
-                  style: GoogleFonts.spaceGrotesk(
+                  style: AppTypography.sectionHeader(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 content: Text(
                   'Are you sure you want to delete this shared note from history?',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.body(
                     color: theme.textColor.withValues(alpha: 0.8),
                   ),
                 ),
@@ -839,7 +839,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                       ),
                       child: Text(
                         item.sender == 'you' ? 'Sent' : 'Received',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.bodyLarge(
                           fontSize: 8,
                           color: Colors.white70,
                           fontWeight: FontWeight.bold,
@@ -886,7 +886,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               ),
               child: Text(
                 item.sender == 'you' ? 'Sent by You' : 'Received from Partner',
-                style: GoogleFonts.inter(
+                style: AppTypography.bodyLarge(
                   color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -903,7 +903,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     if (item.type == NoteitType.drawing) {
       return CustomPaint(
         painter: ScaleDrawingPainter(
-          strokes: _deserializeStrokes(item.content),
+          strokes: NoteitItem.deserializeStrokes(item.content),
           color: Colors.white,
           strokeWidth: 3.5,
         ),
@@ -915,7 +915,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         child: Text(
           item.content ?? '',
           textAlign: TextAlign.center,
-          style: GoogleFonts.lora(
+          style: AppTypography.lora(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             fontStyle: FontStyle.italic,
@@ -992,102 +992,5 @@ class CustomDrawingPainter extends CustomPainter {
     return oldDelegate.strokes != strokes ||
         oldDelegate.brushColor != brushColor ||
         oldDelegate.strokeWidth != strokeWidth;
-  }
-}
-
-class ScaleDrawingPainter extends CustomPainter {
-  final List<List<Offset>> strokes;
-  final Color color;
-  final double strokeWidth;
-
-  ScaleDrawingPainter({
-    required this.strokes,
-    required this.color,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (strokes.isEmpty) return;
-
-    double minX = double.infinity;
-    double maxX = double.negativeInfinity;
-    double minY = double.infinity;
-    double maxY = double.negativeInfinity;
-    bool hasPoints = false;
-
-    for (final stroke in strokes) {
-      for (final p in stroke) {
-        if (p.dx < minX) minX = p.dx;
-        if (p.dx > maxX) maxX = p.dx;
-        if (p.dy < minY) minY = p.dy;
-        if (p.dy > maxY) maxY = p.dy;
-        hasPoints = true;
-      }
-    }
-
-    if (!hasPoints) return;
-
-    final w = maxX - minX;
-    final h = maxY - minY;
-    if (w == 0 || h == 0) return;
-
-    const padding = 16.0;
-    final targetW = size.width - 2 * padding;
-    final targetH = size.height - 2 * padding;
-
-    final scaleX = targetW / w;
-    final scaleY = targetH / h;
-    final scale = scaleX < scaleY ? scaleX : scaleY;
-
-    final targetCenterX = size.width / 2;
-    final targetCenterY = size.height / 2;
-    final sourceCenterX = minX + w / 2;
-    final sourceCenterY = minY + h / 2;
-
-    final paint = Paint()
-      ..color = color
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    for (final stroke in strokes) {
-      if (stroke.isEmpty) continue;
-      final firstPoint = stroke.first;
-      final startX = targetCenterX + (firstPoint.dx - sourceCenterX) * scale;
-      final startY = targetCenterY + (firstPoint.dy - sourceCenterY) * scale;
-
-      final path = Path()..moveTo(startX, startY);
-      for (int i = 1; i < stroke.length; i++) {
-        final p = stroke[i];
-        final px = targetCenterX + (p.dx - sourceCenterX) * scale;
-        final py = targetCenterY + (p.dy - sourceCenterY) * scale;
-        path.lineTo(px, py);
-      }
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant ScaleDrawingPainter oldDelegate) {
-    return oldDelegate.strokes != strokes ||
-        oldDelegate.color != color ||
-        oldDelegate.strokeWidth != strokeWidth;
-  }
-}
-
-List<List<Offset>> _deserializeStrokes(String? data) {
-  if (data == null || data.isEmpty) return [];
-  try {
-    return data.split('|').map((strokeStr) {
-      if (strokeStr.isEmpty) return <Offset>[];
-      return strokeStr.split(';').map((pointStr) {
-        final parts = pointStr.split(',');
-        return Offset(double.parse(parts[0]), double.parse(parts[1]));
-      }).toList();
-    }).toList();
-  } catch (e) {
-    return [];
   }
 }

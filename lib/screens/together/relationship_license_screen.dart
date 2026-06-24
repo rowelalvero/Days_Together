@@ -11,7 +11,7 @@ import 'package:flutter/rendering.dart';
 
 import 'package:provider/provider.dart';
 
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 import 'package:intl/intl.dart';
 
@@ -249,11 +249,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
               const SizedBox(height: 20),
               Text(
                 '💡 Pinch to zoom • Tap card to flip',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white70,
-                ),
+                style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white70),
               ),
             ],
           ),
@@ -315,11 +311,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
         title: Text(
           'Relationship License',
 
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.bold,
-
-            color: theme.textColor,
-          ),
+          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
 
         backgroundColor: Colors.transparent,
@@ -397,13 +389,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                         Text(
                           'Configure License Details',
 
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-
-                            color: theme.textColor.withValues(alpha: 0.8),
-
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppTypography.body(fontSize: 14, color: theme.textColor.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -609,13 +595,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 Text(
                   '💡 Tap any license card directly to flip it!',
 
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-
-                    fontWeight: FontWeight.w500,
-
-                    color: theme.textColor.withValues(alpha: 0.5),
-                  ),
+                  style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.5)),
                 ),
 
                 const SizedBox(height: 16),
@@ -636,11 +616,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                         label: Text(
                           'Flip Cards',
 
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w700,
-
-                            color: theme.textColor,
-                          ),
+                          style: AppTypography.body(fontWeight: FontWeight.w700, color: theme.textColor),
                         ),
 
                         style: OutlinedButton.styleFrom(
@@ -672,11 +648,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                         label: Text(
                           'Enlarge ID',
 
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w700,
-
-                            color: theme.textColor,
-                          ),
+                          style: AppTypography.body(fontWeight: FontWeight.w700, color: theme.textColor),
                         ),
 
                         style: OutlinedButton.styleFrom(
@@ -725,11 +697,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     label: Text(
                       'Share License',
 
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-
-                        fontSize: 15,
-                      ),
+                      style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
 
                     style: ElevatedButton.styleFrom(
@@ -940,15 +908,9 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
             overflow: TextOverflow.ellipsis,
 
-            style: GoogleFonts.inter(
-              fontSize: 13,
-
-              fontWeight: FontWeight.bold,
-
-              color: isActive
+            style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.bold, color: isActive
                   ? Colors.white
-                  : theme.textColor.withValues(alpha: 0.6),
-            ),
+                  : theme.textColor.withValues(alpha: 0.6)),
           ),
         ),
       ),
@@ -1031,10 +993,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
+          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1090,12 +1049,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                               const SizedBox(height: 12),
                               Text(
                                 'OFFICIAL LOVE LICENSE',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
-                                  color: const Color(0xFFD4AF37),
-                                ),
+                                style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 2),
                               ),
                             ],
                           ),
@@ -1106,11 +1060,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                   const SizedBox(height: 40),
                   Text(
                     'No License Found',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textColor,
-                    ),
+                    style: AppTypography.sectionHeader(fontSize: 26, fontWeight: FontWeight.bold, color: theme.textColor),
                   ),
                   const SizedBox(height: 12),
                   Padding(
@@ -1118,12 +1068,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     child: Text(
                       'Create your official Relationship License to certify your bond! Fill in your details, draw your signatures, and generate printable & shareable license cards.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: theme.textColor.withValues(alpha: 0.6),
-                        height: 1.5,
-                      ),
+                      style: AppTypography.body(fontSize: 14, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.6), height: 1.5),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -1139,10 +1084,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                       icon: const Icon(Icons.add_card_rounded, size: 22),
                       label: Text(
                         'Create License ID',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.accentColor,
@@ -1169,10 +1111,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
+          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1212,11 +1151,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     const SizedBox(height: 24),
                     Text(
                       partnerJoined ? 'Waiting for Partner' : 'Waiting for Partner to Join',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -1224,11 +1159,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                       partnerJoined
                           ? "We are waiting for your partner to complete their license setup before details can be shared and viewed."
                           : "Please connect with your partner first. Once they join and complete their setup, your licenses will be synced and visible here.",
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Colors.white70,
-                        height: 1.5,
-                      ),
+                      style: AppTypography.body(fontSize: 14, color: Colors.white70, height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -1285,11 +1216,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                   _loadingMessages[_loadingStep],
                   key: ValueKey<int>(_loadingStep),
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor,
-                  ),
+                  style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textColor),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1315,10 +1242,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'License Application',
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
+          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1384,10 +1308,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     ),
                     child: Text(
                       'Generate Relationship License ID',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -1416,7 +1337,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Full Name *', theme),
       TextField(
         controller: nameCtrl,
-        style: GoogleFonts.inter(color: theme.textColor),
+        style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('Enter full name', theme),
       ),
       const SizedBox(height: 16),
@@ -1465,11 +1386,9 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 birthdate != null
                     ? DateFormat('MMMM dd, yyyy').format(birthdate)
                     : 'Select Birthdate',
-                style: GoogleFonts.inter(
-                  color: birthdate != null
+                style: AppTypography.body(color: birthdate != null
                       ? theme.textColor
-                      : theme.textColor.withValues(alpha: 0.5),
-                ),
+                      : theme.textColor.withValues(alpha: 0.5)),
               ),
               Icon(
                 Icons.calendar_month_rounded,
@@ -1486,14 +1405,14 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Nationality', theme),
       TextField(
         controller: nationalityCtrl,
-        style: GoogleFonts.inter(color: theme.textColor),
+        style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('e.g., Love Land', theme),
       ),
       const SizedBox(height: 16),
       _createFieldLabel('Address', theme),
       TextField(
         controller: addressCtrl,
-        style: GoogleFonts.inter(color: theme.textColor),
+        style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('Enter address details', theme),
       ),
       const SizedBox(height: 16),
@@ -1506,7 +1425,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Height', theme),
                 TextField(
                   controller: heightCtrl,
-                  style: GoogleFonts.inter(color: theme.textColor),
+                  style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., 5\'7"', theme),
                 ),
               ],
@@ -1520,7 +1439,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Weight', theme),
                 TextField(
                   controller: weightCtrl,
-                  style: GoogleFonts.inter(color: theme.textColor),
+                  style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., 65 kg', theme),
                 ),
               ],
@@ -1538,7 +1457,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Blood Type', theme),
                 TextField(
                   controller: bloodCtrl,
-                  style: GoogleFonts.inter(color: theme.textColor),
+                  style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., O+', theme),
                 ),
               ],
@@ -1552,7 +1471,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Eyes Color', theme),
                 TextField(
                   controller: eyeCtrl,
-                  style: GoogleFonts.inter(color: theme.textColor),
+                  style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., Brown', theme),
                 ),
               ],
@@ -1564,7 +1483,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Conditions', theme),
       TextField(
         controller: conditionsCtrl,
-        style: GoogleFonts.inter(color: theme.textColor),
+        style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('e.g., Head over heels', theme),
       ),
       const SizedBox(height: 16),
@@ -1572,7 +1491,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       TextField(
         controller: phoneCtrl,
         keyboardType: TextInputType.phone,
-        style: GoogleFonts.inter(color: theme.textColor),
+        style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('Enter phone number', theme),
       ),
     ];
@@ -1581,7 +1500,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
   InputDecoration _createInputDecoration(String hint, dynamic theme) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.inter(color: theme.textColor.withValues(alpha: 0.4)),
+      hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4)),
       filled: true,
       fillColor: theme.textColor.withValues(alpha: 0.05),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -1624,10 +1543,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
           ),
           child: Text(
             value,
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.8),
-            ),
+            style: AppTypography.body(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.8)),
           ),
         ),
       ),
@@ -1639,12 +1555,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       padding: const EdgeInsets.only(bottom: 6, left: 4),
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1,
-          color: theme.textColor.withValues(alpha: 0.6),
-        ),
+        style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.6)).copyWith(letterSpacing: 1),
       ),
     );
   }
@@ -1734,10 +1645,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
             if (signatureStr.isEmpty)
               Text(
                 'Tap to draw signature',
-                style: GoogleFonts.inter(
-                  color: theme.textColor.withValues(alpha: 0.4),
-                  fontSize: 14,
-                ),
+                style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4), fontSize: 14),
               ),
             if (signatureStr.isNotEmpty)
               Positioned(
@@ -2220,12 +2128,7 @@ class _LicenseFront extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       'SIGNATURE',
-                      style: GoogleFonts.inter(
-                        fontSize: 5,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white.withValues(alpha: 0.35),
-                        letterSpacing: 0.5,
-                      ),
+                      style: AppTypography.body(fontSize: 5, fontWeight: FontWeight.w900, color: Colors.white.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
                     ),
                   ],
                 ),
@@ -2243,12 +2146,7 @@ class _LicenseFront extends StatelessWidget {
                   children: [
                     Text(
                       holderName.toUpperCase(),
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
+                      style: AppTypography.sectionHeader(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 0.5),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2383,12 +2281,7 @@ class _LicenseFront extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'OFFICIAL RELATIONSHIP ID CARD',
-              style: GoogleFonts.inter(
-                fontSize: isCompact ? 8 : 9,
-                fontWeight: FontWeight.w900,
-                letterSpacing: isCompact ? 2 : 3,
-                color: const Color(0xFFD4AF37),
-              ),
+              style: AppTypography.body(fontSize: isCompact ? 8 : 9, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: isCompact ? 2 : 3),
             ),
             const SizedBox(width: 8),
             Icon(
@@ -2401,12 +2294,7 @@ class _LicenseFront extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           'CERTIFIED BY THE DEPARTMENT OF LOVE',
-          style: GoogleFonts.inter(
-            fontSize: isCompact ? 6 : 7,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
-            color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
-          ),
+          style: AppTypography.body(fontSize: isCompact ? 6 : 7, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37).withValues(alpha: 0.6)).copyWith(letterSpacing: 1),
         ),
       ],
     );
@@ -2418,21 +2306,12 @@ class _LicenseFront extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: GoogleFonts.inter(
-            fontSize: isCompact ? 5.5 : 7,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.6,
-            color: const Color(0xFFD4AF37).withValues(alpha: 0.65),
-          ),
+          style: AppTypography.body(fontSize: isCompact ? 5.5 : 7, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37).withValues(alpha: 0.65)).copyWith(letterSpacing: 0.6),
         ),
         const SizedBox(height: 1),
         Text(
           value.toUpperCase(),
-          style: GoogleFonts.inter(
-            fontSize: isCompact ? 8.5 : 10.5,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: AppTypography.body(fontSize: isCompact ? 8.5 : 10.5, fontWeight: FontWeight.bold, color: Colors.white),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -2589,23 +2468,14 @@ class _LicenseBack extends StatelessWidget {
                 children: [
                   Text(
                     'EMERGENCY INFORMATION',
-                    style: GoogleFonts.inter(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                      color: const Color(0xFFD4AF37),
-                    ),
+                    style: AppTypography.body(fontSize: 8, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 4),
                   _goldDivider(),
                   const SizedBox(height: 4),
                   Text(
                     'IN CASE OF EMERGENCY CONTACT:',
-                    style: GoogleFonts.inter(
-                      fontSize: 7,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
+                    style: AppTypography.body(fontSize: 7, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 4),
                   _emergencyContact(
@@ -2726,15 +2596,7 @@ class _LicenseBack extends StatelessWidget {
                 Text(
                   name.toUpperCase(),
 
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-
-                    fontWeight: FontWeight.w900,
-
-                    color: Colors.white,
-
-                    letterSpacing: 1,
-                  ),
+                  style: AppTypography.body(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 1),
                 ),
 
                 if (address != null && address.isNotEmpty) ...[
@@ -2742,13 +2604,7 @@ class _LicenseBack extends StatelessWidget {
                   Text(
                     address.toUpperCase(),
 
-                    style: GoogleFonts.inter(
-                      fontSize: 8,
-
-                      fontWeight: FontWeight.w500,
-
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
+                    style: AppTypography.body(fontSize: 8, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.6)),
                   ),
                 ],
 
@@ -2757,13 +2613,7 @@ class _LicenseBack extends StatelessWidget {
                 Text(
                   phone,
 
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 10,
-
-                    fontWeight: FontWeight.w600,
-
-                    color: const Color(0xFFD4AF37),
-                  ),
+                  style: AppTypography.bodyMono(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFFD4AF37)),
                 ),
               ],
             ),
@@ -3254,13 +3104,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
           Text(
             'Edit ID Card Info',
 
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 22,
-
-              fontWeight: FontWeight.bold,
-
-              color: widget.theme.textColor,
-            ),
+            style: AppTypography.sectionHeader(fontSize: 22, fontWeight: FontWeight.bold, color: widget.theme.textColor),
           ),
 
           const SizedBox(height: 10),
@@ -3293,10 +3137,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                 child: Text(
                   'Save Changes',
 
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ),
@@ -3344,7 +3185,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
           TextField(
             controller: nameCtrl,
 
-            style: GoogleFonts.inter(color: widget.theme.textColor),
+            style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter full name'),
           ),
@@ -3412,11 +3253,9 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                         ? DateFormat('MMMM dd, yyyy').format(birthdate)
                         : 'Select Birthdate',
 
-                    style: GoogleFonts.inter(
-                      color: birthdate != null
+                    style: AppTypography.body(color: birthdate != null
                           ? widget.theme.textColor
-                          : widget.theme.textColor.withValues(alpha: 0.5),
-                    ),
+                          : widget.theme.textColor.withValues(alpha: 0.5)),
                   ),
 
                   Icon(
@@ -3436,7 +3275,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
           TextField(
             controller: nationalityCtrl,
 
-            style: GoogleFonts.inter(color: widget.theme.textColor),
+            style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter nationality'),
           ),
@@ -3456,7 +3295,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                     TextField(
                       controller: heightCtrl,
 
-                      style: GoogleFonts.inter(color: widget.theme.textColor),
+                      style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., 175 cm'),
                     ),
@@ -3476,7 +3315,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                     TextField(
                       controller: weightCtrl,
 
-                      style: GoogleFonts.inter(color: widget.theme.textColor),
+                      style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., 68 kg'),
                     ),
@@ -3494,7 +3333,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
           TextField(
             controller: addressCtrl,
 
-            style: GoogleFonts.inter(color: widget.theme.textColor),
+            style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter address'),
           ),
@@ -3533,12 +3372,10 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                           )
                         : 'Default (Relationship Date)',
 
-                    style: GoogleFonts.inter(
-                      color:
+                    style: AppTypography.body(color:
                           (isYou ? _yourDateIssued : _partnerDateIssued) != null
                           ? widget.theme.textColor
-                          : widget.theme.textColor.withValues(alpha: 0.5),
-                    ),
+                          : widget.theme.textColor.withValues(alpha: 0.5)),
                   ),
 
                   Icon(
@@ -3630,11 +3467,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                     Text(
                       'Tap to draw signature',
 
-                      style: GoogleFonts.inter(
-                        color: widget.theme.textColor.withValues(alpha: 0.4),
-
-                        fontSize: 14,
-                      ),
+                      style: AppTypography.body(color: widget.theme.textColor.withValues(alpha: 0.4), fontSize: 14),
                     ),
 
                   if ((isYou ? _yourSignatureStr : _partnerSignatureStr)
@@ -3680,7 +3513,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                     TextField(
                       controller: bloodCtrl,
 
-                      style: GoogleFonts.inter(color: widget.theme.textColor),
+                      style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., O+'),
                     ),
@@ -3700,7 +3533,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                     TextField(
                       controller: eyeCtrl,
 
-                      style: GoogleFonts.inter(color: widget.theme.textColor),
+                      style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., Brown'),
                     ),
@@ -3718,7 +3551,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
           TextField(
             controller: conditionsCtrl,
 
-            style: GoogleFonts.inter(color: widget.theme.textColor),
+            style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('e.g., Head over heels'),
           ),
@@ -3733,7 +3566,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
             keyboardType: TextInputType.phone,
 
-            style: GoogleFonts.inter(color: widget.theme.textColor),
+            style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter mobile number'),
           ),
@@ -3749,15 +3582,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
       child: Text(
         label.toUpperCase(),
 
-        style: GoogleFonts.inter(
-          fontSize: 11,
-
-          fontWeight: FontWeight.bold,
-
-          letterSpacing: 1,
-
-          color: widget.theme.textColor.withValues(alpha: 0.6),
-        ),
+        style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.bold, color: widget.theme.textColor.withValues(alpha: 0.6)).copyWith(letterSpacing: 1),
       ),
     );
   }
@@ -3813,13 +3638,9 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
               Text(
                 value,
 
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-
-                  color: isSelected
+                style: AppTypography.body(fontWeight: FontWeight.bold, color: isSelected
                       ? widget.theme.accentColor
-                      : widget.theme.textColor,
-                ),
+                      : widget.theme.textColor),
               ),
             ],
           ),
@@ -3832,9 +3653,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
     return InputDecoration(
       hintText: hint,
 
-      hintStyle: GoogleFonts.inter(
-        color: widget.theme.textColor.withValues(alpha: 0.4),
-      ),
+      hintStyle: AppTypography.body(color: widget.theme.textColor.withValues(alpha: 0.4)),
 
       filled: true,
 
@@ -4097,11 +3916,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
         title: Text(
           widget.title,
 
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.bold,
-
-            color: widget.theme.textColor,
-          ),
+          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: widget.theme.textColor),
         ),
 
         backgroundColor: Colors.transparent,
@@ -4125,11 +3940,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
             child: Text(
               'Clear',
 
-              style: GoogleFonts.inter(
-                color: Colors.redAccent,
-
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTypography.body(color: Colors.redAccent, fontWeight: FontWeight.bold),
             ),
           ),
 
@@ -4146,11 +3957,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
               Text(
                 'Draw your signature inside the box below',
 
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-
-                  color: widget.theme.textColor.withValues(alpha: 0.6),
-                ),
+                style: AppTypography.body(fontSize: 14, color: widget.theme.textColor.withValues(alpha: 0.6)),
               ),
 
               const SizedBox(height: 20),
@@ -4232,11 +4039,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
                   child: Text(
                     'Save Signature',
 
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-
-                      fontSize: 16,
-                    ),
+                    style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ),
@@ -4656,23 +4459,13 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                 Text(
                   'OFFICIAL RELATIONSHIP LICENSE',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
-                    color: const Color(0xFFD4AF37),
-                  ),
+                  style: AppTypography.body(fontSize: 22, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 4),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   'CERTIFIED BY THE DEPARTMENT OF LOVE',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5,
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
-                  ),
+                  style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFD4AF37).withValues(alpha: 0.6)).copyWith(letterSpacing: 1.5),
                 ),
                 const Spacer(),
                 widget.showBoth
@@ -4747,24 +4540,14 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                     const SizedBox(width: 8),
                     Text(
                       'STATUS: VALID FOREVER',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                        color: const Color(0xFFD4AF37),
-                      ),
+                      style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 2),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'TOGETHER SINCE $startDateStr',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.5,
-                    color: Colors.white.withValues(alpha: 0.5),
-                  ),
+                  style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.5)).copyWith(letterSpacing: 1.5),
                 ),
                 const SizedBox(height: 30),
               ],
@@ -4820,22 +4603,12 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                   children: [
                     Text(
                       'DEPARTMENT OF LOVE',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 5,
-                        color: const Color(0xFFD4AF37),
-                      ),
+                      style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 5),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'OFFICIAL RELATIONSHIP CERTIFICATE',
-                      style: GoogleFonts.inter(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
+                      style: AppTypography.body(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.4)).copyWith(letterSpacing: 2),
                     ),
                   ],
                 ),
@@ -4910,12 +4683,7 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                         const SizedBox(width: 8),
                         Text(
                           'VALID FOREVER',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 3,
-                            color: const Color(0xFFD4AF37),
-                          ),
+                          style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 3),
                         ),
                         const SizedBox(width: 8),
                         const Icon(
@@ -4928,12 +4696,7 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                     const SizedBox(height: 4),
                     Text(
                       'ANNIVERSARY DATE: $startDateStr',
-                      style: GoogleFonts.inter(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
+                      style: AppTypography.body(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.4)).copyWith(letterSpacing: 1.5),
                     ),
                   ],
                 ),
@@ -5025,21 +4788,12 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
           const SizedBox(height: 16),
           Text(
             'LICENSE EXPORT STUDIO',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2,
-              color: widget.theme.textColor,
-            ),
+            style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w900, color: widget.theme.textColor).copyWith(letterSpacing: 2),
           ),
           const SizedBox(height: 4),
           Text(
             'Choose a style and share your license card',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: widget.theme.textColor.withValues(alpha: 0.5),
-            ),
+            style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w500, color: widget.theme.textColor.withValues(alpha: 0.5)),
           ),
           const SizedBox(height: 20),
           ConstrainedBox(
@@ -5052,11 +4806,7 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
             children: [
               Text(
                 'Show Card Side:',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: widget.theme.textColor.withValues(alpha: 0.7),
-                ),
+                style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.bold, color: widget.theme.textColor.withValues(alpha: 0.7)),
               ),
               Row(
                 children: [
@@ -5120,10 +4870,7 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                         : const Icon(Icons.save_alt_rounded, size: 20),
                     label: Text(
                       _isSaving ? 'Saving...' : 'Save Photo',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
+                      style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: widget.theme.accentColor,
@@ -5156,10 +4903,7 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
                         : const Icon(Icons.share_rounded, size: 20),
                     label: Text(
                       _isSharing ? 'Sharing...' : 'Share',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
+                      style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: widget.theme.accentColor,
@@ -5203,13 +4947,9 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: isActive
+          style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.bold, color: isActive
                 ? Colors.white
-                : widget.theme.textColor.withValues(alpha: 0.7),
-          ),
+                : widget.theme.textColor.withValues(alpha: 0.7)),
         ),
       ),
     );
@@ -5250,13 +4990,9 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
             const SizedBox(height: 6),
             Text(
               title,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: isSelected
+              style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected
                     ? widget.theme.accentColor
-                    : widget.theme.textColor,
-              ),
+                    : widget.theme.textColor),
             ),
           ],
         ),

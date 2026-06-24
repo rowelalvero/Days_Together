@@ -13,7 +13,7 @@ import 'package:days_together/screens/together/noteit_screen.dart';
 import 'package:days_together/screens/together/love_chat_screen.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class TogetherTab extends StatelessWidget {
   const TogetherTab({super.key});
@@ -34,7 +34,7 @@ class TogetherTab extends StatelessWidget {
           children: [
             Text(
               'Together',
-              style: GoogleFonts.spaceGrotesk(
+              style: AppTypography.pageTitle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -42,7 +42,7 @@ class TogetherTab extends StatelessWidget {
             ),
             Text(
               'Every moment shared is a memory.',
-              style: GoogleFonts.inter(
+              style: AppTypography.body(
                 fontSize: 14,
                 color: theme.textColor.withValues(alpha: 0.6),
                 fontWeight: FontWeight.w500,
@@ -158,7 +158,7 @@ class TogetherTab extends StatelessWidget {
                     context: context,
                     theme: theme,
                     emoji: '📱',
-                    title: 'Love Notes',
+                    title: 'Doodle Notes',
                     subtitle: 'Doodle & send widget notes.',
                     color: Colors.pinkAccent,
                     onTap: () => Navigator.push(
@@ -222,7 +222,7 @@ class TogetherTab extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.cardTitle(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -231,7 +231,7 @@ class TogetherTab extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.caption(
                     color: theme.textColor.withValues(alpha: 0.5),
                     fontSize: 11,
                     fontWeight: FontWeight.w500,

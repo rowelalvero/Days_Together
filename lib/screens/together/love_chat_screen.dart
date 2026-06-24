@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -160,7 +160,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
               children: [
                 Text(
                   partnerJoined ? partnerName : 'Waiting for Partner...',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.bodyLarge(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -179,7 +179,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                     const SizedBox(width: 6),
                     Text(
                       partnerJoined && rp.isPartnerOnline ? 'Active Now' : 'Offline',
-                      style: GoogleFonts.inter(
+                      style: AppTypography.bodyMedium(
                         fontSize: 11,
                         color: Colors.white60,
                       ),
@@ -286,7 +286,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                 children: [
                   Text(
                     isMe ? 'Me' : message.senderName,
-                    style: GoogleFonts.inter(
+                    style: AppTypography.bodyLarge(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Colors.white70,
@@ -295,7 +295,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                   const SizedBox(width: 6),
                   Text(
                     DateFormat('MM/dd h:mm a').format(message.createdAt),
-                    style: GoogleFonts.inter(
+                    style: AppTypography.caption(
                       fontSize: 9,
                       color: Colors.white30,
                     ),
@@ -330,7 +330,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
               ),
               child: Text(
                 message.content,
-                style: GoogleFonts.inter(
+                style: AppTypography.body(
                   color: Colors.white,
                   fontSize: 14,
                   height: 1.35,
@@ -348,7 +348,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Text(
                       DateFormat('h:mm a').format(message.createdAt),
-                      style: GoogleFonts.inter(
+                      style: AppTypography.caption(
                         fontSize: 9,
                         color: Colors.white38,
                       ),
@@ -373,7 +373,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: TextField(
                 controller: _messageController,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                style: AppTypography.body(color: Colors.white, fontSize: 14),
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
                   hintText: 'Say something loving...',
@@ -415,7 +415,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                 leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
                 title: Text(
                   'Delete Message',
-                  style: GoogleFonts.inter(color: Colors.redAccent),
+                  style: AppTypography.body(color: Colors.redAccent),
                 ),
                 onTap: () {
                   provider.deleteMessage(message.id);
@@ -442,12 +442,12 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
           const SizedBox(height: 16),
           Text(
             'No chat messages yet.',
-            style: GoogleFonts.inter(color: Colors.white30, fontSize: 13),
+            style: AppTypography.body(color: Colors.white30, fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(
             'Send a message to start chatting!',
-            style: GoogleFonts.inter(color: theme.accentColor.withValues(alpha: 0.4), fontSize: 12),
+            style: AppTypography.bodyMedium(color: theme.accentColor.withValues(alpha: 0.4), fontSize: 12),
           ),
         ],
       ),
