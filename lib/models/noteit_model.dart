@@ -77,4 +77,101 @@ class NoteitItem {
           : null,
     );
   }
+
+  static List<List<Offset>> deserializeStrokes(String? data) {
+    if (data == null || data.isEmpty) return [];
+    try {
+      return data.split('|').map((strokeStr) {
+        if (strokeStr.isEmpty) return <Offset>[];
+        return strokeStr.split(';').map((pointStr) {
+          final parts = pointStr.split(',');
+          return Offset(double.parse(parts[0]), double.parse(parts[1]));
+        }).toList();
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+}
+
+class ScaleDrawingPainter extends CustomPainter {
+  final List<List<Offset>> strokes;
+  final Color color;
+  final double strokeWidth;
+
+  ScaleDrawingPainter({
+    required this.strokes,
+    required this.color,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (strokes.isEmpty) return;
+
+    double minX = double.infinity;
+    double maxX = double.negativeInfinity;
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+    bool hasPoints = false;
+
+    for (final stroke in strokes) {
+      for (final p in stroke) {
+        if (p.dx < minX) minX = p.dx;
+        if (p.dx > maxX) maxX = p.dx;
+        if (p.dy < minY) minY = p.dy;
+        if (p.dy > maxY) maxY = p.dy;
+        hasPoints = true;
+      }
+    }
+
+    if (!hasPoints) return;
+
+    final w = maxX - minX;
+    final h = maxY - minY;
+    if (w == 0 || h == 0) return;
+
+    const padding = 8.0; // Reduced padding for small preview widgets
+    final targetW = size.width - 2 * padding;
+    final targetH = size.height - 2 * padding;
+
+    final scaleX = targetW / w;
+    final scaleY = targetH / h;
+    final scale = scaleX < scaleY ? scaleX : scaleY;
+
+    final targetCenterX = size.width / 2;
+    final targetCenterY = size.height / 2;
+    final sourceCenterX = minX + w / 2;
+    final sourceCenterY = minY + h / 2;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    for (final stroke in strokes) {
+      if (stroke.isEmpty) continue;
+      final firstPoint = stroke.first;
+      final startX = targetCenterX + (firstPoint.dx - sourceCenterX) * scale;
+      final startY = targetCenterY + (firstPoint.dy - sourceCenterY) * scale;
+
+      final path = Path()..moveTo(startX, startY);
+      for (int i = 1; i < stroke.length; i++) {
+        final p = stroke[i];
+        final px = targetCenterX + (p.dx - sourceCenterX) * scale;
+        final py = targetCenterY + (p.dy - sourceCenterY) * scale;
+        path.lineTo(px, py);
+      }
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant ScaleDrawingPainter oldDelegate) {
+    return oldDelegate.strokes != strokes ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth;
+  }
 }

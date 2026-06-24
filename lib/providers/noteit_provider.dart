@@ -137,7 +137,7 @@ class NoteitProvider with ChangeNotifier {
       NoteitItem(
         type: NoteitType.text,
         content:
-            'Hi there! Welcome to Love Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
+            'Hi there! Welcome to Doodle Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
         sender: 'partner',
         createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
         backgroundColor: const Color(0xFF9D4EDD),

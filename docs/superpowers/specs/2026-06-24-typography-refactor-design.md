@@ -3,6 +3,12 @@
 ## Goal Description
 Centralize and wire up all typography styles throughout the `ashwel_anniversary` application by introducing a shared `AppTypography` helper system. This eliminates hardcoded `GoogleFonts` calls in UI widgets, ensuring typographic consistency, custom styling overrides, and a single source of truth for font families, sizes, weights, and line heights.
 
+- [x] **Task 3: Refactor Dashboard Sub-Widgets Typography**
+  - [x] Step 1: Replace GoogleFonts calls in dashboard helper widgets
+  - [x] Step 2: Run static analysis
+  - [x] Step 3: Run unit tests
+  - [x] Step 4: Commit
+
 ---
 
 ## 1. AppTypography Architecture

@@ -12,6 +12,7 @@ class DailyMoodProvider with ChangeNotifier {
   static const String _questionKey = 'daily_sync_questions';
 
   List<DailyMood> _moods = [];
+  List<DailyMood> _partnerMoods = [];
   DailySyncQuestion? _todayQuestion;
   bool _isLoading = true;
   bool _disposed = false;
@@ -23,6 +24,7 @@ class DailyMoodProvider with ChangeNotifier {
   StreamSubscription? _questionSub;
 
   List<DailyMood> get moods => List.unmodifiable(_moods);
+  List<DailyMood> get partnerMoods => List.unmodifiable(_partnerMoods);
   DailySyncQuestion? get todayQuestion => _todayQuestion;
   bool get isLoading => _isLoading;
   bool get hasLoggedToday => _moods.any((m) => m.date == _todayString);
@@ -35,10 +37,51 @@ class DailyMoodProvider with ChangeNotifier {
     }
   }
 
+  DailyMood? get partnerTodayMood {
+    try {
+      if (_partnerMoods.isEmpty) {
+        // Return simulated partner mood if none logged
+        return DailyMood(
+          userId: 'partner_simulator',
+          date: _todayString,
+          moodScore: 8,
+          note: 'Feeling great!',
+        );
+      }
+      return _partnerMoods.firstWhere((m) => m.date == _todayString);
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<DailyMood> get recentMoods {
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
     final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
     return _moods.where((m) => m.date.compareTo(cutoffStr) >= 0).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
+  List<DailyMood> get partnerRecentMoods {
+    if (_partnerMoods.isEmpty) {
+      // Return simulated partner moods for comparison if empty
+      final list = <DailyMood>[];
+      final now = DateTime.now();
+      for (int i = 6; i >= 0; i--) {
+        final date = now.subtract(Duration(days: i));
+        final dateStr = DateFormat('yyyy-MM-dd').format(date);
+        final score = 6 + ((i * 3) % 4);
+        list.add(DailyMood(
+          id: 'simulated_partner_$dateStr',
+          userId: 'partner_simulator',
+          date: dateStr,
+          moodScore: score,
+        ));
+      }
+      return list;
+    }
+    final cutoff = DateTime.now().subtract(const Duration(days: 30));
+    final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
+    return _partnerMoods.where((m) => m.date.compareTo(cutoffStr) >= 0).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
 
@@ -109,23 +152,29 @@ class DailyMoodProvider with ChangeNotifier {
     _moodsSub = Supabase.instance.client
         .from('moods')
         .stream(primaryKey: ['id'])
-        .eq('user_id', _userId!)
+        .eq('couple_id', _coupleId!)
         .listen((dataList) {
-      _moods = dataList.map((data) {
+      final allMoods = dataList.map((data) {
         return DailyMood(
           id: data['id'] as String,
+          userId: data['user_id'] as String?,
           date: data['date'] ?? '',
           moodScore: data['mood_score'] ?? 5,
           note: data['note'] as String?,
           createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
         );
       }).toList();
+
+      _moods = allMoods.where((m) => m.userId == _userId).toList();
+      _partnerMoods = allMoods.where((m) => m.userId != _userId).toList();
+
       _isLoading = false;
       if (!_disposed) notifyListeners();
       _persistLocalMoodsOnly();
     }, onError: (err) {
       debugPrint('DailyMoodProvider: moods Supabase error: $err');
       _loadLocalMoods();
+      _loadLocalPartnerMoods();
     });
 
     _questionSub = Supabase.instance.client
@@ -160,10 +209,13 @@ class DailyMoodProvider with ChangeNotifier {
     });
   }
 
+  static const String _partnerMoodKey = 'partner_daily_moods';
+
   Future<void> _loadData() async {
     _isLoading = true;
     if (!_disposed) notifyListeners();
     await _loadLocalMoods();
+    await _loadLocalPartnerMoods();
     await _loadLocalQuestion();
     _isLoading = false;
     if (!_disposed) notifyListeners();
@@ -181,6 +233,21 @@ class DailyMoodProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('DailyMoodProvider._loadLocalMoods failed: $e');
+    }
+  }
+
+  Future<void> _loadLocalPartnerMoods() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final moodJson = prefs.getString(_partnerMoodKey);
+      if (moodJson != null) {
+        final jsonList = jsonDecode(moodJson) as List;
+        _partnerMoods = jsonList.map((j) => DailyMood.fromJson(j)).toList();
+      } else {
+        _partnerMoods = [];
+      }
+    } catch (e) {
+      debugPrint('DailyMoodProvider._loadLocalPartnerMoods failed: $e');
     }
   }
 
@@ -213,7 +280,7 @@ class DailyMoodProvider with ChangeNotifier {
   }
 
   Future<void> logMood(int score, {String? note}) async {
-    final nextMood = DailyMood(date: _todayString, moodScore: score, note: note);
+    final nextMood = DailyMood(userId: _userId, date: _todayString, moodScore: score, note: note);
 
     if (_coupleId != null && _userId != null) {
       try {
@@ -332,6 +399,9 @@ class DailyMoodProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final jsonList = _moods.map((m) => m.toJson()).toList();
       await prefs.setString(_moodKey, jsonEncode(jsonList));
+
+      final partnerJsonList = _partnerMoods.map((m) => m.toJson()).toList();
+      await prefs.setString(_partnerMoodKey, jsonEncode(partnerJsonList));
     } catch (e, st) {
       debugPrint('DailyMoodProvider._persistLocalMoodsOnly failed: $e\n$st');
     }

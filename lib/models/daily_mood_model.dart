@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 
 class DailyMood {
   String id;
+  String? userId;
   String date; // YYYY-MM-DD format for easy querying
   int moodScore; // 1 to 10
   String? note;
@@ -9,6 +10,7 @@ class DailyMood {
 
   DailyMood({
     String? id,
+    this.userId,
     required this.date,
     required this.moodScore,
     this.note,
@@ -18,6 +20,7 @@ class DailyMood {
 
   DailyMood copyWith({
     String? id,
+    String? userId,
     String? date,
     int? moodScore,
     String? note,
@@ -25,6 +28,7 @@ class DailyMood {
   }) {
     return DailyMood(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       date: date ?? this.date,
       moodScore: moodScore ?? this.moodScore,
       note: note ?? this.note,
@@ -34,6 +38,7 @@ class DailyMood {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'userId': userId,
         'date': date,
         'moodScore': moodScore,
         'note': note,
@@ -43,6 +48,7 @@ class DailyMood {
   factory DailyMood.fromJson(Map<String, dynamic> json) {
     return DailyMood(
       id: json['id'] as String?,
+      userId: json['userId'] as String?,
       date: json['date'] as String? ?? '',
       moodScore: json['moodScore'] as int? ?? 5,
       note: json['note'] as String?,
