@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
@@ -68,20 +68,13 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             const SizedBox(height: 16),
             Text(
               'No memories captured yet',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white70,
-              ),
+              style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70),
             ),
             const SizedBox(height: 8),
             Text(
               'Start documenting your milestones and daily stories.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.white38,
-              ),
+              style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white38),
             ),
           ],
         ),
@@ -208,7 +201,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                   Expanded(
                     child: Text(
                       item.location!,
-                      style: GoogleFonts.inter(fontSize: 11, color: Colors.white70),
+                      style: AppTypography.caption(fontSize: 11, color: Colors.white70),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -219,21 +212,14 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             const SizedBox(height: 8),
             Text(
               item.title,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(
               DateFormat('MMMM dd, yyyy').format(item.date),
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: Colors.white54,
-              ),
+              style: AppTypography.caption(fontSize: 10, color: Colors.white54),
             ),
           ],
         ),
@@ -255,11 +241,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
               Expanded(
                 child: Text(
                   item.title,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -279,12 +261,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
           Expanded(
             child: Text(
               item.description,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-                color: Colors.white70,
-                height: 1.4,
-              ),
+              style: AppTypography.sectionHeader(fontSize: 12, color: Colors.white70, height: 1.4).copyWith(fontStyle: FontStyle.italic),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -295,10 +272,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             children: [
               Text(
                 DateFormat('MMMM dd, yyyy').format(item.date),
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: Colors.white38,
-                ),
+                style: AppTypography.caption(fontSize: 10, color: Colors.white38),
               ),
               if (item.location != null && item.location!.isNotEmpty)
                 Row(
@@ -308,7 +282,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                     const SizedBox(width: 3),
                     Text(
                       item.location!,
-                      style: GoogleFonts.inter(fontSize: 10, color: Colors.white38),
+                      style: AppTypography.caption(fontSize: 10, color: Colors.white38),
                     ),
                   ],
                 ),

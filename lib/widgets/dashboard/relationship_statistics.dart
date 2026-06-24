@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
@@ -95,21 +95,11 @@ class RelationshipStatistics extends StatelessWidget {
                   children: [
                     Text(
                       'Synced Relationship',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
+                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, height: 1.2),
                     ),
                     Text(
                       'Statistics',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        height: 1.2,
-                      ),
+                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, height: 1.2),
                     ),
                   ],
                 ),
@@ -119,21 +109,12 @@ class RelationshipStatistics extends StatelessWidget {
                 children: [
                   Text(
                     'METRICS SYNC',
-                    style: GoogleFonts.inter(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white38,
-                      letterSpacing: 1.2,
-                    ),
+                    style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white38).copyWith(letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '100%',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white38,
-                    ),
+                    style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
                   ),
                 ],
               ),
@@ -168,20 +149,12 @@ class RelationshipStatistics extends StatelessWidget {
                   children: [
                     Text(
                       item.value,
-                      style: GoogleFonts.inter(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: item.color,
-                      ),
+                      style: AppTypography.caption(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       item.label,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white54,
-                      ),
+                      style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white54),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

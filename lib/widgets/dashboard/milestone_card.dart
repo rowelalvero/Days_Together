@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -21,13 +21,20 @@ class MilestoneCard extends StatefulWidget {
 class _MilestoneCardState extends State<MilestoneCard> {
   int _selectedMilestoneIndex = 0;
 
-  int _parseTargetDays(String title) {
-    if (title.contains('1st Anniversary')) return 365;
-    if (title.contains('2nd Anniversary')) return 730;
-    if (title.contains('3rd Anniversary')) return 1095;
-    if (title.contains('4th Anniversary')) return 1461;
-    if (title.contains('5th Anniversary')) return 1826;
-    
+  int _getTargetDaysForMilestone(MilestoneInfo milestone, DateTime? startDate) {
+    final title = milestone.title;
+    if (title.contains('Anniversary') && startDate != null) {
+      final numMatch = RegExp(r'\d+').firstMatch(title);
+      if (numMatch != null) {
+        final year = int.tryParse(numMatch.group(0)!) ?? 1;
+        final anniversaryDate = DateTime(
+          startDate.year + year,
+          startDate.month,
+          startDate.day,
+        );
+        return anniversaryDate.difference(startDate).inDays;
+      }
+    }
     final numMatch = RegExp(r'\d+').firstMatch(title);
     if (numMatch != null) {
       return int.tryParse(numMatch.group(0)!) ?? 100;
@@ -38,8 +45,10 @@ class _MilestoneCardState extends State<MilestoneCard> {
   @override
   Widget build(BuildContext context) {
     final rawMilestones = widget.relationshipProvider.nextMilestones;
-    
-    // Ensure we always have milestones to show, even if mocked
+    final startDate = widget.relationshipProvider.startDate;
+    final daysTogether = widget.relationshipProvider.totalDays;
+
+    // Ensure we always have milestones to show, fallback to mock data if empty
     final milestones = rawMilestones.isNotEmpty
         ? rawMilestones
         : [
@@ -48,23 +57,31 @@ class _MilestoneCardState extends State<MilestoneCard> {
             const MilestoneInfo(title: '5th Anniversary', daysUntil: 591, progress: 0.70),
           ];
 
-    // Safely clamp selection index if list changes size
+    // Safely clamp selection index if the milestones list size changes
     final selectedIndex = _selectedMilestoneIndex.clamp(0, milestones.length - 1);
     final milestone = milestones[selectedIndex];
 
-    final targetDays = _parseTargetDays(milestone.title);
+    final targetDays = _getTargetDaysForMilestone(milestone, startDate);
     final isAnniversary = milestone.title.contains('Anniversary');
-    
+
     final milestoneHeadingText = isAnniversary
         ? milestone.title
         : '${NumberFormat('#,###').format(targetDays)} Days Together';
 
-    // Show up to 3 segments
+    // Show up to 3 segments in the selector capsule
     final visibleSegmentCount = milestones.length < 3 ? milestones.length : 3;
 
+    // Calculations based on day 0 to the milestone target days
+    final isCompleted = daysTogether >= targetDays;
+    final progress = targetDays > 0 
+        ? (daysTogether / targetDays).clamp(0.0, 1.0) 
+        : 0.0;
+    final percentComplete = (progress * 100).round();
+    final daysRemaining = isCompleted ? 0 : targetDays - daysTogether;
+
     return GlassContainer(
-      padding: const EdgeInsets.all(20),
-      borderRadius: 28,
+      padding: const EdgeInsets.all(24),
+      borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -75,19 +92,32 @@ class _MilestoneCardState extends State<MilestoneCard> {
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.explore_rounded,
-                    color: Color(0xFF10B981), // Green Accent
-                    size: 20,
+                  // Custom compass logo: green circle with rotated navigation arrow
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF10B981), // Emerald green
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Transform.rotate(
+                        angle: 0.785398, // Rotate 45 degrees clockwise (pi/4) to point northeast
+                        child: const Icon(
+                          Icons.navigation_rounded,
+                          color: Color(0xFF10B981),
+                          size: 10,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Next Milestone',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+                    style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.95)),
                   ),
                 ],
               ),
@@ -95,10 +125,10 @@ class _MilestoneCardState extends State<MilestoneCard> {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.25),
+                  color: Colors.white.withValues(alpha: 0.05), // bg-white/5
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Colors.white.withValues(alpha: 0.05), // border-white/5
                     width: 1,
                   ),
                 ),
@@ -106,7 +136,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(visibleSegmentCount, (index) {
                     final item = milestones[index];
-                    final target = _parseTargetDays(item.title);
+                    final target = _getTargetDaysForMilestone(item, startDate);
                     final isSelected = selectedIndex == index;
 
                     return GestureDetector(
@@ -115,22 +145,19 @@ class _MilestoneCardState extends State<MilestoneCard> {
                           _selectedMilestoneIndex = index;
                         });
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                      child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.white.withValues(alpha: 0.08)
+                              ? Colors.white.withValues(alpha: 0.1) // bg-white/10
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(9),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '$target',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : Colors.white30,
-                          ),
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: isSelected 
+                                ? Colors.white 
+                                : Colors.white.withValues(alpha: 0.3)),
                         ),
                       ),
                     );
@@ -151,64 +178,64 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   children: [
                     Text(
                       milestoneHeadingText,
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '${milestone.daysUntil}',
-                          style: GoogleFonts.inter(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                    if (isCompleted)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFF10B981),
+                            size: 16,
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'days remain',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: Colors.white38,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(width: 6),
+                          Text(
+                            'Milestone Achieved! 🎉',
+                            style: AppTypography.bodyMono(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      )
+                    else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            NumberFormat('#,###').format(daysRemaining),
+                            style: AppTypography.sectionHeader(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'days remain',
+                            style: AppTypography.bodyMono(fontSize: 12, color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 4),
                     Text(
                       'Target: ${NumberFormat('#,###').format(targetDays)} days total',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.white30,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.captionMono(fontSize: 10, color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              // Progress Dial
+              // Progress Ring Stack
               Stack(
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     child: CircularProgressIndicator(
-                      value: milestone.progress,
-                      strokeWidth: 6,
-                      backgroundColor: Colors.white.withValues(alpha: 0.05),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFFEC4899), // Pink Accent
+                      value: progress,
+                      strokeWidth: 7,
+                      backgroundColor: Colors.white.withValues(alpha: 0.04),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E), // Rose Accent
                       ),
                     ),
                   ),
@@ -216,21 +243,12 @@ class _MilestoneCardState extends State<MilestoneCard> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${(milestone.progress * 100).toStringAsFixed(0)}%',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFFEC4899),
-                        ),
+                        '$percentComplete%',
+                        style: AppTypography.bodyMono(fontSize: 15, fontWeight: FontWeight.w800, color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
                       ),
                       Text(
                         'DONE',
-                        style: GoogleFonts.inter(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white30,
-                          letterSpacing: 0.5,
-                        ),
+                        style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.3)).copyWith(letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -238,23 +256,25 @@ class _MilestoneCardState extends State<MilestoneCard> {
               ),
             ],
           ),
-          const Divider(color: Colors.white10, height: 28),
+          const Divider(
+            color: Colors.white12,
+            height: 32,
+            thickness: 1,
+          ),
           // Sparkle Footer Message
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.auto_awesome,
-                color: Color(0xFFEC4899), // Pink Sparkle
-                size: 14,
+                color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E), // Pink/Green Sparkle
+                size: 13,
               ),
               const SizedBox(width: 8),
               Text(
-                'You are ${(milestone.progress * 100).toStringAsFixed(0)}% of the way there',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: Colors.white54,
-                  fontWeight: FontWeight.w500,
-                ),
+                isCompleted 
+                    ? 'A grand celebration awaits!' 
+                    : 'You are $percentComplete% of the way there',
+                style: AppTypography.button(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
               ),
             ],
           ),

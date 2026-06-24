@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
@@ -68,7 +68,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
       if (isOnline)
         '⏰ $partnerName is active right now. Send a love touch! 💌'
       else
-        '💡 Tip: Check out Love Notes or Topic Cards for a late-night chat.',
+        '💡 Tip: Check out Doodle Notes or Topic Cards for a late-night chat.',
     ];
   }
 
@@ -97,12 +97,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
               children: [
                 Text(
                   'RELATIONSHIP INSIGHTS',
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.pinkAccent,
-                    letterSpacing: 1,
-                  ),
+                  style: AppTypography.caption(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.pinkAccent).copyWith(letterSpacing: 1),
                 ),
                 const SizedBox(height: 2),
                 AnimatedSwitcher(
@@ -112,11 +107,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
                     key: ValueKey(_insights[_index]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
+                    style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.9)),
                   ),
                 ),
               ],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
@@ -115,22 +115,13 @@ class RecentActivityFeed extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Recent Activities',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+                    style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                   ),
                 ],
               ),
               Text(
                 'LIVE LOGS',
-                style: GoogleFonts.inter(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white38,
-                  letterSpacing: 1.2,
-                ),
+                style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white38).copyWith(letterSpacing: 1.2),
               ),
             ],
           ),
@@ -204,11 +195,7 @@ class RecentActivityFeed extends StatelessWidget {
                               child: Center(
                                 child: Text(
                                   log.initials,
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
+                                  style: AppTypography.caption(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
                             ),
@@ -224,29 +211,18 @@ class RecentActivityFeed extends StatelessWidget {
                                     children: [
                                       Text(
                                         log.title,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
+                                        style: AppTypography.caption(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
                                       ),
                                       Text(
                                         _formatRelativeTime(log.timestamp),
-                                        style: GoogleFonts.inter(
-                                          fontSize: 9,
-                                          color: Colors.white30,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                        style: AppTypography.caption(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w500),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     log.subtitle,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      color: Colors.white54,
-                                    ),
+                                    style: AppTypography.caption(fontSize: 11, color: Colors.white54),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -268,19 +244,11 @@ class RecentActivityFeed extends StatelessWidget {
             children: [
               Text(
                 'Shared Co-Lobby Stream',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white30,
-                ),
+                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white30),
               ),
               Text(
                 '${allLogs.length} total',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white30,
-                ),
+                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white30),
               ),
             ],
           ),

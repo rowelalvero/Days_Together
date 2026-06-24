@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -119,21 +119,14 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                   children: [
                     Text(
                       rp.partnerName ?? 'Waiting for partner...',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       isOnline ? 'Online Now' : 'Offline',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.white54,
-                      ),
+                      style: AppTypography.caption(fontSize: 11, color: Colors.white54),
                     ),
                   ],
                 ),
@@ -147,7 +140,7 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                 },
                 child: Text(
                   'Demo',
-                  style: GoogleFonts.inter(fontSize: 10, color: theme.accentColor),
+                  style: AppTypography.caption(fontSize: 10, color: theme.accentColor),
                 ),
               ),
             ],
@@ -155,11 +148,7 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
           const SizedBox(height: 12),
           Text(
             customStatus.isEmpty ? 'No status set' : '"$customStatus"',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.white70,
-              fontStyle: FontStyle.italic,
-            ),
+            style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white70).copyWith(fontStyle: FontStyle.italic),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -169,7 +158,7 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
             children: [
               Text(
                 'REALTIME SYNC',
-                style: GoogleFonts.inter(fontSize: 9, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                style: AppTypography.caption(fontSize: 9, color: Colors.greenAccent, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -185,7 +174,7 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                   icon: const Icon(Icons.favorite, color: Colors.pinkAccent, size: 14),
                   label: Text(
                     _isTapped ? 'Tapped!' : 'Love Tap',
-                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold),
+                    style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

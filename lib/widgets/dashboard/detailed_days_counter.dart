@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -57,12 +57,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
               const SizedBox(width: 6),
               Text(
                 'LOVED WITHOUT LIMITS SINCE ${startDate.year}',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.pinkAccent,
-                  letterSpacing: 1.5,
-                ),
+                style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.pinkAccent).copyWith(letterSpacing: 1.5),
               ),
             ],
           ),
@@ -75,11 +70,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
             children: [
               Text(
                 NumberFormat('#,###').format(totalDays),
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 54,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
+                style: AppTypography.pageTitle(fontSize: 54, fontWeight: FontWeight.w800, color: Colors.white),
               ),
               const SizedBox(width: 8),
               ShaderMask(
@@ -88,11 +79,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                 ).createShader(bounds),
                 child: Text(
                   'Days',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: AppTypography.pageTitle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ],
@@ -129,10 +116,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
               const SizedBox(width: 6),
               Text(
                 'Co-Synched Clock live counter updating frame state...',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: Colors.white54,
-                ),
+                style: AppTypography.caption(fontSize: 10, color: Colors.white54),
               ),
             ],
           ),
@@ -148,21 +132,12 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
         children: [
           Text(
             val.toString(),
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
+            style: AppTypography.caption(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
           ),
           const SizedBox(height: 6),
           Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: Colors.white30,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
+            style: AppTypography.caption(fontSize: 10, color: Colors.white30, fontWeight: FontWeight.w700).copyWith(letterSpacing: 0.5),
           ),
         ],
       ),
