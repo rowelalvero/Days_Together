@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/gift_reminder_provider.dart';
 import 'package:days_together/models/gift_reminder_model.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class GiftRemindersScreen extends StatefulWidget {
   const GiftRemindersScreen({super.key});
@@ -68,7 +69,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white70),
+                          icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -76,10 +77,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _titleController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: theme.textColor),
                       decoration: InputDecoration(
                         hintText: 'e.g. Partner\'s Birthday, Valentine\'s Day',
-                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                        hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                         filled: true,
                         fillColor: Colors.white.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
@@ -148,7 +149,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const Icon(Icons.calendar_today_rounded, size: 18, color: Colors.white70),
+                                  Icon(Icons.calendar_today_rounded, size: 18, color: theme.textColor.withValues(alpha: 0.7)),
                                 ],
                               ),
                             ),
@@ -206,10 +207,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                   if (_selectedTime != null)
                                     GestureDetector(
                                       onTap: () => setModalState(() => _selectedTime = null),
-                                      child: const Icon(Icons.clear, size: 18, color: Colors.white38),
+                                      child: Icon(Icons.clear, size: 18, color: theme.textColor.withValues(alpha: 0.38)),
                                     )
                                   else
-                                    const Icon(Icons.access_time_rounded, size: 18, color: Colors.white70),
+                                    Icon(Icons.access_time_rounded, size: 18, color: theme.textColor.withValues(alpha: 0.7)),
                                 ],
                               ),
                             ),
@@ -309,36 +310,36 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
   }
 
   Widget _buildAppBar(BuildContext context) {
+    final theme = context.watch<ThemeProvider>().currentLoveTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
             onPressed: () => Navigator.pop(context),
           ),
-          const SizedBox(width: 8),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Gift Reminders',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gift Reminders',
+                  style: AppTypography.cormorant(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
-              ),
-              Text(
-                'Never forget a date. Prepare special surprises.',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
-                  fontSize: 12,
-                  color: Colors.white70,
+                Text(
+                  'Never forget a date. Prepare special surprises.',
+                  style: AppTypography.spectral(
+                    fontSize: 12,
+                    color: theme.textColor.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -463,25 +464,25 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.white38),
+                      icon: Icon(Icons.edit_outlined, color: theme.textColor.withValues(alpha: 0.38)),
                       onPressed: () => _showReminderSheet(context, existingReminder: reminder),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.white38),
+                      icon: Icon(Icons.delete_outline_rounded, color: theme.textColor.withValues(alpha: 0.38)),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: theme.primaryColor,
-                            title: const Text('Delete Reminder?', style: TextStyle(color: Colors.white)),
-                            content: const Text(
+                            title: Text('Delete Reminder?', style: TextStyle(color: theme.textColor)),
+                            content: Text(
                               'Are you sure you want to delete this reminder?',
-                              style: TextStyle(color: Colors.white70),
+                              style: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                                child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7))),
                               ),
                               TextButton(
                                 onPressed: () {

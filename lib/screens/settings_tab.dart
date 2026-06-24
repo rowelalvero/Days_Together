@@ -55,7 +55,7 @@ class SettingsTab extends StatelessWidget {
                 style: AppTypography.sectionHeader(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.textColor,
                 ),
               ),
               const SizedBox(height: 32),
@@ -77,7 +77,7 @@ class SettingsTab extends StatelessWidget {
                       child: Text(
                         'Discard Changes',
                         style: AppTypography.body(
-                          color: Colors.white54,
+                          color: theme.textColor.withValues(alpha: 0.54),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -135,7 +135,7 @@ class SettingsTab extends StatelessWidget {
                         : null))
                 : null,
             child: path == null || (!path.startsWith('http') && !File(path).existsSync())
-                ? const Icon(Icons.person, size: 40, color: Colors.white30)
+                ? Icon(Icons.person, size: 40, color: theme.textColor.withValues(alpha: 0.3))
                 : null,
           ),
           Positioned(
@@ -159,10 +159,10 @@ class SettingsTab extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: theme.textColor),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
+          labelStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3), fontSize: 12),
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
         ),
@@ -184,7 +184,7 @@ class SettingsTab extends StatelessWidget {
             Text(
               'Log Out',
               style: AppTypography.cardTitle(
-                color: Colors.white,
+                color: theme.textColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -193,7 +193,7 @@ class SettingsTab extends StatelessWidget {
         content: Text(
           'This will erase all your local data including memories, settings, and theme preferences.\n\nAre you sure?',
           style: AppTypography.body(
-            color: Colors.white70,
+            color: theme.textColor.withValues(alpha: 0.7),
             fontSize: 14,
             height: 1.5,
           ),
@@ -204,7 +204,7 @@ class SettingsTab extends StatelessWidget {
             child: Text(
               'Keep Logged In',
               style: AppTypography.body(
-                color: Colors.white54,
+                color: theme.textColor.withValues(alpha: 0.54),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -261,11 +261,12 @@ class SettingsTab extends StatelessWidget {
              const SizedBox(height: 32),
             _buildLiquidProfileCard(rp, theme, context),
             const SizedBox(height: 40),
-            _buildSectionHeader('Experience'),
+            _buildSectionHeader('Experience', theme),
             _buildModernTile(
               icon: Icons.palette_outlined,
               title: 'App Theme',
               subtitle: theme.name,
+              theme: theme,
               onTap: () {
                 Navigator.push(
                   context,
@@ -274,11 +275,12 @@ class SettingsTab extends StatelessWidget {
               },
             ),
              const SizedBox(height: 32),
-            _buildSectionHeader('Connection'),
+            _buildSectionHeader('Connection', theme),
             _buildModernTile(
               icon: Icons.favorite_outline_rounded,
               title: 'Relationship Profile',
               subtitle: rp.partnerId != null ? 'Connected with partner' : 'Waiting for connection',
+              theme: theme,
               onTap: () {
                 Navigator.push(
                   context,
@@ -293,6 +295,7 @@ class SettingsTab extends StatelessWidget {
               icon: Icons.logout_rounded,
               title: 'Log Out',
               subtitle: 'Sign out of this session',
+              theme: theme,
               onTap: () => _showLogoutConfirmation(context, rp),
             ),
              const SizedBox(height: 48),
@@ -324,11 +327,12 @@ class SettingsTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMiniAvatar(provider.yourAvatarPath, provider.yourName ?? 'You'),
+              _buildMiniAvatar(provider.yourAvatarPath, provider.yourName ?? 'You', theme),
               Icon(Icons.favorite_rounded, color: theme.accentColor, size: 28),
               _buildMiniAvatar(
                 partnerJoined ? provider.partnerAvatarPath : null,
                 partnerJoined ? (provider.partnerName ?? 'Partner') : 'Waiting...',
+                theme,
               ),
             ],
           ),
@@ -338,14 +342,14 @@ class SettingsTab extends StatelessWidget {
             child: OutlinedButton(
               onPressed: () => _editProfileDialog(context, provider, theme),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                side: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: Text(
                 'Edit Profiles',
                 style: AppTypography.caption(
-                  color: Colors.white,
+                  color: theme.textColor,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -357,7 +361,7 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMiniAvatar(String? path, String name) {
+  Widget _buildMiniAvatar(String? path, String name, dynamic theme) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -374,7 +378,7 @@ class SettingsTab extends StatelessWidget {
                           : null))
                   : null,
               child: path == null || (!path.startsWith('http') && !File(path).existsSync())
-                  ? const Icon(Icons.person, color: Colors.white24)
+                  ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.24))
                   : null,
             ),
           ),
@@ -385,7 +389,7 @@ class SettingsTab extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.body(
-              color: Colors.white,
+              color: theme.textColor,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -395,13 +399,13 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-   Widget _buildSectionHeader(String title) {
+   Widget _buildSectionHeader(String title, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 16),
       child: Text(
         title.toUpperCase(),
         style: AppTypography.caption(
-          color: Colors.white.withValues(alpha: 0.3),
+          color: theme.textColor.withValues(alpha: 0.3),
           fontSize: 11,
           fontWeight: FontWeight.w900,
         ).copyWith(letterSpacing: 2),
@@ -413,6 +417,7 @@ class SettingsTab extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    required dynamic theme,
     required VoidCallback onTap,
   }) {
     return GlassContainer(
@@ -424,11 +429,11 @@ class SettingsTab extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: Colors.white70, size: 20),
+          child: Icon(icon, color: theme.textColor.withValues(alpha: 0.7), size: 20),
         ),
-        title: Text(title, style: AppTypography.body(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
-        subtitle: Text(subtitle, style: AppTypography.caption(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 20),
+        title: Text(title, style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.w600, fontSize: 15)),
+        subtitle: Text(subtitle, style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.4), fontSize: 12)),
+        trailing: Icon(Icons.chevron_right_rounded, color: theme.textColor.withValues(alpha: 0.24), size: 20),
       ),
     );
   }
@@ -451,8 +456,8 @@ class SettingsTab extends StatelessWidget {
           decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
           child: const Icon(Icons.star_rounded, color: Colors.white, size: 20),
         ),
-        title: Text('Premium Studio', style: AppTypography.body(color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Text('Unlock exclusive liquid glass themes', style: AppTypography.caption(color: Colors.white54, fontSize: 11)),
+        title: Text('Premium Studio', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
+        subtitle: Text('Unlock exclusive liquid glass themes', style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.54), fontSize: 11)),
         trailing: Switch.adaptive(
           value: provider.isPremium,
           onChanged: (val) => provider.setPremium(val),

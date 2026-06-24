@@ -6,6 +6,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/services/ai_service.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class AILoveLetterScreen extends StatefulWidget {
   const AILoveLetterScreen({super.key});
@@ -73,15 +74,15 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: theme.primaryColor,
-          title: const Text('Vault Locked', style: TextStyle(color: Colors.white)),
-          content: const Text(
+          title: Text('Vault Locked', style: AppTypography.cardTitle(color: theme.textColor)),
+          content: Text(
             'You need to set up your Vault PIN under the "Together" tab first before you can save letters here.',
-            style: TextStyle(color: Colors.white70),
+            style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('OK', style: TextStyle(color: theme.accentColor)),
+              child: Text('OK', style: AppTypography.button(color: theme.accentColor)),
             ),
           ],
         ),
@@ -97,24 +98,24 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         builder: (dialogContext) {
           return AlertDialog(
             backgroundColor: theme.primaryColor,
-            title: const Text('Enter Vault PIN', style: TextStyle(color: Colors.white)),
+            title: Text('Enter Vault PIN', style: AppTypography.cardTitle(color: theme.textColor)),
             content: TextField(
               controller: pinController,
               keyboardType: TextInputType.number,
               obscureText: true,
               maxLength: 4,
-              style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 16),
+              style: TextStyle(color: theme.textColor, fontSize: 24, letterSpacing: 16),
               textAlign: TextAlign.center,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 counterText: '',
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white38)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.pinkAccent)),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.38))),
+                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.accentColor)),
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
               ),
               TextButton(
                 onPressed: () async {
@@ -139,7 +140,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
                     );
                   }
                 },
-                child: Text('Unlock & Save', style: TextStyle(color: theme.accentColor)),
+                child: Text('Unlock & Save', style: AppTypography.button(color: theme.accentColor)),
               ),
             ],
           );
@@ -178,7 +179,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildAppBar(context),
+                  _buildAppBar(context, theme),
                   const SizedBox(height: 12),
                   if (memories.isEmpty)
                     _buildNoMemoriesState(theme)
@@ -201,37 +202,37 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'AI Love Letter',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI Love Letter',
+                  style: AppTypography.cormorant(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
-              ),
-              Text(
-                'Transform your shared memories into poetry.',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
-                  fontSize: 12,
-                  color: Colors.white70,
+                Text(
+                  'Transform your shared memories into poetry.',
+                  style: AppTypography.spectral(
+                    fontSize: 12,
+                    color: theme.textColor.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -245,17 +246,17 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         child: Column(
           children: [
             const SizedBox(height: 40),
-            Icon(Icons.palette_outlined, size: 64, color: Colors.white30),
+            Icon(Icons.palette_outlined, size: 64, color: theme.textColor.withValues(alpha: 0.3)),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'No memories found!',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: AppTypography.cardTitle(color: theme.textColor),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'You need to log at least one memory in the Timeline tab to generate a love letter.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 14),
+              style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.54)),
             ),
           ],
         ),
@@ -272,16 +273,16 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedMemoryId,
           dropdownColor: theme.primaryColor,
           isExpanded: true,
-          icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+          icon: Icon(Icons.arrow_drop_down, color: theme.textColor),
           items: memories.map((m) {
             return DropdownMenuItem<String>(
               value: m.id,
@@ -292,7 +293,8 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
                   Expanded(
                     child: Text(
                       m.title,
-                      style: const TextStyle(color: Colors.white, overflow: TextOverflow.ellipsis),
+                      style: AppTypography.body(color: theme.textColor),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -318,9 +320,9 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         child: ElevatedButton.icon(
           onPressed: () => _generateLetter(theme),
           icon: const Icon(Icons.auto_awesome, color: Colors.white),
-          label: const Text(
+          label: Text(
             'Write Love Letter',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: AppTypography.button(color: Colors.white, fontSize: 16),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: theme.accentColor,
@@ -340,15 +342,14 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       child: Center(
         child: Column(
           children: [
-            const CircularProgressIndicator(color: Colors.pinkAccent),
+            CircularProgressIndicator(color: theme.accentColor),
             const SizedBox(height: 24),
             Text(
               '✍️ Writing your love story...',
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: Colors.white.withValues(alpha: 0.7),
+              style: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.7),
                 fontSize: 16,
-              ),
+              ).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
         ),
@@ -361,9 +362,9 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +373,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                icon: const Icon(Icons.copy_rounded, color: Colors.white70),
+                icon: Icon(Icons.copy_rounded, color: theme.textColor.withValues(alpha: 0.7)),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: _generatedLetter!));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -381,13 +382,13 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.share_rounded, color: Colors.white70),
+                icon: Icon(Icons.share_rounded, color: theme.textColor.withValues(alpha: 0.7)),
                 onPressed: () {
                   Share.share(_generatedLetter!);
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.lock_outline_rounded, color: Colors.white70),
+                icon: Icon(Icons.lock_outline_rounded, color: theme.textColor.withValues(alpha: 0.7)),
                 onPressed: () => _saveToVault(context, theme),
               ),
             ],
@@ -395,11 +396,10 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
           const SizedBox(height: 12),
           Text(
             _generatedLetter!,
-            style: const TextStyle(
-              fontFamily: 'Lora',
+            style: AppTypography.lora(
               fontSize: 16,
               height: 1.6,
-              color: Colors.white70,
+              color: theme.textColor.withValues(alpha: 0.7),
             ),
           ),
         ],

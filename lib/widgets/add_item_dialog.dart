@@ -95,11 +95,11 @@ class _AddItemDialogState extends State<AddItemDialog> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+            icon: Icon(Icons.close_rounded, color: theme.textColor, size: 28),
           ),
           Text(
             'New Memory',
-            style: AppTypography.pageTitle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            style: AppTypography.pageTitle(color: theme.textColor, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveItem,
@@ -163,7 +163,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
               children: [
                 Text(
                   _titleController.text.isEmpty ? 'Title' : _titleController.text,
-                  style: AppTypography.bodyLarge(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 14),
                   maxLines: 1,
                 ),
                 const SizedBox(height: 4),
@@ -188,7 +188,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
         children: [
           Text(
             _titleController.text.isEmpty ? 'Title' : _titleController.text,
-            style: AppTypography.bodyLarge(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 12),
           Text(
@@ -205,7 +205,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('WHEN DID IT HAPPEN?', style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
+        Text('WHEN DID IT HAPPEN?', style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -241,7 +241,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                       const SizedBox(width: 12),
                       Text(
                         DateFormat('MMM dd, yyyy').format(_selectedDate),
-                        style: AppTypography.body(color: Colors.white, fontSize: 13),
+                        style: AppTypography.body(color: theme.textColor, fontSize: 13),
                       ),
                     ],
                   ),
@@ -279,7 +279,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                       const SizedBox(width: 12),
                       Text(
                         _selectedTime.format(context),
-                        style: AppTypography.body(color: Colors.white, fontSize: 13),
+                        style: AppTypography.body(color: theme.textColor, fontSize: 13),
                       ),
                     ],
                   ),
@@ -299,7 +299,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Include a Photo', style: AppTypography.bodyLarge(color: Colors.white, fontWeight: FontWeight.w600)),
+          Text('Include a Photo', style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.w600)),
           Switch.adaptive(
             value: _isImageCard,
             activeTrackColor: theme.accentColor,
@@ -314,7 +314,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('HOW DID IT FEEL?', style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
+        Text('HOW DID IT FEEL?', style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -343,7 +343,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
+        Text(label.toUpperCase(), style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
         const SizedBox(height: 12),
         GlassContainer(
           borderRadius: 20,

@@ -119,14 +119,14 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                   children: [
                     Text(
                       rp.partnerName ?? 'Waiting for partner...',
-                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.bold, color: widget.theme.textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       isOnline ? 'Online Now' : 'Offline',
-                      style: AppTypography.caption(fontSize: 11, color: Colors.white54),
+                      style: AppTypography.caption(fontSize: 11, color: widget.theme.textColor.withValues(alpha: 0.54)),
                     ),
                   ],
                 ),
@@ -148,7 +148,7 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
           const SizedBox(height: 12),
           Text(
             customStatus.isEmpty ? 'No status set' : '"$customStatus"',
-            style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white70).copyWith(fontStyle: FontStyle.italic),
+            style: AppTypography.bodyMedium(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.7)).copyWith(fontStyle: FontStyle.italic),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

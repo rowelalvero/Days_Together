@@ -6,6 +6,7 @@ import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
 import 'package:days_together/services/ai_service.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class RelationshipInsightsScreen extends StatefulWidget {
   const RelationshipInsightsScreen({super.key});
@@ -27,9 +28,9 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
         _isRefreshing = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✨ Insights updated successfully!'),
-          backgroundColor: Colors.pinkAccent,
+        SnackBar(
+          content: const Text('✨ Insights updated successfully!'),
+          backgroundColor: context.read<ThemeProvider>().currentLoveTheme.accentColor,
         ),
       );
     }
@@ -87,10 +88,10 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
           SafeArea(
             child: Column(
               children: [
-                _buildAppBar(context),
+                _buildAppBar(context, theme),
                 Expanded(
                   child: _isRefreshing
-                      ? const Center(child: CircularProgressIndicator(color: Colors.pinkAccent))
+                      ? Center(child: CircularProgressIndicator(color: theme.accentColor))
                       : ListView.builder(
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
@@ -113,37 +114,37 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Love Insights',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Love Insights',
+                  style: AppTypography.cormorant(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
-              ),
-              Text(
-                'Fun statistics and facts about your love story.',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
-                  fontSize: 12,
-                  color: Colors.white70,
+                Text(
+                  'Fun statistics and facts about your love story.',
+                  style: AppTypography.spectral(
+                    fontSize: 12,
+                    color: theme.textColor.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -165,9 +166,9 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,8 +188,8 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
               children: [
                 Text(
                   insight,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: AppTypography.body(
+                    color: theme.textColor,
                     fontSize: 15,
                     height: 1.4,
                     fontWeight: FontWeight.w500,

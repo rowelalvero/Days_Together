@@ -68,13 +68,13 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             const SizedBox(height: 16),
             Text(
               'No memories captured yet',
-              style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70),
+              style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.7)),
             ),
             const SizedBox(height: 8),
             Text(
               'Start documenting your milestones and daily stories.',
               textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white38),
+              style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.38)),
             ),
           ],
         ),
@@ -241,7 +241,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
               Expanded(
                 child: Text(
                   item.title,
-                  style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textColor),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -261,7 +261,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
           Expanded(
             child: Text(
               item.description,
-              style: AppTypography.sectionHeader(fontSize: 12, color: Colors.white70, height: 1.4).copyWith(fontStyle: FontStyle.italic),
+              style: AppTypography.sectionHeader(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4).copyWith(fontStyle: FontStyle.italic),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -272,7 +272,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             children: [
               Text(
                 DateFormat('MMMM dd, yyyy').format(item.date),
-                style: AppTypography.caption(fontSize: 10, color: Colors.white38),
+                style: AppTypography.caption(fontSize: 10, color: theme.textColor.withValues(alpha: 0.38)),
               ),
               if (item.location != null && item.location!.isNotEmpty)
                 Row(
@@ -282,7 +282,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                     const SizedBox(width: 3),
                     Text(
                       item.location!,
-                      style: AppTypography.caption(fontSize: 10, color: Colors.white38),
+                      style: AppTypography.caption(fontSize: 10, color: theme.textColor.withValues(alpha: 0.38)),
                     ),
                   ],
                 ),

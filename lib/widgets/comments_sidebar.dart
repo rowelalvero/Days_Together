@@ -134,7 +134,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                               style: AppTypography.bodyLarge(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: theme.textColor,
                               ),
                             ),
                           ),
@@ -177,7 +177,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               child: TextField(
                                 controller: _commentController,
-                                style: AppTypography.body(color: Colors.white, fontSize: 14),
+                                style: AppTypography.body(color: theme.textColor, fontSize: 14),
                                 textCapitalization: TextCapitalization.sentences,
                                 decoration: const InputDecoration(
                                   hintText: 'Write a cute reply...',
@@ -269,7 +269,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
               ),
               child: Text(
                 comment.content,
-                style: AppTypography.body(color: Colors.white, fontSize: 13.5, height: 1.4),
+                style: AppTypography.body(color: theme.textColor, fontSize: 13.5, height: 1.4),
               ),
             ),
           ),
@@ -303,7 +303,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                 ),
                 title: Text(
                   comment.isPinned ? 'Unpin Conversation' : 'Pin to Top',
-                  style: AppTypography.body(color: Colors.white),
+                  style: AppTypography.body(color: theme.textColor),
                 ),
                 onTap: () {
                   provider.togglePinComment(widget.item.id, comment.id);
@@ -341,7 +341,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
           const SizedBox(height: 16),
           Text(
             'No conversations yet.',
-            style: AppTypography.body(color: Colors.white30, fontSize: 13),
+            style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(

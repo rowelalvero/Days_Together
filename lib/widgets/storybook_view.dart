@@ -75,7 +75,7 @@ class _StorybookViewState extends State<StorybookView> {
       return Center(
         child: Text(
           'No chapters written yet.',
-          style: AppTypography.body(color: Colors.white30, fontSize: 16),
+          style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 16),
         ),
       );
     }
@@ -88,6 +88,9 @@ class _StorybookViewState extends State<StorybookView> {
       itemBuilder: (context, index) {
         final item = widget.items[index];
         final hasImage = item.imagePath != null || item.networkImageUrl != null;
+        final cardTextColor = hasImage ? Colors.white : theme.textColor;
+        final cardSecondaryTextColor = hasImage ? Colors.white70 : theme.textColor.withValues(alpha: 0.7);
+        final cardMutedTextColor = hasImage ? Colors.white54 : theme.textColor.withValues(alpha: 0.54);
 
         // Calculate card scale and translation offset for tactile transition
         double difference = index - _currentPageValue;
@@ -160,7 +163,7 @@ class _StorybookViewState extends State<StorybookView> {
                                   Text(
                                     DateFormat('MMMM dd, yyyy').format(item.date),
                                     style: AppTypography.bodyLarge(
-                                      color: Colors.white,
+                                      color: cardTextColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -168,7 +171,7 @@ class _StorybookViewState extends State<StorybookView> {
                                   Text(
                                     DateFormat.jm().format(item.date),
                                     style: AppTypography.bodyMedium(
-                                      color: Colors.white54,
+                                      color: cardMutedTextColor,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -200,18 +203,18 @@ class _StorybookViewState extends State<StorybookView> {
                             style: AppTypography.pageTitle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: cardTextColor,
                             ),
                           ),
                           if (item.location != null && item.location!.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.location_on_rounded, size: 13, color: Colors.white54),
+                                Icon(Icons.location_on_rounded, size: 13, color: cardMutedTextColor),
                                 const SizedBox(width: 4),
                                 Text(
                                   item.location!,
-                                  style: AppTypography.bodyMedium(color: Colors.white54, fontSize: 12),
+                                  style: AppTypography.bodyMedium(color: cardMutedTextColor, fontSize: 12),
                                 ),
                               ],
                             ),
@@ -226,7 +229,7 @@ class _StorybookViewState extends State<StorybookView> {
                                 item.description,
                                 style: AppTypography.lora(
                                   fontSize: 15,
-                                  color: Colors.white.withValues(alpha: 0.85),
+                                  color: cardSecondaryTextColor,
                                   height: 1.6,
                                   fontStyle: FontStyle.italic,
                                 ),
@@ -256,7 +259,7 @@ class _StorybookViewState extends State<StorybookView> {
                                     Text(
                                       '${item.comments.length}',
                                       style: AppTypography.bodyLarge(
-                                        color: Colors.white,
+                                        color: cardTextColor,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                       ),
@@ -265,7 +268,7 @@ class _StorybookViewState extends State<StorybookView> {
                                     Text(
                                       'chats',
                                       style: AppTypography.bodyMedium(
-                                        color: Colors.white70,
+                                        color: cardSecondaryTextColor,
                                         fontSize: 11,
                                       ),
                                     ),

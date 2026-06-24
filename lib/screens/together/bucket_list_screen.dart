@@ -4,6 +4,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/models/bucket_list_model.dart';
 import 'package:confetti/confetti.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 import 'package:intl/intl.dart';
 
@@ -69,14 +70,14 @@ class _BucketListScreenState extends State<BucketListScreen> {
                     children: [
                       Text(
                         existingItem == null ? '✨ Add New Adventure' : '📝 Edit Adventure',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: theme.textColor,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white70),
+                        icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -85,10 +86,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
                   TextField(
                     controller: _textController,
                     autofocus: true,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: theme.textColor),
                     decoration: InputDecoration(
                       hintText: 'e.g. Watch the sunset in Santorini 🌅',
-                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                      hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
@@ -163,10 +164,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                       _selectedDate = null;
                                       _selectedTime = null;
                                     }),
-                                    child: const Icon(Icons.clear, size: 18, color: Colors.white38),
+                                    child: Icon(Icons.clear, size: 18, color: theme.textColor.withValues(alpha: 0.38)),
                                   )
                                 else
-                                  const Icon(Icons.calendar_month, size: 18, color: Colors.white70),
+                                  Icon(Icons.calendar_month, size: 18, color: theme.textColor.withValues(alpha: 0.7)),
                               ],
                             ),
                           ),
@@ -225,10 +226,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                   if (_selectedTime != null)
                                     GestureDetector(
                                       onTap: () => setModalState(() => _selectedTime = null),
-                                      child: const Icon(Icons.clear, size: 18, color: Colors.white38),
+                                      child: Icon(Icons.clear, size: 18, color: theme.textColor.withValues(alpha: 0.38)),
                                     )
                                   else
-                                    const Icon(Icons.access_time_rounded, size: 18, color: Colors.white70),
+                                    Icon(Icons.access_time_rounded, size: 18, color: theme.textColor.withValues(alpha: 0.7)),
                                 ],
                               ),
                             ),
@@ -347,28 +348,26 @@ class _BucketListScreenState extends State<BucketListScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Our Bucket List',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
+                style: AppTypography.cormorant(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.textColor,
                 ),
               ),
               Text(
                 'Dreams we promise to live together.',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
+                style: AppTypography.spectral(
                   fontSize: 12,
-                  color: Colors.white70,
+                  color: theme.textColor.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -534,25 +533,25 @@ class _BucketListScreenState extends State<BucketListScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: Colors.white38),
+              icon: Icon(Icons.edit_outlined, color: theme.textColor.withValues(alpha: 0.38)),
               onPressed: () => _showAddItemSheet(context, existingItem: item),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.white38),
+              icon: Icon(Icons.delete_outline_rounded, color: theme.textColor.withValues(alpha: 0.38)),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: theme.primaryColor,
-                    title: const Text('Delete Adventure?', style: TextStyle(color: Colors.white)),
-                    content: const Text(
+                    title: Text('Delete Adventure?', style: TextStyle(color: theme.textColor)),
+                    content: Text(
                       'Are you sure you want to remove this dream from your bucket list?',
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                        child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7))),
                       ),
                       TextButton(
                         onPressed: () {
@@ -566,7 +565,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                 );
               },
             ),
-            const Icon(Icons.drag_indicator_rounded, color: Colors.white38),
+            Icon(Icons.drag_indicator_rounded, color: theme.textColor.withValues(alpha: 0.38)),
           ],
         ),
       ),

@@ -107,14 +107,17 @@ class _InsightsBannerState extends State<InsightsBanner> {
                     key: ValueKey(_insights[_index]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.9)),
+                    style: AppTypography.bodyLarge(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: widget.theme.textColor.withValues(alpha: 0.9),),
                   ),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, color: Colors.white30, size: 20),
+              icon: Icon(Icons.chevron_left_rounded, color: widget.theme.textColor.withValues(alpha: 0.3), size: 18),
             onPressed: () {
               setState(() {
                 _index = (_index - 1 + _insights.length) % _insights.length;
@@ -122,7 +125,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right_rounded, color: Colors.white30, size: 20),
+              icon: Icon(Icons.chevron_right_rounded, color: widget.theme.textColor.withValues(alpha: 0.3), size: 18),
             onPressed: () {
               setState(() {
                 _index = (_index + 1) % _insights.length;

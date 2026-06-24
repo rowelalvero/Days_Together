@@ -53,11 +53,19 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.auto_awesome, color: Colors.pinkAccent, size: 14),
+              const Icon(
+                Icons.auto_awesome,
+                color: Colors.pinkAccent,
+                size: 14,
+              ),
               const SizedBox(width: 6),
               Text(
                 'LOVED WITHOUT LIMITS SINCE ${startDate.year}',
-                style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.pinkAccent).copyWith(letterSpacing: 1.5),
+                style: AppTypography.captionMono(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.pinkAccent,
+                ).copyWith(letterSpacing: 1.5),
               ),
             ],
           ),
@@ -70,7 +78,11 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
             children: [
               Text(
                 NumberFormat('#,###').format(totalDays),
-                style: AppTypography.pageTitle(fontSize: 54, fontWeight: FontWeight.w800, color: Colors.white),
+                style: AppTypography.pageTitle(
+                  fontSize: 54,
+                  fontWeight: FontWeight.w800,
+                  color: widget.theme.textColor,
+                ),
               ),
               const SizedBox(width: 8),
               ShaderMask(
@@ -79,7 +91,11 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                 ).createShader(bounds),
                 child: Text(
                   'Days',
-                  style: AppTypography.pageTitle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: AppTypography.pageTitle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: widget.theme.textColor,
+                  ),
                 ),
               ),
             ],
@@ -108,18 +124,6 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
               ],
             ),
           ),
-          const Divider(color: Colors.white10, height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.access_time_filled_rounded, color: Colors.pinkAccent, size: 14),
-              const SizedBox(width: 6),
-              Text(
-                'Co-Synched Clock live counter updating frame state...',
-                style: AppTypography.caption(fontSize: 10, color: Colors.white54),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -132,12 +136,20 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
         children: [
           Text(
             val.toString(),
-            style: AppTypography.caption(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),
+            style: AppTypography.bodyMono(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: widget.theme.textColor,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             label,
-            style: AppTypography.caption(fontSize: 10, color: Colors.white30, fontWeight: FontWeight.w700).copyWith(letterSpacing: 0.5),
+            style: AppTypography.bodyMono(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: widget.theme.textColor.withValues(alpha: 0.3),
+            ),
           ),
         ],
       ),

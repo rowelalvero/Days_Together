@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class VaultScreen extends StatelessWidget {
   const VaultScreen({super.key});
@@ -58,26 +59,25 @@ class _SetPinScreenState extends State<_SetPinScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: Icon(Icons.arrow_back_ios, color: widget.theme.textColor),
                   ),
                 ],
               ),
               const Spacer(),
-              const Icon(Icons.lock_outline_rounded, color: Colors.white, size: 48),
+              Icon(Icons.lock_outline_rounded, color: widget.theme.textColor, size: 48),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Set your Vault PIN',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
+                style: AppTypography.cormorant(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: widget.theme.textColor,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'This keeps your private memories safe.',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                style: AppTypography.body(color: widget.theme.textColor.withValues(alpha: 0.6)),
               ),
               const SizedBox(height: 40),
               _buildPinDots(_pin),
@@ -133,27 +133,26 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: Icon(Icons.arrow_back_ios, color: widget.theme.textColor),
                   ),
                 ],
               ),
               const Spacer(),
-              const Icon(Icons.lock_outline_rounded, color: Colors.white, size: 48),
+              Icon(Icons.lock_outline_rounded, color: widget.theme.textColor, size: 48),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Enter your PIN.',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
+                style: AppTypography.cormorant(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: widget.theme.textColor,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _error ? '❌ Wrong PIN. Try again.' : 'This keeps your private memories safe.',
-                style: TextStyle(
-                  color: _error ? Colors.redAccent : Colors.white.withValues(alpha: 0.6),
+                style: AppTypography.body(
+                  color: _error ? Colors.redAccent : widget.theme.textColor.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 40),
@@ -222,16 +221,15 @@ class _VaultContentScreen extends StatelessWidget {
                           vault.lock();
                           Navigator.pop(context);
                         },
-                        icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                        icon: Icon(Icons.arrow_back_ios, color: theme.textColor),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           '🔒 The Vault',
-                          style: TextStyle(
-                            fontFamily: 'Cormorant',
+                          style: AppTypography.cormorant(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: theme.textColor,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -240,7 +238,7 @@ class _VaultContentScreen extends StatelessWidget {
                         onPressed: () {
                           vault.lock();
                         },
-                        icon: const Icon(Icons.lock_rounded, color: Colors.white, size: 20),
+                        icon: Icon(Icons.lock_rounded, color: theme.textColor, size: 20),
                       ),
                     ],
                   ),
@@ -276,10 +274,10 @@ class _VaultContentScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_library_outlined, size: 48, color: Colors.white.withValues(alpha: 0.3)),
+            Icon(Icons.photo_library_outlined, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
-            Text('Nothing here yet.', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
-            Text('Add your first secret.', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontStyle: FontStyle.italic)),
+            Text('Nothing here yet.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5))),
+            Text('Add your first secret.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.4), fontStyle: FontStyle.italic)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => vault.addPhoto(context),
@@ -375,9 +373,9 @@ class _VaultContentScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.mail_outline_rounded, size: 48, color: Colors.white.withValues(alpha: 0.3)),
+                        Icon(Icons.mail_outline_rounded, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
-                        Text('No love letters yet.', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+                        Text('No love letters yet.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5))),
                       ],
                     ),
                   )
@@ -398,9 +396,8 @@ class _VaultContentScreen extends StatelessWidget {
                           children: [
                             Text(
                               letter.content ?? '',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'Lora',
+                              style: AppTypography.lora(
+                                color: theme.textColor,
                                 fontSize: 14,
                                 fontStyle: FontStyle.italic,
                                 height: 1.5,
@@ -447,7 +444,7 @@ class _VaultContentScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1B41),
+      backgroundColor: theme.primaryColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -462,27 +459,26 @@ class _VaultContentScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '💌 Write a Love Letter',
-              style: TextStyle(
-                color: Colors.white,
+              style: AppTypography.cardTitle(
+                color: theme.textColor,
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               maxLines: 8,
-              style: const TextStyle(color: Colors.white, fontFamily: 'Lora'),
+              style: AppTypography.lora(color: theme.textColor),
               decoration: InputDecoration(
                 hintText: 'Dear love...',
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                 filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
+                fillColor: theme.textColor.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
                 ),
               ),
             ),
@@ -501,7 +497,7 @@ class _VaultContentScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Save Letter'),
+                child: Text('Save Letter', style: AppTypography.button(color: Colors.white, fontSize: 14)),
               ),
             ),
           ],

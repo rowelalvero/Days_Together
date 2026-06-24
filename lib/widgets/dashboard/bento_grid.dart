@@ -436,7 +436,7 @@ class BentoGrid extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       'You',
-                      style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.6)),
+                      style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
                     ),
                     const SizedBox(width: 12),
                     Container(
@@ -450,7 +450,7 @@ class BentoGrid extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       'Partner',
-                      style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.6)),
+                      style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -731,7 +731,7 @@ class BentoGrid extends StatelessWidget {
     if (notes.isEmpty) {
       return Text(
         'Send a doodle note, sketch, or photo directly to your partner\'s screen! 💌',
-        style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white70, height: 1.4),
+        style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
       );
     }
 
@@ -802,9 +802,9 @@ class BentoGrid extends StatelessWidget {
                   File(latest.imagePath!),
                   fit: BoxFit.cover,
                 )
-              : const Icon(
+              : Icon(
                   Icons.photo_rounded,
-                  color: Colors.white60,
+                  color: theme.textColor.withValues(alpha: 0.6),
                   size: 16,
                 ),
         ),
@@ -823,7 +823,7 @@ class BentoGrid extends StatelessWidget {
                 previewText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.95)),
+                style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.95)),
               ),
               const SizedBox(height: 3),
               Row(
@@ -837,14 +837,14 @@ class BentoGrid extends StatelessWidget {
                     width: 3,
                     height: 3,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: theme.textColor.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _formatRelativeTime(latest.createdAt),
-                    style: AppTypography.captionMono(fontSize: 9, color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 9, color: theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -868,7 +868,7 @@ class BentoGrid extends StatelessWidget {
     if (upcoming.isEmpty) {
       return Text(
         'No upcoming dates or anniversaries planned. Plan your next romantic date! 📅',
-        style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white70, height: 1.4),
+        style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
       );
     }
 
@@ -894,7 +894,7 @@ class BentoGrid extends StatelessWidget {
                 event.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.w700, color: theme.textColor),
               ),
             ),
             const SizedBox(width: 8),
@@ -932,7 +932,7 @@ class BentoGrid extends StatelessWidget {
           children: [
             Text(
               formattedDate,
-              style: AppTypography.bodyMono(fontSize: 11, color: Colors.white.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+              style: AppTypography.bodyMono(fontSize: 11, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
             ),
             Text(
               daysText,
@@ -988,7 +988,7 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'YOU',
-                      style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.35)),
+                      style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -1001,7 +1001,7 @@ class BentoGrid extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           '$myEmoji $myScore',
-                          style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
                         ),
                       ],
                     ),
@@ -1027,7 +1027,7 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'PARTNER',
-                      style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.35)),
+                      style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -1040,7 +1040,7 @@ class BentoGrid extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           '$partnerEmoji $partnerScore',
-                          style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
                         ),
                       ],
                     ),
@@ -1066,7 +1066,7 @@ class BentoGrid extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           'Log mood for a few days to visualize your trend 📈',
-          style: AppTypography.caption(fontSize: 11, color: Colors.white38).copyWith(fontStyle: FontStyle.italic),
+          style: AppTypography.caption(fontSize: 11, color: theme.textColor.withValues(alpha: 0.38)).copyWith(fontStyle: FontStyle.italic),
         ),
       );
     }
@@ -1258,7 +1258,7 @@ class BentoGrid extends StatelessWidget {
                     questionText,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white, height: 1.4).copyWith(fontStyle: hasQuestion ? FontStyle.italic : FontStyle.normal),
+                    style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: theme.textColor, height: 1.4).copyWith(fontStyle: hasQuestion ? FontStyle.italic : FontStyle.normal),
                   ),
                   const SizedBox(height: 12),
                   // Divider
@@ -1270,7 +1270,7 @@ class BentoGrid extends StatelessWidget {
                   // Sync status header
                   Text(
                     'SYNC STATUS:',
-                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 8),
                   // Indicators row
@@ -1288,7 +1288,7 @@ class BentoGrid extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'You',
-                        style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: answered ? Colors.white : Colors.white.withValues(alpha: 0.4)),
+                        style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: answered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
                       ),
                       const SizedBox(width: 20),
                       // Partner status
@@ -1303,7 +1303,7 @@ class BentoGrid extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'Partner',
-                        style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: partnerAnswered ? Colors.white : Colors.white.withValues(alpha: 0.4)),
+                        style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: partnerAnswered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
                       ),
                     ],
                   ),
@@ -1450,7 +1450,7 @@ class BentoGrid extends StatelessWidget {
                     children: [
                       Text(
                         'CONQUER PROGRESS',
-                        style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                        style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
                       ),
                       Text(
                         '${(progress * 100).toInt()}% ($completedCount/$total)',
@@ -1479,7 +1479,7 @@ class BentoGrid extends StatelessWidget {
                   // Closest to conquer
                   Text(
                     'CLOSEST TO CONQUER:',
-                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -1498,7 +1498,7 @@ class BentoGrid extends StatelessWidget {
                           closestToConquer,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                          style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textColor),
                         ),
                       ),
                     ],
@@ -1643,7 +1643,7 @@ class BentoGrid extends StatelessWidget {
                           latestLockedMessage,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
+                          style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: theme.textColor),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -1682,7 +1682,7 @@ class BentoGrid extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             'REMAINING:',
-                            style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                            style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
                           ),
                         ],
                       ),
@@ -1702,7 +1702,7 @@ class BentoGrid extends StatelessWidget {
               children: [
                 Text(
                   '$sealedCount Sealed Lockboxes',
-                  style: AppTypography.button(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                  style: AppTypography.button(fontSize: 10.5, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
                 ),
                 Row(
                   children: [
@@ -1746,13 +1746,13 @@ class BentoGrid extends StatelessWidget {
             children: [
               Text(
                 isUnlocked ? 'Unlocked' : 'Locked',
-                style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textColor),
               ),
               Text(
                 isUnlocked 
                     ? '$count items visible' 
                     : '🔒 Enter PIN to access secret letters & photos',
-                style: AppTypography.caption(fontSize: 10, color: Colors.white54),
+                style: AppTypography.caption(fontSize: 10, color: theme.textColor.withValues(alpha: 0.54)),
               ),
             ],
           ),
@@ -1769,7 +1769,7 @@ class BentoGrid extends StatelessWidget {
     if (messages.isEmpty) {
       return Text(
         'Type your private messages and send real-time love taps! 💓',
-        style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white70, height: 1.4),
+        style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
       );
     }
 
@@ -1786,13 +1786,13 @@ class BentoGrid extends StatelessWidget {
             children: [
               Text(
                 isMe ? 'You' : latest.senderName,
-                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54),
+                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.54)),
               ),
               Text(
                 latest.content,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyMedium(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
+                style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor, fontWeight: FontWeight.w500),
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/models/time_capsule_model.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class TimeCapsuleScreen extends StatefulWidget {
   const TimeCapsuleScreen({super.key});
@@ -44,7 +45,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
@@ -54,16 +55,16 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           '✉️ Create Time Capsule',
-                          style: TextStyle(
+                          style: AppTypography.cardTitle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: theme.textColor,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white70),
+                          icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -71,16 +72,16 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _messageController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: theme.textColor),
                       maxLines: 4,
                       decoration: InputDecoration(
                         hintText: 'Write a note, a secret, or a message to your future selves...\n\n"Dear future us..."',
-                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+                        hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        fillColor: theme.textColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                          borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -120,28 +121,28 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _selectedDate == null
-                                  ? 'Select Unlock Date'
-                                  : DateFormat('MMMM dd, yyyy').format(_selectedDate!),
-                              style: TextStyle(
-                                color: _selectedDate == null
-                                    ? Colors.white.withValues(alpha: 0.4)
-                                    : Colors.white,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const Icon(Icons.calendar_today_rounded, color: Colors.white70),
-                          ],
-                        ),
+                        color: theme.textColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                       ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _selectedDate == null
+                                ? 'Select Unlock Date'
+                                : DateFormat('MMMM dd, yyyy').format(_selectedDate!),
+                            style: TextStyle(
+                              color: _selectedDate == null
+                                  ? theme.textColor.withValues(alpha: 0.4)
+                                  : theme.textColor,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Icon(Icons.calendar_today_rounded, color: theme.textColor.withValues(alpha: 0.7)),
+                        ],
+                      ),
+                    ),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -170,7 +171,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
-                        child: const Text('Seal Time Capsule', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'Seal Time Capsule',
+                          style: AppTypography.button(color: Colors.white, fontSize: 14),
+                        ),
                       ),
                     ),
                   ],
@@ -198,7 +202,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             children: [
               const Icon(Icons.drafts_rounded, color: Colors.pinkAccent),
               const SizedBox(width: 12),
-              const Text('Opened Capsule', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text('Opened Capsule', style: AppTypography.cardTitle(color: theme.textColor)),
             ],
           ),
           content: SingleChildScrollView(
@@ -208,16 +212,15 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
               children: [
                 Text(
                   'Created: ${DateFormat('MMMM dd, yyyy').format(capsule.createdAt)}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.54)),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   capsule.message,
-                  style: const TextStyle(
-                    fontFamily: 'Lora',
+                  style: AppTypography.lora(
                     fontSize: 16,
                     height: 1.5,
-                    color: Colors.white,
+                    color: theme.textColor,
                   ),
                 ),
               ],
@@ -226,7 +229,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close', style: TextStyle(color: theme.accentColor)),
+              child: Text('Close', style: AppTypography.button(color: theme.accentColor)),
             ),
           ],
         );
@@ -251,7 +254,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           SafeArea(
             child: Column(
               children: [
-                _buildAppBar(context),
+                _buildAppBar(context, theme),
                 Expanded(
                   child: provider.isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -272,37 +275,37 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
+  Widget _buildAppBar(BuildContext context, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Time Capsules',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Time Capsules',
+                  style: AppTypography.cormorant(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
-              ),
-              Text(
-                'Write to your future selves. Seal them away.',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
-                  fontSize: 12,
-                  color: Colors.white70,
+                Text(
+                  'Write to your future selves. Seal them away.',
+                  style: AppTypography.spectral(
+                    fontSize: 12,
+                    color: theme.textColor.withValues(alpha: 0.7),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -319,19 +322,19 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 96),
       children: [
         if (openable.isNotEmpty) ...[
-          _buildSectionHeader('🔓 Ready to Open'),
+          _buildSectionHeader('🔓 Ready to Open', theme),
           const SizedBox(height: 8),
           ...openable.map((c) => _buildCapsuleCard(c, theme, provider, true)),
           const SizedBox(height: 20),
         ],
         if (locked.isNotEmpty) ...[
-          _buildSectionHeader('🔒 Sealed & Waiting'),
+          _buildSectionHeader('🔒 Sealed & Waiting', theme),
           const SizedBox(height: 8),
           ...locked.map((c) => _buildCapsuleCard(c, theme, provider, false)),
           const SizedBox(height: 20),
         ],
         if (opened.isNotEmpty) ...[
-          _buildSectionHeader('📖 Opened Memories'),
+          _buildSectionHeader('📖 Opened Memories', theme),
           const SizedBox(height: 8),
           ...opened.map((c) => _buildCapsuleCard(c, theme, provider, false)),
           const SizedBox(height: 20),
@@ -340,13 +343,12 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, dynamic theme) {
     return Text(
       title,
-      style: const TextStyle(
+      style: AppTypography.sectionHeader(
         fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.white70,
+        color: theme.textColor.withValues(alpha: 0.7),
       ),
     );
   }
@@ -358,12 +360,12 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isOpenable 
               ? Colors.green.withValues(alpha: 0.3) 
-              : Colors.white.withValues(alpha: 0.1),
+              : theme.textColor.withValues(alpha: 0.1),
         ),
       ),
       child: ListTile(
@@ -383,7 +385,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                 : (isOpenable ? Icons.lock_open_rounded : Icons.lock_rounded),
             color: capsule.isOpened 
                 ? Colors.pinkAccent 
-                : (isOpenable ? Colors.green : Colors.white60),
+                : (isOpenable ? Colors.green : theme.textColor.withValues(alpha: 0.6)),
             size: 20,
           ),
         ),
@@ -391,11 +393,15 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           capsule.isOpened ? capsule.message : 'Time Capsule',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontFamily: capsule.isOpened ? 'Lora' : null,
-          ),
+          style: capsule.isOpened
+              ? AppTypography.lora(
+                  color: theme.textColor,
+                  fontWeight: FontWeight.bold,
+                )
+              : AppTypography.body(
+                  color: theme.textColor,
+                  fontWeight: FontWeight.bold,
+                ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -405,8 +411,8 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                 : (isOpenable
                     ? 'Ready to open now!'
                     : 'Unlocks: $formattedOpenDate ($daysLeft days)'),
-            style: TextStyle(
-              color: isOpenable ? Colors.green : Colors.white60,
+            style: AppTypography.bodyMedium(
+              color: isOpenable ? Colors.green : theme.textColor.withValues(alpha: 0.6),
               fontSize: 12,
             ),
           ),
@@ -416,34 +422,34 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           children: [
             if (isOpenable || capsule.isOpened)
               IconButton(
-                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                icon: Icon(Icons.arrow_forward_ios_rounded, color: theme.textColor.withValues(alpha: 0.7), size: 16),
                 onPressed: () => _showCapsuleDetailDialog(context, capsule, theme, provider),
               )
             else
-              const Icon(Icons.timer_outlined, color: Colors.white38, size: 18),
+              Icon(Icons.timer_outlined, color: theme.textColor.withValues(alpha: 0.38), size: 18),
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: Colors.white38),
+              icon: Icon(Icons.delete_outline_rounded, color: theme.textColor.withValues(alpha: 0.38)),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: theme.primaryColor,
-                    title: const Text('Delete Time Capsule?', style: TextStyle(color: Colors.white)),
-                    content: const Text(
+                    title: Text('Delete Time Capsule?', style: AppTypography.cardTitle(color: theme.textColor)),
+                    content: Text(
                       'Are you sure you want to delete this capsule? It will be gone forever.',
-                      style: TextStyle(color: Colors.white70),
+                      style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                        child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
                       ),
                       TextButton(
                         onPressed: () {
                           provider.deleteCapsule(capsule.id);
                           Navigator.pop(context);
                         },
-                        child: Text('Delete', style: TextStyle(color: theme.accentColor)),
+                        child: Text('Delete', style: AppTypography.button(color: theme.accentColor)),
                       ),
                     ],
                   ),
@@ -466,7 +472,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
+                color: theme.textColor.withValues(alpha: 0.03),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -476,10 +482,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Write to your future selves.',
-              style: TextStyle(
-                color: Colors.white,
+              style: AppTypography.pageTitle(
+                color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -488,8 +494,8 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             Text(
               'Seal a letter today to unlock on a special anniversary or date in the future.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+              style: AppTypography.spectral(
+                color: theme.textColor.withValues(alpha: 0.5),
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),

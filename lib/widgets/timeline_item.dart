@@ -127,20 +127,20 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
               Flexible(
                 child: Text(
                   widget.item.location!,
-                  style: AppTypography.bodyMedium(fontSize: 11, color: Colors.white70),
+                  style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.7)),
                   textAlign: TextAlign.right,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 6),
-              const Icon(Icons.location_on_rounded, size: 12, color: Colors.white70),
+              Icon(Icons.location_on_rounded, size: 12, color: theme.textColor.withValues(alpha: 0.7)),
             ] else ...[
-              const Icon(Icons.location_on_rounded, size: 12, color: Colors.white70),
+              Icon(Icons.location_on_rounded, size: 12, color: theme.textColor.withValues(alpha: 0.7)),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   widget.item.location!,
-                  style: AppTypography.bodyMedium(fontSize: 11, color: Colors.white70),
+                  style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.7)),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -242,14 +242,14 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
         const SizedBox(height: 12),
         Text(
           widget.item.title,
-          style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+          style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
         Text(
           widget.item.description,
-          style: AppTypography.bodyMedium(fontSize: 11, color: Colors.white60, height: 1.4),
+          style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.6), height: 1.4),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -267,7 +267,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
             Expanded(
               child: Text(
                 widget.item.title,
-                style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textColor),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -279,7 +279,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
         const SizedBox(height: 8),
         Text(
           widget.item.description,
-          style: AppTypography.sectionHeader(fontSize: 13, color: Colors.white70, height: 1.5).copyWith(fontStyle: FontStyle.italic),
+          style: AppTypography.sectionHeader(fontSize: 13, color: theme.textColor.withValues(alpha: 0.7), height: 1.5).copyWith(fontStyle: FontStyle.italic),
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
         ),
@@ -394,7 +394,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                     style: AppTypography.pageTitle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: theme.textColor,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -404,14 +404,14 @@ class MemoryDetailScreen extends StatelessWidget {
                                       const SizedBox(width: 6),
                                       Text(
                                         DateFormat('MMMM dd, yyyy').format(currentItem.date),
-                                        style: AppTypography.body(color: Colors.white70, fontSize: 13),
+                                        style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7), fontSize: 13),
                                       ),
                                       const SizedBox(width: 12),
                                       Icon(Icons.access_time_rounded, size: 14, color: theme.accentColor),
                                       const SizedBox(width: 6),
                                       Text(
                                         DateFormat.jm().format(currentItem.date),
-                                        style: AppTypography.body(color: Colors.white70, fontSize: 13),
+                                        style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7), fontSize: 13),
                                       ),
                                     ],
                                   ),
@@ -432,11 +432,11 @@ class MemoryDetailScreen extends StatelessWidget {
                           const SizedBox(height: 16),
                           Row(
                             children: [
-                              const Icon(Icons.location_on_rounded, size: 16, color: Colors.white54),
+                              Icon(Icons.location_on_rounded, size: 16, color: theme.textColor.withValues(alpha: 0.54)),
                               const SizedBox(width: 6),
                               Text(
                                 currentItem.location!,
-                                style: AppTypography.body(color: Colors.white54, fontSize: 14),
+                                style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.54), fontSize: 14),
                               ),
                             ],
                           ),
@@ -451,7 +451,7 @@ class MemoryDetailScreen extends StatelessWidget {
                             currentItem.description,
                             style: AppTypography.lora(
                               fontSize: 18,
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: theme.textColor.withValues(alpha: 0.9),
                               height: 1.8,
                               fontStyle: FontStyle.italic,
                             ),
@@ -474,7 +474,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                   Text(
                                     '${currentItem.comments.length}',
                                     style: AppTypography.bodyLarge(
-                                      color: Colors.white,
+                                      color: theme.textColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
                                     ),
@@ -482,7 +482,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     'chats',
-                                    style: AppTypography.bodyMedium(color: Colors.white70, fontSize: 11),
+                                    style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11),
                                   ),
                                 ],
                               ),
@@ -603,11 +603,11 @@ class _EditItemDialogState extends State<_EditItemDialog> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+            icon: Icon(Icons.close_rounded, color: theme.textColor, size: 28),
           ),
           Text(
             'Edit Memory',
-            style: AppTypography.sectionHeader(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: AppTypography.sectionHeader(color: theme.textColor, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveChanges,
@@ -671,7 +671,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('DATE & TIME', style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
+        Text('DATE & TIME', style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -693,7 +693,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                     children: [
                       Icon(Icons.calendar_today_rounded, size: 16, color: theme.accentColor),
                       const SizedBox(width: 8),
-                      Text(DateFormat('MMM dd, yyyy').format(_selectedDate), style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      Text(DateFormat('MMM dd, yyyy').format(_selectedDate), style: TextStyle(color: theme.textColor, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -716,7 +716,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                     children: [
                       Icon(Icons.access_time_rounded, size: 16, color: theme.accentColor),
                       const SizedBox(width: 8),
-                      Text(_selectedTime.format(context), style: const TextStyle(color: Colors.white, fontSize: 13)),
+                      Text(_selectedTime.format(context), style: TextStyle(color: theme.textColor, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -733,7 +733,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Mood', style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
+        Text('Mood', style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -762,7 +762,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
+        Text(label.toUpperCase(), style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
         const SizedBox(height: 12),
         GlassContainer(
           borderRadius: 20,
@@ -770,10 +770,10 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           child: TextField(
             controller: controller,
             maxLines: maxLines,
-            style: AppTypography.bodyLarge(color: Colors.white, fontSize: 16),
-            decoration: const InputDecoration(
+            style: AppTypography.bodyLarge(color: theme.textColor, fontSize: 16),
+            decoration: InputDecoration(
               border: InputBorder.none,
-              hintStyle: TextStyle(color: Colors.white24),
+              hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.24)),
             ),
           ),
         ),
@@ -790,9 +790,9 @@ class _EditItemDialogState extends State<_EditItemDialog> {
             builder: (ctx) => AlertDialog(
               backgroundColor: theme.secondaryColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text('Delete Memory?', style: AppTypography.bodyLarge(color: Colors.white, fontWeight: FontWeight.bold)),
+              title: Text('Delete Memory?', style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.bold)),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.54)))),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text('Delete', style: TextStyle(color: theme.accentColor, fontWeight: FontWeight.bold)),

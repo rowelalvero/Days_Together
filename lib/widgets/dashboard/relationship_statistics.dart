@@ -95,11 +95,11 @@ class RelationshipStatistics extends StatelessWidget {
                   children: [
                     Text(
                       'Synced Relationship',
-                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, height: 1.2),
+                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
                     ),
                     Text(
                       'Statistics',
-                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white, height: 1.2),
+                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
                     ),
                   ],
                 ),
@@ -109,12 +109,12 @@ class RelationshipStatistics extends StatelessWidget {
                 children: [
                   Text(
                     'METRICS SYNC',
-                    style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white38).copyWith(letterSpacing: 1.2),
+                    style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.38)).copyWith(letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '100%',
-                    style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white38),
+                    style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textColor.withValues(alpha: 0.38)),
                   ),
                 ],
               ),
@@ -154,7 +154,7 @@ class RelationshipStatistics extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       item.label,
-                      style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white54),
+                      style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.54)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

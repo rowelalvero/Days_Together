@@ -117,7 +117,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   const SizedBox(width: 8),
                   Text(
                     'Next Milestone',
-                    style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.95)),
+                    style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: widget.theme.textColor.withValues(alpha: 0.95)),
                   ),
                 ],
               ),
@@ -156,8 +156,8 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         child: Text(
                           '$target',
                           style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: isSelected 
-                                ? Colors.white 
-                                : Colors.white.withValues(alpha: 0.3)),
+                                ? widget.theme.textColor 
+                                : widget.theme.textColor.withValues(alpha: 0.3)),
                         ),
                       ),
                     );
@@ -178,7 +178,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   children: [
                     Text(
                       milestoneHeadingText,
-                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.w700, color: widget.theme.textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -205,19 +205,19 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         children: [
                           Text(
                             NumberFormat('#,###').format(daysRemaining),
-                            style: AppTypography.sectionHeader(fontSize: 24, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
+                            style: AppTypography.sectionHeader(fontSize: 24, fontWeight: FontWeight.w700, color: widget.theme.textColor.withValues(alpha: 0.9)),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'days remain',
-                            style: AppTypography.bodyMono(fontSize: 12, color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                            style: AppTypography.bodyMono(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
                     const SizedBox(height: 4),
                     Text(
                       'Target: ${NumberFormat('#,###').format(targetDays)} days total',
-                      style: AppTypography.captionMono(fontSize: 10, color: Colors.white.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                      style: AppTypography.captionMono(fontSize: 10, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -248,7 +248,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                       ),
                       Text(
                         'DONE',
-                        style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.3)).copyWith(letterSpacing: 0.5),
+                        style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: widget.theme.textColor.withValues(alpha: 0.3)).copyWith(letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -274,7 +274,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                 isCompleted 
                     ? 'A grand celebration awaits!' 
                     : 'You are $percentComplete% of the way there',
-                style: AppTypography.button(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
+                style: AppTypography.button(fontSize: 10.5, color: widget.theme.textColor.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
               ),
             ],
           ),

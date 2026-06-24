@@ -133,7 +133,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           ),
           const SizedBox(width: 4),
           CircleAvatar(
@@ -150,7 +150,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                     rp.partnerAvatarPath == null ||
                     (!rp.partnerAvatarPath!.startsWith('http') &&
                         !File(rp.partnerAvatarPath!).existsSync())
-                ? const Icon(Icons.person, color: Colors.white70, size: 20)
+                ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.7), size: 20)
                 : null,
           ),
           const SizedBox(width: 12),
@@ -163,7 +163,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                   style: AppTypography.bodyLarge(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.textColor,
                   ),
                 ),
                 Row(
@@ -181,7 +181,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                       partnerJoined && rp.isPartnerOnline ? 'Active Now' : 'Offline',
                       style: AppTypography.bodyMedium(
                         fontSize: 11,
-                        color: Colors.white60,
+                        color: theme.textColor.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -289,7 +289,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                     style: AppTypography.bodyLarge(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70,
+                      color: theme.textColor.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -297,7 +297,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                     DateFormat('MM/dd h:mm a').format(message.createdAt),
                     style: AppTypography.caption(
                       fontSize: 9,
-                      color: Colors.white30,
+                      color: theme.textColor.withValues(alpha: 0.3),
                     ),
                   ),
                 ],
@@ -331,7 +331,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
               child: Text(
                 message.content,
                 style: AppTypography.body(
-                  color: Colors.white,
+                  color: theme.textColor,
                   fontSize: 14,
                   height: 1.35,
                 ),
@@ -350,7 +350,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                       DateFormat('h:mm a').format(message.createdAt),
                       style: AppTypography.caption(
                         fontSize: 9,
-                        color: Colors.white38,
+                        color: theme.textColor.withValues(alpha: 0.38),
                       ),
                     ),
                   )
@@ -373,11 +373,11 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: TextField(
                 controller: _messageController,
-                style: AppTypography.body(color: Colors.white, fontSize: 14),
+                style: AppTypography.body(color: theme.textColor, fontSize: 14),
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Say something loving...',
-                  hintStyle: TextStyle(color: Colors.white30, fontSize: 14),
+                  hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3), fontSize: 14),
                   border: InputBorder.none,
                 ),
                 onSubmitted: (_) => _sendMessage(provider, yourName),
@@ -436,13 +436,13 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
         children: [
           Icon(
             Icons.chat_bubble_outline_rounded,
-            color: Colors.white24,
+            color: theme.textColor.withValues(alpha: 0.24),
             size: 40,
           ),
           const SizedBox(height: 16),
           Text(
             'No chat messages yet.',
-            style: AppTypography.body(color: Colors.white30, fontSize: 13),
+            style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(

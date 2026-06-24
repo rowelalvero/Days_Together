@@ -84,7 +84,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white70),
+                        icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -92,23 +92,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Date: ${DateFormat('MMMM dd, yyyy').format(eventDate)}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    style: TextStyle(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _titleController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: theme.textColor),
                     decoration: _inputDecoration('Event Title (e.g. First Date)', theme.accentColor),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _descController,
                     maxLines: 2,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: theme.textColor),
                     decoration: _inputDecoration('Description (optional)', theme.accentColor),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Event Type', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  Text('Event Type', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14)),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 45,
@@ -172,7 +172,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               color: _selectedTime == null ? Colors.white30 : Colors.white,
                             ),
                           ),
-                          const Icon(Icons.access_time_rounded, color: Colors.white70),
+                          Icon(Icons.access_time_rounded, color: theme.textColor.withValues(alpha: 0.7)),
                         ],
                       ),
                     ),
@@ -305,13 +305,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = context.watch<ThemeProvider>().currentLoveTheme;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
             onPressed: () => Navigator.pop(context),
           ),
           Text(
@@ -325,11 +326,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: Colors.white),
+                icon: Icon(Icons.chevron_left, color: theme.textColor),
                 onPressed: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1)),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: Colors.white),
+                icon: Icon(Icons.chevron_right, color: theme.textColor),
                 onPressed: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1)),
               ),
             ],
@@ -365,7 +366,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekDays.map((d) => Text(d, style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold))).toList(),
+            children: weekDays.map((d) => Text(d, style: TextStyle(color: theme.textColor.withValues(alpha: 0.38), fontSize: 12, fontWeight: FontWeight.bold))).toList(),
           ),
           const SizedBox(height: 12),
           GridView.builder(
@@ -471,7 +472,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Text(
             DateFormat('MMMM dd, yyyy').format(_selectedDay),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
           if (!hasAny)
@@ -479,7 +480,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Center(
                 child: Text(
                   'No events for this day.',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontStyle: FontStyle.italic),
+                  style: TextStyle(color: theme.textColor.withValues(alpha: 0.3), fontStyle: FontStyle.italic),
                 ),
               ),
             )
@@ -533,6 +534,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final theme = context.watch<ThemeProvider>().currentLoveTheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -562,13 +564,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold),
                     ),
                     Row(
                       children: [
                         Text(
                           subtitle,
-                          style: const TextStyle(color: Colors.white60, fontSize: 12),
+                          style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                         ),
                         const SizedBox(width: 4),
                         Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.5)),
@@ -614,9 +616,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   years == 0 ? 'The Day We Met' : '$years Year Anniversary',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
-                const Text(
+                Text(
                   'A very special day in our story.',
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                  style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                 ),
               ],
             ),
@@ -654,12 +656,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 children: [
                   Text(
                     event.title,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold),
                   ),
                   if (event.description?.isNotEmpty ?? false)
                     Text(
                       event.description!,
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                      style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -159,23 +160,21 @@ class StudioTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Love Studio',
-              style: TextStyle(
-                fontFamily: 'Cormorant',
+              style: AppTypography.cormorant(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: theme.textColor,
               ),
             ),
             Row(
               children: [
                 Text(
                   'Powered by AI',
-                  style: TextStyle(
-                    fontFamily: 'Spectral',
+                  style: AppTypography.spectral(
                     fontSize: 16,
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: theme.textColor.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -279,14 +278,14 @@ class StudioTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.star_rounded, color: Colors.amber, size: 24),
-              SizedBox(width: 8),
+              const Icon(Icons.star_rounded, color: Colors.amber, size: 24),
+              const SizedBox(width: 8),
               Text(
                 'Unlock Love Studio Premium',
-                style: TextStyle(
-                  color: Colors.white,
+                style: AppTypography.body(
+                  color: theme.textColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -294,9 +293,9 @@ class StudioTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Get access to the Love Letter Generator, deep Insights, and custom app styles.',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
+            style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7), fontSize: 13),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -374,8 +373,8 @@ class StudioTab extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: AppTypography.body(
+                          color: theme.textColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -386,7 +385,7 @@ class StudioTab extends StatelessWidget {
                           isUnlocked
                               ? Icons.star_rounded
                               : Icons.lock_outline_rounded,
-                          color: isUnlocked ? Colors.amber : Colors.white54,
+                          color: isUnlocked ? Colors.amber : theme.textColor.withValues(alpha: 0.54),
                           size: 16,
                         ),
                       ],
@@ -395,8 +394,8 @@ class StudioTab extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     desc,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                    style: AppTypography.bodyMedium(
+                      color: theme.textColor.withValues(alpha: 0.5),
                       fontSize: 12,
                     ),
                   ),

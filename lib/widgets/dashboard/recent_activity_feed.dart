@@ -115,13 +115,13 @@ class RecentActivityFeed extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Recent Activities',
-                    style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                    style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor),
                   ),
                 ],
               ),
               Text(
                 'LIVE LOGS',
-                style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: Colors.white38).copyWith(letterSpacing: 1.2),
+                style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.38)).copyWith(letterSpacing: 1.2),
               ),
             ],
           ),
@@ -211,18 +211,18 @@ class RecentActivityFeed extends StatelessWidget {
                                     children: [
                                       Text(
                                         log.title,
-                                        style: AppTypography.caption(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                                        style: AppTypography.caption(fontSize: 13, fontWeight: FontWeight.w700, color: theme.textColor),
                                       ),
                                       Text(
                                         _formatRelativeTime(log.timestamp),
-                                        style: AppTypography.caption(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w500),
+                                        style: AppTypography.caption(fontSize: 9, color: theme.textColor.withValues(alpha: 0.3), fontWeight: FontWeight.w500),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     log.subtitle,
-                                    style: AppTypography.caption(fontSize: 11, color: Colors.white54),
+                                    style: AppTypography.caption(fontSize: 11, color: theme.textColor.withValues(alpha: 0.54)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -244,11 +244,11 @@ class RecentActivityFeed extends StatelessWidget {
             children: [
               Text(
                 'Shared Co-Lobby Stream',
-                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white30),
+                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.3)),
               ),
               Text(
                 '${allLogs.length} total',
-                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white30),
+                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.3)),
               ),
             ],
           ),
