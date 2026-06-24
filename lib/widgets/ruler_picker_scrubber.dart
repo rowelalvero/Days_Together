@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
@@ -210,7 +210,7 @@ class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
                     child: isYear
                         ? Text(
                             '${item.date.year}',
-                            style: GoogleFonts.inter(
+                            style: AppTypography.caption(
                               fontSize: 9,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                               color: isSelected ? theme.accentColor : Colors.white70,

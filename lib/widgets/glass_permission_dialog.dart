@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -44,7 +44,7 @@ class GlassPermissionDialog extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: AppTypography.bodyLarge(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
@@ -54,7 +54,7 @@ class GlassPermissionDialog extends StatelessWidget {
             Text(
               rationale,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: AppTypography.body(
                 color: Colors.white70,
                 fontSize: 13,
                 height: 1.5,
@@ -68,7 +68,7 @@ class GlassPermissionDialog extends StatelessWidget {
                     onPressed: () => Navigator.pop(context, false),
                     child: Text(
                       'Cancel',
-                      style: GoogleFonts.inter(color: Colors.white54),
+                      style: AppTypography.body(color: Colors.white54),
                     ),
                   ),
                 ),
@@ -90,7 +90,7 @@ class GlassPermissionDialog extends StatelessWidget {
                     ),
                     child: Text(
                       'Settings',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                      style: AppTypography.bodyLarge(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

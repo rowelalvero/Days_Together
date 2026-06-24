@@ -8,7 +8,7 @@ import 'package:days_together/widgets/comments_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 import 'package:intl/intl.dart';
 
@@ -104,7 +104,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
           if (alignment == CrossAxisAlignment.end) ...[
             Text(
               DateFormat('MMM dd, yyyy • h:mm a').format(widget.item.date),
-              style: GoogleFonts.inter(fontSize: 11, color: theme.accentColor, fontWeight: FontWeight.w600),
+              style: AppTypography.bodyLarge(fontSize: 11, color: theme.accentColor, fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: 6),
             Icon(Icons.access_time_rounded, size: 12, color: theme.accentColor),
@@ -113,7 +113,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
             const SizedBox(width: 6),
             Text(
               DateFormat('MMM dd, yyyy • h:mm a').format(widget.item.date),
-              style: GoogleFonts.inter(fontSize: 11, color: theme.accentColor, fontWeight: FontWeight.w600),
+              style: AppTypography.bodyLarge(fontSize: 11, color: theme.accentColor, fontWeight: FontWeight.w600),
             ),
           ],
         ],
@@ -127,7 +127,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
               Flexible(
                 child: Text(
                   widget.item.location!,
-                  style: GoogleFonts.inter(fontSize: 11, color: Colors.white70),
+                  style: AppTypography.bodyMedium(fontSize: 11, color: Colors.white70),
                   textAlign: TextAlign.right,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -140,7 +140,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
               Flexible(
                 child: Text(
                   widget.item.location!,
-                  style: GoogleFonts.inter(fontSize: 11, color: Colors.white70),
+                  style: AppTypography.bodyMedium(fontSize: 11, color: Colors.white70),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -242,14 +242,14 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
         const SizedBox(height: 12),
         Text(
           widget.item.title,
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+          style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
         Text(
           widget.item.description,
-          style: GoogleFonts.inter(fontSize: 11, color: Colors.white60, height: 1.4),
+          style: AppTypography.bodyMedium(fontSize: 11, color: Colors.white60, height: 1.4),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -267,7 +267,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
             Expanded(
               child: Text(
                 widget.item.title,
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -279,7 +279,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
         const SizedBox(height: 8),
         Text(
           widget.item.description,
-          style: GoogleFonts.spaceGrotesk(fontSize: 13, fontStyle: FontStyle.italic, color: Colors.white70, height: 1.5),
+          style: AppTypography.sectionHeader(fontSize: 13, color: Colors.white70, height: 1.5).copyWith(fontStyle: FontStyle.italic),
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
         ),
@@ -391,7 +391,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     currentItem.title,
-                                    style: GoogleFonts.spaceGrotesk(
+                                    style: AppTypography.pageTitle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
@@ -404,14 +404,14 @@ class MemoryDetailScreen extends StatelessWidget {
                                       const SizedBox(width: 6),
                                       Text(
                                         DateFormat('MMMM dd, yyyy').format(currentItem.date),
-                                        style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                                        style: AppTypography.body(color: Colors.white70, fontSize: 13),
                                       ),
                                       const SizedBox(width: 12),
                                       Icon(Icons.access_time_rounded, size: 14, color: theme.accentColor),
                                       const SizedBox(width: 6),
                                       Text(
                                         DateFormat.jm().format(currentItem.date),
-                                        style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                                        style: AppTypography.body(color: Colors.white70, fontSize: 13),
                                       ),
                                     ],
                                   ),
@@ -436,7 +436,7 @@ class MemoryDetailScreen extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text(
                                 currentItem.location!,
-                                style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                                style: AppTypography.body(color: Colors.white54, fontSize: 14),
                               ),
                             ],
                           ),
@@ -449,7 +449,7 @@ class MemoryDetailScreen extends StatelessWidget {
                           opacity: 0.08,
                           child: Text(
                             currentItem.description,
-                            style: GoogleFonts.lora(
+                            style: AppTypography.lora(
                               fontSize: 18,
                               color: Colors.white.withValues(alpha: 0.9),
                               height: 1.8,
@@ -473,7 +473,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                   const SizedBox(width: 6),
                                   Text(
                                     '${currentItem.comments.length}',
-                                    style: GoogleFonts.inter(
+                                    style: AppTypography.bodyLarge(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
@@ -482,7 +482,7 @@ class MemoryDetailScreen extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     'chats',
-                                    style: GoogleFonts.inter(color: Colors.white70, fontSize: 11),
+                                    style: AppTypography.bodyMedium(color: Colors.white70, fontSize: 11),
                                   ),
                                 ],
                               ),
@@ -607,7 +607,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           ),
           Text(
             'Edit Memory',
-            style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: AppTypography.sectionHeader(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveChanges,
@@ -657,7 +657,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                 children: [
                   const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 32),
                   const SizedBox(height: 8),
-                  Text('Change Photo', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                  Text('Change Photo', style: AppTypography.bodyLarge(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                 ],
               ),
             ),
@@ -671,7 +671,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('DATE & TIME', style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text('DATE & TIME', style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -733,7 +733,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Mood', style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text('Mood', style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -762,7 +762,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text(label.toUpperCase(), style: AppTypography.bodyLarge(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.2)),
         const SizedBox(height: 12),
         GlassContainer(
           borderRadius: 20,
@@ -770,7 +770,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           child: TextField(
             controller: controller,
             maxLines: maxLines,
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
+            style: AppTypography.bodyLarge(color: Colors.white, fontSize: 16),
             decoration: const InputDecoration(
               border: InputBorder.none,
               hintStyle: TextStyle(color: Colors.white24),
@@ -790,7 +790,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
             builder: (ctx) => AlertDialog(
               backgroundColor: theme.secondaryColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text('Delete Memory?', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+              title: Text('Delete Memory?', style: AppTypography.bodyLarge(color: Colors.white, fontWeight: FontWeight.bold)),
               actions: [
                 TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
                 TextButton(
@@ -809,7 +809,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           }
         },
         icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-        label: Text('Delete Memory', style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+        label: Text('Delete Memory', style: AppTypography.bodyLarge(color: Colors.redAccent, fontWeight: FontWeight.bold)),
       ),
     );
   }

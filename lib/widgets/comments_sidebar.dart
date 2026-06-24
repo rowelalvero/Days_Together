@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -131,7 +131,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                           Expanded(
                             child: Text(
                               'Sidebar Chat',
-                              style: GoogleFonts.inter(
+                              style: AppTypography.bodyLarge(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -177,7 +177,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                               child: TextField(
                                 controller: _commentController,
-                                style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                                style: AppTypography.body(color: Colors.white, fontSize: 14),
                                 textCapitalization: TextCapitalization.sentences,
                                 decoration: const InputDecoration(
                                   hintText: 'Write a cute reply...',
@@ -231,7 +231,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
               ],
               Text(
                 comment.authorName,
-                style: GoogleFonts.inter(
+                style: AppTypography.bodyLarge(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: comment.isPinned ? theme.accentColor : Colors.white70,
@@ -240,7 +240,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
               const SizedBox(width: 6),
               Text(
                 DateFormat('MM/dd h:mm a').format(comment.date),
-                style: GoogleFonts.inter(fontSize: 10, color: Colors.white38),
+                style: AppTypography.caption(fontSize: 10, color: Colors.white38),
               ),
             ],
           ),
@@ -269,7 +269,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
               ),
               child: Text(
                 comment.content,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13.5, height: 1.4),
+                style: AppTypography.body(color: Colors.white, fontSize: 13.5, height: 1.4),
               ),
             ),
           ),
@@ -303,7 +303,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                 ),
                 title: Text(
                   comment.isPinned ? 'Unpin Conversation' : 'Pin to Top',
-                  style: GoogleFonts.inter(color: Colors.white),
+                  style: AppTypography.body(color: Colors.white),
                 ),
                 onTap: () {
                   provider.togglePinComment(widget.item.id, comment.id);
@@ -314,7 +314,7 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                 leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
                 title: Text(
                   'Delete Comment',
-                  style: GoogleFonts.inter(color: Colors.redAccent),
+                  style: AppTypography.body(color: Colors.redAccent),
                 ),
                 onTap: () {
                   provider.deleteCommentFromItem(widget.item.id, comment.id);
@@ -341,12 +341,12 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
           const SizedBox(height: 16),
           Text(
             'No conversations yet.',
-            style: GoogleFonts.inter(color: Colors.white30, fontSize: 13),
+            style: AppTypography.body(color: Colors.white30, fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(
             'Pin a cute memory conversation here!',
-            style: GoogleFonts.inter(color: theme.accentColor.withValues(alpha: 0.4), fontSize: 12),
+            style: AppTypography.bodyMedium(color: theme.accentColor.withValues(alpha: 0.4), fontSize: 12),
           ),
         ],
       ),

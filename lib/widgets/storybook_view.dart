@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
@@ -75,7 +75,7 @@ class _StorybookViewState extends State<StorybookView> {
       return Center(
         child: Text(
           'No chapters written yet.',
-          style: GoogleFonts.inter(color: Colors.white30, fontSize: 16),
+          style: AppTypography.body(color: Colors.white30, fontSize: 16),
         ),
       );
     }
@@ -159,7 +159,7 @@ class _StorybookViewState extends State<StorybookView> {
                                 children: [
                                   Text(
                                     DateFormat('MMMM dd, yyyy').format(item.date),
-                                    style: GoogleFonts.inter(
+                                    style: AppTypography.bodyLarge(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -167,7 +167,7 @@ class _StorybookViewState extends State<StorybookView> {
                                   ),
                                   Text(
                                     DateFormat.jm().format(item.date),
-                                    style: GoogleFonts.inter(
+                                    style: AppTypography.bodyMedium(
                                       color: Colors.white54,
                                       fontSize: 12,
                                     ),
@@ -197,7 +197,7 @@ class _StorybookViewState extends State<StorybookView> {
                             item.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.spaceGrotesk(
+                            style: AppTypography.pageTitle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -211,7 +211,7 @@ class _StorybookViewState extends State<StorybookView> {
                                 const SizedBox(width: 4),
                                 Text(
                                   item.location!,
-                                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                                  style: AppTypography.bodyMedium(color: Colors.white54, fontSize: 12),
                                 ),
                               ],
                             ),
@@ -224,7 +224,7 @@ class _StorybookViewState extends State<StorybookView> {
                               physics: const BouncingScrollPhysics(),
                               child: Text(
                                 item.description,
-                                style: GoogleFonts.lora(
+                                style: AppTypography.lora(
                                   fontSize: 15,
                                   color: Colors.white.withValues(alpha: 0.85),
                                   height: 1.6,
@@ -255,7 +255,7 @@ class _StorybookViewState extends State<StorybookView> {
                                     const SizedBox(width: 6),
                                     Text(
                                       '${item.comments.length}',
-                                      style: GoogleFonts.inter(
+                                      style: AppTypography.bodyLarge(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
@@ -264,7 +264,7 @@ class _StorybookViewState extends State<StorybookView> {
                                     const SizedBox(width: 4),
                                     Text(
                                       'chats',
-                                      style: GoogleFonts.inter(
+                                      style: AppTypography.bodyMedium(
                                         color: Colors.white70,
                                         fontSize: 11,
                                       ),
