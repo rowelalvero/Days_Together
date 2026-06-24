@@ -1,6 +1,7 @@
 import 'package:days_together/screens/onboarding/create_couple_code_screen.dart';
 import 'package:days_together/screens/onboarding/join_couple_code_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -30,8 +31,7 @@ class PairingSelectionScreen extends StatelessWidget {
                 const Spacer(),
                 Text(
                   'Are you starting fresh\nor joining the journey?',
-                  style: TextStyle(
-                    fontFamily: 'Cormorant',
+                  style: AppTypography.cormorant(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -41,8 +41,7 @@ class PairingSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Choose your path to begin.',
-                  style: TextStyle(
-                    fontFamily: 'Spectral',
+                  style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.7),
                   ),
@@ -132,7 +131,7 @@ class _PairingCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: AppTypography.body(
                       color: Colors.white,
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -141,7 +140,7 @@ class _PairingCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: AppTypography.caption(
                       color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 13,
                     ),

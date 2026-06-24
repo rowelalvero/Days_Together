@@ -39,6 +39,15 @@ class AppTypography {
     );
   }
 
+  static TextStyle body({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
+    return GoogleFonts.inter(
+      fontSize: fontSize ?? 14.0,
+      fontWeight: fontWeight ?? FontWeight.normal,
+      color: color,
+      height: height,
+    );
+  }
+
   static TextStyle bodyLarge({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
     return GoogleFonts.inter(
       fontSize: fontSize ?? 14.0,
@@ -97,6 +106,28 @@ class AppTypography {
     return GoogleFonts.lora(
       fontSize: fontSize ?? 14.0,
       fontWeight: fontWeight ?? FontWeight.normal,
+      color: color,
+      height: height,
+      fontStyle: fontStyle,
+    );
+  }
+
+  static TextStyle cormorant({Color? color, double? fontSize, FontWeight? fontWeight, double? height, FontStyle? fontStyle}) {
+    return TextStyle(
+      fontFamily: 'Cormorant',
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      fontStyle: fontStyle,
+    );
+  }
+
+  static TextStyle spectral({Color? color, double? fontSize, FontWeight? fontWeight, double? height, FontStyle? fontStyle}) {
+    return TextStyle(
+      fontFamily: 'Spectral',
+      fontSize: fontSize,
+      fontWeight: fontWeight,
       color: color,
       height: height,
       fontStyle: fontStyle,

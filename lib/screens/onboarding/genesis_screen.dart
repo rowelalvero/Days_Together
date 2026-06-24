@@ -1,5 +1,6 @@
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:provider/provider.dart';
@@ -39,8 +40,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                 const SizedBox(height: 20),
                 Text(
                   'When did your\nstory begin?',
-                  style: TextStyle(
-                    fontFamily: 'Cormorant',
+                  style: AppTypography.cormorant(
                     fontSize: 36,
                     fontStyle: FontStyle.italic,
                     color: theme.textColor,
@@ -51,8 +51,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                 const SizedBox(height: 10),
                 Text(
                   'Pick the exact day and time you became official.',
-                  style: TextStyle(
-                    fontFamily: 'Spectral',
+                  style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.8),
                   ),
@@ -60,8 +59,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                 const SizedBox(height: 8),
                 Text(
                   "Don't worry—you can change this later.",
-                  style: TextStyle(
-                    fontFamily: 'Spectral',
+                  style: AppTypography.spectral(
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
                     color: theme.textColor.withValues(alpha: 0.5),
@@ -155,9 +153,9 @@ class _GenesisScreenState extends State<GenesisScreen> {
                       ),
                       elevation: 5,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Continue',
-                      style: TextStyle(
+                      style: AppTypography.button(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -205,17 +203,16 @@ class _GenesisScreenState extends State<GenesisScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: AppTypography.caption(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
                     color: Colors.white.withValues(alpha: 0.5),
-                  ),
+                  ).copyWith(letterSpacing: 2),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: AppTypography.body(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w500,

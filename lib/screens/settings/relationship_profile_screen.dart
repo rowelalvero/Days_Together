@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -79,7 +79,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           const SizedBox(width: 16),
           Text(
             'Relationship Profile',
-            style: GoogleFonts.spaceGrotesk(
+            style: AppTypography.sectionHeader(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -117,7 +117,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           if (partnerJoined) ...[
             Text(
               '${rp.yourName ?? 'You'} & ${rp.partnerName ?? 'Partner'}',
-              style: GoogleFonts.spaceGrotesk(
+              style: AppTypography.sectionHeader(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -127,7 +127,7 @@ class RelationshipProfileScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Connected & in Love',
-              style: GoogleFonts.inter(
+              style: AppTypography.caption(
                 fontSize: 13,
                 color: theme.textColor.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w500,
@@ -136,7 +136,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           ] else ...[
             Text(
               rp.yourName ?? 'You',
-              style: GoogleFonts.spaceGrotesk(
+              style: AppTypography.sectionHeader(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -146,7 +146,7 @@ class RelationshipProfileScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Waiting for partner to join...',
-              style: GoogleFonts.inter(
+              style: AppTypography.caption(
                 fontSize: 13,
                 color: theme.textColor.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w500,
@@ -190,7 +190,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           width: 85,
           child: Text(
             name,
-            style: GoogleFonts.inter(
+            style: AppTypography.body(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -236,7 +236,7 @@ class RelationshipProfileScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Waiting...',
-          style: GoogleFonts.inter(
+          style: AppTypography.body(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Colors.white38,
@@ -346,7 +346,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   partnerJoined ? 'Connected' : 'Unpaired / Waiting',
-                  style: GoogleFonts.inter(
+                  style: AppTypography.body(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -399,12 +399,11 @@ class RelationshipProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.caption(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.white38,
-                    letterSpacing: 0.5,
-                  ),
+                  ).copyWith(letterSpacing: 0.5),
                 ),
                 const SizedBox(height: 4),
                 if (valueWidget != null)
@@ -412,7 +411,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                 else
                   Text(
                     value ?? '',
-                    style: GoogleFonts.inter(
+                    style: AppTypography.body(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -464,17 +463,16 @@ class RelationshipProfileScreen extends StatelessWidget {
         children: [
           Text(
             'PAIRING CODE',
-            style: GoogleFonts.inter(
+            style: AppTypography.caption(
               fontSize: 11,
               fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
               color: theme.accentColor,
-            ),
+            ).copyWith(letterSpacing: 1.5),
           ),
           const SizedBox(height: 8),
           Text(
             'Share this invitation code with your partner so they can join your registry.',
-            style: GoogleFonts.inter(
+            style: AppTypography.caption(
               fontSize: 13,
               color: Colors.white54,
               height: 1.4,
@@ -492,12 +490,11 @@ class RelationshipProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   code,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.body(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    letterSpacing: 4,
-                  ),
+                  ).copyWith(letterSpacing: 4),
                 ),
                 Row(
                   children: [
@@ -548,7 +545,7 @@ class RelationshipProfileScreen extends StatelessWidget {
         ),
         child: Text(
           partnerJoined ? 'Unlink Relationship' : 'Cancel Relationship Request',
-          style: GoogleFonts.inter(
+          style: AppTypography.body(
             color: Colors.redAccent,
             fontWeight: FontWeight.bold,
             fontSize: 15,
@@ -578,7 +575,7 @@ class RelationshipProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 partnerJoined ? 'Unlink Relationship' : 'Cancel Registry Request',
-                style: GoogleFonts.spaceGrotesk(
+                style: AppTypography.sectionHeader(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -590,7 +587,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                 partnerJoined
                     ? 'Are you sure you want to unlink? This will disconnect your profile from your partner and return you to the pairing setup screen.'
                     : 'Are you sure you want to cancel? This will deactivate the current invitation code.',
-                style: GoogleFonts.inter(
+                style: AppTypography.caption(
                   fontSize: 13,
                   color: Colors.white70,
                   height: 1.5,
@@ -605,7 +602,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         partnerJoined ? 'Keep Connected' : 'Keep Request',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.body(
                           color: Colors.white54,
                           fontWeight: FontWeight.bold,
                         ),
@@ -629,7 +626,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'Unlink',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.body(
                           fontWeight: FontWeight.bold,
                         ),
                       ),

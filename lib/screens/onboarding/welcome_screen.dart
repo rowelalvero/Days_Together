@@ -1,5 +1,6 @@
 import 'package:days_together/screens/onboarding/auth_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -84,8 +85,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               const SizedBox(height: 40),
               Text(
                 'For the ones you love.',
-                style: TextStyle(
-                  fontFamily: 'Cormorant',
+                style: AppTypography.cormorant(
                   fontSize: 32,
                   fontStyle: FontStyle.italic,
                   color: theme.textColor,
@@ -95,12 +95,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               const SizedBox(height: 16),
               Text(
                 'Your story continues here.',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
+                style: AppTypography.spectral(
                   fontSize: 18,
                   color: theme.textColor.withValues(alpha: 0.7),
-                  letterSpacing: 1.2,
-                ),
+                ).copyWith(letterSpacing: 1.2),
               ),
               const Spacer(),
               Padding(
@@ -132,8 +130,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     const SizedBox(height: 16),
                     Text(
                       'A little magic is loading...',
-                      style: TextStyle(
-                        fontFamily: 'Spectral',
+                      style: AppTypography.spectral(
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
                         color: Colors.white.withValues(alpha: 0.4),
@@ -175,11 +172,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: AppTypography.button(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.1,
-          ),
+          ).copyWith(letterSpacing: 1.1),
         ),
       ),
     );

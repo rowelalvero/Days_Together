@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
@@ -128,8 +129,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 32),
                   Text(
                     _isSignUp ? 'Create Account' : 'Welcome Back',
-                    style: TextStyle(
-                      fontFamily: 'Cormorant',
+                    style: AppTypography.cormorant(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,
@@ -140,8 +140,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     _isSignUp
                         ? 'Join the journey of love together.'
                         : 'Sign in to access your shared memories.',
-                    style: TextStyle(
-                      fontFamily: 'Spectral',
+                    style: AppTypography.spectral(
                       fontSize: 16,
                       color: theme.textColor.withValues(alpha: 0.7),
                     ),

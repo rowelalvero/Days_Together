@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
@@ -56,8 +57,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                 const SizedBox(height: 24),
                 Text(
                   "Let's put a face\nto the name.",
-                  style: TextStyle(
-                    fontFamily: 'Cormorant',
+                  style: AppTypography.cormorant(
                     fontSize: 36,
                     fontStyle: FontStyle.italic,
                     color: theme.textColor,
@@ -68,8 +68,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'This is how your partner will see you.',
-                  style: TextStyle(
-                    fontFamily: 'Spectral',
+                  style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.7),
                   ),
@@ -105,7 +104,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Add Photo',
-                                  style: TextStyle(
+                                  style: AppTypography.caption(
                                     color: theme.accentColor,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -146,9 +145,9 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Complete Setup',
-                            style: TextStyle(
+                            style: AppTypography.button(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -173,20 +172,19 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
       children: [
         Text(
           label.toUpperCase(),
-          style: TextStyle(
+          style: AppTypography.caption(
             color: Colors.white.withValues(alpha: 0.6),
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-          ),
+          ).copyWith(letterSpacing: 1.5),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: AppTypography.body(color: Colors.white, fontSize: 16),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+            hintStyle: AppTypography.body(color: Colors.white.withValues(alpha: 0.3)),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.08),
             border: OutlineInputBorder(

@@ -5,6 +5,7 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class ThemeSelectorScreen extends StatelessWidget {
   const ThemeSelectorScreen({super.key});
@@ -21,7 +22,7 @@ class ThemeSelectorScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Themes',
-          style: GoogleFonts.spaceGrotesk(
+          style: AppTypography.sectionHeader(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
@@ -74,12 +75,11 @@ class ThemeSelectorScreen extends StatelessWidget {
                 if (themeProvider.currentTheme == ThemeType.custom) ...[
                   Text(
                     'CUSTOM DESIGNER',
-                    style: GoogleFonts.inter(
+                    style: AppTypography.caption(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
                       color: theme.textColor.withValues(alpha: 0.4),
-                    ),
+                    ).copyWith(letterSpacing: 2),
                   ),
                   const SizedBox(height: 16),
                   _CustomThemeDesigner(parentTheme: theme),
@@ -211,7 +211,7 @@ class _ThemeCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             theme.name,
-            style: GoogleFonts.inter(
+            style: AppTypography.caption(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isSelected
@@ -351,12 +351,11 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
   Widget _buildSectionLabel(String text, LoveStoryTheme theme) {
     return Text(
       text.toUpperCase(),
-      style: GoogleFonts.inter(
+      style: AppTypography.caption(
         fontSize: 10,
         fontWeight: FontWeight.w800,
-        letterSpacing: 1.5,
         color: theme.textColor.withValues(alpha: 0.35),
-      ),
+      ).copyWith(letterSpacing: 1.5),
     );
   }
 
@@ -408,7 +407,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
                 const SizedBox(width: 8),
                 Text(
                   slot.label,
-                  style: GoogleFonts.inter(
+                  style: AppTypography.caption(
                     fontSize: 12,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     color: isActive
@@ -475,7 +474,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
         children: [
           Text(
             '#',
-            style: GoogleFonts.jetBrainsMono(
+            style: AppTypography.bodyMono(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: theme.accentColor,
@@ -485,13 +484,13 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
           Expanded(
             child: TextField(
               controller: _hexController,
-              style: GoogleFonts.jetBrainsMono(
+              style: AppTypography.bodyMono(
                 fontSize: 14,
                 color: theme.textColor,
               ),
               decoration: InputDecoration(
                 hintText: 'Enter hex (e.g. FF4D6D)',
-                hintStyle: GoogleFonts.jetBrainsMono(
+                hintStyle: AppTypography.bodyMono(
                   fontSize: 14,
                   color: theme.textColor.withValues(alpha: 0.25),
                 ),
@@ -671,7 +670,7 @@ class _ModeChip extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: AppTypography.caption(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected

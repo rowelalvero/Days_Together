@@ -1,5 +1,6 @@
 import 'package:days_together/screens/onboarding/genesis_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:provider/provider.dart';
@@ -57,8 +58,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                   const SizedBox(height: 40),
                   Text(
                     'Enter the\nmagic code.',
-                    style: TextStyle(
-                      fontFamily: 'Cormorant',
+                    style: AppTypography.cormorant(
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,
@@ -68,8 +68,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                   const SizedBox(height: 12),
                   Text(
                     'Your partner shared a 6-digit code with you.',
-                    style: TextStyle(
-                      fontFamily: 'Spectral',
+                    style: AppTypography.spectral(
                       fontSize: 16,
                       color: theme.textColor.withValues(alpha: 0.7),
                     ),
@@ -88,7 +87,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                           textAlign: TextAlign.center,
                           maxLength: 1,
                           textCapitalization: TextCapitalization.characters,
-                          style: const TextStyle(
+                          style: AppTypography.body(
                             color: Colors.white,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -138,7 +137,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                     const SizedBox(height: 20),
                     Text(
                        _errorMessage!,
-                      style: TextStyle(
+                      style: AppTypography.body(
                         color: theme.accentColor,
                         fontSize: 14,
                       ),
@@ -172,9 +171,9 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Link Couple Code',
-                              style: TextStyle(
+                              style: AppTypography.button(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),

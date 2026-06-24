@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -52,7 +52,7 @@ class SettingsTab extends StatelessWidget {
             children: [
               Text(
                 'Personalize Your Story',
-                style: GoogleFonts.spaceGrotesk(
+                style: AppTypography.sectionHeader(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -76,7 +76,7 @@ class SettingsTab extends StatelessWidget {
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         'Discard Changes',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.body(
                           color: Colors.white54,
                           fontWeight: FontWeight.bold,
                         ),
@@ -103,7 +103,7 @@ class SettingsTab extends StatelessWidget {
                       ),
                       child: Text(
                         'Save Profile Details',
-                        style: GoogleFonts.inter(
+                        style: AppTypography.body(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -183,7 +183,7 @@ class SettingsTab extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               'Log Out',
-              style: GoogleFonts.spaceGrotesk(
+              style: AppTypography.cardTitle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -192,7 +192,7 @@ class SettingsTab extends StatelessWidget {
         ),
         content: Text(
           'This will erase all your local data including memories, settings, and theme preferences.\n\nAre you sure?',
-          style: GoogleFonts.inter(
+          style: AppTypography.body(
             color: Colors.white70,
             fontSize: 14,
             height: 1.5,
@@ -203,7 +203,7 @@ class SettingsTab extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Keep Logged In',
-              style: GoogleFonts.inter(
+              style: AppTypography.body(
                 color: Colors.white54,
                 fontWeight: FontWeight.w600,
               ),
@@ -229,7 +229,7 @@ class SettingsTab extends StatelessWidget {
             ),
             child: Text(
               'Log Out',
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+              style: AppTypography.body(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -252,7 +252,7 @@ class SettingsTab extends StatelessWidget {
           children: [
             Text(
               'Settings',
-              style: GoogleFonts.spaceGrotesk(
+              style: AppTypography.pageTitle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -301,7 +301,7 @@ class SettingsTab extends StatelessWidget {
                 opacity: 0.2,
                 child: Text(
                   'Version 0.1.0 • Built with ❤️',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
+                  style: AppTypography.caption(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -344,7 +344,7 @@ class SettingsTab extends StatelessWidget {
               ),
               child: Text(
                 'Edit Profiles',
-                style: GoogleFonts.inter(
+                style: AppTypography.caption(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -384,7 +384,7 @@ class SettingsTab extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
+            style: AppTypography.body(
               color: Colors.white,
               fontWeight: FontWeight.w600,
               fontSize: 14,
@@ -400,12 +400,11 @@ class SettingsTab extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 16),
       child: Text(
         title.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: AppTypography.caption(
           color: Colors.white.withValues(alpha: 0.3),
           fontSize: 11,
           fontWeight: FontWeight.w900,
-          letterSpacing: 2,
-        ),
+        ).copyWith(letterSpacing: 2),
       ),
     );
   }
@@ -427,8 +426,8 @@ class SettingsTab extends StatelessWidget {
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: Colors.white70, size: 20),
         ),
-        title: Text(title, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
-        subtitle: Text(subtitle, style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
+        title: Text(title, style: AppTypography.body(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
+        subtitle: Text(subtitle, style: AppTypography.caption(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
         trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 20),
       ),
     );
@@ -452,8 +451,8 @@ class SettingsTab extends StatelessWidget {
           decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
           child: const Icon(Icons.star_rounded, color: Colors.white, size: 20),
         ),
-        title: Text('Premium Studio', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Text('Unlock exclusive liquid glass themes', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+        title: Text('Premium Studio', style: AppTypography.body(color: Colors.white, fontWeight: FontWeight.bold)),
+        subtitle: Text('Unlock exclusive liquid glass themes', style: AppTypography.caption(color: Colors.white54, fontSize: 11)),
         trailing: Switch.adaptive(
           value: provider.isPremium,
           onChanged: (val) => provider.setPremium(val),

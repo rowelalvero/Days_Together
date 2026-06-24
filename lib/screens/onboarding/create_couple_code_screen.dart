@@ -1,6 +1,7 @@
 import 'package:days_together/screens/onboarding/genesis_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:provider/provider.dart';
@@ -58,8 +59,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                 const SizedBox(height: 40),
                 Text(
                   'Your exclusive\ncouple code.',
-                  style: TextStyle(
-                    fontFamily: 'Cormorant',
+                  style: AppTypography.cormorant(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -69,8 +69,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                 const SizedBox(height: 12),
                 Text(
                   'Share this with your partner so they can join your story.',
-                  style: TextStyle(
-                    fontFamily: 'Spectral',
+                  style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.7),
                   ),
@@ -104,21 +103,19 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       children: [
                         Text(
                           _code,
-                          style: const TextStyle(
+                          style: AppTypography.body(
                             fontSize: 48,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            letterSpacing: 12,
-                          ),
+                          ).copyWith(letterSpacing: 12),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'This code is unique to you. Keep it safe.',
-                          style: TextStyle(
+                          style: AppTypography.caption(
                             fontSize: 13,
                             color: Colors.white.withValues(alpha: 0.5),
-                            fontStyle: FontStyle.italic,
-                          ),
+                          ).copyWith(fontStyle: FontStyle.italic),
                         ),
                       ],
                     ),
@@ -179,9 +176,9 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       ),
                       elevation: 5,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Continue',
-                      style: TextStyle(
+                      style: AppTypography.button(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),

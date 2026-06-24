@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -58,10 +59,9 @@ class _LoadingScreenState extends State<LoadingScreen>
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'A little magic is loading...',
-                style: TextStyle(
-                  fontFamily: 'Spectral',
+                style: AppTypography.spectral(
                   fontSize: 16,
                   fontStyle: FontStyle.italic,
                   color: Colors.white70,
