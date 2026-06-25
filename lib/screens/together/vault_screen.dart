@@ -59,7 +59,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.arrow_back_ios, color: widget.theme.textColor),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: widget.theme.textColor),
                   ),
                 ],
               ),
@@ -80,7 +80,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
                 style: AppTypography.body(color: widget.theme.textColor.withValues(alpha: 0.6)),
               ),
               const SizedBox(height: 40),
-              _buildPinDots(_pin),
+              _buildPinDots(_pin, textColor: widget.theme.textColor),
               const SizedBox(height: 40),
               _buildKeypad(
                 onDigit: (d) {
@@ -94,7 +94,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
                     setState(() => _pin = _pin.substring(0, _pin.length - 1));
                   }
                 },
-                accentColor: widget.theme.accentColor,
+                textColor: widget.theme.textColor,
               ),
               const Spacer(),
             ],
@@ -133,7 +133,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.arrow_back_ios, color: widget.theme.textColor),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: widget.theme.textColor),
                   ),
                 ],
               ),
@@ -156,7 +156,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              _buildPinDots(_pin, isError: _error),
+              _buildPinDots(_pin, isError: _error, textColor: widget.theme.textColor),
               const SizedBox(height: 40),
               _buildKeypad(
                 onDigit: (d) async {
@@ -181,7 +181,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
                     setState(() => _pin = _pin.substring(0, _pin.length - 1));
                   }
                 },
-                accentColor: widget.theme.accentColor,
+                textColor: widget.theme.textColor,
               ),
               const Spacer(),
             ],
@@ -221,7 +221,7 @@ class _VaultContentScreen extends StatelessWidget {
                           vault.lock();
                           Navigator.pop(context);
                         },
-                        icon: Icon(Icons.arrow_back_ios, color: theme.textColor),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                       ),
                       Expanded(
                         child: Text(
@@ -245,8 +245,8 @@ class _VaultContentScreen extends StatelessWidget {
                 ),
                 TabBar(
                   indicatorColor: theme.accentColor,
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white54,
+                  labelColor: theme.textColor,
+                  unselectedLabelColor: theme.textColor.withValues(alpha: 0.5),
                   tabs: const [
                     Tab(text: '📸 Photos'),
                     Tab(text: '💌 Letters'),
@@ -277,7 +277,6 @@ class _VaultContentScreen extends StatelessWidget {
             Icon(Icons.photo_library_outlined, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text('Nothing here yet.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5))),
-            Text('Add your first secret.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.4), fontStyle: FontStyle.italic)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => vault.addPhoto(context),
@@ -312,9 +311,10 @@ class _VaultContentScreen extends StatelessWidget {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Delete Photo?'),
+                        backgroundColor: theme.primaryColor,
+                        title: Text('Delete Photo?', style: TextStyle(color: theme.textColor)),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5)))),
                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
                         ],
                       ),
@@ -387,9 +387,9 @@ class _VaultContentScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: theme.textColor.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,7 +534,7 @@ class _DecoyWeatherScreen extends StatelessWidget {
                       onReset();
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
                   ),
                 ],
               ),
@@ -564,7 +564,7 @@ class _DecoyWeatherScreen extends StatelessWidget {
 }
 
 // ── SHARED WIDGETS ──
-Widget _buildPinDots(String pin, {bool isError = false}) {
+Widget _buildPinDots(String pin, {bool isError = false, Color textColor = Colors.white}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: List.generate(4, (index) {
@@ -576,10 +576,10 @@ Widget _buildPinDots(String pin, {bool isError = false}) {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: filled
-              ? (isError ? Colors.redAccent : Colors.white)
+              ? (isError ? Colors.redAccent : textColor)
               : Colors.transparent,
           border: Border.all(
-            color: isError ? Colors.redAccent : Colors.white.withValues(alpha: 0.5),
+            color: isError ? Colors.redAccent : textColor.withValues(alpha: 0.5),
             width: 2,
           ),
         ),
@@ -591,7 +591,7 @@ Widget _buildPinDots(String pin, {bool isError = false}) {
 Widget _buildKeypad({
   required Function(String) onDigit,
   required VoidCallback onDelete,
-  required Color accentColor,
+  required Color textColor,
 }) {
   final keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
   return Padding(
@@ -619,13 +619,13 @@ Widget _buildKeypad({
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.08),
+              color: textColor.withValues(alpha: 0.08),
             ),
             child: Center(
               child: Text(
                 key,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: textColor,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),

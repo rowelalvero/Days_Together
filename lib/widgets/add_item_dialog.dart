@@ -104,7 +104,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           IconButton(
             onPressed: _isSaving ? null : _saveItem,
             icon: _isSaving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.accentColor))
                 : Icon(Icons.check_rounded, color: theme.accentColor, size: 28),
           ),
         ],
@@ -138,16 +138,16 @@ class _AddItemDialogState extends State<AddItemDialog> {
                   )
                 : Container(
                     width: double.infinity,
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: theme.textColor.withValues(alpha: 0.05),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_photo_alternate_outlined, color: Colors.white30, size: 40),
+                          Icon(Icons.add_photo_alternate_outlined, color: theme.textColor.withValues(alpha: 0.3), size: 40),
                           const SizedBox(height: 8),
                           Text(
                             'No photo selected',
-                            style: AppTypography.bodyMedium(color: Colors.white30, fontSize: 12),
+                            style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.3), fontSize: 12),
                           ),
                         ],
                       ),
@@ -169,7 +169,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                 const SizedBox(height: 4),
                 Text(
                   _descriptionController.text.isEmpty ? 'Description...' : _descriptionController.text,
-                  style: AppTypography.bodyMedium(color: Colors.white60, fontSize: 11),
+                  style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.6), fontSize: 11),
                   maxLines: 2,
                 ),
               ],
@@ -193,7 +193,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           const SizedBox(height: 12),
           Text(
             _descriptionController.text.isEmpty ? 'Your beautiful story goes here...' : _descriptionController.text,
-            style: AppTypography.sectionHeader(color: Colors.white70, fontSize: 14, height: 1.5).copyWith(fontStyle: FontStyle.italic),
+            style: AppTypography.lora(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14, height: 1.5).copyWith(fontStyle: FontStyle.italic),
             maxLines: 5,
           ),
         ],
@@ -220,10 +220,9 @@ class _AddItemDialogState extends State<AddItemDialog> {
                     builder: (context, child) {
                       return Theme(
                         data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.dark(
-                            primary: theme.accentColor,
-                            onPrimary: Colors.white,
-                            surface: theme.secondaryColor,
+                          colorScheme: ColorScheme.fromSeed(
+                            seedColor: theme.accentColor,
+                            brightness: theme.isDark ? Brightness.dark : Brightness.light,
                           ),
                         ),
                         child: child!,
@@ -258,10 +257,9 @@ class _AddItemDialogState extends State<AddItemDialog> {
                     builder: (context, child) {
                       return Theme(
                         data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.dark(
-                            primary: theme.accentColor,
-                            onPrimary: Colors.white,
-                            surface: theme.secondaryColor,
+                          colorScheme: ColorScheme.fromSeed(
+                            seedColor: theme.accentColor,
+                            brightness: theme.isDark ? Brightness.dark : Brightness.light,
                           ),
                         ),
                         child: child!,
@@ -326,9 +324,9 @@ class _AddItemDialogState extends State<AddItemDialog> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isSelected ? theme.accentColor : Colors.white10,
+                  color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
-                  border: Border.all(color: isSelected ? Colors.white : Colors.transparent, width: 2),
+                  border: Border.all(color: isSelected ? theme.textColor : Colors.transparent, width: 2),
                 ),
                 child: Text(m, style: const TextStyle(fontSize: 24)),
               ),
@@ -351,11 +349,11 @@ class _AddItemDialogState extends State<AddItemDialog> {
           child: TextField(
             controller: controller,
             maxLines: maxLines,
-            style: AppTypography.body(color: Colors.white),
+            style: AppTypography.body(color: theme.textColor),
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white24),
+              hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.24)),
               border: InputBorder.none,
             ),
           ),
@@ -370,10 +368,10 @@ class _AddItemDialogState extends State<AddItemDialog> {
       icon: const Icon(Icons.add_photo_alternate_rounded),
       label: Text(_imagePath != null ? 'Change Photo' : 'Select Photo'),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white10,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.textColor.withValues(alpha: 0.05),
+        foregroundColor: theme.textColor,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.white24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: theme.textColor.withValues(alpha: 0.1))),
         elevation: 0,
       ),
     );

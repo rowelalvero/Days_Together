@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -7,6 +6,7 @@ import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/theme_selector.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/cached_avatar.dart';
 import 'package:days_together/screens/onboarding/welcome_screen.dart';
 import 'package:days_together/screens/settings/relationship_profile_screen.dart';
 import 'package:days_together/services/permission_service.dart';
@@ -124,19 +124,10 @@ class SettingsTab extends StatelessWidget {
       onTap: () => _pickAvatar(context, rp, isYou),
       child: Stack(
         children: [
-          CircleAvatar(
+          CachedAvatar(
+            path: path,
             radius: 40,
-            backgroundColor: Colors.white10,
-            backgroundImage: path != null
-                ? (path.startsWith('http')
-                    ? NetworkImage(path) as ImageProvider
-                    : (File(path).existsSync()
-                        ? FileImage(File(path))
-                        : null))
-                : null,
-            child: path == null || (!path.startsWith('http') && !File(path).existsSync())
-                ? Icon(Icons.person, size: 40, color: theme.textColor.withValues(alpha: 0.3))
-                : null,
+            placeholderColor: theme.textColor.withValues(alpha: 0.1),
           ),
           Positioned(
             right: 0,
@@ -367,19 +358,10 @@ class SettingsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Center(
-            child: CircleAvatar(
+            child: CachedAvatar(
+              path: path,
               radius: 30,
-              backgroundColor: Colors.white10,
-              backgroundImage: path != null
-                  ? (path.startsWith('http')
-                      ? NetworkImage(path) as ImageProvider
-                      : (File(path).existsSync()
-                          ? FileImage(File(path))
-                          : null))
-                  : null,
-              child: path == null || (!path.startsWith('http') && !File(path).existsSync())
-                  ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.24))
-                  : null,
+              placeholderColor: theme.textColor.withValues(alpha: 0.1),
             ),
           ),
            const SizedBox(height: 8),
@@ -428,7 +410,7 @@ class SettingsTab extends StatelessWidget {
          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: theme.textColor.withValues(alpha: 0.7), size: 20),
         ),
         title: Text(title, style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.w600, fontSize: 15)),

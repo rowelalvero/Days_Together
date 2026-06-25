@@ -225,6 +225,12 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
                 height: 120,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 120,
+                  width: double.infinity,
+                  color: theme.textColor.withValues(alpha: 0.1),
+                  child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2)),
+                ),
               ),
               Positioned(
                 top: 8,
@@ -358,6 +364,12 @@ class MemoryDetailScreen extends StatelessWidget {
                               Image(
                                 image: _getImageProvider(currentItem),
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: theme.textColor.withValues(alpha: 0.1),
+                                  child: Center(
+                                    child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 48),
+                                  ),
+                                ),
                               ),
                               Container(
                                 decoration: BoxDecoration(
@@ -636,6 +648,12 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                 child: Image(
                   image: _getImageProvider(),
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                    child: Center(
+                      child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 48),
+                    ),
+                  ),
                 ),
               ),
             ),

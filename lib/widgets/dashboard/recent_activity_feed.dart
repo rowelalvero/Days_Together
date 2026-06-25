@@ -148,7 +148,7 @@ class RecentActivityFeed extends StatelessWidget {
                             bottom: index == displayLogs.length - 1 ? 25 : 0, // End line at avatar center
                             child: Container(
                               width: 1.5,
-                              color: Colors.white10,
+                              color: theme.textColor.withValues(alpha: 0.1),
                             ),
                           ),
                           Positioned(
@@ -238,7 +238,7 @@ class RecentActivityFeed extends StatelessWidget {
               );
             },
           ),
-          const Divider(color: Colors.white10, height: 24),
+          Divider(color: theme.textColor.withValues(alpha: 0.1), height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

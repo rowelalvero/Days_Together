@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +7,7 @@ import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/cached_avatar.dart';
 
 class LoveChatScreen extends StatefulWidget {
   const LoveChatScreen({super.key});
@@ -68,7 +68,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
             children: [
               // Premium Header
               _buildHeader(context, theme, rp, partnerJoined, partnerName),
-              const Divider(color: Colors.white10, height: 1),
+              Divider(color: theme.textColor.withValues(alpha: 0.1), height: 1),
 
               // Chat Messages List
               Expanded(
@@ -109,7 +109,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                         },
                       ),
               ),
-              const Divider(color: Colors.white10, height: 1),
+              Divider(color: theme.textColor.withValues(alpha: 0.1), height: 1),
 
               // Input Box
               _buildInputRow(provider, theme, yourName),
@@ -136,22 +136,10 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
             icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           ),
           const SizedBox(width: 4),
-          CircleAvatar(
+          CachedAvatar(
+            path: partnerJoined ? rp.partnerAvatarPath : null,
             radius: 18,
-            backgroundColor: Colors.white12,
-            backgroundImage: partnerJoined && rp.partnerAvatarPath != null
-                ? (rp.partnerAvatarPath!.startsWith('http')
-                    ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
-                    : (File(rp.partnerAvatarPath!).existsSync()
-                        ? FileImage(File(rp.partnerAvatarPath!))
-                        : null))
-                : null,
-            child: !partnerJoined ||
-                    rp.partnerAvatarPath == null ||
-                    (!rp.partnerAvatarPath!.startsWith('http') &&
-                        !File(rp.partnerAvatarPath!).existsSync())
-                ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.7), size: 20)
-                : null,
+            placeholderColor: theme.textColor.withValues(alpha: 0.1),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -322,10 +310,10 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
               decoration: BoxDecoration(
                 color: isMe
                     ? theme.accentColor.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.08),
+                    : theme.textColor.withValues(alpha: 0.05),
                 borderRadius: borderRadius,
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: theme.textColor.withValues(alpha: 0.05),
                 ),
               ),
               child: Text(

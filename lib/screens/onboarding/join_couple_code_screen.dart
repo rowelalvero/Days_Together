@@ -53,7 +53,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                   const SizedBox(height: 20),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                   ),
                   const SizedBox(height: 40),
                   Text(
@@ -88,20 +88,20 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                           maxLength: 1,
                           textCapitalization: TextCapitalization.characters,
                           style: AppTypography.body(
-                            color: Colors.white,
+                            color: theme.textColor,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                           decoration: InputDecoration(
                             counterText: '',
                             filled: true,
-                            fillColor: Colors.white.withValues(alpha: 0.1),
+                            fillColor: theme.textColor.withValues(alpha: 0.05),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide(
                                 color: _errorMessage != null
                                     ? theme.accentColor
-                                    : Colors.white.withValues(alpha: 0.2),
+                                    : theme.textColor.withValues(alpha: 0.15),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
@@ -109,7 +109,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                               borderSide: BorderSide(
                                 color: _errorMessage != null
                                     ? theme.accentColor
-                                    : Colors.white.withValues(alpha: 0.2),
+                                    : theme.textColor.withValues(alpha: 0.15),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -160,7 +160,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        elevation: 5,
+                        elevation: 0,
                       ),
                       child: _isValidating
                           ? const SizedBox(

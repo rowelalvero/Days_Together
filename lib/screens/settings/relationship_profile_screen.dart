@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/cached_avatar.dart';
 
 class RelationshipProfileScreen extends StatelessWidget {
   const RelationshipProfileScreen({super.key});
@@ -161,29 +161,12 @@ class RelationshipProfileScreen extends StatelessWidget {
   Widget _buildAvatarWidget(String? path, String name, dynamic theme) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: theme.accentColor.withValues(alpha: 0.6),
-              width: 2.5,
-            ),
-          ),
-          child: CircleAvatar(
-            radius: 36,
-            backgroundColor: Colors.white12,
-            backgroundImage: path != null
-                ? (path.startsWith('http')
-                    ? NetworkImage(path) as ImageProvider
-                    : (File(path).existsSync()
-                        ? FileImage(File(path))
-                        : null))
-                : null,
-            child: path == null || (!path.startsWith('http') && !File(path).existsSync())
-                ? const Icon(Icons.person, color: Colors.white70, size: 36)
-                : null,
-          ),
+        CachedAvatar(
+          path: path,
+          radius: 36,
+          placeholderColor: theme.textColor.withValues(alpha: 0.1),
+          borderColor: theme.accentColor.withValues(alpha: 0.6),
+          borderWidth: 2.5,
         ),
         const SizedBox(height: 8),
         SizedBox(

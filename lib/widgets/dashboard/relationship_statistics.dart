@@ -136,10 +136,10 @@ class RelationshipStatistics extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
+                  color: theme.textColor.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.04),
+                    color: theme.textColor.withValues(alpha: 0.04),
                     width: 1,
                   ),
                 ),

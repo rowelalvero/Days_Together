@@ -249,7 +249,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
               const SizedBox(height: 20),
               Text(
                 '💡 Pinch to zoom • Tap card to flip',
-                style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white70),
+                style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w500, color: context.watch<ThemeProvider>().currentLoveTheme.textColor.withValues(alpha: 0.7)),
               ),
             ],
           ),
@@ -311,16 +311,17 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
         title: Text(
           'Relationship License',
 
-          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.cormorant(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
 
         backgroundColor: Colors.transparent,
 
         elevation: 0,
 
-        centerTitle: true,
-
-        iconTheme: IconThemeData(color: theme.textColor),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
 
       body: Container(
@@ -993,11 +994,15 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.cormorant(fontSize: 28,fontWeight: FontWeight.bold, color: theme.textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Container(
         width: double.infinity,
@@ -1117,7 +1122,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: theme.textColor),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -1151,7 +1156,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     const SizedBox(height: 24),
                     Text(
                       partnerJoined ? 'Waiting for Partner' : 'Waiting for Partner to Join',
-                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textColor),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -1159,16 +1164,16 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                       partnerJoined
                           ? "We are waiting for your partner to complete their license setup before details can be shared and viewed."
                           : "Please connect with your partner first. Once they join and complete their setup, your licenses will be synced and visible here.",
-                      style: AppTypography.body(fontSize: 14, color: Colors.white70, height: 1.5),
+                      style: AppTypography.body(fontSize: 14, color: theme.textColor.withValues(alpha: 0.7), height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    const SizedBox(
+                    SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+                        valueColor: AlwaysStoppedAnimation<Color>(theme.textColor.withValues(alpha: 0.5)),
                       ),
                     ),
                   ],
@@ -1248,7 +1253,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: theme.textColor),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: () {
             setState(() {
               _isCreating = false;
@@ -2311,7 +2316,7 @@ class _LicenseFront extends StatelessWidget {
         const SizedBox(height: 1),
         Text(
           value.toUpperCase(),
-          style: AppTypography.body(fontSize: isCompact ? 8.5 : 10.5, fontWeight: FontWeight.bold, color: Colors.white),
+          style: AppTypography.body(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.white),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

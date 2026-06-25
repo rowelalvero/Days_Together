@@ -26,7 +26,7 @@ class PairingSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                 ),
                 const Spacer(),
                 Text(
@@ -52,6 +52,7 @@ class PairingSelectionScreen extends StatelessWidget {
                   title: "I'm Starting Our Story",
                   subtitle: 'Create a couple code and invite your partner.',
                   accentColor: theme.accentColor,
+                  textColor: theme.textColor,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -67,6 +68,7 @@ class PairingSelectionScreen extends StatelessWidget {
                   title: "I'm Joining My Partner",
                   subtitle: 'Enter the code they gave you.',
                   accentColor: theme.accentColor,
+                  textColor: theme.textColor,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -91,6 +93,7 @@ class _PairingCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color accentColor;
+  final Color textColor;
   final VoidCallback onTap;
 
   const _PairingCard({
@@ -98,6 +101,7 @@ class _PairingCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.accentColor,
+    required this.textColor,
     required this.onTap,
   });
 
@@ -109,9 +113,9 @@ class _PairingCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: textColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          border: Border.all(color: textColor.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
@@ -132,7 +136,7 @@ class _PairingCard extends StatelessWidget {
                   Text(
                     title,
                     style: AppTypography.body(
-                      color: Colors.white,
+                      color: textColor,
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                     ),
@@ -141,7 +145,7 @@ class _PairingCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: AppTypography.caption(
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: textColor.withValues(alpha: 0.6),
                       fontSize: 13,
                     ),
                   ),
@@ -150,7 +154,7 @@ class _PairingCard extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right,
-              color: Colors.white.withValues(alpha: 0.4),
+              color: textColor.withValues(alpha: 0.4),
             ),
           ],
         ),

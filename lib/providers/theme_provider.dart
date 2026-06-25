@@ -6,7 +6,7 @@ import 'package:days_together/themes/theme_manager.dart';
 
 class ThemeProvider with ChangeNotifier {
   final TimelineRepository _repository = TimelineRepository();
-  ThemeType _currentTheme = ThemeType.midnightRose;
+  ThemeType _currentTheme = ThemeType.offWhite;
   AppSettings _settings = AppSettings();
   bool _disposed = false;
 

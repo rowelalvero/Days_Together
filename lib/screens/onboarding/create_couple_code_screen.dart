@@ -54,7 +54,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                 const SizedBox(height: 20),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                 ),
                 const SizedBox(height: 40),
                 Text(
@@ -85,7 +85,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: theme.textColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
                         color: theme.accentColor.withValues(alpha: 0.3),
@@ -93,9 +93,9 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.accentColor.withValues(alpha: 0.15),
+                          color: theme.accentColor.withValues(alpha: 0.1),
                           blurRadius: 30,
-                          spreadRadius: 5,
+                          spreadRadius: 2,
                         ),
                       ],
                     ),
@@ -106,7 +106,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                           style: AppTypography.body(
                             fontSize: 48,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: theme.textColor,
                           ).copyWith(letterSpacing: 12),
                         ),
                         const SizedBox(height: 16),
@@ -114,7 +114,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                           'This code is unique to you. Keep it safe.',
                           style: AppTypography.caption(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: theme.textColor.withValues(alpha: 0.5),
                           ).copyWith(fontStyle: FontStyle.italic),
                         ),
                       ],
@@ -135,8 +135,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                             if (mounted) setState(() => _copied = false);
                           });
                         },
-                        isPrimary: false,
-                        accentColor: theme.accentColor,
+                        theme: theme,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -149,8 +148,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                             'Join me on Our Love Story! Use my couple code: $_code 💕',
                           );
                         },
-                        isPrimary: false,
-                        accentColor: theme.accentColor,
+                        theme: theme,
                       ),
                     ),
                   ],
@@ -174,7 +172,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 5,
+                      elevation: 0,
                     ),
                     child: Text(
                       'Continue',
@@ -198,16 +196,15 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
-    required bool isPrimary,
-    required Color accentColor,
+    required dynamic theme,
   }) {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 18),
       label: Text(label),
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+        foregroundColor: theme.textColor,
+        side: BorderSide(color: theme.textColor.withValues(alpha: 0.15)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),

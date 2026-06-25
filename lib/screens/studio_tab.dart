@@ -18,12 +18,12 @@ class StudioTab extends StatelessWidget {
       builder: (context) {
         return Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF10122B),
+            color: theme.primaryColor,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
             ),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
           child: Column(
@@ -33,45 +33,49 @@ class StudioTab extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white30,
+                  color: theme.textColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '✨ Love Studio Premium',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.textColor,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Unlock the full magic of AI and digital connection.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60, fontSize: 14),
+                style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 24),
               _buildFeatureBullet(
                 Icons.edit_note_rounded,
                 'AI Love Letter Generator',
                 'Create poetic love letters from your timeline memories.',
+                theme,
               ),
               _buildFeatureBullet(
                 Icons.insights_rounded,
                 'Deep Relationship Insights',
                 'Get fun stats, relationship analysis & compatibility scores.',
+                theme,
               ),
               _buildFeatureBullet(
                 Icons.alarm_on_rounded,
                 'Unlimited Future Time Capsules',
                 'Write to your future selves with no date restrictions.',
+                theme,
               ),
               _buildFeatureBullet(
                 Icons.palette_rounded,
                 'Exclusive App Themes',
                 'Access premium romantic and celestial color palettes.',
+                theme,
               ),
               const SizedBox(height: 30),
               SizedBox(
@@ -105,7 +109,7 @@ class StudioTab extends StatelessWidget {
               Text(
                 'This is a local demo. Toggling is completely free.',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: theme.textColor.withValues(alpha: 0.3),
                   fontSize: 11,
                 ),
               ),
@@ -116,7 +120,7 @@ class StudioTab extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureBullet(IconData icon, String title, String desc) {
+  Widget _buildFeatureBullet(IconData icon, String title, String desc, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -130,14 +134,14 @@ class StudioTab extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.textColor,
                   ),
                 ),
                 Text(
                   desc,
-                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                 ),
               ],
             ),
@@ -336,12 +340,12 @@ class StudioTab extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: theme.textColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isPremium && !isUnlocked
                 ? Colors.amber.withValues(alpha: 0.2)
-                : Colors.white.withValues(alpha: 0.1),
+                : theme.textColor.withValues(alpha: 0.1),
           ),
         ),
         child: Row(

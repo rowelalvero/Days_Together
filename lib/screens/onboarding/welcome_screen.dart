@@ -51,7 +51,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 animation: _pulseController,
                 builder: (context, child) {
                   final scale = 1.0 + (_pulseController.value * 0.08);
-                  final glowOpacity = 0.2 + (_pulseController.value * 0.3);
+                  final glowOpacity = 0.15 + (_pulseController.value * 0.2);
                   return Transform.scale(
                     scale: scale,
                     child: Container(
@@ -59,23 +59,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: theme.textColor.withValues(alpha: 0.05),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
+                          color: theme.textColor.withValues(alpha: 0.1),
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: theme.accentColor.withValues(alpha: glowOpacity),
-                            blurRadius: 30,
-                            spreadRadius: 10,
+                            blurRadius: 40,
+                            spreadRadius: 4,
                           ),
                         ],
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.all_inclusive,
                           size: 60,
-                          color: Colors.white,
+                          color: theme.accentColor,
                         ),
                       ),
                     ),
@@ -125,7 +125,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         );
                       },
                       isPrimary: true,
-                      accentColor: theme.backgroundColor,
+                      theme: theme,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -133,7 +133,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       style: AppTypography.spectral(
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
-                        color: Colors.white.withValues(alpha: 0.4),
+                        color: theme.textColor.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
@@ -151,7 +151,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     required String label,
     required VoidCallback onPressed,
     required bool isPrimary,
-    required Color accentColor,
+    required dynamic theme,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -159,15 +159,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? Colors.white : Colors.transparent,
-          foregroundColor:
-              isPrimary ? accentColor : Colors.white,
-          elevation: isPrimary ? 4 : 0,
+          backgroundColor: theme.accentColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: isPrimary
-                ? BorderSide.none
-                : const BorderSide(color: Colors.white, width: 1.5),
           ),
         ),
         child: Text(

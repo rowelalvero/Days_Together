@@ -71,32 +71,30 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
           ),
           const SizedBox(height: 16),
           // Large Counter
-          Row(
+          Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                NumberFormat('#,###').format(totalDays),
-                style: AppTypography.pageTitle(
-                  fontSize: 54,
-                  fontWeight: FontWeight.w800,
-                  color: widget.theme.textColor,
-                ),
-              ),
-              const SizedBox(width: 8),
               ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Colors.pinkAccent, Colors.amberAccent],
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [widget.theme.accentColor, Colors.amberAccent],
                 ).createShader(bounds),
                 child: Text(
-                  'Days',
+                  NumberFormat('#,###').format(totalDays),
                   style: AppTypography.pageTitle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: widget.theme.textColor,
+                    fontSize: 72,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
                   ),
                 ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Days Together',
+                style: AppTypography.cormorant(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: widget.theme.textColor.withValues(alpha: 0.8),
+                ).copyWith(letterSpacing: 1.2),
               ),
             ],
           ),
@@ -105,10 +103,10 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
+              color: widget.theme.textColor.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: widget.theme.textColor.withValues(alpha: 0.05),
                 width: 1,
               ),
             ),

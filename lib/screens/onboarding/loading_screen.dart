@@ -64,7 +64,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                 style: AppTypography.spectral(
                   fontSize: 16,
                   fontStyle: FontStyle.italic,
-                  color: Colors.white70,
+                  color: theme.textColor,
                 ),
               ),
             ],

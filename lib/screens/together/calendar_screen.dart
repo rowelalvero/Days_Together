@@ -14,6 +14,7 @@ import 'package:days_together/screens/together/vault_screen.dart';
 import 'package:days_together/screens/together/bucket_list_screen.dart';
 import 'package:days_together/screens/together/gift_reminders_screen.dart';
 import 'package:days_together/screens/love_story_screen.dart';
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Column(
@@ -80,7 +81,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         style: AppTypography.pageTitle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: theme.textColor,
                         ),
                       ),
                       IconButton(
@@ -98,14 +99,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   TextField(
                     controller: _titleController,
                     style: TextStyle(color: theme.textColor),
-                    decoration: _inputDecoration('Event Title (e.g. First Date)', theme.accentColor),
+                    decoration: _inputDecoration('Event Title (e.g. First Date)', theme.accentColor, theme),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _descController,
                     maxLines: 2,
                     style: TextStyle(color: theme.textColor),
-                    decoration: _inputDecoration('Description (optional)', theme.accentColor),
+                    decoration: _inputDecoration('Description (optional)', theme.accentColor, theme),
                   ),
                   const SizedBox(height: 16),
                   Text('Event Type', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14)),
@@ -124,9 +125,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           selected: isSelected,
                           onSelected: (val) => setModalState(() => _selectedType = type),
                           selectedColor: theme.accentColor,
-                          backgroundColor: Colors.white.withValues(alpha: 0.05),
+                          backgroundColor: theme.textColor.withValues(alpha: 0.05),
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.white70,
+                            color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.7),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -159,9 +160,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: theme.textColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -169,7 +170,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           Text(
                             _selectedTime == null ? 'Set Time (Optional)' : _selectedTime!.format(context),
                             style: TextStyle(
-                              color: _selectedTime == null ? Colors.white30 : Colors.white,
+                              color: _selectedTime == null ? theme.textColor.withValues(alpha: 0.3) : theme.textColor,
                             ),
                           ),
                           Icon(Icons.access_time_rounded, color: theme.textColor.withValues(alpha: 0.7)),
@@ -243,15 +244,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String hint, Color accent) {
+  InputDecoration _inputDecoration(String hint, Color accent, LoveStoryTheme theme) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+      hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.05),
+      fillColor: theme.textColor.withValues(alpha: 0.05),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
@@ -320,7 +321,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             style: AppTypography.pageTitle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: theme.textColor,
             ),
           ),
           Row(
@@ -358,9 +359,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
@@ -414,7 +415,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       Text(
                         '$dayNum',
                         style: TextStyle(
-                          color: isSelected ? Colors.white : (isToday ? theme.accentColor : Colors.white70),
+                          color: isSelected ? Colors.white : (isToday ? theme.accentColor : theme.textColor.withValues(alpha: 0.7)),
                           fontWeight: (isSelected || isToday) ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -538,7 +539,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
@@ -602,7 +603,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: theme.textColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text('💑', style: TextStyle(fontSize: 18)),
@@ -614,7 +615,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   years == 0 ? 'The Day We Met' : '$years Year Anniversary',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'A very special day in our story.',
@@ -633,9 +634,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: InkWell(
         onTap: () => _showEventSheet(context, existingEvent: event),

@@ -84,16 +84,25 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                     ),
                     child: CircleAvatar(
                       radius: 26,
-                      backgroundColor: Colors.white12,
-                      backgroundImage: partnerJoined && rp.partnerAvatarPath != null
+                      backgroundColor: widget.theme.textColor.withValues(alpha: 0.1),
+                      foregroundImage: partnerJoined && rp.partnerAvatarPath != null
                           ? (rp.partnerAvatarPath!.startsWith('http')
                               ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
                               : (File(rp.partnerAvatarPath!).existsSync()
                                   ? FileImage(File(rp.partnerAvatarPath!))
                                   : null))
                           : null,
-                      child: !partnerJoined || rp.partnerAvatarPath == null
-                          ? const Icon(Icons.person, color: Colors.white70)
+                      child: (!partnerJoined ||
+                              rp.partnerAvatarPath == null ||
+                              (rp.partnerAvatarPath!.startsWith('http') == false &&
+                                  !File(rp.partnerAvatarPath!).existsSync()))
+                          ? Icon(Icons.person, color: widget.theme.textColor.withValues(alpha: 0.3))
+                          : null,
+                      onForegroundImageError: (rp.partnerAvatarPath != null &&
+                              rp.partnerAvatarPath!.startsWith('http'))
+                          ? (exception, stackTrace) {
+                              debugPrint('Error loading partner presence avatar: $exception');
+                            }
                           : null,
                     ),
                   ),

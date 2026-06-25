@@ -52,14 +52,13 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   "Let's put a face\nto the name.",
                   style: AppTypography.cormorant(
                     fontSize: 36,
-                    fontStyle: FontStyle.italic,
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     height: 1.2,
@@ -83,9 +82,9 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: theme.textColor.withValues(alpha: 0.05),
                         border: Border.all(
-                          color: theme.accentColor.withValues(alpha: 0.5),
+                          color: theme.accentColor.withValues(alpha: 0.3),
                           width: 3,
                         ),
                         image: _avatarPath != null && File(_avatarPath!).existsSync()
@@ -121,6 +120,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                   label: 'Your Name',
                   controller: _yourNameController,
                   hint: 'Enter your name',
+                  theme: theme,
                 ),
                 const SizedBox(height: 48),
                 SizedBox(
@@ -134,7 +134,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 5,
+                      elevation: 0,
                     ),
                     child: _isSaving
                         ? const SizedBox(
@@ -166,6 +166,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
     required String label,
     required TextEditingController controller,
     required String hint,
+    required dynamic theme,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +174,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
         Text(
           label.toUpperCase(),
           style: AppTypography.caption(
-            color: Colors.white.withValues(alpha: 0.6),
+            color: theme.textColor.withValues(alpha: 0.6),
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ).copyWith(letterSpacing: 1.5),
@@ -181,15 +182,23 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: AppTypography.body(color: Colors.white, fontSize: 16),
+          style: AppTypography.body(color: theme.textColor, fontSize: 16),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: AppTypography.body(color: Colors.white.withValues(alpha: 0.3)),
+            hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
             filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.08),
+            fillColor: theme.textColor.withValues(alpha: 0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: theme.accentColor, width: 1.5),
             ),
             contentPadding: const EdgeInsets.all(20),
           ),

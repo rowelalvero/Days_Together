@@ -127,15 +127,18 @@ class _NoteitScreenState extends State<NoteitScreen>
       appBar: AppBar(
         title: Text(
           'Doodle Notes',
-          style: AppTypography.pageTitle(
+          style: AppTypography.cormorant(
+            fontSize: 28,
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
         ),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: theme.textColor),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: theme.accentColor,
@@ -241,7 +244,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                       color: color,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? Colors.white : Colors.transparent,
+                        color: isSelected ? theme.textColor : Colors.transparent,
                         width: 2,
                       ),
                       boxShadow: [
@@ -811,7 +814,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           child: Container(
             decoration: BoxDecoration(
               color:
-                  item.backgroundColor ?? Colors.white.withValues(alpha: 0.05),
+                  item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
             ),
@@ -870,7 +873,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               decoration: BoxDecoration(
                 color: item.backgroundColor ?? const Color(0xFF0F0B1A),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white24, width: 2),
+                border: Border.all(color: theme.textColor.withValues(alpha: 0.2), width: 2),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(26),

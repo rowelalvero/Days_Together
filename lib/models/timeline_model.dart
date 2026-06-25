@@ -183,7 +183,7 @@ class AppSettings {
   bool customIsDark;
 
   AppSettings({
-    this.currentTheme = ThemeType.midnightRose,
+    this.currentTheme = ThemeType.offWhite,
     this.backgroundMusicEnabled = false,
     this.musicVolume = 0.5,
     this.selectedMusicPath,

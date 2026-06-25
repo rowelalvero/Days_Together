@@ -162,64 +162,80 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        image: DecorationImage(
-          image: _getImageProvider(item),
-          fit: BoxFit.cover,
-        ),
+        color: theme.textColor.withValues(alpha: 0.05),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.8),
-            ],
-          ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.black38,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(item.mood, style: const TextStyle(fontSize: 14)),
+            Image(
+              image: _getImageProvider(item),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: theme.textColor.withValues(alpha: 0.1),
+                child: Center(
+                  child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 40),
                 ),
-                const SizedBox(width: 8),
-                if (item.location != null && item.location!.isNotEmpty) ...[
-                  Icon(Icons.location_on_rounded, size: 12, color: theme.accentColor),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      item.location!,
-                      style: AppTypography.caption(fontSize: 11, color: Colors.white70),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black38,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(item.mood, style: const TextStyle(fontSize: 14)),
+                      ),
+                      const SizedBox(width: 8),
+                      if (item.location != null && item.location!.isNotEmpty) ...[
+                        Icon(Icons.location_on_rounded, size: 12, color: theme.accentColor),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            item.location!,
+                            style: AppTypography.caption(fontSize: 11, color: Colors.white70),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.title,
+                    style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('MMMM dd, yyyy').format(item.date),
+                    style: AppTypography.caption(fontSize: 10, color: Colors.white54),
                   ),
                 ],
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              item.title,
-              style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              DateFormat('MMMM dd, yyyy').format(item.date),
-              style: AppTypography.caption(fontSize: 10, color: Colors.white54),
+              ),
             ),
           ],
         ),

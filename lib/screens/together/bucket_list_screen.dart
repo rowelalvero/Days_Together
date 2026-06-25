@@ -58,7 +58,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
@@ -91,10 +91,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
                       hintText: 'e.g. Watch the sunset in Santorini 🌅',
                       hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                       filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.05),
+                      fillColor: theme.textColor.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                        borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -117,11 +117,9 @@ class _BucketListScreenState extends State<BucketListScreen> {
                               builder: (context, child) {
                                 return Theme(
                                   data: Theme.of(context).copyWith(
-                                    colorScheme: ColorScheme.dark(
-                                      primary: theme.accentColor,
-                                      onPrimary: Colors.white,
-                                      surface: theme.secondaryColor,
-                                      onSurface: Colors.white,
+                                    colorScheme: ColorScheme.fromSeed(
+                                      seedColor: theme.accentColor,
+                                      brightness: theme.isDark ? Brightness.dark : Brightness.light,
                                     ),
                                   ),
                                   child: child!,
@@ -137,9 +135,9 @@ class _BucketListScreenState extends State<BucketListScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
+                              color: theme.textColor.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,8 +149,8 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                         : DateFormat('MMM dd, yyyy').format(_selectedDate!),
                                     style: TextStyle(
                                       color: _selectedDate == null
-                                          ? Colors.white.withValues(alpha: 0.3)
-                                          : Colors.white,
+                                          ? theme.textColor.withValues(alpha: 0.3)
+                                          : theme.textColor,
                                       fontSize: 14,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -184,9 +182,9 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                 builder: (context, child) {
                                   return Theme(
                                     data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.dark(
-                                        primary: theme.accentColor,
-                                        surface: theme.secondaryColor,
+                                      colorScheme: ColorScheme.fromSeed(
+                                        seedColor: theme.accentColor,
+                                        brightness: theme.isDark ? Brightness.dark : Brightness.light,
                                       ),
                                     ),
                                     child: child!,
@@ -202,9 +200,9 @@ class _BucketListScreenState extends State<BucketListScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
+                                color: theme.textColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -216,8 +214,8 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                           : _selectedTime!.format(context),
                                       style: TextStyle(
                                         color: _selectedTime == null
-                                            ? Colors.white.withValues(alpha: 0.3)
-                                            : Colors.white,
+                                            ? theme.textColor.withValues(alpha: 0.3)
+                                            : theme.textColor,
                                         fontSize: 14,
                                       ),
                                       overflow: TextOverflow.ellipsis,
@@ -383,9 +381,9 @@ class _BucketListScreenState extends State<BucketListScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -395,8 +393,8 @@ class _BucketListScreenState extends State<BucketListScreen> {
               children: [
                 Text(
                   '${provider.completedItems} of ${provider.totalItems} adventures completed',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -407,7 +405,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                   child: LinearProgressIndicator(
                     value: provider.progress,
                     minHeight: 10,
-                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    backgroundColor: theme.textColor.withValues(alpha: 0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
                   ),
                 ),
@@ -424,14 +422,14 @@ class _BucketListScreenState extends State<BucketListScreen> {
                 child: CircularProgressIndicator(
                   value: provider.progress,
                   strokeWidth: 4,
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  backgroundColor: theme.textColor.withValues(alpha: 0.1),
                   valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
                 ),
               ),
               Text(
                 '${(provider.progress * 100).toInt()}%',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: theme.textColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -465,12 +463,12 @@ class _BucketListScreenState extends State<BucketListScreen> {
       key: ValueKey(item.id),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: item.isCompleted ? 0.02 : 0.05),
+        color: theme.textColor.withValues(alpha: item.isCompleted ? 0.02 : 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: item.isCompleted 
               ? theme.accentColor.withValues(alpha: 0.2) 
-              : Colors.white.withValues(alpha: 0.1),
+              : theme.textColor.withValues(alpha: 0.1),
         ),
       ),
       child: ListTile(
@@ -488,7 +486,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: item.isCompleted ? theme.accentColor : Colors.white54,
+                color: item.isCompleted ? theme.accentColor : theme.textColor.withValues(alpha: 0.38),
                 width: 2,
               ),
               color: item.isCompleted ? theme.accentColor.withValues(alpha: 0.2) : Colors.transparent,
@@ -504,7 +502,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
             Text(
               item.title,
               style: TextStyle(
-                color: item.isCompleted ? Colors.white54 : Colors.white,
+                color: item.isCompleted ? theme.textColor.withValues(alpha: 0.54) : theme.textColor,
                 decoration: item.isCompleted ? TextDecoration.lineThrough : null,
                 fontSize: 16,
                 fontWeight: item.isCompleted ? FontWeight.normal : FontWeight.w500,
@@ -582,7 +580,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
+                color: theme.textColor.withValues(alpha: 0.03),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -592,10 +590,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Dream big.',
               style: TextStyle(
-                color: Colors.white,
+                color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -605,7 +603,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
               'Add your first adventure together.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: theme.textColor.withValues(alpha: 0.5),
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),

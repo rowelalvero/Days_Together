@@ -76,7 +76,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildAppBar(context),
+                  _buildAppBar(context, theme),
                   if (todayMood == null || _isEditingMood)
                     _buildMoodLogger(theme, moodProvider)
                   else
@@ -94,8 +94,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
-    final theme = context.watch<ThemeProvider>().currentLoveTheme;
+  Widget _buildAppBar(BuildContext context, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
@@ -135,19 +134,19 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'How is your mood today?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: theme.textColor,
             ),
           ),
           const SizedBox(height: 20),
@@ -168,7 +167,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: theme.accentColor,
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+              inactiveTrackColor: theme.textColor.withValues(alpha: 0.1),
               thumbColor: theme.accentColor,
               overlayColor: theme.accentColor.withValues(alpha: 0.2),
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
@@ -197,8 +196,8 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                   '${i + 1}',
                   style: TextStyle(
                     color: (_currentMoodScore.toInt() == i + 1)
-                        ? Colors.white
-                        : Colors.white38,
+                        ? theme.textColor
+                        : theme.textColor.withValues(alpha: 0.38),
                     fontWeight: (_currentMoodScore.toInt() == i + 1)
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -210,16 +209,16 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           const SizedBox(height: 24),
           TextField(
             controller: _noteController,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: theme.textColor),
             maxLines: 2,
             decoration: InputDecoration(
               hintText: 'Add a small note about your day... (optional)',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+              hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: theme.textColor.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -266,9 +265,9 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,12 +275,12 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Today\'s Mood',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white70,
+                  color: theme.textColor.withValues(alpha: 0.7),
                 ),
               ),
               TextButton.icon(
@@ -310,10 +309,10 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                   children: [
                     Text(
                       'Score: ${todayMood.moodScore}/10',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: theme.textColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -335,13 +334,13 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
+                color: theme.textColor.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 '"${todayMood.note}"',
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: theme.textColor.withValues(alpha: 0.7),
                   fontStyle: FontStyle.italic,
                   fontSize: 14,
                 ),
@@ -364,9 +363,9 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,12 +381,12 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 child: Icon(Icons.favorite_rounded, color: theme.accentColor, size: 20),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Daily Sync Question',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.textColor,
                 ),
               ),
             ],
@@ -395,10 +394,10 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           const SizedBox(height: 16),
           Text(
             question.question,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: theme.textColor,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -406,16 +405,16 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           if (!hasAnswered) ...[
             TextField(
               controller: _answerController,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: theme.textColor),
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Type your answer here...',
                 hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                 filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
+                fillColor: theme.textColor.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -449,17 +448,17 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
+                color: theme.textColor.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(color: theme.textColor.withValues(alpha: 0.05)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Your Answer:',
                     style: TextStyle(
-                      color: Colors.white54,
+                      color: theme.textColor.withValues(alpha: 0.54),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -478,25 +477,25 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.01),
+                  color: theme.textColor.withValues(alpha: 0.01),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: theme.textColor.withValues(alpha: 0.05),
                     style: BorderStyle.solid,
                   ),
                 ),
                 child: Column(
                   children: [
-                    const SizedBox(
+                    SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white30),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: theme.textColor.withValues(alpha: 0.3)),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       '⏳ Waiting for partner to reply...',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: theme.textColor.withValues(alpha: 0.5),
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
                       ),
@@ -544,27 +543,27 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Emotional Map',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: theme.textColor,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Mood sync history over the last 30 days',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white60,
+              color: theme.textColor.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 30),
@@ -574,14 +573,14 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               width: double.infinity,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.02),
+                color: theme.textColor.withValues(alpha: 0.02),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Text(
+              child: Text(
                 'Log your mood for a few days to see your emotional map 📈',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white38,
+                  color: theme.textColor.withValues(alpha: 0.38),
                   fontSize: 13,
                   fontStyle: FontStyle.italic,
                 ),
@@ -604,8 +603,8 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                         getTitlesWidget: (value, meta) {
                           return Text(
                             value.toInt().toString(),
-                            style: const TextStyle(
-                              color: Colors.white30,
+                            style: TextStyle(
+                              color: theme.textColor.withValues(alpha: 0.3),
                               fontWeight: FontWeight.bold,
                               fontSize: 10,
                             ),
@@ -627,8 +626,8 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(
                                 DateFormat('MM/dd').format(date),
-                                style: const TextStyle(
-                                  color: Colors.white30,
+                                style: TextStyle(
+                                  color: theme.textColor.withValues(alpha: 0.3),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 9,
                                 ),

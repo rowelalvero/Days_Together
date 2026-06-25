@@ -367,15 +367,18 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
       appBar: AppBar(
         title: Text(
           'Topic Cards',
-          style: AppTypography.sectionHeader(
+          style: AppTypography.cormorant(
+            fontSize: 28,
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),
         ),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: theme.textColor),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -480,6 +483,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         icon: Icons.skip_previous_rounded,
                         color: theme.textColor.withValues(alpha: 0.1),
                         iconColor: theme.textColor,
+                        theme: theme,
                         onPressed: () {
                           cardsProvider.previousCard();
                           setState(() {
@@ -494,6 +498,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         icon: Icons.shuffle_rounded,
                         color: theme.textColor.withValues(alpha: 0.1),
                         iconColor: theme.textColor,
+                        theme: theme,
                         onPressed: () {
                           cardsProvider.shuffleDeck();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -510,6 +515,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         icon: Icons.skip_next_rounded,
                         color: theme.accentColor,
                         iconColor: Colors.white,
+                        theme: theme,
                         onPressed: () {
                           cardsProvider.nextCard();
                           setState(() {
@@ -707,7 +713,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
       width: 300,
       height: 400,
       decoration: BoxDecoration(
-        color: theme.backgroundColor.withValues(alpha: 0.9),
+        color: theme.backgroundColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: const Color(0xFFD4AF37), // elegant gold border
@@ -715,8 +721,8 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.accentColor.withValues(alpha: 0.15),
-            blurRadius: 15,
+            color: theme.accentColor.withValues(alpha: 0.1),
+            blurRadius: 20,
             spreadRadius: 2,
           ),
         ],
@@ -843,153 +849,153 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
         width: 300,
         height: 400,
         decoration: BoxDecoration(
-          color: theme.textColor.withValues(alpha: 0.08),
+          color: theme.backgroundColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: theme.textColor.withValues(alpha: 0.15),
-            width: 1.5,
+            color: const Color(0xFFD4AF37), // elegant gold border
+            width: 2.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 12,
-              spreadRadius: 1,
+              color: theme.accentColor.withValues(alpha: 0.1),
+              blurRadius: 20,
+              spreadRadius: 2,
             ),
           ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Top Row: Category label & Delete (if custom)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.accentColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          card.category,
-                          style: AppTypography.caption(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: theme.accentColor,
-                          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top Row: Category label & Delete (if custom)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.2),
                         ),
                       ),
-                      if (card.isCustom)
-                        IconButton(
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(
-                            Icons.delete_outline_rounded,
-                            color: Colors.redAccent,
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                backgroundColor: theme.backgroundColor,
-                                title: Text(
-                                  'Delete Card?',
-                                  style: AppTypography.cardTitle(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.textColor,
-                                  ),
-                                ),
-                                content: Text(
-                                  'Are you sure you want to delete this custom topic card?',
-                                  style: AppTypography.body(
-                                    color: theme.textColor.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    child: const Text('Cancel'),
-                                    onPressed: () => Navigator.pop(ctx),
-                                  ),
-                                  TextButton(
-                                    child: const Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.redAccent),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      provider.deleteCard(card.id);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                      child: Text(
+                        card.category,
+                        style: AppTypography.caption(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: theme.accentColor,
                         ),
-                    ],
-                  ),
-                  const Spacer(),
-
-                  // Question Text
-                  Text(
-                    card.question,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.sectionHeader(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textColor,
-                      height: 1.4,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-
-                  // Bottom Action buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Share Button
+                    if (card.isCustom)
                       IconButton(
-                        icon: Icon(
-                          Icons.share_outlined,
-                          color: theme.textColor.withValues(alpha: 0.6),
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Colors.redAccent,
+                          size: 20,
                         ),
                         onPressed: () {
-                          Share.share(
-                            'Here is a relationship topic for us: "${card.question}" 💕',
-                            subject: 'Deep Connection Topic',
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              backgroundColor: theme.backgroundColor,
+                              title: Text(
+                                'Delete Card?',
+                                style: AppTypography.cardTitle(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textColor,
+                                ),
+                              ),
+                              content: Text(
+                                'Are you sure you want to delete this custom topic card?',
+                                style: AppTypography.body(
+                                  color: theme.textColor.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  child: const Text('Cancel'),
+                                  onPressed: () => Navigator.pop(ctx),
+                                ),
+                                TextButton(
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.redAccent),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    provider.deleteCard(card.id);
+                                  },
+                                ),
+                              ],
+                            ),
                           );
                         },
                       ),
+                  ],
+                ),
+                const Spacer(),
 
-                      // Like/Favorite Toggle Button
-                      IconButton(
-                        icon: Icon(
-                          card.isLiked
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          color: card.isLiked
-                              ? theme.accentColor
-                              : theme.textColor.withValues(alpha: 0.6),
-                        ),
-                        onPressed: () {
-                          provider.toggleLikeCard(card.id);
-                        },
-                      ),
-                    ],
+                // Question Text
+                Text(
+                  card.question,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.sectionHeader(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                    height: 1.4,
                   ),
-                ],
-              ),
+                ),
+                const Spacer(),
+
+                // Bottom Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Share Button
+                    IconButton(
+                      icon: Icon(
+                        Icons.share_outlined,
+                        color: theme.textColor.withValues(alpha: 0.6),
+                      ),
+                      onPressed: () {
+                        Share.share(
+                          'Here is a relationship topic for us: "${card.question}" 💕',
+                          subject: 'Deep Connection Topic',
+                        );
+                      },
+                    ),
+
+                    // Like/Favorite Toggle Button
+                    IconButton(
+                      icon: Icon(
+                        card.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: card.isLiked
+                            ? theme.accentColor
+                            : theme.textColor.withValues(alpha: 0.6),
+                      ),
+                      onPressed: () {
+                        provider.toggleLikeCard(card.id);
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -1001,6 +1007,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
     required IconData icon,
     required Color color,
     required Color iconColor,
+    required dynamic theme,
     required VoidCallback onPressed,
   }) {
     return InkWell(
@@ -1014,7 +1021,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: theme.textColor.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

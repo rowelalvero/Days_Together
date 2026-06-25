@@ -92,23 +92,23 @@ class _MilestoneCardState extends State<MilestoneCard> {
             children: [
               Row(
                 children: [
-                  // Custom compass logo: green circle with rotated navigation arrow
+                  // Custom compass logo
                   Container(
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFF10B981), // Emerald green
+                        color: widget.theme.accentColor,
                         width: 1.5,
                       ),
                     ),
                     child: Center(
                       child: Transform.rotate(
-                        angle: 0.785398, // Rotate 45 degrees clockwise (pi/4) to point northeast
-                        child: const Icon(
+                        angle: 0.785398, // Rotate 45 degrees
+                        child: Icon(
                           Icons.navigation_rounded,
-                          color: Color(0xFF10B981),
+                          color: widget.theme.accentColor,
                           size: 10,
                         ),
                       ),
@@ -125,10 +125,10 @@ class _MilestoneCardState extends State<MilestoneCard> {
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05), // bg-white/5
+                  color: widget.theme.textColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05), // border-white/5
+                    color: widget.theme.textColor.withValues(alpha: 0.05),
                     width: 1,
                   ),
                 ),
@@ -149,7 +149,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.white.withValues(alpha: 0.1) // bg-white/10
+                              ? widget.theme.textColor.withValues(alpha: 0.1)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -233,7 +233,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                     child: CircularProgressIndicator(
                       value: progress,
                       strokeWidth: 7,
-                      backgroundColor: Colors.white.withValues(alpha: 0.04),
+                      backgroundColor: widget.theme.textColor.withValues(alpha: 0.05),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E), // Rose Accent
                       ),
@@ -256,8 +256,8 @@ class _MilestoneCardState extends State<MilestoneCard> {
               ),
             ],
           ),
-          const Divider(
-            color: Colors.white12,
+          Divider(
+            color: widget.theme.textColor.withValues(alpha: 0.1),
             height: 32,
             thickness: 1,
           ),

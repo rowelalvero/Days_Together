@@ -87,12 +87,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2E1720), // Lighter dark pink/rose transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'DOODLE NOTES',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFFF43F5E)).copyWith(// Pink
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -102,14 +102,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFF43F5E).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.draw_outlined,
-                      color: Color(0xFFF43F5E),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -119,13 +119,13 @@ class BentoGrid extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Doodle Notes',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFFF43F5E)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _buildNoteItContent(context),
@@ -139,7 +139,7 @@ class BentoGrid extends StatelessWidget {
                     footerText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFFF43F5E), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -147,13 +147,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Doodle Space',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFFF43F5E)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFFF43F5E),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -187,12 +187,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF162235), // Lighter dark blue transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'CALENDAR',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFF60A5FA)).copyWith(// Blue
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -202,14 +202,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF60A5FA).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.calendar_month_outlined,
-                      color: Color(0xFF60A5FA),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -219,13 +219,13 @@ class BentoGrid extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Shared Calendar',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF60A5FA)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _buildCalendarContent(context),
@@ -239,7 +239,7 @@ class BentoGrid extends StatelessWidget {
                     '$count Events Scheduled',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFF60A5FA), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -247,13 +247,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'View Calendar',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF60A5FA)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFF60A5FA),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -289,12 +289,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2216), // Lighter dark amber transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'DAILY MOOD',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFFF59E0B)).copyWith(// Amber
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -304,14 +304,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.emoji_emotions_outlined,
-                      color: Color(0xFFF59E0B),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -321,13 +321,13 @@ class BentoGrid extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Daily Mood',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFFF59E0B)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _buildMoodContent(context),
@@ -341,7 +341,7 @@ class BentoGrid extends StatelessWidget {
                     statusText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFFF59E0B), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -349,13 +349,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Track Mood',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFFF59E0B)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFFF59E0B),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -386,12 +386,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF162E25), // Lighter dark emerald transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'EMOTIONAL MAP',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFF10B981)).copyWith(// Emerald
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -401,14 +401,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.trending_up_rounded,
-                      color: Color(0xFF10B981),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -421,15 +421,15 @@ class BentoGrid extends StatelessWidget {
               children: [
                 Text(
                   'Emotional Map',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
                 ),
                 Row(
                   children: [
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -442,8 +442,8 @@ class BentoGrid extends StatelessWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFC084FC),
+                      decoration: BoxDecoration(
+                        color: theme.textColor.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -460,7 +460,7 @@ class BentoGrid extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _buildEmotionalMapContent(context),
@@ -474,7 +474,7 @@ class BentoGrid extends StatelessWidget {
                     '30-Day Trend Analysis',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFF10B981), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -482,13 +482,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Analyze Trends',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFF10B981),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -522,12 +522,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2D1818), // Lighter dark red transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'SECRET VAULT',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFFEF4444)).copyWith(// Red
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -537,14 +537,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.lock_outline_rounded,
-                      color: Color(0xFFEF4444),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -554,13 +554,13 @@ class BentoGrid extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Secret Vault',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFFEF4444)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _buildVaultContent(context),
@@ -574,7 +574,7 @@ class BentoGrid extends StatelessWidget {
                     isUnlocked ? 'Access Granted' : 'PIN Protected',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFFEF4444), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -582,13 +582,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Open Vault',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFFEF4444)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFFEF4444),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -628,12 +628,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF162235), // Lighter dark blue transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'LOVE CHAT',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFF60A5FA)).copyWith(// Blue
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -643,14 +643,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF60A5FA).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.chat_bubble_outline_rounded,
-                      color: Color(0xFF60A5FA),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -660,13 +660,13 @@ class BentoGrid extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Love Chat Space',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF60A5FA)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18),
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: _buildLoveChatContent(context),
@@ -680,7 +680,7 @@ class BentoGrid extends StatelessWidget {
                     footerText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFF60A5FA), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -688,13 +688,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Open Chat',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF60A5FA)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFF60A5FA),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -747,7 +747,7 @@ class BentoGrid extends StatelessWidget {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: latest.backgroundColor ?? Colors.pinkAccent.withValues(alpha: 0.1),
+          color: latest.backgroundColor ?? theme.accentColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Center(
@@ -767,7 +767,7 @@ class BentoGrid extends StatelessWidget {
           color: latest.backgroundColor ?? const Color(0xFF0F0B1A),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: theme.textColor.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -788,10 +788,10 @@ class BentoGrid extends StatelessWidget {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: Colors.black26,
+          color: theme.textColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: theme.textColor.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -902,7 +902,7 @@ class BentoGrid extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF43F5E), // Vibrant pink/rose accent
+                color: theme.accentColor,
                 borderRadius: BorderRadius.circular(100),
               ),
               child: Row(
@@ -936,7 +936,7 @@ class BentoGrid extends StatelessWidget {
             ),
             Text(
               daysText,
-              style: AppTypography.bodyMono(fontSize: 11.5, color: const Color(0xFFF43F5E)).copyWith(// Vibrant pink/rose accent
+              style: AppTypography.bodyMono(fontSize: 11.5, color: theme.accentColor).copyWith(
                 fontWeight: FontWeight.w700),
             ),
           ],
@@ -976,10 +976,10 @@ class BentoGrid extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
+                  color: theme.textColor.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: theme.textColor.withValues(alpha: 0.05),
                     width: 1,
                   ),
                 ),
@@ -995,7 +995,7 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Icon(
                           myToday != null ? Icons.check_circle_rounded : Icons.pending_rounded,
-                          color: myToday != null ? const Color(0xFFF59E0B) : Colors.white.withValues(alpha: 0.2),
+                          color: myToday != null ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
                           size: 13,
                         ),
                         const SizedBox(width: 6),
@@ -1015,10 +1015,10 @@ class BentoGrid extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
+                  color: theme.textColor.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: theme.textColor.withValues(alpha: 0.05),
                     width: 1,
                   ),
                 ),
@@ -1034,7 +1034,7 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Icon(
                           partnerToday != null ? Icons.check_circle_rounded : Icons.pending_rounded,
-                          color: partnerToday != null ? const Color(0xFFF59E0B) : Colors.white.withValues(alpha: 0.2),
+                          color: partnerToday != null ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
                           size: 13,
                         ),
                         const SizedBox(width: 6),
@@ -1082,11 +1082,12 @@ class BentoGrid extends StatelessWidget {
 
     for (int i = 0; i < dates.length; i++) {
       final date = dates[i];
-      final uScore = userMoodsMap[date] ?? (recent.isNotEmpty ? recent.last.moodScore : 7);
-      final pScore = partnerMoodsMap[date] ?? (partnerRecent.isNotEmpty ? partnerRecent.last.moodScore : 8);
-
-      userSpots.add(FlSpot(i.toDouble(), uScore.toDouble()));
-      partnerSpots.add(FlSpot(i.toDouble(), pScore.toDouble()));
+      if (userMoodsMap.containsKey(date)) {
+        userSpots.add(FlSpot(i.toDouble(), userMoodsMap[date]!.toDouble()));
+      }
+      if (partnerMoodsMap.containsKey(date)) {
+        partnerSpots.add(FlSpot(i.toDouble(), partnerMoodsMap[date]!.toDouble()));
+      }
     }
 
     return SizedBox(
@@ -1103,64 +1104,66 @@ class BentoGrid extends StatelessWidget {
           maxY: 11,
           lineTouchData: const LineTouchData(enabled: false),
           lineBarsData: [
-            // User Line (Green)
-            LineChartBarData(
-              spots: userSpots,
-              isCurved: true,
-              color: const Color(0xFF10B981), // Emerald Green
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(
-                show: true,
-                checkToShowDot: (spot, barData) => spot.x == barData.spots.last.x,
-                getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                  radius: 4,
-                  color: const Color(0xFF10B981),
-                  strokeWidth: 1.5,
-                  strokeColor: Colors.white,
+            // User Line
+            if (userSpots.length >= 2)
+              LineChartBarData(
+                spots: userSpots,
+                isCurved: true,
+                color: theme.accentColor,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(
+                  show: true,
+                  checkToShowDot: (spot, barData) => spot.x == barData.spots.last.x,
+                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                    radius: 4,
+                    color: theme.accentColor,
+                    strokeWidth: 1.5,
+                    strokeColor: Colors.white,
+                  ),
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.accentColor.withValues(alpha: 0.15),
+                      theme.accentColor.withValues(alpha: 0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF10B981).withValues(alpha: 0.15),
-                    const Color(0xFF10B981).withValues(alpha: 0.0),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            // Partner Line
+            if (partnerSpots.length >= 2)
+              LineChartBarData(
+                spots: partnerSpots,
+                isCurved: true,
+                color: theme.textColor.withValues(alpha: 0.2),
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(
+                  show: true,
+                  checkToShowDot: (spot, barData) => spot.x == barData.spots.last.x,
+                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                    radius: 4,
+                    color: theme.textColor.withValues(alpha: 0.2),
+                    strokeWidth: 1.5,
+                    strokeColor: Colors.white,
+                  ),
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.textColor.withValues(alpha: 0.05),
+                      theme.textColor.withValues(alpha: 0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
-            ),
-            // Partner Line (Purple)
-            LineChartBarData(
-              spots: partnerSpots,
-              isCurved: true,
-              color: const Color(0xFFC084FC), // Purple
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(
-                show: true,
-                checkToShowDot: (spot, barData) => spot.x == barData.spots.last.x,
-                getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                  radius: 4,
-                  color: const Color(0xFFC084FC),
-                  strokeWidth: 1.5,
-                  strokeColor: Colors.white,
-                ),
-              ),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFFC084FC).withValues(alpha: 0.15),
-                    const Color(0xFFC084FC).withValues(alpha: 0.0),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -1207,12 +1210,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF251A35), // Dark purple transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'DAILY SYNC',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFFC084FC)).copyWith(// Light purple
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -1223,14 +1226,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFC084FC).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.question_answer_outlined,
-                      color: Color(0xFFC084FC),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -1241,14 +1244,14 @@ class BentoGrid extends StatelessWidget {
             // Title: Daily Sync Question
             Text(
               'Daily Sync Question',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFFC084FC)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             // Main center block: Question Box
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18), // Very dark grey/black transparent box
+                color: theme.textColor.withValues(alpha: 0.05), // Adaptive transparent box
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -1264,7 +1267,7 @@ class BentoGrid extends StatelessWidget {
                   // Divider
                   Container(
                     height: 1,
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: theme.textColor.withValues(alpha: 0.05),
                   ),
                   const SizedBox(height: 12),
                   // Sync status header
@@ -1281,7 +1284,7 @@ class BentoGrid extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: answered ? const Color(0xFFC084FC) : Colors.white.withValues(alpha: 0.15),
+                          color: answered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -1296,7 +1299,7 @@ class BentoGrid extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: partnerAnswered ? const Color(0xFFC084FC) : Colors.white.withValues(alpha: 0.15),
+                          color: partnerAnswered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -1320,7 +1323,7 @@ class BentoGrid extends StatelessWidget {
                     statusText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFFC084FC), fontWeight: FontWeight.w500),
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor, fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1328,13 +1331,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Sync Minds',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFFC084FC)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFFC084FC),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -1354,15 +1357,15 @@ class BentoGrid extends StatelessWidget {
     final completedItems = items.where((i) => i.isCompleted).toList();
     final uncompletedItems = items.where((i) => !i.isCompleted).toList();
     
-    final total = items.isNotEmpty ? items.length : 5;
-    final completedCount = items.isNotEmpty ? completedItems.length : 2;
-    final progress = items.isNotEmpty ? (completedCount / total) : 0.40;
+    final total = items.length;
+    final completedCount = completedItems.length;
+    final progress = total > 0 ? (completedCount / total) : 0.0;
     
     final closestToConquer = uncompletedItems.isNotEmpty 
         ? uncompletedItems.first.title 
-        : (items.isNotEmpty ? 'All goals achieved! 🎉' : 'Go hot air ballooning during a rose sunset');
+        : (items.isNotEmpty ? 'All goals achieved! 🎉' : 'No goals added yet');
         
-    String completedText = 'Completed: Learn to cook h...';
+    String completedText = 'No items yet';
     if (items.isNotEmpty) {
       if (completedItems.isNotEmpty) {
         final title = completedItems.first.title;
@@ -1397,12 +1400,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E2D2F), // Lighter dark cyan/teal transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'ADVENTURES',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFF06B6D4)).copyWith(// Cyan
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -1413,14 +1416,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF06B6D4).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.explore_outlined,
-                      color: Color(0xFF06B6D4),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -1431,80 +1434,90 @@ class BentoGrid extends StatelessWidget {
             // Title: Bucket List Goals
             Text(
               'Bucket List Goals',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF06B6D4)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             // Main center block: Progress Box
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18), // Very dark grey/black transparent box
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Progress labels
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: items.isEmpty
+                ? Container(
+                    height: 100,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'No bucket list items yet. Start planning your future adventures together! ✈️',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Progress labels
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'CONQUER PROGRESS',
+                            style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                          ),
+                          Text(
+                            '${(progress * 100).toInt()}% ($completedCount/$total)',
+                            style: AppTypography.bodyMono(fontSize: 11, fontWeight: FontWeight.w800, color: theme.accentColor),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Progress Bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(100),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: theme.textColor.withValues(alpha: 0.05),
+                          valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Divider
+                      Container(
+                        height: 1,
+                        color: theme.textColor.withValues(alpha: 0.05),
+                      ),
+                      const SizedBox(height: 12),
+                      // Closest to conquer
                       Text(
-                        'CONQUER PROGRESS',
+                        'CLOSEST TO CONQUER:',
                         style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
                       ),
-                      Text(
-                        '${(progress * 100).toInt()}% ($completedCount/$total)',
-                        style: AppTypography.bodyMono(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF06B6D4)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: theme.accentColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              closestToConquer,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textColor),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // Progress Bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(100),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                      backgroundColor: Colors.white.withValues(alpha: 0.05),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF06B6D4)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Divider
-                  Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                  const SizedBox(height: 12),
-                  // Closest to conquer
-                  Text(
-                    'CLOSEST TO CONQUER:',
-                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF06B6D4),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          closestToConquer,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ),
             const SizedBox(height: 14),
             // Footer row
@@ -1516,7 +1529,7 @@ class BentoGrid extends StatelessWidget {
                     completedText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: const Color(0xFF06B6D4)).copyWith(// Cyan completed text matching footer link
+                    style: AppTypography.captionMono(fontSize: 10, color: theme.accentColor).copyWith(
                       fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -1525,13 +1538,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Chase Objectives',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF06B6D4)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFF06B6D4),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -1547,26 +1560,30 @@ class BentoGrid extends StatelessWidget {
   Widget _buildTimeCapsuleBentoCard(BuildContext context) {
     final capsuleProvider = context.watch<TimeCapsuleProvider>();
     final lockedCapsules = capsuleProvider.lockedCapsules;
+    final hasCapsules = lockedCapsules.isNotEmpty;
 
-    final latestLockedMessage = lockedCapsules.isNotEmpty 
+    final latestLockedMessage = hasCapsules 
         ? lockedCapsules.first.message 
-        : 'Post-Graduation Hopes & Fears';
+        : 'No sealed capsules yet';
 
-    final openDate = lockedCapsules.isNotEmpty 
+    final openDate = hasCapsules 
         ? lockedCapsules.first.openDate 
-        : DateTime.now().add(const Duration(days: 294, hours: 22, minutes: 47));
+        : null;
     
-    final duration = openDate.difference(DateTime.now());
-    final days = duration.inDays;
-    final hours = duration.inHours % 24;
-    final minutes = duration.inMinutes % 60;
-    
-    final displayDays = days > 0 ? days : 294;
-    final displayHours = hours > 0 ? hours : 22;
-    final displayMinutes = minutes > 0 ? minutes : 47;
-    final countdownText = '${displayDays}d ${displayHours}h ${displayMinutes}m';
+    String countdownText = '--d --h --m';
+    if (openDate != null) {
+      final duration = openDate.difference(DateTime.now());
+      if (duration.isNegative) {
+        countdownText = 'Ready to open!';
+      } else {
+        final days = duration.inDays;
+        final hours = duration.inHours % 24;
+        final minutes = duration.inMinutes % 60;
+        countdownText = '${days}d ${hours}h ${minutes}m';
+      }
+    }
 
-    final sealedCount = lockedCapsules.isNotEmpty ? lockedCapsules.length : 3;
+    final sealedCount = lockedCapsules.length;
 
     return InkWell(
       onTap: () => Navigator.push(
@@ -1588,12 +1605,12 @@ class BentoGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2E221E), // Lighter dark orange/brown transparent capsule
+                    color: theme.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'FUTURE LETTERS',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: const Color(0xFFE28743)).copyWith(// Warm orange
+                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
                       letterSpacing: 0.5),
                   ),
                 ),
@@ -1604,14 +1621,14 @@ class BentoGrid extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFE28743).withValues(alpha: 0.3),
+                      color: theme.accentColor.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       Icons.hourglass_empty_rounded,
-                      color: Color(0xFFE28743),
+                      color: theme.accentColor,
                       size: 13,
                     ),
                   ),
@@ -1622,78 +1639,88 @@ class BentoGrid extends StatelessWidget {
             // Title: Time Capsules
             Text(
               'Time Capsules',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFFFFDFB9)),
+              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
             ),
             const SizedBox(height: 14),
             // Main center block: Sealed Info Box
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.18), // Very dark grey/black transparent box
+                color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          latestLockedMessage,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: theme.textColor),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // "SEALED" Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E221E), // Subtle dark orange/brown background
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'SEALED',
-                          style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: const Color(0xFFE28743)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Divider
-                  Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                  const SizedBox(height: 12),
-                  // Countdown row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: !hasCapsules
+                ? Container(
+                    height: 100,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Write a letter to your future selves. Seal it today, open it years from now! ✉️',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(
-                            Icons.access_time_rounded,
-                            color: Color(0xFFE28743),
-                            size: 14,
+                          Expanded(
+                            child: Text(
+                              latestLockedMessage,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: theme.textColor),
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'REMAINING:',
-                            style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                          const SizedBox(width: 8),
+                          // "SEALED" Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.accentColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'SEALED',
+                              style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: theme.accentColor),
+                            ),
                           ),
                         ],
                       ),
-                      Text(
-                        countdownText,
-                        style: AppTypography.bodyMono(fontSize: 11.5, fontWeight: FontWeight.w800, color: const Color(0xFFE28743)),
+                      const SizedBox(height: 12),
+                      // Divider
+                      Container(
+                        height: 1,
+                        color: theme.textColor.withValues(alpha: 0.05),
+                      ),
+                      const SizedBox(height: 12),
+                      // Countdown row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time_rounded,
+                                color: theme.accentColor,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'REMAINING:',
+                                style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            countdownText,
+                            style: AppTypography.bodyMono(fontSize: 11.5, fontWeight: FontWeight.w800, color: theme.accentColor),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
             ),
             const SizedBox(height: 14),
             // Footer row
@@ -1708,13 +1735,13 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Launch Capsule',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFFE28743)),
+                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 9,
-                      color: Color(0xFFE28743),
+                      color: theme.accentColor,
                     ),
                   ],
                 ),
@@ -1736,7 +1763,7 @@ class BentoGrid extends StatelessWidget {
       children: [
         Icon(
           isUnlocked ? Icons.lock_open_rounded : Icons.lock_rounded,
-          color: isUnlocked ? Colors.greenAccent : Colors.redAccent,
+          color: isUnlocked ? Colors.greenAccent : theme.accentColor,
           size: 18,
         ),
         const SizedBox(width: 10),
@@ -1778,7 +1805,7 @@ class BentoGrid extends StatelessWidget {
 
     return Row(
       children: [
-        const Icon(Icons.maps_ugc_rounded, color: Color(0xFF60A5FA), size: 16),
+        Icon(Icons.maps_ugc_rounded, color: theme.accentColor, size: 16),
         const SizedBox(width: 10),
         Expanded(
           child: Column(

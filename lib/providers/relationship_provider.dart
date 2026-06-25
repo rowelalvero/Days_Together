@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 const Object _unset = Object();
 
@@ -26,6 +27,49 @@ class MilestoneInfo {
 class RelationshipProvider with ChangeNotifier {
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
+
+  /// Returns `true` when [url] looks like a valid, loadable HTTP(S) URL.
+  static bool _isValidAvatarUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return false;
+    final uri = Uri.tryParse(url);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
+  /// Validates an avatar URL by making a HEAD request.
+  /// Returns the URL if reachable, or `null` if it fails.
+  Future<String?> _validateAvatarUrl(String url) async {
+    if (!_isValidAvatarUrl(url)) return null;
+    try {
+      final client = HttpClient();
+      final request = await client.headUrl(Uri.parse(url));
+      final response = await request.close().timeout(
+        const Duration(seconds: 5),
+      );
+      client.close(force: false);
+      if (response.statusCode >= 200 && response.statusCode < 400) {
+        return url;
+      }
+      debugPrint('Avatar URL validation failed ($url): HTTP ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('Avatar URL validation error ($url): $e');
+      return null;
+    }
+  }
+
+  /// Clears a stale avatar URL from SharedPreferences and evicts it
+  /// from the CachedNetworkImage cache.
+  Future<void> _clearStaleAvatarCache(String prefsKey, String? url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(prefsKey);
+    if (url != null && _isValidAvatarUrl(url)) {
+      try {
+        await CachedNetworkImage.evictFromCache(url);
+      } catch (_) {}
+    }
+  }
 
   DateTime? _startDate;
   TimeOfDay? _startTime;
@@ -205,6 +249,36 @@ class RelationshipProvider with ChangeNotifier {
       _isInitialized = true;
     }
     notifyListeners();
+
+    // Background-validate cached avatar URLs on startup.
+    // If a cached URL is stale (e.g. file deleted, 400/404), clear it
+    // immediately so the UI shows a placeholder instead of retrying.
+    _backgroundValidateAvatars();
+  }
+
+  /// Validates cached avatar URLs in the background on startup.
+  /// Clears any that are unreachable so we stop retrying broken URLs.
+  void _backgroundValidateAvatars() {
+    if (_yourAvatarPath != null && _yourAvatarPath!.startsWith('http')) {
+      _validateAvatarUrl(_yourAvatarPath!).then((validUrl) {
+        if (validUrl == null && _yourAvatarPath != null) {
+          debugPrint('Clearing stale your_avatar_path: $_yourAvatarPath');
+          _clearStaleAvatarCache('your_avatar_path', _yourAvatarPath);
+          _yourAvatarPath = null;
+          notifyListeners();
+        }
+      });
+    }
+    if (_partnerAvatarPath != null && _partnerAvatarPath!.startsWith('http')) {
+      _validateAvatarUrl(_partnerAvatarPath!).then((validUrl) {
+        if (validUrl == null && _partnerAvatarPath != null) {
+          debugPrint('Clearing stale partner_avatar_path: $_partnerAvatarPath');
+          _clearStaleAvatarCache('partner_avatar_path', _partnerAvatarPath);
+          _partnerAvatarPath = null;
+          notifyListeners();
+        }
+      });
+    }
   }
 
   void _initFirebaseSync() {
@@ -388,47 +462,70 @@ class RelationshipProvider with ChangeNotifier {
 
                           final isYouCreator = lData['creator_id'] == _userId;
 
-                          _yourName =
+                          // Capture new values for dirty-checking
+                          final newYourName =
                               (isYouCreator
                                       ? lData['your_name']
                                       : lData['partner_name'])
                                   as String?;
-                          _partnerName =
+                          final newPartnerName =
                               (isYouCreator
                                       ? lData['partner_name']
                                       : lData['your_name'])
                                   as String?;
-                          _yourGender =
+                          final newYourGender =
                               (isYouCreator
                                       ? lData['your_gender']
                                       : lData['partner_gender'])
                                   as String?;
-                          _partnerGender =
+                          final newPartnerGender =
                               (isYouCreator
                                       ? lData['partner_gender']
                                       : lData['your_gender'])
                                   as String?;
-                          _yourPhone =
+                          final newYourPhone =
                               (isYouCreator
                                       ? lData['your_phone']
                                       : lData['partner_phone'])
                                   as String?;
-                          _partnerPhone =
+                          final newPartnerPhone =
                               (isYouCreator
                                       ? lData['partner_phone']
                                       : lData['your_phone'])
                                   as String?;
 
-                          _yourAvatarPath =
+                          // Validate avatar URLs before accepting them
+                          var newYourAvatarPath =
                               (isYouCreator
                                       ? lData['your_avatar_path']
                                       : lData['partner_avatar_path'])
                                   as String?;
-                          _partnerAvatarPath =
+                          var newPartnerAvatarPath =
                               (isYouCreator
                                       ? lData['partner_avatar_path']
                                       : lData['your_avatar_path'])
                                   as String?;
+
+                          // Clear obviously invalid avatar URLs
+                          if (newYourAvatarPath != null &&
+                              newYourAvatarPath.startsWith('http') &&
+                              !_isValidAvatarUrl(newYourAvatarPath)) {
+                            newYourAvatarPath = null;
+                          }
+                          if (newPartnerAvatarPath != null &&
+                              newPartnerAvatarPath.startsWith('http') &&
+                              !_isValidAvatarUrl(newPartnerAvatarPath)) {
+                            newPartnerAvatarPath = null;
+                          }
+
+                          _yourName = newYourName;
+                          _partnerName = newPartnerName;
+                          _yourGender = newYourGender;
+                          _partnerGender = newPartnerGender;
+                          _yourPhone = newYourPhone;
+                          _partnerPhone = newPartnerPhone;
+                          _yourAvatarPath = newYourAvatarPath;
+                          _partnerAvatarPath = newPartnerAvatarPath;
 
                           final yBirth =
                               lData[isYouCreator

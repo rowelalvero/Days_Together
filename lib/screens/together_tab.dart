@@ -76,7 +76,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Bucket List',
                     subtitle:
                         '${bucketList.completedItems}/${bucketList.totalItems} done',
-                    color: Colors.lightBlueAccent,
+                    color: Colors.lightBlue,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -92,7 +92,7 @@ class TogetherTab extends StatelessWidget {
                     subtitle: dailyMood.hasLoggedToday
                         ? 'Today: ${dailyMood.todayMood?.moodScore}/10'
                         : 'How are we today?',
-                    color: Colors.pinkAccent,
+                    color: Colors.pink,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -106,7 +106,7 @@ class TogetherTab extends StatelessWidget {
                     emoji: '🎁',
                     title: 'Gift Ideas',
                     subtitle: 'Never forget a date.',
-                    color: Colors.orangeAccent,
+                    color: Colors.orange,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -120,7 +120,7 @@ class TogetherTab extends StatelessWidget {
                     emoji: '📅',
                     title: 'Calendar',
                     subtitle: 'Our important dates.',
-                    color: Colors.tealAccent,
+                    color: Colors.teal,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const CalendarScreen()),
@@ -146,7 +146,7 @@ class TogetherTab extends StatelessWidget {
                     emoji: '🃏',
                     title: 'Topic Cards',
                     subtitle: 'Deep questions for couples.',
-                    color: Colors.purpleAccent,
+                    color: Colors.purple,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -160,7 +160,7 @@ class TogetherTab extends StatelessWidget {
                     emoji: '📱',
                     title: 'Doodle Notes',
                     subtitle: 'Doodle & send widget notes.',
-                    color: Colors.pinkAccent,
+                    color: Colors.pink,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -174,7 +174,7 @@ class TogetherTab extends StatelessWidget {
                     emoji: '💬',
                     title: 'Love Chat',
                     subtitle: 'Connected messaging.',
-                    color: Colors.pinkAccent,
+                    color: theme.accentColor,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

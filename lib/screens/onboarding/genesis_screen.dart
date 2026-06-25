@@ -35,14 +35,13 @@ class _GenesisScreenState extends State<GenesisScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'When did your\nstory begin?',
                   style: AppTypography.cormorant(
                     fontSize: 36,
-                    fontStyle: FontStyle.italic,
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     height: 1.2,
@@ -61,7 +60,6 @@ class _GenesisScreenState extends State<GenesisScreen> {
                   "Don't worry—you can change this later.",
                   style: AppTypography.spectral(
                     fontSize: 13,
-                    fontStyle: FontStyle.italic,
                     color: theme.textColor.withValues(alpha: 0.5),
                   ),
                 ),
@@ -81,11 +79,9 @@ class _GenesisScreenState extends State<GenesisScreen> {
                       builder: (context, child) {
                         return Theme(
                           data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.dark(
-                              primary: theme.accentColor,
-                              onPrimary: Colors.white,
-                              surface: theme.secondaryColor,
-                              onSurface: Colors.white,
+                            colorScheme: ColorScheme.fromSeed(
+                              seedColor: theme.accentColor,
+                              brightness: theme.isDark ? Brightness.dark : Brightness.light,
                             ),
                           ),
                           child: child!,
@@ -111,11 +107,9 @@ class _GenesisScreenState extends State<GenesisScreen> {
                       builder: (context, child) {
                         return Theme(
                           data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.dark(
-                              primary: theme.accentColor,
-                              onPrimary: Colors.white,
-                              surface: theme.secondaryColor,
-                              onSurface: Colors.white,
+                            colorScheme: ColorScheme.fromSeed(
+                              seedColor: theme.accentColor,
+                              brightness: theme.isDark ? Brightness.dark : Brightness.light,
                             ),
                           ),
                           child: child!,
@@ -151,7 +145,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 5,
+                      elevation: 0,
                     ),
                     child: Text(
                       'Continue',
@@ -182,9 +176,9 @@ class _GenesisScreenState extends State<GenesisScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: theme.textColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
@@ -206,14 +200,14 @@ class _GenesisScreenState extends State<GenesisScreen> {
                   style: AppTypography.caption(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: theme.textColor.withValues(alpha: 0.5),
                   ).copyWith(letterSpacing: 2),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
                   style: AppTypography.body(
-                    color: Colors.white,
+                    color: theme.textColor,
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                   ),
@@ -221,7 +215,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
               ],
             ),
             const Spacer(),
-            Icon(Icons.edit_rounded, color: Colors.white.withValues(alpha: 0.4), size: 20),
+            Icon(Icons.edit_rounded, color: theme.textColor.withValues(alpha: 0.3), size: 20),
           ],
         ),
       ),

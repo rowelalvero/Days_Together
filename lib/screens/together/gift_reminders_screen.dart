@@ -50,7 +50,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: Column(
@@ -62,10 +62,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       children: [
                         Text(
                           existingReminder == null ? '🎁 New Gift Reminder' : '🎁 Edit Gift Reminder',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: theme.textColor,
                           ),
                         ),
                         IconButton(
@@ -82,10 +82,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                         hintText: 'e.g. Partner\'s Birthday, Valentine\'s Day',
                         hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        fillColor: theme.textColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                          borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -128,9 +128,9 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
+                                color: theme.textColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,8 +142,8 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                           : DateFormat('MMM dd, yyyy').format(_selectedDate!),
                                       style: TextStyle(
                                         color: _selectedDate == null
-                                            ? Colors.white.withValues(alpha: 0.4)
-                                            : Colors.white,
+                                            ? theme.textColor.withValues(alpha: 0.4)
+                                            : theme.textColor,
                                         fontSize: 14,
                                       ),
                                       overflow: TextOverflow.ellipsis,
@@ -183,9 +183,9 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
+                                color: theme.textColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,8 +197,8 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                           : _selectedTime!.format(context),
                                       style: TextStyle(
                                         color: _selectedTime == null
-                                            ? Colors.white.withValues(alpha: 0.4)
-                                            : Colors.white,
+                                            ? theme.textColor.withValues(alpha: 0.4)
+                                            : theme.textColor,
                                         fontSize: 14,
                                       ),
                                       overflow: TextOverflow.ellipsis,
@@ -373,12 +373,12 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: reminder.isEnabled 
-              ? Colors.white.withValues(alpha: 0.1) 
-              : Colors.white.withValues(alpha: 0.03),
+              ? theme.textColor.withValues(alpha: 0.1) 
+              : theme.textColor.withValues(alpha: 0.03),
         ),
       ),
       child: Padding(
@@ -398,7 +398,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     '🎁',
                     style: TextStyle(
                       fontSize: 20,
-                      color: reminder.isEnabled ? Colors.white : Colors.white24,
+                      color: reminder.isEnabled ? Colors.white : theme.textColor.withValues(alpha: 0.24),
                     ),
                   ),
                 ),
@@ -410,7 +410,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       Text(
                         reminder.title,
                         style: TextStyle(
-                          color: reminder.isEnabled ? Colors.white : Colors.white38,
+                          color: reminder.isEnabled ? theme.textColor : theme.textColor.withValues(alpha: 0.38),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           decoration: reminder.isEnabled ? null : TextDecoration.lineThrough,
@@ -420,7 +420,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       Text(
                         '$dateStr${reminder.date.hour != 0 || reminder.date.minute != 0 ? ' at ${DateFormat.jm().format(reminder.date)}' : ''} (Next: ${DateFormat('MMMM dd, yyyy').format(reminder.nextOccurrence)})',
                         style: TextStyle(
-                          color: reminder.isEnabled ? Colors.white60 : Colors.white24,
+                          color: reminder.isEnabled ? theme.textColor.withValues(alpha: 0.6) : theme.textColor.withValues(alpha: 0.24),
                           fontSize: 12,
                         ),
                       ),
@@ -437,7 +437,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            const Divider(color: Colors.white12, height: 1),
+            const Divider(height: 1),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -447,7 +447,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                   decoration: BoxDecoration(
                     color: reminder.isEnabled
                         ? (daysLeft <= 14 ? Colors.redAccent : theme.accentColor).withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.05),
+                        : theme.textColor.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -455,7 +455,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     style: TextStyle(
                       color: reminder.isEnabled
                           ? (daysLeft <= 14 ? Colors.redAccent : theme.accentColor)
-                          : Colors.white30,
+                          : theme.textColor.withValues(alpha: 0.3),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -526,10 +526,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Never forget a date.',
               style: TextStyle(
-                color: Colors.white,
+                color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -539,7 +539,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
               'Add birthdays, anniversaries, or special surprise counters.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: theme.textColor.withValues(alpha: 0.5),
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),

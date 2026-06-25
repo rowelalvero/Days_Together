@@ -60,7 +60,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
           content: Center(
             child: GlassContainer(
               borderRadius: 20,
-              opacity: 0.2,
+              opacity: 0.1,
               blur: 20,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
@@ -75,7 +75,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
                   Text(
                     'Press back again to exit',
                     style: AppTypography.body(
-                      color: Colors.white,
+                      color: theme.textColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -156,7 +156,9 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
                 // Custom Grid Overlay Painter
                 Positioned.fill(
                   child: CustomPaint(
-                    painter: DashboardGridPainter(),
+                    painter: DashboardGridPainter(
+                      gridColor: theme.textColor.withValues(alpha: 0.015),
+                    ),
                   ),
                 ),
                 // Screen Pages Content
@@ -443,7 +445,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   style: AppTypography.cardTitle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.textColor,
                   ),
                 ),
               ],
@@ -585,17 +587,17 @@ class _TimelineTabState extends State<TimelineTab> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: theme.backgroundColor,
-        title: const Text(
+        backgroundColor: theme.primaryColor,
+        title: Text(
           'Edit Story Title',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: theme.textColor),
         ),
         content: TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: theme.textColor),
           decoration: InputDecoration(
             hintText: 'e.g. Our Love Story',
-            hintStyle: const TextStyle(color: Colors.white24),
+            hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: theme.accentColor),
             ),
@@ -604,9 +606,9 @@ class _TimelineTabState extends State<TimelineTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white54),
+              style: TextStyle(color: theme.textColor.withValues(alpha: 0.5)),
             ),
           ),
           TextButton(
@@ -670,7 +672,7 @@ class _TimelineTabState extends State<TimelineTab> {
                                   rp.storyTitle,
                                   style: AppTypography.sectionHeader(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: theme.textColor,
                                     fontSize: 24,
                                   ),
                                 ),
@@ -696,10 +698,10 @@ class _TimelineTabState extends State<TimelineTab> {
                                             begin: Alignment.topCenter,
                                             end: Alignment.bottomCenter,
                                             colors: [
-                                              Colors.white.withValues(alpha: 0.0),
-                                              Colors.white24,
-                                              Colors.white24,
-                                              Colors.white.withValues(alpha: 0.0),
+                                              theme.textColor.withValues(alpha: 0.0),
+                                              theme.textColor.withValues(alpha: 0.1),
+                                              theme.textColor.withValues(alpha: 0.1),
+                                              theme.textColor.withValues(alpha: 0.0),
                                             ],
                                           ),
                                         ),
@@ -797,7 +799,7 @@ class _TimelineTabState extends State<TimelineTab> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: theme.textColor.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -811,7 +813,7 @@ class _TimelineTabState extends State<TimelineTab> {
             'Your story begins here.',
             textAlign: TextAlign.center,
             style: AppTypography.sectionHeader(
-              color: Colors.white,
+              color: theme.textColor,
               fontSize: 26,
               fontWeight: FontWeight.bold,
             ),
@@ -821,7 +823,7 @@ class _TimelineTabState extends State<TimelineTab> {
             'Every date, every laugh, and every small moment is a chapter in your book. Start capturing your memories together.',
             textAlign: TextAlign.center,
             style: AppTypography.body(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: theme.textColor.withValues(alpha: 0.5),
               fontSize: 15,
               height: 1.6,
             ),
@@ -901,10 +903,13 @@ class _ThreeDotLoaderState extends State<_ThreeDotLoader> {
 }
 
 class DashboardGridPainter extends CustomPainter {
+  final Color gridColor;
+  DashboardGridPainter({this.gridColor = const Color(0x05000000)});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.015)
+      ..color = gridColor
       ..strokeWidth = 1.0;
     const double step = 32.0;
     for (double x = 0; x < size.width; x += step) {
