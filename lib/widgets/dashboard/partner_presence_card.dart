@@ -128,7 +128,7 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                   children: [
                     Text(
                       rp.partnerName ?? 'Waiting for partner...',
-                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold, color: widget.theme.textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

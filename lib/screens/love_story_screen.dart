@@ -590,14 +590,14 @@ class _TimelineTabState extends State<TimelineTab> {
         backgroundColor: theme.primaryColor,
         title: Text(
           'Edit Story Title',
-          style: TextStyle(color: theme.textColor),
+          style: AppTypography.sectionHeader(color: theme.textColor),
         ),
         content: TextField(
           controller: controller,
-          style: TextStyle(color: theme.textColor),
+          style: AppTypography.body(color: theme.textColor),
           decoration: InputDecoration(
             hintText: 'e.g. Our Love Story',
-            hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+            hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: theme.accentColor),
             ),
@@ -608,7 +608,7 @@ class _TimelineTabState extends State<TimelineTab> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(color: theme.textColor.withValues(alpha: 0.5)),
+              style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.5)),
             ),
           ),
           TextButton(
@@ -616,7 +616,7 @@ class _TimelineTabState extends State<TimelineTab> {
               rp.setStoryTitle(controller.text.trim());
               Navigator.pop(context);
             },
-            child: Text('Save', style: TextStyle(color: theme.accentColor)),
+            child: Text('Save', style: AppTypography.button(color: theme.accentColor)),
           ),
         ],
       ),
@@ -670,7 +670,7 @@ class _TimelineTabState extends State<TimelineTab> {
                                 onTap: () => _showEditTitleDialog(context, rp, theme),
                                 child: Text(
                                   rp.storyTitle,
-                                  style: AppTypography.sectionHeader(
+                                  style: AppTypography.pageTitle(
                                     fontWeight: FontWeight.bold,
                                     color: theme.textColor,
                                     fontSize: 24,

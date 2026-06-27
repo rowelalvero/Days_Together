@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/themes/app_typography.dart';
 
 class ShakeToHugWrapper extends StatefulWidget {
   final Widget child;
@@ -108,14 +109,14 @@ class _ShakeToHugWrapperState extends State<ShakeToHugWrapper> with SingleTicker
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                        Text(
                           '🤗',
-                          style: TextStyle(fontSize: 80),
+                          style: AppTypography.body(fontSize: 80),
                         ),
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Virtual Hug Sent!',
-                          style: TextStyle(
+                          style: AppTypography.sectionHeader(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -125,7 +126,7 @@ class _ShakeToHugWrapperState extends State<ShakeToHugWrapper> with SingleTicker
                         Text(
                           'You sent a warm squeeze to ${rp.partnerName ?? 'Partner'}!',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: AppTypography.body(
                             color: Colors.white70,
                             fontSize: 15,
                           ),

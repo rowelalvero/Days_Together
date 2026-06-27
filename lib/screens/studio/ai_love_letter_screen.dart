@@ -104,7 +104,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
               keyboardType: TextInputType.number,
               obscureText: true,
               maxLength: 4,
-              style: TextStyle(color: theme.textColor, fontSize: 24, letterSpacing: 16),
+              style: AppTypography.bodyMono(color: theme.textColor, fontSize: 24).copyWith(letterSpacing: 16),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
                 counterText: '',
@@ -288,7 +288,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
               value: m.id,
               child: Row(
                 children: [
-                  Text(m.mood, style: const TextStyle(fontSize: 20)),
+                  Text(m.mood, style: AppTypography.body(fontSize: 20)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

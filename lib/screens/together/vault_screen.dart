@@ -276,12 +276,12 @@ class _VaultContentScreen extends StatelessWidget {
           children: [
             Icon(Icons.photo_library_outlined, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
-            Text('Nothing here yet.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5))),
+            Text('Nothing here yet.', style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.5))),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => vault.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
-              label: const Text('Add Photo'),
+              label: Text('Add Photo', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
@@ -312,10 +312,10 @@ class _VaultContentScreen extends StatelessWidget {
                       context: context,
                       builder: (ctx) => AlertDialog(
                         backgroundColor: theme.primaryColor,
-                        title: Text('Delete Photo?', style: TextStyle(color: theme.textColor)),
+                        title: Text('Delete Photo?', style: AppTypography.cardTitle(color: theme.textColor)),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5)))),
-                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.5)))),
+                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: AppTypography.button(color: Colors.red))),
                         ],
                       ),
                     );
@@ -349,7 +349,7 @@ class _VaultContentScreen extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () => vault.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
-              label: const Text('Add Photo'),
+              label: Text('Add Photo', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
@@ -375,7 +375,7 @@ class _VaultContentScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.mail_outline_rounded, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
-                        Text('No love letters yet.', style: TextStyle(color: theme.textColor.withValues(alpha: 0.5))),
+                        Text('No love letters yet.', style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.5))),
                       ],
                     ),
                   )
@@ -426,7 +426,7 @@ class _VaultContentScreen extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () => _showWriteLetterDialog(context, vault),
               icon: const Icon(Icons.edit_rounded),
-              label: const Text('Write a Letter'),
+              label: Text('Write a Letter', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
@@ -473,7 +473,7 @@ class _VaultContentScreen extends StatelessWidget {
               style: AppTypography.lora(color: theme.textColor),
               decoration: InputDecoration(
                 hintText: 'Dear love...',
-                hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+                hintStyle: AppTypography.lora(color: theme.textColor.withValues(alpha: 0.3)),
                 filled: true,
                 fillColor: theme.textColor.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
@@ -541,18 +541,18 @@ class _DecoyWeatherScreen extends StatelessWidget {
               const Spacer(),
               const Icon(Icons.wb_sunny_rounded, size: 80, color: Colors.yellow),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 '28°C',
-                style: TextStyle(fontSize: 60, fontWeight: FontWeight.w200, color: Colors.white),
+                style: AppTypography.body(fontSize: 60, fontWeight: FontWeight.w200, color: Colors.white),
               ),
-              const Text(
+              Text(
                 'Sunny',
-                style: TextStyle(fontSize: 20, color: Colors.white70),
+                style: AppTypography.body(fontSize: 20, color: Colors.white70),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 'Manila, Philippines',
-                style: TextStyle(fontSize: 16, color: Colors.white54),
+                style: AppTypography.body(fontSize: 16, color: Colors.white54),
               ),
               const Spacer(),
             ],
@@ -624,7 +624,7 @@ Widget _buildKeypad({
             child: Center(
               child: Text(
                 key,
-                style: TextStyle(
+                style: AppTypography.body(
                   color: textColor,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

@@ -66,17 +66,6 @@ class ThemeProvider with ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  /// Update custom font and persist.
-  Future<void> setCustomFont(String fontFamily) async {
-    _settings = _settings.copyWith(customFont: fontFamily);
-    try {
-      await _repository.saveSettings(_settings);
-    } catch (e, st) {
-      debugPrint('ThemeProvider.setCustomFont save failed: $e\n$st');
-    }
-    if (!_disposed) notifyListeners();
-  }
-
   /// Toggle custom theme dark/light mode.
   Future<void> setCustomIsDark(bool isDark) async {
     _settings = _settings.copyWith(customIsDark: isDark);

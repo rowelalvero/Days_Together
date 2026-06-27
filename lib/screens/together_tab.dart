@@ -215,7 +215,7 @@ class TogetherTab extends StatelessWidget {
                 color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Text(emoji, style: const TextStyle(fontSize: 24)),
+              child: Text(emoji, style: AppTypography.body(fontSize: 24)),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -150,10 +150,10 @@ class SettingsTab extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: TextField(
         controller: controller,
-        style: TextStyle(color: theme.textColor),
+        style: AppTypography.body(color: theme.textColor),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3), fontSize: 12),
+          labelStyle: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.3), fontSize: 12),
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
         ),

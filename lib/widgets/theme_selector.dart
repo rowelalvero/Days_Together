@@ -251,25 +251,6 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
     0xFFFFF0F5, 0xFFFFE4EC, 0xFFFFF8FA, 0xFFF8EDEB, 0xFFE8E0D8,
   ];
 
-  // Available fonts
-  static const List<String> _availableFonts = [
-    'Inter',
-    'Space Grotesk',
-    'Roboto',
-    'Lato',
-    'Poppins',
-    'Raleway',
-    'Outfit',
-    'Cormorant Garamond',
-    'Spectral',
-    'Dancing Script',
-    'Pacifico',
-    'Lobster',
-    'Great Vibes',
-    'Quicksand',
-    'Nunito',
-  ];
-
   int _getActiveColor(AppSettings settings) {
     switch (_activeSlot) {
       case 'primary':
@@ -338,12 +319,6 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
         const SizedBox(height: 8),
         _buildDarkLightToggle(themeProvider, settings, theme),
         const SizedBox(height: 32),
-
-        // Font Selector
-        _buildSectionLabel('Font Family', theme),
-        const SizedBox(height: 8),
-        _buildFontSelector(themeProvider, settings, theme),
-        const SizedBox(height: 40),
       ],
     );
   }
@@ -562,55 +537,6 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFontSelector(
-    ThemeProvider provider,
-    AppSettings settings,
-    LoveStoryTheme theme,
-  ) {
-    return GlassContainer(
-      borderRadius: 18,
-      opacity: 0.06,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _availableFonts.contains(settings.customFont)
-              ? settings.customFont
-              : 'Inter',
-          isExpanded: true,
-          dropdownColor: theme.secondaryColor,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: theme.textColor.withValues(alpha: 0.5),
-          ),
-          items: _availableFonts.map((font) {
-            TextStyle fontStyle;
-            try {
-              fontStyle = GoogleFonts.getFont(
-                font,
-                fontSize: 15,
-                color: theme.textColor,
-              );
-            } catch (_) {
-              fontStyle = TextStyle(
-                fontSize: 15,
-                color: theme.textColor,
-              );
-            }
-            return DropdownMenuItem<String>(
-              value: font,
-              child: Text(font, style: fontStyle),
-            );
-          }).toList(),
-          onChanged: (font) {
-            if (font != null) {
-              provider.setCustomFont(font);
-            }
-          },
-        ),
       ),
     );
   }

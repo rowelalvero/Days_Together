@@ -72,11 +72,11 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _messageController,
-                      style: TextStyle(color: theme.textColor),
+                      style: AppTypography.body(color: theme.textColor),
                       maxLines: 4,
                       decoration: InputDecoration(
                         hintText: 'Write a note, a secret, or a message to your future selves...\n\n"Dear future us..."',
-                        hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+                        hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
                         filled: true,
                         fillColor: theme.textColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
@@ -132,7 +132,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                             _selectedDate == null
                                 ? 'Select Unlock Date'
                                 : DateFormat('MMMM dd, yyyy').format(_selectedDate!),
-                            style: TextStyle(
+                            style: AppTypography.body(
                               color: _selectedDate == null
                                   ? theme.textColor.withValues(alpha: 0.4)
                                   : theme.textColor,

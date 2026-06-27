@@ -930,9 +930,9 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                                   onPressed: () => Navigator.pop(ctx),
                                 ),
                                 TextButton(
-                                  child: const Text(
+                                  child: Text(
                                     'Delete',
-                                    style: TextStyle(color: Colors.redAccent),
+                                    style: AppTypography.button(color: Colors.redAccent),
                                   ),
                                   onPressed: () {
                                     Navigator.pop(ctx);

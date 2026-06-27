@@ -95,11 +95,11 @@ class RelationshipStatistics extends StatelessWidget {
                   children: [
                     Text(
                       'Synced Relationship',
-                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
+                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
                     ),
                     Text(
                       'Statistics',
-                      style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
+                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
                     ),
                   ],
                 ),
@@ -149,7 +149,7 @@ class RelationshipStatistics extends StatelessWidget {
                   children: [
                     Text(
                       item.value,
-                      style: AppTypography.caption(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
+                      style: AppTypography.body(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
                     ),
                     const SizedBox(height: 4),
                     Text(

@@ -143,7 +143,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
         children: [
           Text(
             'How is your mood today?',
-            style: TextStyle(
+            style: AppTypography.sectionHeader(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -152,12 +152,12 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           const SizedBox(height: 20),
           Text(
             _getMoodEmoji(_currentMoodScore),
-            style: const TextStyle(fontSize: 70),
+            style: AppTypography.body(fontSize: 70),
           ),
           const SizedBox(height: 8),
           Text(
             _getMoodLabel(_currentMoodScore),
-            style: TextStyle(
+            style: AppTypography.body(
               fontSize: 16,
               color: theme.accentColor,
               fontWeight: FontWeight.w600,
@@ -194,7 +194,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 10,
                 (i) => Text(
                   '${i + 1}',
-                  style: TextStyle(
+                  style: AppTypography.caption(
                     color: (_currentMoodScore.toInt() == i + 1)
                         ? theme.textColor
                         : theme.textColor.withValues(alpha: 0.38),
@@ -209,11 +209,11 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           const SizedBox(height: 24),
           TextField(
             controller: _noteController,
-            style: TextStyle(color: theme.textColor),
+            style: AppTypography.body(color: theme.textColor),
             maxLines: 2,
             decoration: InputDecoration(
               hintText: 'Add a small note about your day... (optional)',
-              hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+              hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
               filled: true,
               fillColor: theme.textColor.withValues(alpha: 0.05),
               border: OutlineInputBorder(
@@ -249,9 +249,9 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Log Today\'s Mood',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: AppTypography.button(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
               ),
             ),
           ),
@@ -277,7 +277,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
             children: [
               Text(
                 'Today\'s Mood',
-                style: TextStyle(
+                style: AppTypography.body(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: theme.textColor.withValues(alpha: 0.7),
@@ -290,7 +290,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                   });
                 },
                 icon: const Icon(Icons.edit, size: 16),
-                label: const Text('Update'),
+                label: Text('Update', style: AppTypography.button(color: theme.accentColor)),
                 style: TextButton.styleFrom(foregroundColor: theme.accentColor),
               ),
             ],
@@ -300,7 +300,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
             children: [
               Text(
                 _getMoodEmoji(todayMood.moodScore.toDouble()),
-                style: const TextStyle(fontSize: 48),
+                style: AppTypography.body(fontSize: 48),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -309,7 +309,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                   children: [
                     Text(
                       'Score: ${todayMood.moodScore}/10',
-                      style: TextStyle(
+                      style: AppTypography.body(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: theme.textColor,
@@ -318,7 +318,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                     const SizedBox(height: 4),
                     Text(
                       _getMoodLabel(todayMood.moodScore.toDouble()),
-                      style: TextStyle(
+                      style: AppTypography.body(
                         fontSize: 14,
                         color: theme.accentColor,
                       ),
@@ -339,11 +339,10 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               ),
               child: Text(
                 '"${todayMood.note}"',
-                style: TextStyle(
+                style: AppTypography.body(
                   color: theme.textColor.withValues(alpha: 0.7),
-                  fontStyle: FontStyle.italic,
                   fontSize: 14,
-                ),
+                ).copyWith(fontStyle: FontStyle.italic),
               ),
             ),
           ],
@@ -383,7 +382,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               const SizedBox(width: 12),
               Text(
                 'Daily Sync Question',
-                style: TextStyle(
+                style: AppTypography.body(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: theme.textColor,
@@ -394,22 +393,21 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           const SizedBox(height: 16),
           Text(
             question.question,
-            style: TextStyle(
+            style: AppTypography.body(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: theme.textColor,
-              fontStyle: FontStyle.italic,
-            ),
+            ).copyWith(fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 20),
           if (!hasAnswered) ...[
             TextField(
               controller: _answerController,
-              style: TextStyle(color: theme.textColor),
+              style: AppTypography.body(color: theme.textColor),
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Type your answer here...',
-                hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+                hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
                 filled: true,
                 fillColor: theme.textColor.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
@@ -440,7 +438,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text('Submit Answer', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text('Submit Answer', style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
           ] else ...[
@@ -457,7 +455,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 children: [
                   Text(
                     'Your Answer:',
-                    style: TextStyle(
+                    style: AppTypography.caption(
                       color: theme.textColor.withValues(alpha: 0.54),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -466,7 +464,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                   const SizedBox(height: 6),
                   Text(
                     question.myAnswer!,
-                    style: TextStyle(color: theme.textColor, fontSize: 14),
+                    style: AppTypography.body(color: theme.textColor, fontSize: 14),
                   ),
                 ],
               ),
@@ -494,11 +492,10 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                     const SizedBox(height: 12),
                     Text(
                       '⏳ Waiting for partner to reply...',
-                      style: TextStyle(
+                      style: AppTypography.body(
                         color: theme.textColor.withValues(alpha: 0.5),
                         fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      ).copyWith(fontStyle: FontStyle.italic),
                     ),
                   ],
                 ),
@@ -515,9 +512,9 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Partner\'s Answer:',
-                      style: TextStyle(
+                      style: AppTypography.caption(
                         color: Colors.pinkAccent,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -526,7 +523,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                     const SizedBox(height: 6),
                     Text(
                       question.partnerAnswer!,
-                      style: TextStyle(color: theme.textColor, fontSize: 14),
+                      style: AppTypography.body(color: theme.textColor, fontSize: 14),
                     ),
                   ],
                 ),
@@ -552,7 +549,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
         children: [
           Text(
             'Emotional Map',
-            style: TextStyle(
+            style: AppTypography.body(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -561,7 +558,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           const SizedBox(height: 4),
           Text(
             'Mood sync history over the last 30 days',
-            style: TextStyle(
+            style: AppTypography.caption(
               fontSize: 12,
               color: theme.textColor.withValues(alpha: 0.6),
             ),
@@ -579,11 +576,10 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               child: Text(
                 'Log your mood for a few days to see your emotional map 📈',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: AppTypography.body(
                   color: theme.textColor.withValues(alpha: 0.38),
                   fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                ),
+                ).copyWith(fontStyle: FontStyle.italic),
               ),
             )
           else
@@ -603,7 +599,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                         getTitlesWidget: (value, meta) {
                           return Text(
                             value.toInt().toString(),
-                            style: TextStyle(
+                            style: AppTypography.caption(
                               color: theme.textColor.withValues(alpha: 0.3),
                               fontWeight: FontWeight.bold,
                               fontSize: 10,
@@ -626,7 +622,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                               padding: const EdgeInsets.only(top: 6),
                               child: Text(
                                 DateFormat('MM/dd').format(date),
-                                style: TextStyle(
+                                style: AppTypography.caption(
                                   color: theme.textColor.withValues(alpha: 0.3),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 9,

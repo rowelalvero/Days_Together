@@ -194,7 +194,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                           const SizedBox(width: 6),
                           Text(
                             'Milestone Achieved! 🎉',
-                            style: AppTypography.bodyMono(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
+                            style: AppTypography.body(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
                           ),
                         ],
                       )
@@ -210,14 +210,14 @@ class _MilestoneCardState extends State<MilestoneCard> {
                           const SizedBox(width: 6),
                           Text(
                             'days remain',
-                            style: AppTypography.bodyMono(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                            style: AppTypography.body(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
                     const SizedBox(height: 4),
                     Text(
                       'Target: ${NumberFormat('#,###').format(targetDays)} days total',
-                      style: AppTypography.captionMono(fontSize: 10, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                      style: AppTypography.caption(fontSize: 10, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -244,11 +244,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
                     children: [
                       Text(
                         '$percentComplete%',
-                        style: AppTypography.bodyMono(fontSize: 15, fontWeight: FontWeight.w800, color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
+                        style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.w800, color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
                       ),
                       Text(
                         'DONE',
-                        style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: widget.theme.textColor.withValues(alpha: 0.3)).copyWith(letterSpacing: 0.5),
+                        style: AppTypography.body(fontSize: 8, fontWeight: FontWeight.w800, color: widget.theme.textColor.withValues(alpha: 0.3)).copyWith(letterSpacing: 0.5),
                       ),
                     ],
                   ),

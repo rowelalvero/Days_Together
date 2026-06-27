@@ -80,7 +80,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                 ).createShader(bounds),
                 child: Text(
                   NumberFormat('#,###').format(totalDays),
-                  style: AppTypography.pageTitle(
+                  style: AppTypography.mainCounter(
                     fontSize: 72,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -134,7 +134,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
         children: [
           Text(
             val.toString(),
-            style: AppTypography.bodyMono(
+            style: AppTypography.body(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: widget.theme.textColor,
@@ -143,7 +143,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
           const SizedBox(height: 6),
           Text(
             label,
-            style: AppTypography.bodyMono(
+            style: AppTypography.body(
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: widget.theme.textColor.withValues(alpha: 0.3),

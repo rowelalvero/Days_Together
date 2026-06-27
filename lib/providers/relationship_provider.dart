@@ -314,6 +314,8 @@ class RelationshipProvider with ChangeNotifier {
         notifyListeners();
 
         _userId = user.id;
+        _isInitialized = false;
+        notifyListeners();
 
         _userSub = Supabase.instance.client
             .from('users')
@@ -329,14 +331,16 @@ class RelationshipProvider with ChangeNotifier {
                       'couple_id': null,
                     });
                   } catch (_) {}
-                  _isInitialized = true;
-                  notifyListeners();
                   return;
                 }
 
                 final userData = dataList.first;
-                _coupleId = userData['couple_id'] as String?;
+                final newCoupleId = userData['couple_id'] as String?;
                 _partnerId = userData['partner_id'] as String?;
+
+                bool coupleIdChanged = _coupleId != newCoupleId;
+                _coupleId = newCoupleId;
+                _isPaired = _coupleId != null;
 
                 // Sync FCM Token to Supabase
                 NotificationService().syncTokenToSupabase();
@@ -354,6 +358,7 @@ class RelationshipProvider with ChangeNotifier {
                     _yourJoinDate = DateTime.parse(authCreated);
                   }
                 }
+
                 if (_yourJoinDate != null) {
                   await prefs.setString(
                     'your_join_date',
@@ -365,7 +370,7 @@ class RelationshipProvider with ChangeNotifier {
                 if (_partnerId != null) {
                   Supabase.instance.client
                       .from('users')
-                      .select('id')
+                      .select() // Select all available columns instead of explicit 'created_at'
                       .eq('id', _partnerId!)
                       .maybeSingle()
                       .then((pData) async {
@@ -394,432 +399,427 @@ class RelationshipProvider with ChangeNotifier {
                 _initPresence(); // Initialize real-time presence channel
 
                 if (_coupleId != null) {
-                  _isPaired = true;
+                  if (coupleIdChanged) {
+                    _coupleSub?.cancel();
+                    _licenseSub?.cancel();
+                    _syncLocalDetailsToCloud();
+
+                    _coupleSub = Supabase.instance.client
+                        .from('couples')
+                        .stream(primaryKey: ['id'])
+                        .eq('id', _coupleId!)
+                        .listen(
+                          (coupleDataList) async {
+                            if (coupleDataList.isEmpty) return;
+                            final coupleData = coupleDataList.first;
+
+                            _storyTitle = coupleData['story_title'] as String?;
+                            final startStr =
+                                coupleData['start_date'] as String?;
+                            if (startStr != null) {
+                              _startDate = DateTime.parse(startStr);
+                            }
+                            final hour = coupleData['start_time_hour'] as int?;
+                            final minute =
+                                coupleData['start_time_minute'] as int?;
+                            if (hour != null && minute != null) {
+                              _startTime =
+                                  TimeOfDay(hour: hour, minute: minute);
+                            }
+                            _isPremium =
+                                coupleData['is_premium'] as bool? ?? false;
+
+                            final prefs = await SharedPreferences.getInstance();
+                            if (_storyTitle != null) {
+                              await prefs.setString(
+                                'story_title',
+                                _storyTitle!,
+                              );
+                            }
+                            if (_startDate != null) {
+                              await prefs.setString(
+                                'relationship_start_date',
+                                _startDate!.toIso8601String(),
+                              );
+                            }
+                            if (_startTime != null) {
+                              await prefs.setInt(
+                                'relationship_start_hour',
+                                _startTime!.hour,
+                              );
+                              await prefs.setInt(
+                                'relationship_start_minute',
+                                _startTime!.minute,
+                              );
+                            }
+                            await prefs.setBool('is_premium', _isPremium);
+
+                            notifyListeners();
+                          },
+                          onError: (error) {
+                            debugPrint('Supabase couples stream error: $error');
+                          },
+                        );
+
+                    _licenseSub = Supabase.instance.client
+                        .from('license_details')
+                        .stream(primaryKey: ['couple_id'])
+                        .eq('couple_id', _coupleId!)
+                        .listen(
+                          (licenseDataList) async {
+                            if (licenseDataList.isEmpty) return;
+                            final lData = licenseDataList.first;
+
+                            final isYouCreator = lData['creator_id'] == _userId;
+
+                            _yourName =
+                                (isYouCreator
+                                        ? lData['your_name']
+                                        : lData['partner_name'])
+                                    as String?;
+                            _partnerName =
+                                (isYouCreator
+                                        ? lData['partner_name']
+                                        : lData['your_name'])
+                                    as String?;
+                            _yourGender =
+                                (isYouCreator
+                                        ? lData['your_gender']
+                                        : lData['partner_gender'])
+                                    as String?;
+                            _partnerGender =
+                                (isYouCreator
+                                        ? lData['partner_gender']
+                                        : lData['your_gender'])
+                                    as String?;
+                            _yourPhone =
+                                (isYouCreator
+                                        ? lData['your_phone']
+                                        : lData['partner_phone'])
+                                    as String?;
+                            _partnerPhone =
+                                (isYouCreator
+                                        ? lData['partner_phone']
+                                        : lData['your_phone'])
+                                    as String?;
+
+                            _yourAvatarPath =
+                                (isYouCreator
+                                        ? lData['your_avatar_path']
+                                        : lData['partner_avatar_path'])
+                                    as String?;
+                            _partnerAvatarPath =
+                                (isYouCreator
+                                        ? lData['partner_avatar_path']
+                                        : lData['your_avatar_path'])
+                                    as String?;
+
+                            final yBirth =
+                                lData[isYouCreator
+                                        ? 'your_birthdate'
+                                        : 'partner_birthdate']
+                                    as String?;
+                            _yourBirthdate =
+                                yBirth != null ? DateTime.parse(yBirth) : null;
+
+                            final pBirth =
+                                lData[isYouCreator
+                                        ? 'partner_birthdate'
+                                        : 'your_birthdate']
+                                    as String?;
+                            _partnerBirthdate =
+                                pBirth != null ? DateTime.parse(pBirth) : null;
+
+                            _yourAddress =
+                                (isYouCreator
+                                        ? lData['your_address']
+                                        : lData['partner_address'])
+                                    as String?;
+                            _partnerAddress =
+                                (isYouCreator
+                                        ? lData['partner_address']
+                                        : lData['your_address'])
+                                    as String?;
+
+                            _yourNationality =
+                                (isYouCreator
+                                        ? lData['your_nationality']
+                                        : lData['partner_nationality'])
+                                    as String?;
+                            _partnerNationality =
+                                (isYouCreator
+                                        ? lData['partner_nationality']
+                                        : lData['your_nationality'])
+                                    as String?;
+
+                            _yourWeight =
+                                (isYouCreator
+                                        ? lData['your_weight']
+                                        : lData['partner_weight'])
+                                    as String?;
+                            _partnerWeight =
+                                (isYouCreator
+                                        ? lData['partner_weight']
+                                        : lData['your_weight'])
+                                    as String?;
+
+                            _yourHeight =
+                                (isYouCreator
+                                        ? lData['your_height']
+                                        : lData['partner_height'])
+                                    as String?;
+                            _partnerHeight =
+                                (isYouCreator
+                                        ? lData['partner_height']
+                                        : lData['your_height'])
+                                    as String?;
+
+                            _yourBloodType =
+                                (isYouCreator
+                                        ? lData['your_blood_type']
+                                        : lData['partner_blood_type'])
+                                    as String?;
+                            _partnerBloodType =
+                                (isYouCreator
+                                        ? lData['partner_blood_type']
+                                        : lData['your_blood_type'])
+                                    as String?;
+
+                            _yourEyeColor =
+                                (isYouCreator
+                                        ? lData['your_eye_color']
+                                        : lData['partner_eye_color'])
+                                    as String?;
+                            _partnerEyeColor =
+                                (isYouCreator
+                                        ? lData['partner_eye_color']
+                                        : lData['your_eye_color'])
+                                    as String?;
+
+                            _yourConditions =
+                                (isYouCreator
+                                        ? lData['your_conditions']
+                                        : lData['partner_conditions'])
+                                    as String?;
+                            _partnerConditions =
+                                (isYouCreator
+                                        ? lData['partner_conditions']
+                                        : lData['your_conditions'])
+                                    as String?;
+
+                            final yIssued =
+                                lData[isYouCreator
+                                        ? 'your_date_issued'
+                                        : 'partner_date_issued']
+                                    as String?;
+                            _yourDateIssued = yIssued != null
+                                ? DateTime.parse(yIssued)
+                                : null;
+
+                            final pIssued =
+                                lData[isYouCreator
+                                        ? 'partner_date_issued'
+                                        : 'your_date_issued']
+                                    as String?;
+                            _partnerDateIssued = pIssued != null
+                                ? DateTime.parse(pIssued)
+                                : null;
+
+                            _yourSignature =
+                                (isYouCreator
+                                        ? lData['your_signature']
+                                        : lData['partner_signature'])
+                                    as String?;
+                            _partnerSignature =
+                                (isYouCreator
+                                        ? lData['partner_signature']
+                                        : lData['your_signature'])
+                                    as String?;
+
+                            final prefs = await SharedPreferences.getInstance();
+                            if (_yourName != null) {
+                              await prefs.setString('your_name', _yourName!);
+                            }
+                            if (_partnerName != null) {
+                              await prefs.setString(
+                                'partner_name',
+                                _partnerName!,
+                              );
+                            }
+                            if (_yourGender != null) {
+                              await prefs.setString(
+                                'your_gender',
+                                _yourGender!,
+                              );
+                            }
+                            if (_partnerGender != null) {
+                              await prefs.setString(
+                                'partner_gender',
+                                _partnerGender!,
+                              );
+                            }
+                            if (_yourPhone != null) {
+                              await prefs.setString('your_phone', _yourPhone!);
+                            }
+                            if (_partnerPhone != null) {
+                              await prefs.setString(
+                                'partner_phone',
+                                _partnerPhone!,
+                              );
+                            }
+                            if (_yourAvatarPath != null) {
+                              await prefs.setString(
+                                'your_avatar_path',
+                                _yourAvatarPath!,
+                              );
+                            }
+                            if (_partnerAvatarPath != null) {
+                              await prefs.setString(
+                                'partner_avatar_path',
+                                _partnerAvatarPath!,
+                              );
+                            }
+                            if (_yourBirthdate != null) {
+                              await prefs.setString(
+                                'your_birthdate',
+                                _yourBirthdate!.toIso8601String(),
+                              );
+                            }
+                            if (_partnerBirthdate != null) {
+                              await prefs.setString(
+                                'partner_birthdate',
+                                _partnerBirthdate!.toIso8601String(),
+                              );
+                            }
+                            if (_yourAddress != null) {
+                              await prefs.setString(
+                                'your_address',
+                                _yourAddress!,
+                              );
+                            }
+                            if (_partnerAddress != null) {
+                              await prefs.setString(
+                                'partner_address',
+                                _partnerAddress!,
+                              );
+                            }
+                            if (_yourNationality != null) {
+                              await prefs.setString(
+                                'your_nationality',
+                                _yourNationality!,
+                              );
+                            }
+                            if (_partnerNationality != null) {
+                              await prefs.setString(
+                                'partner_nationality',
+                                _partnerNationality!,
+                              );
+                            }
+                            if (_yourWeight != null) {
+                              await prefs.setString(
+                                'your_weight',
+                                _yourWeight!,
+                              );
+                            }
+                            if (_partnerWeight != null) {
+                              await prefs.setString(
+                                'partner_weight',
+                                _partnerWeight!,
+                              );
+                            }
+                            if (_yourHeight != null) {
+                              await prefs.setString(
+                                'your_height',
+                                _yourHeight!,
+                              );
+                            }
+                            if (_partnerHeight != null) {
+                              await prefs.setString(
+                                'partner_height',
+                                _partnerHeight!,
+                              );
+                            }
+                            if (_yourBloodType != null) {
+                              await prefs.setString(
+                                'your_blood_type',
+                                _yourBloodType!,
+                              );
+                            }
+                            if (_partnerBloodType != null) {
+                              await prefs.setString(
+                                'partner_blood_type',
+                                _partnerBloodType!,
+                              );
+                            }
+                            if (_yourEyeColor != null) {
+                              await prefs.setString(
+                                'your_eye_color',
+                                _yourEyeColor!,
+                              );
+                            }
+                            if (_partnerEyeColor != null) {
+                              await prefs.setString(
+                                'partner_eye_color',
+                                _partnerEyeColor!,
+                              );
+                            }
+                            if (_yourConditions != null) {
+                              await prefs.setString(
+                                'your_conditions',
+                                _yourConditions!,
+                              );
+                            }
+                            if (_partnerConditions != null) {
+                              await prefs.setString(
+                                'partner_conditions',
+                                _partnerConditions!,
+                              );
+                            }
+                            if (_yourDateIssued != null) {
+                              await prefs.setString(
+                                'your_date_issued',
+                                _yourDateIssued!.toIso8601String(),
+                              );
+                            }
+                            if (_partnerDateIssued != null) {
+                              await prefs.setString(
+                                'partner_date_issued',
+                                _partnerDateIssued!.toIso8601String(),
+                              );
+                            }
+                            if (_yourSignature != null) {
+                              await prefs.setString(
+                                'your_signature',
+                                _yourSignature!,
+                              );
+                            }
+                            if (_partnerSignature != null) {
+                              await prefs.setString(
+                                'partner_signature',
+                                _partnerSignature!,
+                              );
+                            }
+
+                            notifyListeners();
+                          },
+                          onError: (error) {
+                            debugPrint(
+                              'Supabase license_details stream error: $error',
+                            );
+                          },
+                        );
+                  }
+                } else {
                   _coupleSub?.cancel();
                   _licenseSub?.cancel();
-                  _syncLocalDetailsToCloud();
-
-                  _coupleSub = Supabase.instance.client
-                      .from('couples')
-                      .stream(primaryKey: ['id'])
-                      .eq('id', _coupleId!)
-                      .listen(
-                        (coupleDataList) async {
-                          if (coupleDataList.isEmpty) return;
-                          final coupleData = coupleDataList.first;
-
-                          _storyTitle = coupleData['story_title'] as String?;
-                          final startStr = coupleData['start_date'] as String?;
-                          if (startStr != null) {
-                            _startDate = DateTime.parse(startStr);
-                          }
-                          final hour = coupleData['start_time_hour'] as int?;
-                          final minute =
-                              coupleData['start_time_minute'] as int?;
-                          if (hour != null && minute != null) {
-                            _startTime = TimeOfDay(hour: hour, minute: minute);
-                          }
-                          _isPremium =
-                              coupleData['is_premium'] as bool? ?? false;
-
-                          final prefs = await SharedPreferences.getInstance();
-                          if (_storyTitle != null) {
-                            await prefs.setString('story_title', _storyTitle!);
-                          }
-                          if (_startDate != null) {
-                            await prefs.setString(
-                              'relationship_start_date',
-                              _startDate!.toIso8601String(),
-                            );
-                          }
-                          if (_startTime != null) {
-                            await prefs.setInt(
-                              'relationship_start_hour',
-                              _startTime!.hour,
-                            );
-                            await prefs.setInt(
-                              'relationship_start_minute',
-                              _startTime!.minute,
-                            );
-                          }
-                          await prefs.setBool('is_premium', _isPremium);
-
-                          notifyListeners();
-                        },
-                        onError: (error) {
-                          debugPrint('Supabase couples stream error: $error');
-                        },
-                      );
-
-                  _licenseSub = Supabase.instance.client
-                      .from('license_details')
-                      .stream(primaryKey: ['couple_id'])
-                      .eq('couple_id', _coupleId!)
-                      .listen(
-                        (licenseDataList) async {
-                          if (licenseDataList.isEmpty) return;
-                          final lData = licenseDataList.first;
-
-                          final isYouCreator = lData['creator_id'] == _userId;
-
-                          // Capture new values for dirty-checking
-                          final newYourName =
-                              (isYouCreator
-                                      ? lData['your_name']
-                                      : lData['partner_name'])
-                                  as String?;
-                          final newPartnerName =
-                              (isYouCreator
-                                      ? lData['partner_name']
-                                      : lData['your_name'])
-                                  as String?;
-                          final newYourGender =
-                              (isYouCreator
-                                      ? lData['your_gender']
-                                      : lData['partner_gender'])
-                                  as String?;
-                          final newPartnerGender =
-                              (isYouCreator
-                                      ? lData['partner_gender']
-                                      : lData['your_gender'])
-                                  as String?;
-                          final newYourPhone =
-                              (isYouCreator
-                                      ? lData['your_phone']
-                                      : lData['partner_phone'])
-                                  as String?;
-                          final newPartnerPhone =
-                              (isYouCreator
-                                      ? lData['partner_phone']
-                                      : lData['your_phone'])
-                                  as String?;
-
-                          // Validate avatar URLs before accepting them
-                          var newYourAvatarPath =
-                              (isYouCreator
-                                      ? lData['your_avatar_path']
-                                      : lData['partner_avatar_path'])
-                                  as String?;
-                          var newPartnerAvatarPath =
-                              (isYouCreator
-                                      ? lData['partner_avatar_path']
-                                      : lData['your_avatar_path'])
-                                  as String?;
-
-                          // Clear obviously invalid avatar URLs
-                          if (newYourAvatarPath != null &&
-                              newYourAvatarPath.startsWith('http') &&
-                              !_isValidAvatarUrl(newYourAvatarPath)) {
-                            newYourAvatarPath = null;
-                          }
-                          if (newPartnerAvatarPath != null &&
-                              newPartnerAvatarPath.startsWith('http') &&
-                              !_isValidAvatarUrl(newPartnerAvatarPath)) {
-                            newPartnerAvatarPath = null;
-                          }
-
-                          _yourName = newYourName;
-                          _partnerName = newPartnerName;
-                          _yourGender = newYourGender;
-                          _partnerGender = newPartnerGender;
-                          _yourPhone = newYourPhone;
-                          _partnerPhone = newPartnerPhone;
-                          _yourAvatarPath = newYourAvatarPath;
-                          _partnerAvatarPath = newPartnerAvatarPath;
-
-                          final yBirth =
-                              lData[isYouCreator
-                                      ? 'your_birthdate'
-                                      : 'partner_birthdate']
-                                  as String?;
-                          _yourBirthdate = yBirth != null
-                              ? DateTime.parse(yBirth)
-                              : null;
-
-                          final pBirth =
-                              lData[isYouCreator
-                                      ? 'partner_birthdate'
-                                      : 'your_birthdate']
-                                  as String?;
-                          _partnerBirthdate = pBirth != null
-                              ? DateTime.parse(pBirth)
-                              : null;
-
-                          _yourAddress =
-                              (isYouCreator
-                                      ? lData['your_address']
-                                      : lData['partner_address'])
-                                  as String?;
-                          _partnerAddress =
-                              (isYouCreator
-                                      ? lData['partner_address']
-                                      : lData['your_address'])
-                                  as String?;
-
-                          _yourNationality =
-                              (isYouCreator
-                                      ? lData['your_nationality']
-                                      : lData['partner_nationality'])
-                                  as String?;
-                          _partnerNationality =
-                              (isYouCreator
-                                      ? lData['partner_nationality']
-                                      : lData['your_nationality'])
-                                  as String?;
-
-                          _yourWeight =
-                              (isYouCreator
-                                      ? lData['your_weight']
-                                      : lData['partner_weight'])
-                                  as String?;
-                          _partnerWeight =
-                              (isYouCreator
-                                      ? lData['partner_weight']
-                                      : lData['your_weight'])
-                                  as String?;
-
-                          _yourHeight =
-                              (isYouCreator
-                                      ? lData['your_height']
-                                      : lData['partner_height'])
-                                  as String?;
-                          _partnerHeight =
-                              (isYouCreator
-                                      ? lData['partner_height']
-                                      : lData['your_height'])
-                                  as String?;
-
-                          _yourBloodType =
-                              (isYouCreator
-                                      ? lData['your_blood_type']
-                                      : lData['partner_blood_type'])
-                                  as String?;
-                          _partnerBloodType =
-                              (isYouCreator
-                                      ? lData['partner_blood_type']
-                                      : lData['your_blood_type'])
-                                  as String?;
-
-                          _yourEyeColor =
-                              (isYouCreator
-                                      ? lData['your_eye_color']
-                                      : lData['partner_eye_color'])
-                                  as String?;
-                          _partnerEyeColor =
-                              (isYouCreator
-                                      ? lData['partner_eye_color']
-                                      : lData['your_eye_color'])
-                                  as String?;
-
-                          _yourConditions =
-                              (isYouCreator
-                                      ? lData['your_conditions']
-                                      : lData['partner_conditions'])
-                                  as String?;
-                          _partnerConditions =
-                              (isYouCreator
-                                      ? lData['partner_conditions']
-                                      : lData['your_conditions'])
-                                  as String?;
-
-                          final yIssued =
-                              lData[isYouCreator
-                                      ? 'your_date_issued'
-                                      : 'partner_date_issued']
-                                  as String?;
-                          _yourDateIssued = yIssued != null
-                              ? DateTime.parse(yIssued)
-                              : null;
-
-                          final pIssued =
-                              lData[isYouCreator
-                                      ? 'partner_date_issued'
-                                      : 'your_date_issued']
-                                  as String?;
-                          _partnerDateIssued = pIssued != null
-                              ? DateTime.parse(pIssued)
-                              : null;
-
-                          _yourSignature =
-                              (isYouCreator
-                                      ? lData['your_signature']
-                                      : lData['partner_signature'])
-                                  as String?;
-                          _partnerSignature =
-                              (isYouCreator
-                                      ? lData['partner_signature']
-                                      : lData['your_signature'])
-                                  as String?;
-
-                          final prefs = await SharedPreferences.getInstance();
-                          if (_yourName != null) {
-                            await prefs.setString('your_name', _yourName!);
-                          }
-                          if (_partnerName != null) {
-                            await prefs.setString(
-                              'partner_name',
-                              _partnerName!,
-                            );
-                          }
-                          if (_yourGender != null) {
-                            await prefs.setString('your_gender', _yourGender!);
-                          }
-                          if (_partnerGender != null) {
-                            await prefs.setString(
-                              'partner_gender',
-                              _partnerGender!,
-                            );
-                          }
-                          if (_yourPhone != null) {
-                            await prefs.setString('your_phone', _yourPhone!);
-                          }
-                          if (_partnerPhone != null) {
-                            await prefs.setString(
-                              'partner_phone',
-                              _partnerPhone!,
-                            );
-                          }
-                          if (_yourAvatarPath != null) {
-                            await prefs.setString(
-                              'your_avatar_path',
-                              _yourAvatarPath!,
-                            );
-                          }
-                          if (_partnerAvatarPath != null) {
-                            await prefs.setString(
-                              'partner_avatar_path',
-                              _partnerAvatarPath!,
-                            );
-                          }
-                          if (_yourBirthdate != null) {
-                            await prefs.setString(
-                              'your_birthdate',
-                              _yourBirthdate!.toIso8601String(),
-                            );
-                          }
-                          if (_partnerBirthdate != null) {
-                            await prefs.setString(
-                              'partner_birthdate',
-                              _partnerBirthdate!.toIso8601String(),
-                            );
-                          }
-                          if (_yourAddress != null) {
-                            await prefs.setString(
-                              'your_address',
-                              _yourAddress!,
-                            );
-                          }
-                          if (_partnerAddress != null) {
-                            await prefs.setString(
-                              'partner_address',
-                              _partnerAddress!,
-                            );
-                          }
-                          if (_yourNationality != null) {
-                            await prefs.setString(
-                              'your_nationality',
-                              _yourNationality!,
-                            );
-                          }
-                          if (_partnerNationality != null) {
-                            await prefs.setString(
-                              'partner_nationality',
-                              _partnerNationality!,
-                            );
-                          }
-                          if (_yourWeight != null) {
-                            await prefs.setString('your_weight', _yourWeight!);
-                          }
-                          if (_partnerWeight != null) {
-                            await prefs.setString(
-                              'partner_weight',
-                              _partnerWeight!,
-                            );
-                          }
-                          if (_yourHeight != null) {
-                            await prefs.setString('your_height', _yourHeight!);
-                          }
-                          if (_partnerHeight != null) {
-                            await prefs.setString(
-                              'partner_height',
-                              _partnerHeight!,
-                            );
-                          }
-                          if (_yourBloodType != null) {
-                            await prefs.setString(
-                              'your_blood_type',
-                              _yourBloodType!,
-                            );
-                          }
-                          if (_partnerBloodType != null) {
-                            await prefs.setString(
-                              'partner_blood_type',
-                              _partnerBloodType!,
-                            );
-                          }
-                          if (_yourEyeColor != null) {
-                            await prefs.setString(
-                              'your_eye_color',
-                              _yourEyeColor!,
-                            );
-                          }
-                          if (_partnerEyeColor != null) {
-                            await prefs.setString(
-                              'partner_eye_color',
-                              _partnerEyeColor!,
-                            );
-                          }
-                          if (_yourConditions != null) {
-                            await prefs.setString(
-                              'your_conditions',
-                              _yourConditions!,
-                            );
-                          }
-                          if (_partnerConditions != null) {
-                            await prefs.setString(
-                              'partner_conditions',
-                              _partnerConditions!,
-                            );
-                          }
-                          if (_yourDateIssued != null) {
-                            await prefs.setString(
-                              'your_date_issued',
-                              _yourDateIssued!.toIso8601String(),
-                            );
-                          }
-                          if (_partnerDateIssued != null) {
-                            await prefs.setString(
-                              'partner_date_issued',
-                              _partnerDateIssued!.toIso8601String(),
-                            );
-                          }
-                          if (_yourSignature != null) {
-                            await prefs.setString(
-                              'your_signature',
-                              _yourSignature!,
-                            );
-                          }
-                          if (_partnerSignature != null) {
-                            await prefs.setString(
-                              'partner_signature',
-                              _partnerSignature!,
-                            );
-                          }
-
-                          notifyListeners();
-                        },
-                        onError: (error) {
-                          debugPrint(
-                            'Supabase license_details stream error: $error',
-                          );
-                        },
-                      );
                 }
                 _isInitialized = true;
                 notifyListeners();
               },
               onError: (error) {
                 debugPrint('Supabase users stream error: $error');
+                _isInitialized = true;
+                notifyListeners();
               },
             );
       },
@@ -1700,8 +1700,20 @@ class RelationshipProvider with ChangeNotifier {
               final yourUrl = Supabase.instance.client.storage
                   .from('avatars')
                   .getPublicUrl(storagePath);
-              _yourAvatarPath = yourUrl;
-              await prefs.setString('your_avatar_path', yourUrl);
+
+              // Evict old URL from cache before updating state
+              if (_yourAvatarPath != null && _yourAvatarPath!.startsWith('http')) {
+                try {
+                  await CachedNetworkImage.evictFromCache(_yourAvatarPath!);
+                } catch (_) {}
+              }
+
+              // Append timestamp to bust cache for all listening clients
+              final timestampedUrl =
+                  '$yourUrl${yourUrl.contains('?') ? '&' : '?'}t=${DateTime.now().millisecondsSinceEpoch}';
+
+              _yourAvatarPath = timestampedUrl;
+              await prefs.setString('your_avatar_path', timestampedUrl);
             }
           } catch (e) {
             debugPrint('Failed to upload your avatar: $e');
@@ -1735,8 +1747,21 @@ class RelationshipProvider with ChangeNotifier {
               final partnerUrl = Supabase.instance.client.storage
                   .from('avatars')
                   .getPublicUrl(storagePath);
-              _partnerAvatarPath = partnerUrl;
-              await prefs.setString('partner_avatar_path', partnerUrl);
+
+              // Evict old URL from cache before updating state
+              if (_partnerAvatarPath != null &&
+                  _partnerAvatarPath!.startsWith('http')) {
+                try {
+                  await CachedNetworkImage.evictFromCache(_partnerAvatarPath!);
+                } catch (_) {}
+              }
+
+              // Append timestamp to bust cache
+              final timestampedUrl =
+                  '$partnerUrl${partnerUrl.contains('?') ? '&' : '?'}t=${DateTime.now().millisecondsSinceEpoch}';
+
+              _partnerAvatarPath = timestampedUrl;
+              await prefs.setString('partner_avatar_path', timestampedUrl);
             }
           } catch (e) {
             debugPrint('Failed to upload partner avatar: $e');

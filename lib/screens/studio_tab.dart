@@ -40,7 +40,7 @@ class StudioTab extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 '✨ Love Studio Premium',
-                style: TextStyle(
+                style: AppTypography.sectionHeader(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: theme.textColor,
@@ -50,7 +50,7 @@ class StudioTab extends StatelessWidget {
               Text(
                 'Unlock the full magic of AI and digital connection.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 14),
+                style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.6), fontSize: 14),
               ),
               const SizedBox(height: 24),
               _buildFeatureBullet(
@@ -99,16 +99,16 @@ class StudioTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Unlock Premium — \$0.00 (Free Test)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: AppTypography.button(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 'This is a local demo. Toggling is completely free.',
-                style: TextStyle(
+                style: AppTypography.caption(
                   color: theme.textColor.withValues(alpha: 0.3),
                   fontSize: 11,
                 ),
@@ -134,14 +134,14 @@ class StudioTab extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: AppTypography.body(
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
                   ),
                 ),
                 Text(
                   desc,
-                  style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                  style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                 ),
               ],
             ),
@@ -313,9 +313,9 @@ class StudioTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Upgrade Now',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.black87),
               ),
             ),
           ),

@@ -70,7 +70,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                     children: [
                       Text(
                         existingItem == null ? '✨ Add New Adventure' : '📝 Edit Adventure',
-                        style: TextStyle(
+                        style: AppTypography.cardTitle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: theme.textColor,
@@ -86,10 +86,10 @@ class _BucketListScreenState extends State<BucketListScreen> {
                   TextField(
                     controller: _textController,
                     autofocus: true,
-                    style: TextStyle(color: theme.textColor),
+                    style: AppTypography.body(color: theme.textColor),
                     decoration: InputDecoration(
                       hintText: 'e.g. Watch the sunset in Santorini 🌅',
-                      hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+                      hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
                       filled: true,
                       fillColor: theme.textColor.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
@@ -147,7 +147,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                     _selectedDate == null
                                         ? 'Set a Date'
                                         : DateFormat('MMM dd, yyyy').format(_selectedDate!),
-                                    style: TextStyle(
+                                    style: AppTypography.body(
                                       color: _selectedDate == null
                                           ? theme.textColor.withValues(alpha: 0.3)
                                           : theme.textColor,
@@ -212,7 +212,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                                       _selectedTime == null
                                           ? 'Set Time'
                                           : _selectedTime!.format(context),
-                                      style: TextStyle(
+                                      style: AppTypography.body(
                                         color: _selectedTime == null
                                             ? theme.textColor.withValues(alpha: 0.3)
                                             : theme.textColor,
@@ -279,7 +279,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                       ),
                       child: Text(
                         existingItem == null ? 'Add to List' : 'Update Adventure',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
                       ),
                     ),
                   ),
@@ -393,7 +393,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
               children: [
                 Text(
                   '${provider.completedItems} of ${provider.totalItems} adventures completed',
-                  style: TextStyle(
+                  style: AppTypography.body(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -428,7 +428,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
               ),
               Text(
                 '${(provider.progress * 100).toInt()}%',
-                style: TextStyle(
+                style: AppTypography.caption(
                   color: theme.textColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
@@ -501,11 +501,12 @@ class _BucketListScreenState extends State<BucketListScreen> {
           children: [
             Text(
               item.title,
-              style: TextStyle(
+              style: AppTypography.body(
                 color: item.isCompleted ? theme.textColor.withValues(alpha: 0.54) : theme.textColor,
-                decoration: item.isCompleted ? TextDecoration.lineThrough : null,
                 fontSize: 16,
                 fontWeight: item.isCompleted ? FontWeight.normal : FontWeight.w500,
+              ).copyWith(
+                decoration: item.isCompleted ? TextDecoration.lineThrough : null,
               ),
             ),
             if (item.scheduledAt != null)
@@ -517,7 +518,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '${DateFormat('MMM dd, yyyy').format(item.scheduledAt!)}${item.scheduledAt!.hour != 0 || item.scheduledAt!.minute != 0 ? ' at ${DateFormat.jm().format(item.scheduledAt!)}' : ''}',
-                      style: TextStyle(
+                      style: AppTypography.caption(
                         fontSize: 11,
                         color: theme.accentColor.withValues(alpha: 0.7),
                       ),
@@ -541,22 +542,22 @@ class _BucketListScreenState extends State<BucketListScreen> {
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: theme.primaryColor,
-                    title: Text('Delete Adventure?', style: TextStyle(color: theme.textColor)),
+                    title: Text('Delete Adventure?', style: AppTypography.cardTitle(color: theme.textColor)),
                     content: Text(
                       'Are you sure you want to remove this dream from your bucket list?',
-                      style: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
+                      style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7))),
+                        child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
                       ),
                       TextButton(
                         onPressed: () {
                           provider.deleteItem(item.id);
                           Navigator.pop(context);
                         },
-                        child: Text('Delete', style: TextStyle(color: theme.accentColor)),
+                        child: Text('Delete', style: AppTypography.button(color: theme.accentColor)),
                       ),
                     ],
                   ),
@@ -592,7 +593,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
             const SizedBox(height: 24),
             Text(
               'Dream big.',
-              style: TextStyle(
+              style: AppTypography.pageTitle(
                 color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -602,7 +603,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
             Text(
               'Add your first adventure together.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppTypography.spectral(
                 color: theme.textColor.withValues(alpha: 0.5),
                 fontSize: 15,
                 fontStyle: FontStyle.italic,

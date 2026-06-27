@@ -115,7 +115,7 @@ class RecentActivityFeed extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Recent Activities',
-                    style: AppTypography.caption(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor),
+                    style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor),
                   ),
                 ],
               ),
@@ -195,7 +195,7 @@ class RecentActivityFeed extends StatelessWidget {
                               child: Center(
                                 child: Text(
                                   log.initials,
-                                  style: AppTypography.caption(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
                             ),
@@ -211,7 +211,7 @@ class RecentActivityFeed extends StatelessWidget {
                                     children: [
                                       Text(
                                         log.title,
-                                        style: AppTypography.caption(fontSize: 13, fontWeight: FontWeight.w700, color: theme.textColor),
+                                        style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w700, color: theme.textColor),
                                       ),
                                       Text(
                                         _formatRelativeTime(log.timestamp),
@@ -222,7 +222,7 @@ class RecentActivityFeed extends StatelessWidget {
                                   const SizedBox(height: 2),
                                   Text(
                                     log.subtitle,
-                                    style: AppTypography.caption(fontSize: 11, color: theme.textColor.withValues(alpha: 0.54)),
+                                    style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.54)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),

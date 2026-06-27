@@ -462,12 +462,13 @@ class _NoteitScreenState extends State<NoteitScreen>
               maxLength: 120,
               decoration: InputDecoration(
                 hintText: 'Dear love, hope you have a beautiful day! ❤️',
-                hintStyle: TextStyle(
+                hintStyle: AppTypography.lora(
                   color: Colors.white.withValues(alpha: 0.4),
                   fontStyle: FontStyle.italic,
+                  fontSize: 16,
                 ),
                 border: InputBorder.none,
-                counterStyle: const TextStyle(
+                counterStyle: AppTypography.caption(
                   color: Colors.white60,
                   fontSize: 10,
                 ),
@@ -797,11 +798,11 @@ class _NoteitScreenState extends State<NoteitScreen>
                     child: const Text('Cancel'),
                     onPressed: () => Navigator.pop(ctx),
                   ),
-                  TextButton(
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(color: Colors.redAccent),
-                    ),
+                      TextButton(
+                        child: Text(
+                          'Delete',
+                          style: AppTypography.button(color: Colors.redAccent),
+                        ),
                     onPressed: () {
                       Navigator.pop(ctx);
                       provider.deleteNote(item.id);

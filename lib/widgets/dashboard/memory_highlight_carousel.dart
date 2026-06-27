@@ -205,7 +205,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                           color: Colors.black38,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(item.mood, style: const TextStyle(fontSize: 14)),
+                        child: Text(item.mood, style: AppTypography.body(fontSize: 14)),
                       ),
                       const SizedBox(width: 8),
                       if (item.location != null && item.location!.isNotEmpty) ...[
@@ -225,7 +225,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                   const SizedBox(height: 8),
                   Text(
                     item.title,
-                    style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -257,7 +257,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
               Expanded(
                 child: Text(
                   item.title,
-                  style: AppTypography.caption(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textColor),
+                  style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textColor),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -269,7 +269,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                   color: Colors.white10,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(item.mood, style: const TextStyle(fontSize: 14)),
+                child: Text(item.mood, style: AppTypography.body(fontSize: 14)),
               ),
             ],
           ),

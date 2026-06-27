@@ -365,7 +365,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: 'Say something loving...',
-                  hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3), fontSize: 14),
+                  hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 14),
                   border: InputBorder.none,
                 ),
                 onSubmitted: (_) => _sendMessage(provider, yourName),

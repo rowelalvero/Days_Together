@@ -179,9 +179,9 @@ class _CommentsSidebarState extends State<CommentsSidebar> {
                                 controller: _commentController,
                                 style: AppTypography.body(color: theme.textColor, fontSize: 14),
                                 textCapitalization: TextCapitalization.sentences,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: 'Write a cute reply...',
-                                  hintStyle: TextStyle(color: Colors.white30, fontSize: 14),
+                                  hintStyle: AppTypography.body(color: Colors.white30, fontSize: 14),
                                   border: InputBorder.none,
                                 ),
                                 onSubmitted: (_) => _submitComment(tp, yourName),

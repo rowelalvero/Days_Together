@@ -328,7 +328,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
                   shape: BoxShape.circle,
                   border: Border.all(color: isSelected ? theme.textColor : Colors.transparent, width: 2),
                 ),
-                child: Text(m, style: const TextStyle(fontSize: 24)),
+                child: Text(m, style: AppTypography.body(fontSize: 24)),
               ),
             );
           }).toList(),
@@ -353,7 +353,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.24)),
+              hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.24)),
               border: InputBorder.none,
             ),
           ),

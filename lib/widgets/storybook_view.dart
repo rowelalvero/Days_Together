@@ -154,7 +154,7 @@ class _StorybookViewState extends State<StorybookView> {
                                 blur: 5,
                                 child: Text(
                                   item.mood,
-                                  style: const TextStyle(fontSize: 22),
+                                  style: AppTypography.body(fontSize: 22),
                                 ),
                               ),
                               Column(

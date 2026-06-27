@@ -93,23 +93,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Date: ${DateFormat('MMMM dd, yyyy').format(eventDate)}',
-                    style: TextStyle(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14),
+                    style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _titleController,
-                    style: TextStyle(color: theme.textColor),
+                    style: AppTypography.body(color: theme.textColor),
                     decoration: _inputDecoration('Event Title (e.g. First Date)', theme.accentColor, theme),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _descController,
                     maxLines: 2,
-                    style: TextStyle(color: theme.textColor),
+                    style: AppTypography.body(color: theme.textColor),
                     decoration: _inputDecoration('Description (optional)', theme.accentColor, theme),
                   ),
                   const SizedBox(height: 16),
-                  Text('Event Type', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14)),
+                  Text('Event Type', style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14)),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 45,
@@ -126,7 +126,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           onSelected: (val) => setModalState(() => _selectedType = type),
                           selectedColor: theme.accentColor,
                           backgroundColor: theme.textColor.withValues(alpha: 0.05),
-                          labelStyle: TextStyle(
+                          labelStyle: AppTypography.button(
                             color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.7),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
@@ -169,7 +169,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         children: [
                           Text(
                             _selectedTime == null ? 'Set Time (Optional)' : _selectedTime!.format(context),
-                            style: TextStyle(
+                            style: AppTypography.body(
                               color: _selectedTime == null ? theme.textColor.withValues(alpha: 0.3) : theme.textColor,
                             ),
                           ),
@@ -229,7 +229,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ),
                           child: Text(
                             existingEvent == null ? 'Add Event' : 'Save Changes',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
                           ),
                         ),
                       ),
@@ -247,7 +247,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   InputDecoration _inputDecoration(String hint, Color accent, LoveStoryTheme theme) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+      hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
       filled: true,
       fillColor: theme.textColor.withValues(alpha: 0.05),
       border: OutlineInputBorder(
@@ -367,7 +367,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekDays.map((d) => Text(d, style: TextStyle(color: theme.textColor.withValues(alpha: 0.38), fontSize: 12, fontWeight: FontWeight.bold))).toList(),
+            children: weekDays.map((d) => Text(d, style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.38), fontSize: 12, fontWeight: FontWeight.bold))).toList(),
           ),
           const SizedBox(height: 12),
           GridView.builder(
@@ -414,7 +414,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     children: [
                       Text(
                         '$dayNum',
-                        style: TextStyle(
+                        style: AppTypography.body(
                           color: isSelected ? Colors.white : (isToday ? theme.accentColor : theme.textColor.withValues(alpha: 0.7)),
                           fontWeight: (isSelected || isToday) ? FontWeight.bold : FontWeight.normal,
                         ),
@@ -473,7 +473,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           Text(
             DateFormat('MMMM dd, yyyy').format(_selectedDay),
-            style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
+            style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 12),
           if (!hasAny)
@@ -481,7 +481,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Center(
                 child: Text(
                   'No events for this day.',
-                  style: TextStyle(color: theme.textColor.withValues(alpha: 0.3), fontStyle: FontStyle.italic),
+                  style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)).copyWith(fontStyle: FontStyle.italic),
                 ),
               ),
             )
@@ -556,7 +556,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(emoji, style: const TextStyle(fontSize: 18)),
+                child: Text(emoji, style: AppTypography.body(fontSize: 18)),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -565,13 +565,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold),
+                      style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold),
                     ),
                     Row(
                       children: [
                         Text(
                           subtitle,
-                          style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                          style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                         ),
                         const SizedBox(width: 4),
                         Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.5)),
@@ -606,7 +606,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               color: theme.textColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text('💑', style: TextStyle(fontSize: 18)),
+            child: Text('💑', style: AppTypography.body(fontSize: 18)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -615,11 +615,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   years == 0 ? 'The Day We Met' : '$years Year Anniversary',
-                  style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold),
+                  style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'A very special day in our story.',
-                  style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                  style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                 ),
               ],
             ),
@@ -648,7 +648,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 color: _getEventColor(event.type, theme).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(_getEventEmoji(event.type), style: const TextStyle(fontSize: 18)),
+              child: Text(_getEventEmoji(event.type), style: AppTypography.body(fontSize: 18)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -657,12 +657,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 children: [
                   Text(
                     event.title,
-                    style: TextStyle(color: theme.textColor, fontWeight: FontWeight.bold),
+                    style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold),
                   ),
                   if (event.description?.isNotEmpty ?? false)
                     Text(
                       event.description!,
-                      style: TextStyle(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                      style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -672,7 +672,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             if (event.time != null)
               Text(
                 event.time!.format(context),
-                style: TextStyle(color: theme.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
+                style: AppTypography.caption(color: theme.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
               ),
           ],
         ),

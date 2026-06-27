@@ -58,7 +58,9 @@ class _AuthScreenState extends State<AuthScreen> {
           _passwordController.text.trim(),
         );
         if (mounted) {
-          Navigator.pop(context);
+          // Instead of a single pop, we ensure we return to the root 
+          // where MaterialApp.home will decide the next screen based on state.
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       }
     } catch (e) {
@@ -84,7 +86,7 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       await provider.signInWithGoogle();
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (e.toString() != 'Sign in aborted by user' && mounted) {
@@ -185,7 +187,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                       alignment: Alignment.center,
                                       child: Text(
                                         'Log In',
-                                        style: TextStyle(
+                                        style: AppTypography.button(
                                           color: !_isSignUp ? Colors.white : theme.textColor.withValues(alpha: 0.6),
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -207,7 +209,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                       alignment: Alignment.center,
                                       child: Text(
                                         'Sign Up',
-                                        style: TextStyle(
+                                        style: AppTypography.button(
                                           color: _isSignUp ? Colors.white : theme.textColor.withValues(alpha: 0.6),
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -223,7 +225,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(color: theme.textColor),
+                            style: AppTypography.body(color: theme.textColor),
                             decoration: _buildInputDecoration(
                               label: 'Email Address',
                               icon: Icons.mail_outline_rounded,
@@ -244,7 +246,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            style: TextStyle(color: theme.textColor),
+                            style: AppTypography.body(color: theme.textColor),
                             decoration: _buildInputDecoration(
                               label: 'Password',
                               icon: Icons.lock_outline_rounded,
@@ -279,7 +281,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
-                              style: TextStyle(color: theme.textColor),
+                              style: AppTypography.body(color: theme.textColor),
                               decoration: _buildInputDecoration(
                                 label: 'Confirm Password',
                                 icon: Icons.lock_outline_rounded,
@@ -336,10 +338,10 @@ class _AuthScreenState extends State<AuthScreen> {
                                     )
                                   : Text(
                                       _isSignUp ? 'Join the Story' : 'Enter Our World',
-                                      style: const TextStyle(
+                                      style: AppTypography.button(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.1,
+                                        color: Colors.white,
                                       ),
                                     ),
                             ),
@@ -357,12 +359,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
                                   'OR',
-                                  style: TextStyle(
+                                  style: AppTypography.caption(
                                     color: theme.textColor.withValues(alpha: 0.3),
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.1,
-                                  ),
+                                  ).copyWith(letterSpacing: 1.1),
                                 ),
                               ),
                               Expanded(
@@ -397,21 +398,22 @@ class _AuthScreenState extends State<AuthScreen> {
                                     width: 24,
                                     height: 24,
                                     errorBuilder: (context, error, stackTrace) =>
-                                        const Text(
+                                        Text(
                                       'G',
-                                      style: TextStyle(
+                                      style: AppTypography.button(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 20,
+                                        color: theme.textColor,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  const Text(
+                                  Text(
                                     'Continue with Google',
-                                    style: TextStyle(
+                                    style: AppTypography.button(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.1,
+                                      color: theme.textColor,
                                     ),
                                   ),
                                 ],
@@ -440,7 +442,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.4)),
+      labelStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4)),
       prefixIcon: Icon(icon, color: theme.textColor.withValues(alpha: 0.4)),
       suffixIcon: suffixIcon,
       filled: true,
@@ -457,7 +459,7 @@ class _AuthScreenState extends State<AuthScreen> {
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide(color: theme.accentColor, width: 1.5),
       ),
-      errorStyle: const TextStyle(color: Colors.redAccent),
+      errorStyle: AppTypography.caption(color: Colors.redAccent),
     );
   }
 }

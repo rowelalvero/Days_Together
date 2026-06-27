@@ -100,10 +100,10 @@ class MyApp extends StatelessWidget {
 
   /// Safely load a Google Fonts text theme; falls back to default if font name
   /// is not available.
-  TextTheme _resolveTextTheme(String fontName, Brightness brightness) {
+  TextTheme _resolveTextTheme(Brightness brightness) {
     final baseTheme = ThemeData(brightness: brightness).textTheme;
     try {
-      return GoogleFonts.getTextTheme(fontName, baseTheme);
+      return GoogleFonts.spectralTextTheme(baseTheme);
     } catch (_) {
       return GoogleFonts.interTextTheme(baseTheme);
     }
@@ -116,13 +116,13 @@ class MyApp extends StatelessWidget {
     final theme = themeProvider.currentLoveTheme;
 
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
-    final fontName = themeProvider.settings.customFont;
 
     return MaterialApp(
       title: 'Our Love Story',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: _resolveTextTheme(fontName, brightness),
+        fontFamily: 'Spectral',
+        textTheme: _resolveTextTheme(brightness),
         useMaterial3: true,
         brightness: brightness,
         scaffoldBackgroundColor: theme.backgroundColor,
@@ -132,13 +132,26 @@ class MyApp extends StatelessWidget {
         ),
         cardColor: theme.cardColor,
       ),
-      home: !relationshipProvider.isInitialized
-          ? const LoadingScreen()
-          : (relationshipProvider.userId != null
-              ? (relationshipProvider.isPaired
-                  ? const LoveStoryScreen()
-                  : const PairingSelectionScreen())
-              : const WelcomeScreen()),
+      home: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        child: _buildHome(relationshipProvider),
+      ),
     );
+  }
+
+  Widget _buildHome(RelationshipProvider rp) {
+    if (!rp.isInitialized) {
+      return const LoadingScreen(key: ValueKey('loading'));
+    }
+
+    if (rp.userId == null) {
+      return const WelcomeScreen(key: ValueKey('welcome'));
+    }
+
+    if (rp.isPaired) {
+      return const LoveStoryScreen(key: ValueKey('home'));
+    }
+
+    return const PairingSelectionScreen(key: ValueKey('pairing'));
   }
 }

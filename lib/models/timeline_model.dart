@@ -179,7 +179,6 @@ class AppSettings {
   int customSecondaryColor;
   int customBackgroundColor;
   int customAccentColor;
-  String customFont;
   bool customIsDark;
 
   AppSettings({
@@ -193,7 +192,6 @@ class AppSettings {
     this.customSecondaryColor = 0xFFC44569,
     this.customBackgroundColor = 0xFF2C003E,
     this.customAccentColor = 0xFFFFB5C5,
-    this.customFont = 'Inter',
     this.customIsDark = true,
   });
 
@@ -209,7 +207,6 @@ class AppSettings {
     int? customSecondaryColor,
     int? customBackgroundColor,
     int? customAccentColor,
-    String? customFont,
     bool? customIsDark,
   }) {
     return AppSettings(
@@ -228,7 +225,6 @@ class AppSettings {
       customSecondaryColor: customSecondaryColor ?? this.customSecondaryColor,
       customBackgroundColor: customBackgroundColor ?? this.customBackgroundColor,
       customAccentColor: customAccentColor ?? this.customAccentColor,
-      customFont: customFont ?? this.customFont,
       customIsDark: customIsDark ?? this.customIsDark,
     );
   }
@@ -244,7 +240,6 @@ class AppSettings {
     'customSecondaryColor': customSecondaryColor,
     'customBackgroundColor': customBackgroundColor,
     'customAccentColor': customAccentColor,
-    'customFont': customFont,
     'customIsDark': customIsDark,
   };
 
@@ -266,7 +261,6 @@ class AppSettings {
       customSecondaryColor: json['customSecondaryColor'] as int? ?? 0xFFC44569,
       customBackgroundColor: json['customBackgroundColor'] as int? ?? 0xFF2C003E,
       customAccentColor: json['customAccentColor'] as int? ?? 0xFFFFB5C5,
-      customFont: json['customFont'] as String? ?? 'Inter',
       customIsDark: json['customIsDark'] as bool? ?? true,
     );
   }

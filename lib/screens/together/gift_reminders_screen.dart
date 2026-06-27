@@ -62,7 +62,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       children: [
                         Text(
                           existingReminder == null ? '🎁 New Gift Reminder' : '🎁 Edit Gift Reminder',
-                          style: TextStyle(
+                          style: AppTypography.cardTitle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: theme.textColor,
@@ -77,10 +77,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _titleController,
-                      style: TextStyle(color: theme.textColor),
+                      style: AppTypography.body(color: theme.textColor),
                       decoration: InputDecoration(
                         hintText: 'e.g. Partner\'s Birthday, Valentine\'s Day',
-                        hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.3)),
+                        hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
                         filled: true,
                         fillColor: theme.textColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
@@ -140,7 +140,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                       _selectedDate == null
                                           ? 'Select Date'
                                           : DateFormat('MMM dd, yyyy').format(_selectedDate!),
-                                      style: TextStyle(
+                                      style: AppTypography.body(
                                         color: _selectedDate == null
                                             ? theme.textColor.withValues(alpha: 0.4)
                                             : theme.textColor,
@@ -195,7 +195,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                       _selectedTime == null
                                           ? 'Set Time'
                                           : _selectedTime!.format(context),
-                                      style: TextStyle(
+                                      style: AppTypography.body(
                                         color: _selectedTime == null
                                             ? theme.textColor.withValues(alpha: 0.4)
                                             : theme.textColor,
@@ -257,7 +257,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                         ),
                         child: Text(
                           existingReminder == null ? 'Add Reminder' : 'Update Reminder',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
                         ),
                       ),
                     ),
@@ -396,7 +396,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                   ),
                   child: Text(
                     '🎁',
-                    style: TextStyle(
+                    style: AppTypography.body(
                       fontSize: 20,
                       color: reminder.isEnabled ? Colors.white : theme.textColor.withValues(alpha: 0.24),
                     ),
@@ -409,17 +409,18 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     children: [
                       Text(
                         reminder.title,
-                        style: TextStyle(
+                        style: AppTypography.body(
                           color: reminder.isEnabled ? theme.textColor : theme.textColor.withValues(alpha: 0.38),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                        ).copyWith(
                           decoration: reminder.isEnabled ? null : TextDecoration.lineThrough,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$dateStr${reminder.date.hour != 0 || reminder.date.minute != 0 ? ' at ${DateFormat.jm().format(reminder.date)}' : ''} (Next: ${DateFormat('MMMM dd, yyyy').format(reminder.nextOccurrence)})',
-                        style: TextStyle(
+                        style: AppTypography.caption(
                           color: reminder.isEnabled ? theme.textColor.withValues(alpha: 0.6) : theme.textColor.withValues(alpha: 0.24),
                           fontSize: 12,
                         ),
@@ -452,7 +453,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                   ),
                   child: Text(
                     countdownStr,
-                    style: TextStyle(
+                    style: AppTypography.caption(
                       color: reminder.isEnabled
                           ? (daysLeft <= 14 ? Colors.redAccent : theme.accentColor)
                           : theme.textColor.withValues(alpha: 0.3),
@@ -474,22 +475,22 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: theme.primaryColor,
-                            title: Text('Delete Reminder?', style: TextStyle(color: theme.textColor)),
+                            title: Text('Delete Reminder?', style: AppTypography.cardTitle(color: theme.textColor)),
                             content: Text(
                               'Are you sure you want to delete this reminder?',
-                              style: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
+                              style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: Text('Cancel', style: TextStyle(color: theme.textColor.withValues(alpha: 0.7))),
+                                child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
                               ),
                               TextButton(
                                 onPressed: () {
                                   provider.deleteReminder(reminder.id);
                                   Navigator.pop(context);
                                 },
-                                child: Text('Delete', style: TextStyle(color: theme.accentColor)),
+                                child: Text('Delete', style: AppTypography.button(color: theme.accentColor)),
                               ),
                             ],
                           ),
@@ -528,7 +529,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
             const SizedBox(height: 24),
             Text(
               'Never forget a date.',
-              style: TextStyle(
+              style: AppTypography.pageTitle(
                 color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -538,7 +539,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
             Text(
               'Add birthdays, anniversaries, or special surprise counters.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppTypography.spectral(
                 color: theme.textColor.withValues(alpha: 0.5),
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
