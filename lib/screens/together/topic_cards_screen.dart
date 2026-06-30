@@ -189,7 +189,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Add Custom Card',
+                            'Create Custom Card',
                             style: AppTypography.sectionHeader(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -254,7 +254,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'YOUR QUESTION / TOPIC PROMPT',
+                        'YOUR CONVERSATION PROMPT',
                         style: AppTypography.caption(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -268,13 +268,13 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         style: AppTypography.body(color: theme.textColor),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please write a prompt!';
+                            return 'Please share a question or prompt.';
                           }
                           return null;
                         },
                         decoration: InputDecoration(
                           hintText:
-                              'e.g., What is a dream you have that you are too scared to pursue?',
+                              'e.g., What is a dream you\'ve always wanted to share with me?',
                           hintStyle: AppTypography.body(
                             color: theme.textColor.withValues(alpha: 0.4),
                           ),
@@ -316,7 +316,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    'Custom topic added successfully! 🃏',
+                                    'Custom prompt added to your deck! 🃏',
                                   ),
                                   backgroundColor: Colors.green,
                                 ),
@@ -561,7 +561,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            isFav ? 'No Favorited Topics' : 'No custom topics yet',
+            isFav ? 'No Favorited Topics' : 'No custom prompts yet',
             style: AppTypography.sectionHeader(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -572,8 +572,8 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
           const SizedBox(height: 12),
           Text(
             isFav
-                ? 'Tap the heart icon on any card back to save deep prompts for later discussion!'
-                : 'Fill this category with custom prompts tailored to your relationship!',
+                ? 'Tap the heart icon on any card to save meaningful prompts for later!'
+                : 'Add your own custom prompts to personalize your deck!',
             style: AppTypography.body(
               fontSize: 14,
               color: theme.textColor.withValues(alpha: 0.6),
@@ -586,7 +586,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
             ElevatedButton.icon(
               onPressed: () => _showAddCardDialog(context, theme, provider),
               icon: const Icon(Icons.add),
-              label: const Text('Add Custom Topic'),
+              label: const Text('Create Custom Card'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,

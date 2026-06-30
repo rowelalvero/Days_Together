@@ -131,7 +131,7 @@ class _NoteitScreenState extends State<NoteitScreen>
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          'Doodle Notes',
+          'Doodles & Notes',
           style: AppTypography.cormorant(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -541,14 +541,14 @@ class _NoteitScreenState extends State<NoteitScreen>
                 _tabController.animateTo(3); // Switch to History tab
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Note sent to partner! 🚀'),
+                    content: Text('Note shared with your partner! 🚀'),
                     backgroundColor: Colors.green,
                   ),
                 );
               },
               icon: const Icon(Icons.send_rounded),
               label: Text(
-                'Send Note to Partner',
+                'Send Note',
                 style: AppTypography.bodyLarge(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -576,7 +576,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Upload a Photo',
+            'Share a Photo',
             style: AppTypography.sectionHeader(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -610,7 +610,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Select a photo to send directly\nto your partner\'s screen.',
+                              'Select a photo to share directly\nto your partner\'s screen.',
                               textAlign: TextAlign.center,
                               style: AppTypography.body(
                                 fontSize: 13,
@@ -715,14 +715,14 @@ class _NoteitScreenState extends State<NoteitScreen>
                   _tabController.animateTo(3); // Switch to History tab
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Photo sent to partner! 📸🚀'),
+                      content: Text('Photo shared with your partner! 📸🚀'),
                       backgroundColor: Colors.green,
                     ),
                   );
                 },
                 icon: const Icon(Icons.send_rounded),
                 label: Text(
-                  'Send Photo to Partner',
+                  'Send Photo',
                   style: AppTypography.bodyLarge(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,

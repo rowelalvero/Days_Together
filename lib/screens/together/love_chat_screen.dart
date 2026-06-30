@@ -364,7 +364,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                 style: AppTypography.body(color: theme.textColor, fontSize: 14),
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: 'Say something loving...',
+                  hintText: 'Write something sweet...',
                   hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 14),
                   border: InputBorder.none,
                 ),
@@ -429,12 +429,12 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No chat messages yet.',
+            'No messages here yet',
             style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(
-            'Send a message to start chatting!',
+            'Send a sweet note to start the conversation!',
             style: AppTypography.bodyMedium(color: theme.accentColor.withValues(alpha: 0.4), fontSize: 12),
           ),
         ],

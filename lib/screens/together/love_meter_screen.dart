@@ -108,7 +108,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Love Meter',
+                'Love Harmony',
                 style: AppTypography.cormorant(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -116,7 +116,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 ),
               ),
               Text(
-                'Sync your hearts and track your moods.',
+                'Connect your hearts and share your daily moods.',
                 style: AppTypography.spectral(
                   fontSize: 12,
                   color: theme.textColor.withValues(alpha: 0.7),
@@ -212,7 +212,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
             style: AppTypography.body(color: theme.textColor),
             maxLines: 2,
             decoration: InputDecoration(
-              hintText: 'Add a small note about your day... (optional)',
+              hintText: 'Add a little detail about your day... (optional)',
               hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
               filled: true,
               fillColor: theme.textColor.withValues(alpha: 0.05),
@@ -250,7 +250,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 ),
               ),
               child: Text(
-                'Log Today\'s Mood',
+                'Save Today\'s Mood',
                 style: AppTypography.button(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
               ),
             ),
@@ -381,7 +381,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                'Daily Sync Question',
+                'Daily Connection Prompt',
                 style: AppTypography.body(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -406,7 +406,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               style: AppTypography.body(color: theme.textColor),
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: 'Type your answer here...',
+                hintText: 'Write your response here...',
                 hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
                 filled: true,
                 fillColor: theme.textColor.withValues(alpha: 0.05),
@@ -438,7 +438,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Text('Submit Answer', style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text('Share Response', style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
           ] else ...[
@@ -557,7 +557,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Mood sync history over the last 30 days',
+            'Your shared mood trends over the last 30 days',
             style: AppTypography.caption(
               fontSize: 12,
               color: theme.textColor.withValues(alpha: 0.6),
@@ -574,7 +574,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                'Log your mood for a few days to see your emotional map 📈',
+                'Log your mood for a few days to visualize your emotional connection 📈',
                 textAlign: TextAlign.center,
                 style: AppTypography.body(
                   color: theme.textColor.withValues(alpha: 0.38),

@@ -67,7 +67,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
               Icon(Icons.lock_outline_rounded, color: widget.theme.textColor, size: 48),
               const SizedBox(height: 20),
               Text(
-                'Set your Vault PIN',
+                'Create Your Secret PIN',
                 style: AppTypography.cormorant(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -76,7 +76,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'This keeps your private memories safe.',
+                'Keep your private memories, letters, and photos secure.',
                 style: AppTypography.body(color: widget.theme.textColor.withValues(alpha: 0.6)),
               ),
               const SizedBox(height: 40),
@@ -141,7 +141,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
               Icon(Icons.lock_outline_rounded, color: widget.theme.textColor, size: 48),
               const SizedBox(height: 20),
               Text(
-                'Enter your PIN.',
+                'Enter your Secret PIN',
                 style: AppTypography.cormorant(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -150,7 +150,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _error ? '❌ Wrong PIN. Try again.' : 'This keeps your private memories safe.',
+                _error ? '❌ Incorrect PIN. Please try again.' : 'This keeps your private memories safe.',
                 style: AppTypography.body(
                   color: _error ? Colors.redAccent : widget.theme.textColor.withValues(alpha: 0.6),
                 ),
@@ -531,7 +531,6 @@ class _DecoyWeatherScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () {
-                      onReset();
                       Navigator.pop(context);
                     },
                     icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -539,7 +538,13 @@ class _DecoyWeatherScreen extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              const Icon(Icons.wb_sunny_rounded, size: 80, color: Colors.yellow),
+              GestureDetector(
+                onLongPress: () {
+                  onReset();
+                  Navigator.pop(context);
+                },
+                child: const Icon(Icons.wb_sunny_rounded, size: 80, color: Colors.yellow),
+              ),
               const SizedBox(height: 20),
               Text(
                 '28°C',
