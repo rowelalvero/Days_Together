@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/daily_mood_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
@@ -149,11 +150,10 @@ class DailyMoodProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _moodsSub = Supabase.instance.client
-        .from('moods')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
+    _moodsSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'moods',
+      coupleId: _coupleId!,
+      onData: (dataList) {
       final allMoods = dataList.map((data) {
         return DailyMood(
           id: data['id'] as String,
@@ -171,11 +171,13 @@ class DailyMoodProvider with ChangeNotifier {
       _isLoading = false;
       if (!_disposed) notifyListeners();
       _persistLocalMoodsOnly();
-    }, onError: (err) {
-      debugPrint('DailyMoodProvider: moods Supabase error: $err');
-      _loadLocalMoods();
-      _loadLocalPartnerMoods();
-    });
+      },
+      onError: (err) {
+        debugPrint('DailyMoodProvider: moods Supabase error: $err');
+        _loadLocalMoods();
+        _loadLocalPartnerMoods();
+      },
+    );
 
     _questionSub = Supabase.instance.client
         .from('daily_questions')

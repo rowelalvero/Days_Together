@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/time_capsule_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
@@ -50,30 +51,31 @@ class TimeCapsuleProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('time_capsules')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
-      _capsules = dataList.map((data) {
-        return TimeCapsule(
-          id: data['id'] as String,
-          message: data['message'] ?? '',
-          openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String) : DateTime.now(),
-          isOpened: data['is_opened'] ?? false,
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-        );
-      }).toList();
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'time_capsules',
+      coupleId: _coupleId!,
+      onData: (dataList) {
+        _capsules = dataList.map((data) {
+          return TimeCapsule(
+            id: data['id'] as String,
+            message: data['message'] ?? '',
+            openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String) : DateTime.now(),
+            isOpened: data['is_opened'] ?? false,
+            createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+          );
+        }).toList();
 
-      _capsules.sort((a, b) => a.openDate.compareTo(b.openDate));
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
+        _capsules.sort((a, b) => a.openDate.compareTo(b.openDate));
+        _isLoading = false;
+        if (!_disposed) notifyListeners();
 
-      _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('TimeCapsuleProvider: Supabase sync error: $err');
-      _loadCapsules();
-    });
+        _persistLocalOnly();
+      },
+      onError: (err) {
+        debugPrint('TimeCapsuleProvider: Supabase sync error: $err');
+        _loadCapsules();
+      },
+    );
   }
 
   Future<void> _loadCapsules() async {

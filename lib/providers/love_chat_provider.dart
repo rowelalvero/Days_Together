@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
@@ -18,7 +19,7 @@ class LoveChatProvider with ChangeNotifier {
   String? _userId;
   StreamSubscription? _syncSub;
 
-  List<LoveChatMessage> get messages => List.unmodifiable(_messages);
+  List<LoveChatMessage> get messages => _coupleId == null ? const [] : List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
 
   LoveChatProvider() {
@@ -46,11 +47,10 @@ class LoveChatProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('love_notes')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'love_notes',
+      coupleId: _coupleId!,
+      onData: (dataList) {
       _messages = dataList
           .where((data) => data['type'] == 'chat')
           .map((data) {
@@ -70,10 +70,12 @@ class LoveChatProvider with ChangeNotifier {
       _isLoading = false;
       if (!_disposed) notifyListeners();
       _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('LoveChatProvider: Supabase stream error: $err');
-      _loadMessages();
-    });
+      },
+      onError: (err) {
+        debugPrint('LoveChatProvider: Supabase stream error: $err');
+        _loadMessages();
+      },
+    );
   }
 
   Future<void> _loadMessages() async {

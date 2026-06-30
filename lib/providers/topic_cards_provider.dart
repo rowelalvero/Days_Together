@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/topic_card_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -10,10 +11,12 @@ import 'package:days_together/providers/relationship_provider.dart';
 class TopicCardsProvider with ChangeNotifier {
   static const String _customCardsKey = 'topic_cards_custom';
   static const String _likedCardIdsKey = 'topic_cards_liked_ids';
+  static const String _pendingLikesKey = 'topic_cards_pending_likes';
 
   List<TopicCard> _defaultCards = [];
   List<TopicCard> _customCards = [];
   Set<String> _likedCardIds = {};
+  Map<String, bool> _pendingLikes = {};
 
   String _activeCategory = 'All';
   int _currentIndex = 0;
@@ -23,7 +26,9 @@ class TopicCardsProvider with ChangeNotifier {
 
   String? _coupleId;
   String? _userId;
-  StreamSubscription? _syncSub;
+  StreamSubscription? _syncCardsSub;
+  StreamSubscription? _syncLikesSub;
+  bool _isSyncingLikes = false;
 
   List<TopicCard> get allCards {
     final List<TopicCard> combined = [];
@@ -51,8 +56,10 @@ class TopicCardsProvider with ChangeNotifier {
       _coupleId = relationship.coupleId;
       _userId = relationship.userId;
 
-      _syncSub?.cancel();
-      _syncSub = null;
+      _syncCardsSub?.cancel();
+      _syncCardsSub = null;
+      _syncLikesSub?.cancel();
+      _syncLikesSub = null;
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
@@ -67,22 +74,16 @@ class TopicCardsProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('topic_cards')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
+    // Stream 1: Sync Custom Cards
+    _syncCardsSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'topic_cards',
+      coupleId: _coupleId!,
+      onData: (dataList) {
       final List<TopicCard> newCustoms = [];
-      final Set<String> newLikes = {};
 
       for (final data in dataList) {
         final docId = data['id'] as String;
         final isCustom = data['is_custom'] as bool? ?? false;
-        final likedList = List<String>.from(data['liked_by_user_ids'] ?? []);
-
-        if (likedList.contains(_userId)) {
-          newLikes.add(docId);
-        }
 
         if (isCustom) {
           newCustoms.add(TopicCard(
@@ -90,20 +91,58 @@ class TopicCardsProvider with ChangeNotifier {
             category: data['category'] ?? '',
             question: data['question'] ?? '',
             isCustom: true,
-            isLiked: likedList.contains(_userId),
+            isLiked: _likedCardIds.contains(docId),
           ));
         }
       }
 
       _customCards = newCustoms;
-      _likedCardIds = newLikes;
       _isLoading = false;
       _updateActiveDeck();
       _persistLocalOnly();
+      },
+      onError: (err) {
+        debugPrint('TopicCardsProvider: Supabase cards sync error: $err');
+        _loadData();
+      },
+    );
+
+    // Stream 2: Sync Liked Card IDs
+    _syncLikesSub = Supabase.instance.client
+        .from('topic_card_likes')
+        .stream(primaryKey: ['id'])
+        .eq('couple_id', _coupleId!)
+        .listen((dataList) {
+      final Set<String> newLikes = {};
+
+      for (final data in dataList) {
+        final cardId = data['card_id'] as String;
+        final userId = data['user_id'] as String;
+
+        if (userId == _userId) {
+          newLikes.add(cardId);
+        }
+      }
+
+      _likedCardIds = newLikes;
+
+      // Apply local pending overrides to maintain visual consistency
+      for (final entry in _pendingLikes.entries) {
+        if (entry.value) {
+          _likedCardIds.add(entry.key);
+        } else {
+          _likedCardIds.remove(entry.key);
+        }
+      }
+
+      _updateActiveDeck();
+      _persistLocalOnly();
     }, onError: (err) {
-      debugPrint('TopicCardsProvider: Supabase sync error: $err');
-      _loadData();
+      debugPrint('TopicCardsProvider: Supabase likes sync error: $err');
     });
+
+    // Run initial sync of offline/pending likes
+    _syncPendingLikes();
   }
 
   void _initializeDefaultCards() {
@@ -184,6 +223,14 @@ class TopicCardsProvider with ChangeNotifier {
         _customCards = decoded.map((json) => TopicCard.fromJson(json)).toList();
       } else {
         _customCards = [];
+      }
+
+      final pendingJson = prefs.getString(_pendingLikesKey);
+      if (pendingJson != null) {
+        final decoded = jsonDecode(pendingJson) as Map<String, dynamic>;
+        _pendingLikes = decoded.map((k, v) => MapEntry(k, v as bool));
+      } else {
+        _pendingLikes = {};
       }
     } catch (e, st) {
       debugPrint('TopicCardsProvider._loadData failed: $e\n$st');
@@ -282,19 +329,31 @@ class TopicCardsProvider with ChangeNotifier {
             .from('topic_cards')
             .delete()
             .eq('id', id);
+
+        // Clean up own like for the deleted card if exists
+        await Supabase.instance.client
+            .from('topic_card_likes')
+            .delete()
+            .eq('couple_id', _coupleId!)
+            .eq('user_id', _userId!)
+            .eq('card_id', id);
       } catch (e) {
         debugPrint('TopicCardsProvider.deleteCard Supabase error: $e');
         _customCards.removeWhere((c) => c.id == id);
         _likedCardIds.remove(id);
+        _pendingLikes.remove(id);
         await _saveCustomCards();
         await _saveLikedCardIds();
+        await _savePendingLikes();
         _updateActiveDeck();
       }
     } else {
       _customCards.removeWhere((c) => c.id == id);
       _likedCardIds.remove(id);
+      _pendingLikes.remove(id);
       await _saveCustomCards();
       await _saveLikedCardIds();
+      await _savePendingLikes();
       _updateActiveDeck();
     }
   }
@@ -302,48 +361,67 @@ class TopicCardsProvider with ChangeNotifier {
   Future<void> toggleLikeCard(String id) async {
     final nextLiked = !_likedCardIds.contains(id);
 
-    if (_coupleId != null && _userId != null) {
-      try {
-        final response = await Supabase.instance.client
-            .from('topic_cards')
-            .select('liked_by_user_ids')
-            .eq('id', id)
-            .maybeSingle();
-
-        final List<String> likedList = [];
-        if (response != null && response['liked_by_user_ids'] != null) {
-          likedList.addAll(List<String>.from(response['liked_by_user_ids']));
-        }
-
-        if (nextLiked) {
-          if (!likedList.contains(_userId)) {
-            likedList.add(_userId!);
-          }
-        } else {
-          likedList.remove(_userId);
-        }
-
-        await Supabase.instance.client
-            .from('topic_cards')
-            .update({'liked_by_user_ids': likedList})
-            .eq('id', id);
-      } catch (e) {
-        debugPrint('TopicCardsProvider.toggleLikeCard Supabase error: $e');
-        _toggleLocalLike(id);
-      }
+    // 1. Optimistic UI update
+    if (nextLiked) {
+      _likedCardIds.add(id);
     } else {
-      _toggleLocalLike(id);
+      _likedCardIds.remove(id);
     }
+    _updateActiveDeck();
+    _saveLikedCardIds();
+
+    // 2. Queue the pending operation
+    _pendingLikes[id] = nextLiked;
+    await _savePendingLikes();
+
+    // 3. Trigger async sync in background
+    _syncPendingLikes();
   }
 
-  void _toggleLocalLike(String id) {
-    if (_likedCardIds.contains(id)) {
-      _likedCardIds.remove(id);
-    } else {
-      _likedCardIds.add(id);
+  Future<void> _syncPendingLikes() async {
+    if (_isSyncingLikes) return;
+    if (_coupleId == null || _userId == null) return;
+    if (_pendingLikes.isEmpty) return;
+
+    _isSyncingLikes = true;
+
+    try {
+      final List<String> completedIds = [];
+      for (final entry in List.from(_pendingLikes.entries)) {
+        final cardId = entry.key as String;
+        final targetLiked = entry.value as bool;
+
+        try {
+          if (targetLiked) {
+            // Idempotent upsert
+            await Supabase.instance.client.from('topic_card_likes').upsert({
+              'couple_id': _coupleId,
+              'user_id': _userId,
+              'card_id': cardId,
+            });
+          } else {
+            // Delete matching row
+            await Supabase.instance.client
+                .from('topic_card_likes')
+                .delete()
+                .eq('couple_id', _coupleId!)
+                .eq('user_id', _userId!)
+                .eq('card_id', cardId);
+          }
+          completedIds.add(cardId);
+        } catch (e) {
+          debugPrint('TopicCardsProvider: Failed to sync pending like for $cardId: $e');
+          break; // Stop and retry later if network fails
+        }
+      }
+
+      for (final id in completedIds) {
+        _pendingLikes.remove(id);
+      }
+      await _savePendingLikes();
+    } finally {
+      _isSyncingLikes = false;
     }
-    _saveLikedCardIds();
-    _updateActiveDeck();
   }
 
   Future<void> _saveCustomCards() async {
@@ -365,14 +443,25 @@ class TopicCardsProvider with ChangeNotifier {
     }
   }
 
+  Future<void> _savePendingLikes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_pendingLikesKey, jsonEncode(_pendingLikes));
+    } catch (e) {
+      debugPrint('TopicCardsProvider._savePendingLikes failed: $e');
+    }
+  }
+
   Future<void> _persistLocalOnly() async {
     await _saveCustomCards();
     await _saveLikedCardIds();
+    await _savePendingLikes();
   }
 
   @override
   void dispose() {
-    _syncSub?.cancel();
+    _syncCardsSub?.cancel();
+    _syncLikesSub?.cancel();
     _disposed = true;
     super.dispose();
   }

@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/noteit_sync_manager.dart';
 
 class NoteitProvider with ChangeNotifier {
   static const String _storageKey = 'love_notes_items';
@@ -21,8 +23,10 @@ class NoteitProvider with ChangeNotifier {
   String? _userId;
   StreamSubscription? _syncSub;
 
-  List<NoteitItem> get notes => List.unmodifiable(_notes);
+  List<NoteitItem> get notes => _coupleId == null ? const [] : List.unmodifiable(_notes);
   bool get isLoading => _isLoading;
+  String? get coupleId => _coupleId;
+  String? get userId => _userId;
 
   NoteitItem? get latestReceived {
     try {
@@ -52,10 +56,13 @@ class NoteitProvider with ChangeNotifier {
       _syncSub?.cancel();
       _syncSub = null;
 
-      if (_coupleId != null &&
-          _userId != null &&
-          relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
+      if (_coupleId != null && _userId != null) {
+        NoteitSyncManager.instance.initialize(this);
+        if (relationship.isFirebaseAvailable) {
+          _initSupabaseSync();
+        } else {
+          _loadNotes();
+        }
       } else {
         _loadNotes();
       }
@@ -67,48 +74,62 @@ class NoteitProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('love_notes')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen(
-          (dataList) {
-            final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
-            _notes = filteredList.map((data) {
-              final typeStr = data['type'] as String? ?? 'text';
-              final type = NoteitType.values.firstWhere(
-                (t) => t.name == typeStr,
-                orElse: () => NoteitType.text,
-              );
-              final senderId = data['sender_id'] as String? ?? '';
-              final sender = (senderId == _userId) ? 'you' : 'partner';
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'love_notes',
+      coupleId: _coupleId!,
+      onData: (dataList) {
+        // Identify local unsynced love notes to preserve optimistic states
+        final localUnsynced = _notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
 
-              return NoteitItem(
-                id: data['id'] as String,
-                type: type,
-                content: data['content'] as String?,
-                imageUrl: data['image_url'] as String?,
-                sender: sender,
-                createdAt: data['created_at'] != null
-                    ? DateTime.parse(data['created_at'] as String)
-                    : DateTime.now(),
-                backgroundColor: data['background_color'] != null
-                    ? Color(data['background_color'] as int)
-                    : null,
-              );
-            }).toList();
+        final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
+        final serverNotes = filteredList.map((data) {
+          final typeStr = data['type'] as String? ?? 'text';
+          final type = NoteitType.values.firstWhere(
+            (t) => t.name == typeStr,
+            orElse: () => NoteitType.text,
+          );
+          final senderId = data['sender_id'] as String? ?? '';
+          final sender = (senderId == _userId) ? 'you' : 'partner';
 
-            _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-            _isLoading = false;
-            if (!_disposed) notifyListeners();
+          return NoteitItem(
+            id: data['id'] as String,
+            type: type,
+            content: data['content'] as String?,
+            imageUrl: data['image_url'] as String?,
+            sender: sender,
+            createdAt: data['created_at'] != null
+                ? DateTime.parse(data['created_at'] as String)
+                : DateTime.now(),
+            backgroundColor: data['background_color'] != null
+                ? Color(data['background_color'] as int)
+                : null,
+            syncStatus: SyncStatus.synced,
+          );
+        }).toList();
 
-            _persistLocalOnly();
-          },
-          onError: (err) {
-            debugPrint('NoteitProvider: Supabase sync error: $err');
-            _loadNotes();
-          },
-        );
+        // Merge local optimistic unsynced notes with incoming server notes
+        final Map<String, NoteitItem> mergedMap = {};
+        for (var note in serverNotes) {
+          mergedMap[note.id] = note;
+        }
+        for (var note in localUnsynced) {
+          if (!mergedMap.containsKey(note.id)) {
+            mergedMap[note.id] = note;
+          }
+        }
+
+        _notes = mergedMap.values.toList();
+        _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _isLoading = false;
+        if (!_disposed) notifyListeners();
+
+        _persistLocalOnly();
+      },
+      onError: (err) {
+        debugPrint('NoteitProvider: Supabase sync error: $err');
+        _loadNotes();
+      },
+    );
   }
 
   Future<void> _loadNotes() async {
@@ -141,6 +162,7 @@ class NoteitProvider with ChangeNotifier {
         sender: 'partner',
         createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
         backgroundColor: const Color(0xFF9D4EDD),
+        syncStatus: SyncStatus.synced,
       ),
       NoteitItem(
         type: NoteitType.drawing,
@@ -148,9 +170,19 @@ class NoteitProvider with ChangeNotifier {
         sender: 'partner',
         createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
         backgroundColor: const Color(0xFFFF4D6D),
+        syncStatus: SyncStatus.synced,
       ),
     ];
     _persist();
+  }
+
+  void updateItemSyncStatus(String id, SyncStatus status) {
+    final idx = _notes.indexWhere((n) => n.id == id);
+    if (idx != -1) {
+      _notes[idx] = _notes[idx].copyWith(syncStatus: status);
+      if (!_disposed) notifyListeners();
+      _persistLocalOnly();
+    }
   }
 
   Future<void> sendDrawing(String strokes, Color bgColor) async {
@@ -159,27 +191,24 @@ class NoteitProvider with ChangeNotifier {
       content: strokes,
       sender: 'you',
       backgroundColor: bgColor,
+      syncStatus: SyncStatus.sending,
     );
 
+    _notes.insert(0, newItem);
+    await _persist();
+
     if (_coupleId != null && _userId != null) {
-      try {
-        await Supabase.instance.client.from('love_notes').upsert({
-          'id': newItem.id,
-          'couple_id': _coupleId,
-          'type': 'drawing',
-          'content': strokes,
-          'sender_id': _userId,
-          'created_at': DateTime.now().toIso8601String(),
-          'background_color': bgColor.toARGB32().toSigned(32),
-        });
-      } catch (e) {
-        debugPrint('NoteitProvider.sendDrawing Supabase error: $e');
-        _notes.insert(0, newItem);
-        await _persist();
-      }
+      await NoteitSyncManager.instance.enqueue(
+        NoteitSyncTask(
+          id: newItem.id,
+          type: NoteitType.drawing,
+          content: strokes,
+          backgroundColor: bgColor,
+          createdAt: newItem.createdAt,
+        ),
+      );
     } else {
-      _notes.insert(0, newItem);
-      await _persist();
+      updateItemSyncStatus(newItem.id, SyncStatus.failed);
     }
   }
 
@@ -189,27 +218,24 @@ class NoteitProvider with ChangeNotifier {
       content: text,
       sender: 'you',
       backgroundColor: bgColor,
+      syncStatus: SyncStatus.sending,
     );
 
+    _notes.insert(0, newItem);
+    await _persist();
+
     if (_coupleId != null && _userId != null) {
-      try {
-        await Supabase.instance.client.from('love_notes').upsert({
-          'id': newItem.id,
-          'couple_id': _coupleId,
-          'type': 'text',
-          'content': text,
-          'sender_id': _userId,
-          'created_at': DateTime.now().toIso8601String(),
-          'background_color': bgColor.toARGB32().toSigned(32),
-        });
-      } catch (e) {
-        debugPrint('NoteitProvider.sendText Supabase error: $e');
-        _notes.insert(0, newItem);
-        await _persist();
-      }
+      await NoteitSyncManager.instance.enqueue(
+        NoteitSyncTask(
+          id: newItem.id,
+          type: NoteitType.text,
+          content: text,
+          backgroundColor: bgColor,
+          createdAt: newItem.createdAt,
+        ),
+      );
     } else {
-      _notes.insert(0, newItem);
-      await _persist();
+      updateItemSyncStatus(newItem.id, SyncStatus.failed);
     }
   }
 
@@ -226,39 +252,23 @@ class NoteitProvider with ChangeNotifier {
         type: NoteitType.photo,
         imagePath: newPath,
         sender: 'you',
+        syncStatus: SyncStatus.sending,
       );
 
-      if (_coupleId != null && _userId != null) {
-        try {
-          final file = File(originalPath);
-          final storagePath = 'couples/$_coupleId/love_notes/$noteId.jpg';
-          await Supabase.instance.client.storage
-              .from('love-notes')
-              .upload(
-                storagePath,
-                file,
-                fileOptions: const FileOptions(upsert: true),
-              );
-          final imageUrl = Supabase.instance.client.storage
-              .from('love-notes')
-              .getPublicUrl(storagePath);
+      _notes.insert(0, newItem);
+      await _persist();
 
-          await Supabase.instance.client.from('love_notes').upsert({
-            'id': noteId,
-            'couple_id': _coupleId,
-            'type': 'photo',
-            'image_url': imageUrl,
-            'sender_id': _userId,
-            'created_at': DateTime.now().toIso8601String(),
-          });
-        } catch (e) {
-          debugPrint('NoteitProvider.sendPhoto Supabase upload error: $e');
-          _notes.insert(0, newItem);
-          await _persist();
-        }
+      if (_coupleId != null && _userId != null) {
+        await NoteitSyncManager.instance.enqueue(
+          NoteitSyncTask(
+            id: noteId,
+            type: NoteitType.photo,
+            imagePath: newPath,
+            createdAt: newItem.createdAt,
+          ),
+        );
       } else {
-        _notes.insert(0, newItem);
-        await _persist();
+        updateItemSyncStatus(noteId, SyncStatus.failed);
       }
     } catch (e) {
       debugPrint('NoteitProvider.sendPhoto failed: $e');

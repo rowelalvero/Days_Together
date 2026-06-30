@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
@@ -44,11 +45,10 @@ class CalendarProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('calendar_events')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'calendar_events',
+      coupleId: _coupleId!,
+      onData: (dataList) {
       _events = dataList.map((data) {
         final hour = data['hour'] as int?;
         final minute = data['minute'] as int?;
@@ -72,10 +72,12 @@ class CalendarProvider with ChangeNotifier {
       if (!_disposed) notifyListeners();
 
       _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('CalendarProvider: Supabase sync error: $err');
-      _loadEvents();
-    });
+      },
+      onError: (err) {
+        debugPrint('CalendarProvider: Supabase sync error: $err');
+        _loadEvents();
+      },
+    );
   }
 
   Future<void> _loadEvents() async {

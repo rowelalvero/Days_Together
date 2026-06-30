@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/bucket_list_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
@@ -47,11 +48,10 @@ class BucketListProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('bucket_list')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'bucket_list',
+      coupleId: _coupleId!,
+      onData: (dataList) {
       _items = dataList.map((data) {
         return BucketListItem(
           id: data['id'] as String,
@@ -69,10 +69,12 @@ class BucketListProvider with ChangeNotifier {
       if (!_disposed) notifyListeners();
 
       _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('BucketListProvider: Supabase sync error: $err');
-      _loadItems();
-    });
+      },
+      onError: (err) {
+        debugPrint('BucketListProvider: Supabase sync error: $err');
+        _loadItems();
+      },
+    );
   }
 
   Future<void> _loadItems() async {

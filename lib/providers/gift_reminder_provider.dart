@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/gift_reminder_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
@@ -49,11 +50,10 @@ class GiftReminderProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('gift_reminders')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen((dataList) {
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'gift_reminders',
+      coupleId: _coupleId!,
+      onData: (dataList) {
       _reminders = dataList.map((data) {
         return GiftReminder(
           id: data['id'] as String,
@@ -70,10 +70,12 @@ class GiftReminderProvider with ChangeNotifier {
       if (!_disposed) notifyListeners();
 
       _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('GiftReminderProvider: Supabase sync error: $err');
-      _loadReminders();
-    });
+      },
+      onError: (err) {
+        debugPrint('GiftReminderProvider: Supabase sync error: $err');
+        _loadReminders();
+      },
+    );
   }
 
   Future<void> _loadReminders() async {

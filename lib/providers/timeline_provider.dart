@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/repositories/timeline_repository.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -115,12 +116,10 @@ class TimelineProvider with ChangeNotifier {
     _isLoading = true;
     if (!_disposed) notifyListeners();
 
-    _syncSub = Supabase.instance.client
-        .from('timeline_items')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen(
-          (dataList) {
+    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
+      tableName: 'timeline_items',
+      coupleId: _coupleId!,
+      onData: (dataList) {
             // Filter out locally deleted items to handle stream filter/delete timing issues
             final activeDataList = dataList.where((data) {
               final id = data['id'] as String;
@@ -181,12 +180,12 @@ class TimelineProvider with ChangeNotifier {
             if (!_disposed) notifyListeners();
 
             _persistLocalOnly();
-          },
-          onError: (err) {
-            debugPrint('TimelineProvider: Supabase sync error: $err');
-            _loadTimeline();
-          },
-        );
+      },
+      onError: (err) {
+        debugPrint('TimelineProvider: Supabase sync error: $err');
+        _loadTimeline();
+      },
+    );
   }
 
   Future<void> _loadTimeline() async {
