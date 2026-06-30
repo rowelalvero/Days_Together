@@ -3,6 +3,7 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/date_helper.dart';
 
 class MilestoneCard extends StatefulWidget {
   final RelationshipProvider relationshipProvider;
@@ -27,12 +28,8 @@ class _MilestoneCardState extends State<MilestoneCard> {
       final numMatch = RegExp(r'\d+').firstMatch(title);
       if (numMatch != null) {
         final year = int.tryParse(numMatch.group(0)!) ?? 1;
-        final anniversaryDate = DateTime(
-          startDate.year + year,
-          startDate.month,
-          startDate.day,
-        );
-        return anniversaryDate.difference(startDate).inDays;
+        final anniversaryDate = DateHelper.getAnniversaryDate(startDate, year);
+        return DateHelper.calendarDaysBetween(startDate, anniversaryDate);
       }
     }
     final numMatch = RegExp(r'\d+').firstMatch(title);
@@ -48,14 +45,70 @@ class _MilestoneCardState extends State<MilestoneCard> {
     final startDate = widget.relationshipProvider.startDate;
     final daysTogether = widget.relationshipProvider.totalDays;
 
-    // Ensure we always have milestones to show, fallback to mock data if empty
+    final isPaired = widget.relationshipProvider.isPaired;
+    // Ensure we always have milestones to show, fallback to mock data if empty and paired
     final milestones = rawMilestones.isNotEmpty
         ? rawMilestones
-        : [
-            const MilestoneInfo(title: '1500 Days', daysUntil: 265, progress: 0.82),
-            const MilestoneInfo(title: '2000 Days', daysUntil: 765, progress: 0.62),
-            const MilestoneInfo(title: '5th Anniversary', daysUntil: 591, progress: 0.70),
-          ];
+        : (isPaired
+            ? [
+                const MilestoneInfo(title: '1500 Days', daysUntil: 265, progress: 0.82),
+                const MilestoneInfo(title: '2000 Days', daysUntil: 765, progress: 0.62),
+                const MilestoneInfo(title: '5th Anniversary', daysUntil: 591, progress: 0.70),
+              ]
+            : <MilestoneInfo>[]);
+
+    if (milestones.isEmpty) {
+      return GlassContainer(
+        padding: const EdgeInsets.all(24),
+        borderRadius: 24,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: widget.theme.accentColor,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Transform.rotate(
+                      angle: 0.785398, // Rotate 45 degrees
+                      child: Icon(
+                        Icons.navigation_rounded,
+                        color: widget.theme.accentColor,
+                        size: 10,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Next Milestone',
+                  style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: widget.theme.textColor.withValues(alpha: 0.95)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              alignment: Alignment.center,
+              child: Text(
+                'Connect with your partner to start tracking milestones! 💖',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodyMedium(fontSize: 12.5, color: widget.theme.textColor.withValues(alpha: 0.7), height: 1.4),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     // Safely clamp selection index if the milestones list size changes
     final selectedIndex = _selectedMilestoneIndex.clamp(0, milestones.length - 1);

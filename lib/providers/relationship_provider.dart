@@ -2079,9 +2079,6 @@ class RelationshipProvider with ChangeNotifier {
     }
   }
 
-  bool get isGeneratingCode => _isGeneratingCode;
-  bool get isJoining => _isJoining;
-  bool get isUnlinking => _isUnlinking;
   bool get showPartnerDeletedNotice => _showPartnerDeletedNotice;
 
   void clearPartnerDeletedNotice() {

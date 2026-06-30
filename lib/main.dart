@@ -112,7 +112,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final relationshipProvider = Provider.of<RelationshipProvider>(context);
     final theme = themeProvider.currentLoveTheme;
 
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
@@ -132,14 +131,25 @@ class MyApp extends StatelessWidget {
         ),
         cardColor: theme.cardColor,
       ),
-      home: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        child: _buildHome(relationshipProvider),
-      ),
+      home: const AppHome(),
+    );
+  }
+}
+
+class AppHome extends StatelessWidget {
+  const AppHome({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final rp = Provider.of<RelationshipProvider>(context);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: _buildHomeContent(rp),
     );
   }
 
-  Widget _buildHome(RelationshipProvider rp) {
+  Widget _buildHomeContent(RelationshipProvider rp) {
     if (!rp.isInitialized) {
       return const LoadingScreen(key: ValueKey('loading'));
     }
@@ -148,7 +158,7 @@ class MyApp extends StatelessWidget {
       return const WelcomeScreen(key: ValueKey('welcome'));
     }
 
-    if (rp.isPaired) {
+    if (rp.isOnboardingComplete) {
       return const LoveStoryScreen(key: ValueKey('home'));
     }
 

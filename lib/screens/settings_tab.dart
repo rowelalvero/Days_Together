@@ -7,9 +7,9 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/theme_selector.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
-import 'package:days_together/screens/onboarding/welcome_screen.dart';
 import 'package:days_together/screens/settings/relationship_profile_screen.dart';
 import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/main.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -206,7 +206,7 @@ class SettingsTab extends StatelessWidget {
               await rp.logout();
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                  MaterialPageRoute(builder: (_) => const AppHome()),
                   (route) => false,
                 );
               }

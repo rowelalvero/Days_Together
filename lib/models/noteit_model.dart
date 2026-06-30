@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 enum NoteitType { drawing, photo, text }
+enum SyncStatus { sending, synced, failed }
 
 class NoteitItem {
   final String id;
@@ -12,6 +13,7 @@ class NoteitItem {
   final String sender; // 'you' or 'partner'
   final DateTime createdAt;
   final Color? backgroundColor;
+  final SyncStatus syncStatus;
 
   NoteitItem({
     String? id,
@@ -22,6 +24,7 @@ class NoteitItem {
     required this.sender,
     DateTime? createdAt,
     this.backgroundColor,
+    this.syncStatus = SyncStatus.synced,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now();
 
@@ -34,6 +37,7 @@ class NoteitItem {
     String? sender,
     DateTime? createdAt,
     Color? backgroundColor,
+    SyncStatus? syncStatus,
   }) {
     return NoteitItem(
       id: id ?? this.id,
@@ -44,6 +48,7 @@ class NoteitItem {
       sender: sender ?? this.sender,
       createdAt: createdAt ?? this.createdAt,
       backgroundColor: backgroundColor ?? this.backgroundColor,
+      syncStatus: syncStatus ?? this.syncStatus,
     );
   }
 
@@ -56,10 +61,12 @@ class NoteitItem {
         'sender': sender,
         'createdAt': createdAt.toIso8601String(),
         'backgroundColor': backgroundColor?.toARGB32(),
+        'syncStatus': syncStatus.index,
       };
 
   factory NoteitItem.fromJson(Map<String, dynamic> json) {
     final typeIndex = json['type'] as int? ?? 0;
+    final syncIndex = json['syncStatus'] as int? ?? SyncStatus.synced.index;
     return NoteitItem(
       id: json['id'] as String?,
       type: (typeIndex >= 0 && typeIndex < NoteitType.values.length)
@@ -75,6 +82,9 @@ class NoteitItem {
       backgroundColor: json['backgroundColor'] != null
           ? Color(json['backgroundColor'] as int)
           : null,
+      syncStatus: (syncIndex >= 0 && syncIndex < SyncStatus.values.length)
+          ? SyncStatus.values[syncIndex]
+          : SyncStatus.synced,
     );
   }
 

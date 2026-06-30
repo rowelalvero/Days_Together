@@ -69,10 +69,8 @@ class NoteitSyncManager {
   bool _isSyncing = false;
   Timer? _backoffTimer;
   Timer? _connectivityTimer;
-  bool Function()? mockConnectionChecker;
 
   bool get hasPendingItems => _queue.isNotEmpty;
-  bool get isSyncing => _isSyncing;
   List<NoteitSyncTask> get queue => List.unmodifiable(_queue);
 
   void initialize(NoteitProvider provider) {
@@ -140,9 +138,6 @@ class NoteitSyncManager {
   }
 
   Future<bool> checkConnection() async {
-    if (mockConnectionChecker != null) {
-      return mockConnectionChecker!();
-    }
     try {
       final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 5));
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
