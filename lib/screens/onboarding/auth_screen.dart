@@ -225,6 +225,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
                             style: AppTypography.body(color: theme.textColor),
                             decoration: _buildInputDecoration(
                               label: 'Email Address',
@@ -233,7 +234,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                             validator: (val) {
                               if (val == null || val.trim().isEmpty) {
-                                return 'Please enter your email';
+                                  return 'Please enter your email';
                               }
                               if (!val.contains('@')) {
                                 return 'Please enter a valid email';
@@ -246,6 +247,12 @@ class _AuthScreenState extends State<AuthScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
+                            textInputAction: _isSignUp ? TextInputAction.next : TextInputAction.done,
+                            onFieldSubmitted: (_) {
+                              if (!_isSignUp) {
+                                _submit();
+                              }
+                            },
                             style: AppTypography.body(color: theme.textColor),
                             decoration: _buildInputDecoration(
                               label: 'Password',
@@ -281,6 +288,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _submit(),
                               style: AppTypography.body(color: theme.textColor),
                               decoration: _buildInputDecoration(
                                 label: 'Confirm Password',

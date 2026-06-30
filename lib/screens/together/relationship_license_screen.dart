@@ -1342,6 +1342,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Full Name *', theme),
       TextField(
         controller: nameCtrl,
+        textInputAction: TextInputAction.next,
         style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('Enter full name', theme),
       ),
@@ -1410,6 +1411,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Nationality', theme),
       TextField(
         controller: nationalityCtrl,
+        textInputAction: TextInputAction.next,
         style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('e.g., Love Land', theme),
       ),
@@ -1417,6 +1419,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Address', theme),
       TextField(
         controller: addressCtrl,
+        textInputAction: TextInputAction.next,
         style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('Enter address details', theme),
       ),
@@ -1430,6 +1433,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Height', theme),
                 TextField(
                   controller: heightCtrl,
+                  textInputAction: TextInputAction.next,
                   style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., 5\'7"', theme),
                 ),
@@ -1444,6 +1448,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Weight', theme),
                 TextField(
                   controller: weightCtrl,
+                  textInputAction: TextInputAction.next,
                   style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., 65 kg', theme),
                 ),
@@ -1462,6 +1467,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Blood Type', theme),
                 TextField(
                   controller: bloodCtrl,
+                  textInputAction: TextInputAction.next,
                   style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., O+', theme),
                 ),
@@ -1476,6 +1482,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                 _createFieldLabel('Eyes Color', theme),
                 TextField(
                   controller: eyeCtrl,
+                  textInputAction: TextInputAction.next,
                   style: AppTypography.body(color: theme.textColor),
                   decoration: _createInputDecoration('e.g., Brown', theme),
                 ),
@@ -1488,6 +1495,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Conditions', theme),
       TextField(
         controller: conditionsCtrl,
+        textInputAction: TextInputAction.next,
         style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('e.g., Head over heels', theme),
       ),
@@ -1495,6 +1503,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       _createFieldLabel('Phone / Emergency Mobile', theme),
       TextField(
         controller: phoneCtrl,
+        textInputAction: TextInputAction.done,
         keyboardType: TextInputType.phone,
         style: AppTypography.body(color: theme.textColor),
         decoration: _createInputDecoration('Enter phone number', theme),
@@ -3189,7 +3198,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
           TextField(
             controller: nameCtrl,
-
+            textInputAction: TextInputAction.next,
             style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter full name'),
@@ -3279,7 +3288,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
           TextField(
             controller: nationalityCtrl,
-
+            textInputAction: TextInputAction.next,
             style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter nationality'),
@@ -3299,7 +3308,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
                     TextField(
                       controller: heightCtrl,
-
+                      textInputAction: TextInputAction.next,
                       style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., 175 cm'),
@@ -3319,7 +3328,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
                     TextField(
                       controller: weightCtrl,
-
+                      textInputAction: TextInputAction.next,
                       style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., 68 kg'),
@@ -3337,7 +3346,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
           TextField(
             controller: addressCtrl,
-
+            textInputAction: TextInputAction.next,
             style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('Enter address'),
@@ -3517,7 +3526,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
                     TextField(
                       controller: bloodCtrl,
-
+                      textInputAction: TextInputAction.next,
                       style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., O+'),
@@ -3537,7 +3546,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
                     TextField(
                       controller: eyeCtrl,
-
+                      textInputAction: TextInputAction.next,
                       style: AppTypography.body(color: widget.theme.textColor),
 
                       decoration: _inputDecoration('e.g., Brown'),
@@ -3555,7 +3564,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
           TextField(
             controller: conditionsCtrl,
-
+            textInputAction: TextInputAction.next,
             style: AppTypography.body(color: widget.theme.textColor),
 
             decoration: _inputDecoration('e.g., Head over heels'),
@@ -3568,7 +3577,7 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
 
           TextField(
             controller: phoneCtrl,
-
+            textInputAction: TextInputAction.done,
             keyboardType: TextInputType.phone,
 
             style: AppTypography.body(color: widget.theme.textColor),
