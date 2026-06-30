@@ -46,6 +46,8 @@ class RelationshipProfileScreen extends StatelessWidget {
                         const SizedBox(height: 32),
                       ],
                       _buildUnlinkButton(context, rp, theme),
+                      if (partnerJoined) const SizedBox(height: 16),
+                      _buildDeleteAccountButton(context, rp, theme),
                       const SizedBox(height: 24),
                       _buildAuthDebugInfo(rp, theme),
                       const SizedBox(height: 40),
@@ -168,7 +170,7 @@ class RelationshipProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Waiting for partner to join...',
+              'Waiting for your partner to connect...',
               style: AppTypography.body(
                 fontSize: 14,
                 color: theme.textColor.withValues(alpha: 0.5),
@@ -443,6 +445,9 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   Widget _buildUnlinkButton(BuildContext context, RelationshipProvider rp, dynamic theme) {
     final partnerJoined = rp.partnerId != null;
+    if (!partnerJoined) {
+      return const SizedBox.shrink();
+    }
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -464,6 +469,127 @@ class RelationshipProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDeleteAccountButton(BuildContext context, RelationshipProvider rp, dynamic theme) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+      ),
+      child: TextButton(
+        onPressed: () => _showDeleteAccountConfirmation(context, rp, theme),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: Text(
+          'Delete Account',
+          style: AppTypography.body(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountConfirmation(BuildContext context, RelationshipProvider rp, dynamic theme) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Text(
+            'Delete Account',
+            style: AppTypography.sectionHeader(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: theme.textColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            'Are you absolutely sure you want to delete your account? This action is permanent. All your personal data will be erased immediately. If you are paired, your partner will be returned to a single state and all shared memories and notes will be deleted forever.',
+            style: AppTypography.body(
+              fontSize: 14,
+              color: theme.textColor.withValues(alpha: 0.6),
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: Text(
+                      'Cancel',
+                      style: AppTypography.body(
+                        color: theme.textColor.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(dialogContext); // Close confirmation dialog
+                      
+                      // Show loading spinner dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => const Center(
+                          child: CircularProgressIndicator(color: Colors.redAccent),
+                        ),
+                      );
+
+                      try {
+                        await rp.deleteAccount();
+                        if (context.mounted) {
+                          Navigator.pop(context); // Dismiss loading spinner
+                          Navigator.of(context).popUntil((route) => route.isFirst);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          Navigator.pop(context); // Dismiss loading
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to delete account: $e')),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Delete',
+                      style: AppTypography.body(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -494,7 +620,7 @@ class RelationshipProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Text(
-                partnerJoined ? 'Unlink Relationship' : 'Cancel Registry Request',
+                partnerJoined ? 'Disconnect Relationship' : 'Cancel Invitation',
                 style: AppTypography.sectionHeader(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -505,8 +631,8 @@ class RelationshipProfileScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 partnerJoined
-                    ? 'Are you sure you want to unlink? This will disconnect your profile from your partner and return you to the pairing setup screen.'
-                    : 'Are you sure you want to cancel? This will deactivate the current invitation code.',
+                    ? 'Are you sure you want to disconnect? This will unlink your profile from your partner and return you to the pairing setup.'
+                    : 'Are you sure you want to cancel? This will deactivate your current connection code.',
                 style: AppTypography.body(
                   fontSize: 14,
                   color: theme.textColor.withValues(alpha: 0.6),
@@ -521,7 +647,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                     child: TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        'Keep Connected',
+                        'Stay Connected',
                         style: AppTypography.body(
                           color: theme.textColor.withValues(alpha: 0.4),
                           fontWeight: FontWeight.bold,
@@ -546,7 +672,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Unlink',
+                        partnerJoined ? 'Disconnect' : 'Cancel Code',
                         style: AppTypography.body(
                           fontWeight: FontWeight.bold,
                         ),
@@ -596,12 +722,16 @@ class _StatTile extends StatelessWidget {
               children: [
                 Icon(icon, color: theme.accentColor, size: 16),
                 const SizedBox(width: 8),
-                Text(
-                  label.toUpperCase(),
-                  style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.4)).copyWith(letterSpacing: 0.5),
+                Expanded(
+                  child: Text(
+                    label.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.4)).copyWith(letterSpacing: 0.5),
+                  ),
                 ),
                 if (onTap != null) ...[
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Icon(Icons.edit_rounded, color: theme.accentColor.withValues(alpha: 0.5), size: 14),
                 ],
               ],

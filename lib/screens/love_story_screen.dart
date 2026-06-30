@@ -38,6 +38,94 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
   int _currentIndex = 0;
   DateTime? _lastBackPressTime;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final rp = context.read<RelationshipProvider>();
+      rp.addListener(_checkPartnerDeletedNotice);
+      _checkPartnerDeletedNotice();
+    });
+  }
+
+  @override
+  void dispose() {
+    try {
+      context.read<RelationshipProvider>().removeListener(_checkPartnerDeletedNotice);
+    } catch (_) {}
+    super.dispose();
+  }
+
+  void _checkPartnerDeletedNotice() {
+    if (!mounted) return;
+    final rp = context.read<RelationshipProvider>();
+    if (rp.showPartnerDeletedNotice) {
+      rp.clearPartnerDeletedNotice();
+      _showPartnerDeletedDialog();
+    }
+  }
+
+  void _showPartnerDeletedDialog() {
+    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Text(
+              'Connection Update',
+              style: AppTypography.sectionHeader(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: theme.textColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            content: Text(
+              'Your partner has disconnected or deleted their account. To protect your privacy, your profile has returned to a single state. You can link with a new connection code at any time.',
+              style: AppTypography.body(
+                fontSize: 15,
+                color: theme.textColor.withValues(alpha: 0.7),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.accentColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    'Continue',
+                    style: AppTypography.body(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _handleBackInvoked(bool didPop, dynamic result) {
     if (didPop) return;
 
@@ -97,8 +185,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final timelineProvider = context.watch<TimelineProvider>();
-    final items = timelineProvider.timelineItems;
+    final hasTimelineItems = context.select<TimelineProvider, bool>((p) => p.timelineItems.isNotEmpty);
 
     final List<Widget> pages = [
       const HomeDashboard(),
@@ -176,11 +263,11 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
                     child: pages[_currentIndex],
                   ),
                 ),
-                Positioned(
+                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: _buildUnifiedFloatingBar(theme, timelineProvider),
+                  child: _buildUnifiedFloatingBar(theme),
                 ),
               ],
             ),
@@ -198,7 +285,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
                 )
               : null,
           floatingActionButtonLocation: AnimatedFabLocation(
-            _currentIndex == 1 && items.isNotEmpty
+            _currentIndex == 1 && hasTimelineItems
                 ? 148.0 + _floatingBarMarginBottom + 16.0
                 : 70.0 + _floatingBarMarginBottom + 16.0,
           ),
@@ -207,9 +294,8 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
     );
   }
 
-  Widget _buildUnifiedFloatingBar(dynamic theme, TimelineProvider timelineProvider) {
+  Widget _buildUnifiedFloatingBar(dynamic theme) {
     final double marginBot = _floatingBarMarginBottom;
-    final items = timelineProvider.timelineItems;
 
     final isLight = Theme.of(context).brightness == Brightness.light;
     final overlayColor = isLight ? Colors.black : Colors.white;
@@ -218,130 +304,135 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
         : Colors.white.withValues(alpha: 0.2);
     final double opacity = 0.15;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, marginBot),
-      child: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
-        tween: Tween<double>(
-          begin: 35.0,
-          end: _currentIndex == 1 && items.isNotEmpty ? 24.0 : 35.0,
-        ),
-        builder: (context, radius, child) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: overlayColor.withValues(alpha: opacity),
-                  borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(
-                    color: borderColor,
-                    width: 1.5,
-                  ),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      overlayColor.withValues(alpha: opacity * 2),
-                      overlayColor.withValues(alpha: opacity),
-                    ],
+    return Consumer<TimelineProvider>(
+      builder: (context, timelineProvider, child) {
+        final items = timelineProvider.timelineItems;
+        return Container(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, marginBot),
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutCubic,
+            tween: Tween<double>(
+              begin: 35.0,
+              end: _currentIndex == 1 && items.isNotEmpty ? 24.0 : 35.0,
+            ),
+            builder: (context, radius, child) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(radius),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: overlayColor.withValues(alpha: opacity),
+                      borderRadius: BorderRadius.circular(radius),
+                      border: Border.all(
+                        color: borderColor,
+                        width: 1.5,
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          overlayColor.withValues(alpha: opacity * 2),
+                          overlayColor.withValues(alpha: opacity),
+                        ],
+                      ),
+                    ),
+                    child: child,
                   ),
                 ),
-                child: child,
-              ),
-            ),
-          );
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRect(
-              child: AnimatedAlign(
-                alignment: Alignment.topCenter,
-                heightFactor: _currentIndex == 1 && items.isNotEmpty ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeInOutCubic,
-                child: AnimatedOpacity(
-                  opacity: _currentIndex == 1 && items.isNotEmpty ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOutCubic,
-                  child: SizedBox(
-                    height: 78,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: RulerPickerScrubber(
-                            items: items,
-                            selectedIndex: timelineProvider.currentScrubIndex,
-                            isAscending: timelineProvider.isAscending,
-                            hasBackground: false,
-                            onIndexChanged: (index) {
-                              timelineProvider.setCurrentScrubIndex(index);
-                            },
-                          ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRect(
+                  child: AnimatedAlign(
+                    alignment: Alignment.topCenter,
+                    heightFactor: _currentIndex == 1 && items.isNotEmpty ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOutCubic,
+                    child: AnimatedOpacity(
+                      opacity: _currentIndex == 1 && items.isNotEmpty ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOutCubic,
+                      child: SizedBox(
+                        height: 78,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: RulerPickerScrubber(
+                                items: items,
+                                selectedIndex: timelineProvider.currentScrubIndex,
+                                isAscending: timelineProvider.isAscending,
+                                hasBackground: false,
+                                onIndexChanged: (index) {
+                                  timelineProvider.setCurrentScrubIndex(index);
+                                },
+                              ),
+                            ),
+                            const Divider(
+                              color: Colors.white10,
+                              height: 1,
+                              thickness: 1,
+                              indent: 20,
+                              endIndent: 20,
+                            ),
+                            const SizedBox(height: 7),
+                          ],
                         ),
-                        const Divider(
-                          color: Colors.white10,
-                          height: 1,
-                          thickness: 1,
-                          indent: 20,
-                          endIndent: 20,
-                        ),
-                        const SizedBox(height: 7),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+                SizedBox(
+                  height: 70,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildNavItem(
+                        0,
+                        Icons.home_rounded,
+                        Icons.home_outlined,
+                        'Home',
+                        theme,
+                      ),
+                      _buildNavItem(
+                        1,
+                        Icons.auto_awesome_motion_rounded,
+                        Icons.auto_awesome_motion_outlined,
+                        'Story',
+                        theme,
+                      ),
+                      _buildNavItem(
+                        2,
+                        Icons.favorite_rounded,
+                        Icons.favorite_outline_rounded,
+                        'Us',
+                        theme,
+                      ),
+                      _buildNavItem(
+                        3,
+                        Icons.palette_rounded,
+                        Icons.palette_outlined,
+                        'Studio',
+                        theme,
+                      ),
+                      _buildNavItem(
+                        4,
+                        Icons.person_rounded,
+                        Icons.person_outline_rounded,
+                        'More',
+                        theme,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(
-              height: 70,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavItem(
-                    0,
-                    Icons.home_rounded,
-                    Icons.home_outlined,
-                    'Home',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    1,
-                    Icons.auto_awesome_motion_rounded,
-                    Icons.auto_awesome_motion_outlined,
-                    'Story',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    2,
-                    Icons.favorite_rounded,
-                    Icons.favorite_outline_rounded,
-                    'Us',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    3,
-                    Icons.palette_rounded,
-                    Icons.palette_outlined,
-                    'Studio',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    4,
-                    Icons.person_rounded,
-                    Icons.person_outline_rounded,
-                    'More',
-                    theme,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

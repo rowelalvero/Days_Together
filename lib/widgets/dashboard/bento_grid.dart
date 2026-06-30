@@ -15,6 +15,7 @@ import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
+import 'package:days_together/providers/relationship_provider.dart';
 
 // Screens
 import 'package:days_together/screens/together/noteit_screen.dart';
@@ -59,650 +60,675 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildDoodleNotesBentoCard(BuildContext context) {
-    final noteit = context.watch<NoteitProvider>();
-    final notes = noteit.notes;
-    final latest = notes.isNotEmpty ? notes.first : null;
-    
-    String footerText = 'No shared notes';
-    if (latest != null) {
-      final senderName = latest.sender == 'you' ? 'You' : 'Partner';
-      footerText = '$senderName • ${_formatRelativeTime(latest.createdAt)}';
-    }
+    return Consumer<NoteitProvider>(
+      builder: (context, noteit, child) {
+        final notes = noteit.notes;
+        final latest = notes.isNotEmpty ? notes.first : null;
+        
+        String footerText = 'No shared notes';
+        if (latest != null) {
+          final senderName = latest.sender == 'you' ? 'You' : 'Partner';
+          footerText = '$senderName • ${_formatRelativeTime(latest.createdAt)}';
+        }
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const NoteitScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NoteitScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'DOODLE NOTES',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.draw_outlined,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Doodle Notes',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildNoteItContent(context),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    footerText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Doodle Space',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'DOODLE NOTES',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.draw_outlined,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Doodles & Notes',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildNoteItContent(context, noteit),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        footerText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Draw & Write',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildSharedCalendarBentoCard(BuildContext context) {
-    final calendar = context.watch<CalendarProvider>();
-    final count = calendar.events.length;
+    return Consumer<CalendarProvider>(
+      builder: (context, calendar, child) {
+        final count = calendar.events.length;
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const CalendarScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CalendarScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'CALENDAR',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.calendar_month_outlined,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Shared Calendar',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildCalendarContent(context),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    '$count Events Scheduled',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'View Calendar',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'CALENDAR',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.calendar_month_outlined,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Shared Calendar',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildCalendarContent(context, calendar),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '$count Events Scheduled',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'View Calendar',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildDailyMoodBentoCard(BuildContext context) {
-    final dailyMood = context.watch<DailyMoodProvider>();
-    final myToday = dailyMood.todayMood;
+    return Consumer2<RelationshipProvider, DailyMoodProvider>(
+      builder: (context, relationship, dailyMood, child) {
+        final isPaired = relationship.isPaired;
+        final myToday = dailyMood.todayMood;
 
-    String statusText = myToday != null ? 'Synced Mood Logged' : 'Awaiting check-in';
+        String statusText = myToday != null
+            ? (isPaired ? 'Synced Mood Logged' : 'Mood Logged')
+            : 'Awaiting check-in';
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'DAILY MOOD',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.emoji_emotions_outlined,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Daily Mood',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildMoodContent(context),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    statusText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Track Mood',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'DAILY MOOD',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.emoji_emotions_outlined,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Daily Mood',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildMoodContent(context, relationship, dailyMood),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        statusText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Share Mood',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildEmotionalMapBentoCard(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Consumer2<RelationshipProvider, DailyMoodProvider>(
+      builder: (context, relationship, dailyMood, child) {
+        final isPaired = relationship.isPaired;
+
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'EMOTIONAL MAP',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.trending_up_rounded,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Emotional Map',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-                ),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: theme.accentColor,
-                        shape: BoxShape.circle,
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'EMOTIONAL MAP',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'You',
-                      style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
-                    ),
-                    const SizedBox(width: 12),
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 26,
+                      height: 26,
                       decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.trending_up_rounded,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     Text(
-                      'Partner',
-                      style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
+                      'Emotional Map',
+                      style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                    ),
+                    if (isPaired)
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: theme.accentColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'You',
+                            style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: theme.textColor.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Partner',
+                            style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildEmotionalMapContent(context, dailyMood),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '30-Day Trend Analysis',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'View Mood Map',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildEmotionalMapContent(context),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    '30-Day Trend Analysis',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Analyze Trends',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildSecretVaultBentoCard(BuildContext context) {
-    final vault = context.watch<VaultProvider>();
-    final isUnlocked = vault.isUnlocked;
+    return Consumer<VaultProvider>(
+      builder: (context, vault, child) {
+        final isUnlocked = vault.isUnlocked;
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const VaultScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const VaultScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'SECRET VAULT',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.lock_outline_rounded,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Secret Vault',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildVaultContent(context),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    isUnlocked ? 'Access Granted' : 'PIN Protected',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Open Vault',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'SECRET VAULT',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.lock_outline_rounded,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Secret Vault',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildVaultContent(context, vault),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isUnlocked ? 'Vault Unlocked' : 'Vault Secured',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Unlock Vault',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildLoveChatBentoCard(BuildContext context) {
-    final chat = context.watch<LoveChatProvider>();
-    final messages = chat.messages;
-    final latest = messages.isNotEmpty ? messages.first : null;
+    return Consumer<LoveChatProvider>(
+      builder: (context, chat, child) {
+        final messages = chat.messages;
+        final latest = messages.isNotEmpty ? messages.first : null;
 
-    String footerText = 'Type your private messages';
-    if (latest != null) {
-      footerText = 'Last active: ${_formatRelativeTime(latest.createdAt)}';
-    }
+        String footerText = 'Share private memories';
+        if (latest != null) {
+          footerText = 'Last active: ${_formatRelativeTime(latest.createdAt)}';
+        }
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LoveChatScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LoveChatScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'LOVE CHAT',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Love Chat Space',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _buildLoveChatContent(context),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    footerText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Open Chat',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'LOVE CHAT',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Love Chat Space',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildLoveChatContent(context, chat),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        footerText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Chat Now',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -723,14 +749,12 @@ class BentoGrid extends StatelessWidget {
     }
   }
 
-  // NOTEIT PREVIEW CONTENT
-  Widget _buildNoteItContent(BuildContext context) {
-    final noteit = context.watch<NoteitProvider>();
+  Widget _buildNoteItContent(BuildContext context, NoteitProvider noteit) {
     final notes = noteit.notes;
 
     if (notes.isEmpty) {
       return Text(
-        'Send a doodle note, sketch, or photo directly to your partner\'s screen! 💌',
+        'Draw a sketch, write a note, or share a photo to surprise your partner! 💌',
         style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
       );
     }
@@ -855,9 +879,7 @@ class BentoGrid extends StatelessWidget {
     );
   }
 
-  // CALENDAR PREVIEW CONTENT
-  Widget _buildCalendarContent(BuildContext context) {
-    final calendar = context.watch<CalendarProvider>();
+  Widget _buildCalendarContent(BuildContext context, CalendarProvider calendar) {
     final events = calendar.events.toList();
 
     // Sort to find the next upcoming event
@@ -867,7 +889,7 @@ class BentoGrid extends StatelessWidget {
 
     if (upcoming.isEmpty) {
       return Text(
-        'No upcoming dates or anniversaries planned. Plan your next romantic date! 📅',
+        'No upcoming dates or anniversaries. Plan a romantic day together! 📅',
         style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
       );
     }
@@ -954,118 +976,84 @@ class BentoGrid extends StatelessWidget {
     return '🥰';
   }
 
-  // DAILY MOOD PREVIEW CONTENT
-  Widget _buildMoodContent(BuildContext context) {
-    final dailyMood = context.watch<DailyMoodProvider>();
+  Widget _buildMoodContent(BuildContext context, RelationshipProvider relationship, DailyMoodProvider dailyMood) {
+    final isPaired = relationship.isPaired;
     final myToday = dailyMood.todayMood;
-    final partnerToday = dailyMood.partnerTodayMood;
+    final partnerToday = isPaired ? dailyMood.partnerTodayMood : null;
 
     final myScore = myToday != null ? '${myToday.moodScore}/10' : 'Pending';
-    final partnerScore = partnerToday != null ? '${partnerToday.moodScore}/10' : 'Pending';
-
     final myEmoji = myToday != null ? _getMoodEmoji(myToday.moodScore) : '🤔';
-    final partnerEmoji = partnerToday != null ? _getMoodEmoji(partnerToday.moodScore) : '🤔';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    Widget buildMoodBox(String label, String emoji, String score, bool hasLogged) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: theme.textColor.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.textColor.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // You mood box
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: theme.textColor.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.05),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'YOU',
-                      style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          myToday != null ? Icons.check_circle_rounded : Icons.pending_rounded,
-                          color: myToday != null ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
-                          size: 13,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$myEmoji $myScore',
-                          style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            Text(
+              label,
+              style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)),
             ),
-            const SizedBox(width: 12),
-            // Partner mood box
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: theme.textColor.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.05),
-                    width: 1,
-                  ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(
+                  hasLogged ? Icons.check_circle_rounded : Icons.pending_rounded,
+                  color: hasLogged ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
+                  size: 13,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'PARTNER',
-                      style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          partnerToday != null ? Icons.check_circle_rounded : Icons.pending_rounded,
-                          color: partnerToday != null ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
-                          size: 13,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$partnerEmoji $partnerScore',
-                          style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
-                        ),
-                      ],
-                    ),
-                  ],
+                const SizedBox(width: 6),
+                Text(
+                  '$emoji $score',
+                  style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
                 ),
-              ),
+              ],
             ),
           ],
+        ),
+      );
+    }
+
+    if (!isPaired) {
+      return buildMoodBox('YOU', myEmoji, myScore, myToday != null);
+    }
+
+    final partnerScore = partnerToday != null ? '${partnerToday.moodScore}/10' : 'Pending';
+    final partnerEmoji = partnerToday != null ? _getMoodEmoji(partnerToday.moodScore) : '🤔';
+
+    return Row(
+      children: [
+        Expanded(
+          child: buildMoodBox('YOU', myEmoji, myScore, myToday != null),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: buildMoodBox('PARTNER', partnerEmoji, partnerScore, partnerToday != null),
         ),
       ],
     );
   }
 
-  // EMOTIONAL MAP CHART PREVIEW CONTENT
-  Widget _buildEmotionalMapContent(BuildContext context) {
-    final dailyMood = context.watch<DailyMoodProvider>();
+  Widget _buildEmotionalMapContent(BuildContext context, DailyMoodProvider dailyMood) {
     final recent = dailyMood.recentMoods;
     final partnerRecent = dailyMood.partnerRecentMoods;
 
-    if (recent.length < 2 && partnerRecent.length < 2) {
+    if (recent.length < 2) {
       return Container(
         height: 60,
         alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          'Log mood for a few days to visualize your trend 📈',
+          'Log your mood for a few days to see your emotional map',
+          textAlign: TextAlign.center,
           style: AppTypography.caption(fontSize: 11, color: theme.textColor.withValues(alpha: 0.38)).copyWith(fontStyle: FontStyle.italic),
         ),
       );
@@ -1172,590 +1160,595 @@ class BentoGrid extends StatelessWidget {
 
   // DAILY SYNC PREVIEW CONTENT
   Widget _buildDailySyncBentoCard(BuildContext context) {
-    final dailyMood = context.watch<DailyMoodProvider>();
-    final question = dailyMood.todayQuestion;
+    return Consumer<DailyMoodProvider>(
+      builder: (context, dailyMood, child) {
+        final question = dailyMood.todayQuestion;
 
-    final hasQuestion = question != null;
-    final answered = question != null && question.myAnswer != null;
-    final partnerAnswered = question != null && question.partnerAnswer != null;
+        final hasQuestion = question != null;
+        final answered = question != null && question.myAnswer != null;
+        final partnerAnswered = question != null && question.partnerAnswer != null;
 
-    String statusText = 'Waiting for answers';
-    if (answered && partnerAnswered) {
-      statusText = 'Ready to read responses';
-    } else if (answered) {
-      statusText = 'Waiting for partner';
-    } else if (partnerAnswered) {
-      statusText = 'Partner answered! Unlock now';
-    }
+        String statusText = 'Waiting for answers';
+        if (answered && partnerAnswered) {
+          statusText = 'Ready to read responses';
+        } else if (answered) {
+          statusText = 'Waiting for partner';
+        } else if (partnerAnswered) {
+          statusText = 'Partner answered! Unlock now';
+        }
 
-    final questionText = question != null ? '"${question.question}"' : 'Waiting for today\'s relationship prompt...';
+        final questionText = question != null ? '"${question.question}"' : 'Waiting for today\'s relationship prompt...';
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Row: Badge & Circular Question Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // "DAILY SYNC" Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'DAILY SYNC',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                // Circular Question Icon
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
+                // Header Row: Badge & Circular Question Icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // "DAILY SYNC" Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'DAILY SYNC',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.question_answer_outlined,
-                      color: theme.accentColor,
-                      size: 13,
+                    // Circular Question Icon
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.question_answer_outlined,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Title: Daily Sync Question
-            Text(
-              'Daily Sync Question',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            // Main center block: Question Box
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05), // Adaptive transparent box
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    questionText,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: theme.textColor, height: 1.4).copyWith(fontStyle: hasQuestion ? FontStyle.italic : FontStyle.normal),
+                const SizedBox(height: 12),
+                // Title: Daily Sync Question
+                Text(
+                  'Daily Sync Question',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                // Main center block: Question Box
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05), // Adaptive transparent box
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 12),
-                  // Divider
-                  Container(
-                    height: 1,
-                    color: theme.textColor.withValues(alpha: 0.05),
-                  ),
-                  const SizedBox(height: 12),
-                  // Sync status header
-                  Text(
-                    'SYNC STATUS:',
-                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                  ),
-                  const SizedBox(height: 8),
-                  // Indicators row
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // You status
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: answered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       Text(
-                        'You',
-                        style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: answered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
+                        questionText,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: theme.textColor, height: 1.4).copyWith(fontStyle: hasQuestion ? FontStyle.italic : FontStyle.normal),
                       ),
-                      const SizedBox(width: 20),
-                      // Partner status
+                      const SizedBox(height: 12),
+                      // Divider
                       Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: partnerAnswered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
+                        height: 1,
+                        color: theme.textColor.withValues(alpha: 0.05),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 12),
+                      // Sync status header
                       Text(
-                        'Partner',
-                        style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: partnerAnswered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
+                        'SYNC STATUS:',
+                        style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                      ),
+                      const SizedBox(height: 8),
+                      // Indicators row
+                      Row(
+                        children: [
+                          // You status
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: answered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'You',
+                            style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: answered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
+                          ),
+                          const SizedBox(width: 20),
+                          // Partner status
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: partnerAnswered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Partner',
+                            style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: partnerAnswered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            // Footer row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    statusText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(height: 14),
+                // Footer row
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Sync Minds',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Expanded(
+                      child: Text(
+                        statusText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Sync Minds',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   // BUCKET LIST PREVIEW CONTENT
   Widget _buildBucketListBentoCard(BuildContext context) {
-    final bucketProvider = context.watch<BucketListProvider>();
-    final items = bucketProvider.items;
-    
-    final completedItems = items.where((i) => i.isCompleted).toList();
-    final uncompletedItems = items.where((i) => !i.isCompleted).toList();
-    
-    final total = items.length;
-    final completedCount = completedItems.length;
-    final progress = total > 0 ? (completedCount / total) : 0.0;
-    
-    final closestToConquer = uncompletedItems.isNotEmpty 
-        ? uncompletedItems.first.title 
-        : (items.isNotEmpty ? 'All goals achieved! 🎉' : 'No goals added yet');
+    return Consumer<BucketListProvider>(
+      builder: (context, bucketProvider, child) {
+        final items = bucketProvider.items;
         
-    String completedText = 'No items yet';
-    if (items.isNotEmpty) {
-      if (completedItems.isNotEmpty) {
-        final title = completedItems.first.title;
-        final prefix = 'Completed: $title';
-        if (prefix.length > 25) {
-          completedText = '${prefix.substring(0, 22)}...';
-        } else {
-          completedText = prefix;
+        final completedItems = items.where((i) => i.isCompleted).toList();
+        final uncompletedItems = items.where((i) => !i.isCompleted).toList();
+        
+        final total = items.length;
+        final completedCount = completedItems.length;
+        final progress = total > 0 ? (completedCount / total) : 0.0;
+        
+        final closestToConquer = uncompletedItems.isNotEmpty 
+            ? uncompletedItems.first.title 
+            : (items.isNotEmpty ? 'All goals achieved! 🎉' : 'No goals added yet');
+            
+        String completedText = 'No items yet';
+        if (items.isNotEmpty) {
+          if (completedItems.isNotEmpty) {
+            final title = completedItems.first.title;
+            final prefix = 'Completed: $title';
+            if (prefix.length > 25) {
+              completedText = '${prefix.substring(0, 22)}...';
+            } else {
+              completedText = prefix;
+            }
+          } else {
+            completedText = 'No completed goals yet';
+          }
         }
-      } else {
-        completedText = 'No completed goals yet';
-      }
-    }
 
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const BucketListScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Row: Badge & Circular Compass Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BucketListScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // "ADVENTURES" Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'ADVENTURES',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
-                ),
-                // Circular Compass Icon
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.explore_outlined,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Title: Bucket List Goals
-            Text(
-              'Bucket List Goals',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            // Main center block: Progress Box
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: items.isEmpty
-                ? Container(
-                    height: 100,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'No bucket list items yet. Start planning your future adventures together! ✈️',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Progress labels
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'CONQUER PROGRESS',
-                            style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                          ),
-                          Text(
-                            '${(progress * 100).toInt()}% ($completedCount/$total)',
-                            style: AppTypography.bodyMono(fontSize: 11, fontWeight: FontWeight.w800, color: theme.accentColor),
-                          ),
-                        ],
+                // Header Row: Badge & Circular Compass Icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // "ADVENTURES" Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(height: 10),
-                      // Progress Bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(100),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 6,
-                          backgroundColor: theme.textColor.withValues(alpha: 0.05),
-                          valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                      child: Text(
+                        'ADVENTURES',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
+                    ),
+                    // Circular Compass Icon
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Divider
-                      Container(
-                        height: 1,
-                        color: theme.textColor.withValues(alpha: 0.05),
+                      child: Center(
+                        child: Icon(
+                          Icons.explore_outlined,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      // Closest to conquer
-                      Text(
-                        'CLOSEST TO CONQUER:',
-                        style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: theme.accentColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              closestToConquer,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textColor),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-            ),
-            const SizedBox(height: 14),
-            // Footer row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    completedText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35)).copyWith(
-                      fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Chase Objectives',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
                     ),
                   ],
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // TIME CAPSULES PREVIEW CONTENT
-  Widget _buildTimeCapsuleBentoCard(BuildContext context) {
-    final capsuleProvider = context.watch<TimeCapsuleProvider>();
-    final lockedCapsules = capsuleProvider.lockedCapsules;
-    final hasCapsules = lockedCapsules.isNotEmpty;
-
-    final latestLockedMessage = hasCapsules 
-        ? lockedCapsules.first.message 
-        : 'No sealed capsules yet';
-
-    final openDate = hasCapsules 
-        ? lockedCapsules.first.openDate 
-        : null;
-    
-    String countdownText = '--d --h --m';
-    if (openDate != null) {
-      final duration = openDate.difference(DateTime.now());
-      if (duration.isNegative) {
-        countdownText = 'Ready to open!';
-      } else {
-        final days = duration.inDays;
-        final hours = duration.inHours % 24;
-        final minutes = duration.inMinutes % 60;
-        countdownText = '${days}d ${hours}h ${minutes}m';
-      }
-    }
-
-    final sealedCount = lockedCapsules.length;
-
-    return InkWell(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const TimeCapsuleScreen()),
-      ),
-      borderRadius: BorderRadius.circular(24),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 24,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Row: Badge & Circular Hourglass Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // "FUTURE LETTERS" Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: theme.accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'FUTURE LETTERS',
-                    style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                      letterSpacing: 0.5),
-                  ),
+                const SizedBox(height: 12),
+                // Title: Bucket List Goals
+                Text(
+                  'Bucket List Goals',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
                 ),
-                // Circular Hourglass icon
+                const SizedBox(height: 14),
+                // Main center block: Progress Box
                 Container(
-                  width: 26,
-                  height: 26,
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.accentColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Center(
-                    child: Icon(
-                      Icons.hourglass_empty_rounded,
-                      color: theme.accentColor,
-                      size: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Title: Time Capsules
-            Text(
-              'Time Capsules',
-              style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-            ),
-            const SizedBox(height: 14),
-            // Main center block: Sealed Info Box
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: !hasCapsules
-                ? Container(
-                    height: 100,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Write a letter to your future selves. Seal it today, open it years from now! ✉️',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: items.isEmpty
+                    ? Container(
+                        height: 100,
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Your bucket list is empty. Start planning your next dream adventure together! ✈️',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              latestLockedMessage,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: theme.textColor),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // "SEALED" Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: theme.accentColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              'SEALED',
-                              style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: theme.accentColor),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Divider
-                      Container(
-                        height: 1,
-                        color: theme.textColor.withValues(alpha: 0.05),
-                      ),
-                      const SizedBox(height: 12),
-                      // Countdown row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+                          // Progress labels
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(
-                                Icons.access_time_rounded,
-                                color: theme.accentColor,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 6),
                               Text(
-                                'REMAINING:',
-                                style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                                'CONQUER PROGRESS',
+                                style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                              ),
+                              Text(
+                                '${(progress * 100).toInt()}% ($completedCount/$total)',
+                                style: AppTypography.bodyMono(fontSize: 11, fontWeight: FontWeight.w800, color: theme.accentColor),
                               ),
                             ],
                           ),
+                          const SizedBox(height: 10),
+                          // Progress Bar
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 6,
+                              backgroundColor: theme.textColor.withValues(alpha: 0.05),
+                              valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Divider
+                          Container(
+                            height: 1,
+                            color: theme.textColor.withValues(alpha: 0.05),
+                          ),
+                          const SizedBox(height: 12),
+                          // Closest to conquer
                           Text(
-                            countdownText,
-                            style: AppTypography.bodyMono(fontSize: 11.5, fontWeight: FontWeight.w800, color: theme.accentColor),
+                            'CLOSEST TO CONQUER:',
+                            style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: theme.accentColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  closestToConquer,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textColor),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-            ),
-            const SizedBox(height: 14),
-            // Footer row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$sealedCount Sealed Lockboxes',
-                  style: AppTypography.button(fontSize: 10.5, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
                 ),
+                const SizedBox(height: 14),
+                // Footer row
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Launch Capsule',
-                      style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                    Expanded(
+                      child: Text(
+                        completedText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35)).copyWith(
+                          fontWeight: FontWeight.w500),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 9,
-                      color: theme.accentColor,
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Chase Objectives',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  // SECRET VAULT PREVIEW CONTENT
-  Widget _buildVaultContent(BuildContext context) {
-    final vault = context.watch<VaultProvider>();
+  Widget _buildTimeCapsuleBentoCard(BuildContext context) {
+    return Consumer<TimeCapsuleProvider>(
+      builder: (context, capsuleProvider, child) {
+        final lockedCapsules = capsuleProvider.lockedCapsules;
+        final hasCapsules = lockedCapsules.isNotEmpty;
+
+        final latestLockedMessage = hasCapsules 
+            ? lockedCapsules.first.message 
+            : 'No sealed capsules yet';
+
+        final openDate = hasCapsules 
+            ? lockedCapsules.first.openDate 
+            : null;
+        
+        String countdownText = '--d --h --m';
+        if (openDate != null) {
+          final duration = openDate.difference(DateTime.now());
+          if (duration.isNegative) {
+            countdownText = 'Ready to open!';
+          } else {
+            final days = duration.inDays;
+            final hours = duration.inHours % 24;
+            final minutes = duration.inMinutes % 60;
+            countdownText = '${days}d ${hours}h ${minutes}m';
+          }
+        }
+
+        final sealedCount = lockedCapsules.length;
+
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TimeCapsuleScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row: Badge & Circular Hourglass Icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // "FUTURE LETTERS" Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: theme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'FUTURE LETTERS',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
+                    ),
+                    // Circular Hourglass icon
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.hourglass_empty_rounded,
+                          color: theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Title: Time Capsules
+                Text(
+                  'Time Capsules',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                // Main center block: Sealed Info Box
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: !hasCapsules
+                    ? Container(
+                        height: 100,
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Write a letter to your future selves. Seal it today, and unlock a beautiful memory later! ✉️',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  latestLockedMessage,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: theme.textColor),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // "SEALED" Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: theme.accentColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'SEALED',
+                                  style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: theme.accentColor),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Divider
+                          Container(
+                            height: 1,
+                            color: theme.textColor.withValues(alpha: 0.05),
+                          ),
+                          const SizedBox(height: 12),
+                          // Countdown row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    color: theme.accentColor,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'REMAINING:',
+                                    style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                countdownText,
+                                style: AppTypography.bodyMono(fontSize: 11.5, fontWeight: FontWeight.w800, color: theme.accentColor),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                ),
+                const SizedBox(height: 14),
+                // Footer row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$sealedCount Sealed Lockboxes',
+                      style: AppTypography.button(fontSize: 10.5, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Launch Capsule',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: theme.accentColor,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildVaultContent(BuildContext context, VaultProvider vault) {
     final isUnlocked = vault.isUnlocked;
     final count = vault.allItems.length;
 
@@ -1788,14 +1781,12 @@ class BentoGrid extends StatelessWidget {
     );
   }
 
-  // LOVE CHAT PREVIEW CONTENT
-  Widget _buildLoveChatContent(BuildContext context) {
-    final chat = context.watch<LoveChatProvider>();
+  Widget _buildLoveChatContent(BuildContext context, LoveChatProvider chat) {
     final messages = chat.messages;
 
     if (messages.isEmpty) {
       return Text(
-        'Type your private messages and send real-time love taps! 💓',
+        'Send sweet notes and real-time love taps to your partner! 💓',
         style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
       );
     }
