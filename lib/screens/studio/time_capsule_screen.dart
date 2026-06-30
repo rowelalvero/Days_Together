@@ -75,7 +75,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                       style: AppTypography.body(color: theme.textColor),
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: 'Write a note, a secret, or a message to your future selves...\n\n"Dear future us..."',
+                        hintText: 'Write a letter, share a secret, or send a message to your future selves...\n\n"Dear future us..."',
                         hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
                         filled: true,
                         fillColor: theme.textColor.withValues(alpha: 0.05),
@@ -436,7 +436,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     backgroundColor: theme.primaryColor,
                     title: Text('Delete Time Capsule?', style: AppTypography.cardTitle(color: theme.textColor)),
                     content: Text(
-                      'Are you sure you want to delete this capsule? It will be gone forever.',
+                      'Are you sure you want to delete this time capsule? Its contents will be permanently lost.',
                       style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
                     ),
                     actions: [
@@ -483,7 +483,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Write to your future selves.',
+              'Send a message to the future.',
               style: AppTypography.pageTitle(
                 color: theme.textColor,
                 fontSize: 22,
@@ -492,7 +492,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Seal a letter today to unlock on a special anniversary or date in the future.',
+              'Seal a letter today to be unlocked on a special date or milestone in your future.',
               textAlign: TextAlign.center,
               style: AppTypography.spectral(
                 color: theme.textColor.withValues(alpha: 0.5),

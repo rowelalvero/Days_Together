@@ -28,7 +28,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
 
     if (_selectedMemoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select or add a memory first.')),
+        const SnackBar(content: Text('Please select a memory to inspire your love letter.')),
       );
       return;
     }
@@ -53,7 +53,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate: $e')),
+          SnackBar(content: const Text('We couldn\'t generate your letter. Please check your connection and try again.')),
         );
       }
     } finally {
@@ -76,13 +76,13 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
           backgroundColor: theme.primaryColor,
           title: Text('Vault Locked', style: AppTypography.cardTitle(color: theme.textColor)),
           content: Text(
-            'You need to set up your Vault PIN under the "Together" tab first before you can save letters here.',
+            'Please set up a Secret Vault PIN under the Together tab first to save your letters securely.',
             style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('OK', style: AppTypography.button(color: theme.accentColor)),
+              child: Text('Okay', style: AppTypography.button(color: theme.accentColor)),
             ),
           ],
         ),
@@ -127,14 +127,14 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
                     Navigator.pop(dialogContext);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('🔒 Letter saved securely to the Vault!'),
+                        content: Text('🔒 Saved securely to your Secret Vault!'),
                         backgroundColor: Colors.pinkAccent,
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Incorrect PIN. Try again.'),
+                        content: Text('Incorrect PIN. Please try again.'),
                         backgroundColor: Colors.redAccent,
                       ),
                     );
@@ -151,7 +151,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🔒 Letter saved securely to the Vault!'),
+          content: Text('🔒 Saved securely to your Secret Vault!'),
           backgroundColor: Colors.pinkAccent,
         ),
       );
@@ -217,7 +217,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'AI Love Letter',
+                  'Love Letter Writer',
                   style: AppTypography.cormorant(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -225,7 +225,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
                   ),
                 ),
                 Text(
-                  'Transform your shared memories into poetry.',
+                  'Transform your shared memories into a beautiful letter.',
                   style: AppTypography.spectral(
                     fontSize: 12,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -249,12 +249,12 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
             Icon(Icons.palette_outlined, size: 64, color: theme.textColor.withValues(alpha: 0.3)),
             const SizedBox(height: 24),
             Text(
-              'No memories found!',
+              'No memories logged yet',
               style: AppTypography.cardTitle(color: theme.textColor),
             ),
             const SizedBox(height: 8),
             Text(
-              'You need to log at least one memory in the Timeline tab to generate a love letter.',
+              'Share a memory in the Timeline first, and we\'ll help you turn it into a beautiful love letter.',
               textAlign: TextAlign.center,
               style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.54)),
             ),
