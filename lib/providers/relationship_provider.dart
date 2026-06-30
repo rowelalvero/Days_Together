@@ -9,6 +9,10 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/services/auth_service.dart';
+import 'package:days_together/services/couple_service.dart';
+import 'package:days_together/services/profile_service.dart';
 
 const Object _unset = Object();
 
@@ -80,6 +84,10 @@ class RelationshipProvider with ChangeNotifier {
   String? _coupleCode;
   bool _isPaired = false;
   bool _isPremium = false;
+  bool _isGeneratingCode = false;
+  bool _isJoining = false;
+  bool _isUnlinking = false;
+  bool _showPartnerDeletedNotice = false;
   String? _storyTitle;
   String? _yourGender;
   String? _partnerGender;
@@ -129,6 +137,7 @@ class RelationshipProvider with ChangeNotifier {
   String? get partnerAvatarPath => _partnerAvatarPath;
   String? get coupleCode => _coupleCode;
   bool get isPaired => _isPaired;
+  bool get isOnboardingComplete => _yourName != null && _yourName!.isNotEmpty;
   bool get isPremium => _isPremium;
   String get storyTitle => _storyTitle ?? 'Our Story';
   String? get yourGender => _yourGender;
@@ -331,21 +340,80 @@ class RelationshipProvider with ChangeNotifier {
                       'couple_id': null,
                     });
                   } catch (_) {}
+                  _isInitialized = true;
+                  notifyListeners();
                   return;
                 }
+
+                final prefs = await SharedPreferences.getInstance();
 
                 final userData = dataList.first;
                 final newCoupleId = userData['couple_id'] as String?;
                 _partnerId = userData['partner_id'] as String?;
 
+                final partnerDeletedNotice = userData['partner_deleted_notice'] as bool? ?? false;
+                if (partnerDeletedNotice) {
+                  _showPartnerDeletedNotice = true;
+                  // Immediately clear it in the db to prevent repeat triggers
+                  Supabase.instance.client
+                      .from('users')
+                      .update({'partner_deleted_notice': false})
+                      .eq('id', _userId!)
+                      .then((_) {});
+                }
+
                 bool coupleIdChanged = _coupleId != newCoupleId;
                 _coupleId = newCoupleId;
-                _isPaired = _coupleId != null;
+                _isPaired = _coupleId != null && _partnerId != null;
+                await prefs.setBool('is_paired', _isPaired);
 
                 // Sync FCM Token to Supabase
                 NotificationService().syncTokenToSupabase();
 
-                final prefs = await SharedPreferences.getInstance();
+                _yourName = userData['display_name'] as String? ?? prefs.getString('your_name');
+                if (_yourName != null) {
+                  await prefs.setString('your_name', _yourName!);
+                  await prefs.setBool('onboarding_completed', true);
+                }
+
+                // Restore preserved onboarding details if unpaired
+                if (!_isPaired) {
+                  final dateStr = prefs.getString('relationship_start_date');
+                  if (dateStr != null) {
+                    _startDate = DateTime.parse(dateStr);
+                  }
+                  final hour = prefs.getInt('relationship_start_hour');
+                  final minute = prefs.getInt('relationship_start_minute');
+                  if (hour != null && minute != null) {
+                    _startTime = TimeOfDay(hour: hour, minute: minute);
+                  }
+                  _yourAvatarPath = prefs.getString('your_avatar_path');
+                }
+
+                // Load existing pairing code if not paired
+                if (!_isPaired && _coupleCode == null) {
+                  Supabase.instance.client
+                      .from('pairing_codes')
+                      .select('code')
+                      .eq('creator_id', _userId!)
+                      .maybeSingle()
+                      .then((pairingData) async {
+                        if (pairingData != null) {
+                          _coupleCode = pairingData['code'] as String?;
+                          if (_coupleCode != null) {
+                            final innerPrefs = await SharedPreferences.getInstance();
+                            await innerPrefs.setString('couple_code', _coupleCode!);
+                            notifyListeners();
+                          }
+                        } else {
+                          // If no pairing code exists in the database, generate a new permanent one
+                          generateCoupleCode();
+                        }
+                      })
+                      .catchError((e) {
+                        debugPrint('Error retrieving existing pairing code: $e');
+                      });
+                }
 
                 // Load and cache your join date
                 final createdAtStr = userData['created_at'] as String?;
@@ -885,10 +953,7 @@ class RelationshipProvider with ChangeNotifier {
 
     if (isFirebaseAvailable && _userId != null) {
       try {
-        await Supabase.instance.client
-            .from('users')
-            .update({'display_name': name})
-            .eq('id', _userId!);
+        await ProfileService.instance.updateUserDetails(_userId!, {'display_name': name});
       } catch (e) {
         debugPrint('Supabase setYourName display_name update failed: $e');
       }
@@ -1103,10 +1168,7 @@ class RelationshipProvider with ChangeNotifier {
 
     if (isFirebaseAvailable && _userId != null) {
       try {
-        await Supabase.instance.client
-            .from('users')
-            .update({'display_name': yours})
-            .eq('id', _userId!);
+        await ProfileService.instance.updateUserDetails(_userId!, {'display_name': yours});
       } catch (e) {
         debugPrint('Supabase setNames display_name update failed: $e');
       }
@@ -1199,14 +1261,10 @@ class RelationshipProvider with ChangeNotifier {
     await prefs.setString('partner_height', partnerH);
     if (_coupleId != null) {
       try {
-        final snap = await Supabase.instance.client
-            .from('license_details')
-            .select()
-            .eq('couple_id', _coupleId!)
-            .maybeSingle();
+        final snap = await ProfileService.instance.fetchLicenseDetails(_coupleId!);
         final creatorId = snap != null ? snap['creator_id'] : _userId;
         final isCreator = creatorId == _userId;
-        await Supabase.instance.client.from('license_details').upsert({
+        await ProfileService.instance.upsertLicenseDetails({
           'couple_id': _coupleId!,
           'creator_id': creatorId,
           isCreator ? 'your_weight' : 'partner_weight': yourW,
@@ -1238,14 +1296,10 @@ class RelationshipProvider with ChangeNotifier {
     await prefs.setString('partner_eye_color', partnerE);
     if (_coupleId != null) {
       try {
-        final snap = await Supabase.instance.client
-            .from('license_details')
-            .select()
-            .eq('couple_id', _coupleId!)
-            .maybeSingle();
+        final snap = await ProfileService.instance.fetchLicenseDetails(_coupleId!);
         final creatorId = snap != null ? snap['creator_id'] : _userId;
         final isCreator = creatorId == _userId;
-        await Supabase.instance.client.from('license_details').upsert({
+        await ProfileService.instance.upsertLicenseDetails({
           'couple_id': _coupleId!,
           'creator_id': creatorId,
           isCreator ? 'your_blood_type' : 'partner_blood_type': yourB,
@@ -1284,14 +1338,10 @@ class RelationshipProvider with ChangeNotifier {
     }
     if (_coupleId != null) {
       try {
-        final snap = await Supabase.instance.client
-            .from('license_details')
-            .select()
-            .eq('couple_id', _coupleId!)
-            .maybeSingle();
+        final snap = await ProfileService.instance.fetchLicenseDetails(_coupleId!);
         final creatorId = snap != null ? snap['creator_id'] : _userId;
         final isCreator = creatorId == _userId;
-        await Supabase.instance.client.from('license_details').upsert({
+        await ProfileService.instance.upsertLicenseDetails({
           'couple_id': _coupleId!,
           'creator_id': creatorId,
           isCreator ? 'your_conditions' : 'partner_conditions': yourC,
@@ -1347,11 +1397,7 @@ class RelationshipProvider with ChangeNotifier {
   ) async {
     if (_coupleId != null) {
       try {
-        final snap = await Supabase.instance.client
-            .from('license_details')
-            .select()
-            .eq('couple_id', _coupleId!)
-            .maybeSingle();
+        final snap = await ProfileService.instance.fetchLicenseDetails(_coupleId!);
 
         final creatorId = snap != null ? snap['creator_id'] : _userId;
         final isCreator = creatorId == _userId;
@@ -1373,7 +1419,7 @@ class RelationshipProvider with ChangeNotifier {
           finalPartnerVal = partnerVal.toIso8601String();
         }
 
-        await Supabase.instance.client.from('license_details').upsert({
+        await ProfileService.instance.upsertLicenseDetails({
           'couple_id': _coupleId!,
           'creator_id': creatorId,
           finalCreatorKey: finalCreatorVal,
@@ -1388,11 +1434,7 @@ class RelationshipProvider with ChangeNotifier {
   void _syncSingleLicenseField(String key, dynamic val) async {
     if (_coupleId != null) {
       try {
-        final snap = await Supabase.instance.client
-            .from('license_details')
-            .select()
-            .eq('couple_id', _coupleId!)
-            .maybeSingle();
+        final snap = await ProfileService.instance.fetchLicenseDetails(_coupleId!);
 
         final creatorId = snap != null ? snap['creator_id'] : _userId;
         final isCreator = creatorId == _userId;
@@ -1410,7 +1452,7 @@ class RelationshipProvider with ChangeNotifier {
         dynamic finalVal = val;
         if (val is DateTime) finalVal = val.toIso8601String();
 
-        await Supabase.instance.client.from('license_details').upsert({
+        await ProfileService.instance.upsertLicenseDetails({
           'couple_id': _coupleId!,
           'creator_id': creatorId,
           snakeKey: finalVal,
@@ -1690,16 +1732,11 @@ class RelationshipProvider with ChangeNotifier {
             if (await file.exists()) {
               final storagePath =
                   'couples/$_coupleId/avatars/${_userId ?? 'user'}.jpg';
-              await Supabase.instance.client.storage
-                  .from('avatars')
-                  .upload(
-                    storagePath,
-                    file,
-                    fileOptions: const FileOptions(upsert: true),
-                  );
-              final yourUrl = Supabase.instance.client.storage
-                  .from('avatars')
-                  .getPublicUrl(storagePath);
+              final yourUrl = await ProfileService.instance.uploadAvatar(
+                bucketName: 'avatars',
+                filePath: yourPath,
+                storagePath: storagePath,
+              );
 
               // Evict old URL from cache before updating state
               if (_yourAvatarPath != null && _yourAvatarPath!.startsWith('http')) {
@@ -1737,16 +1774,11 @@ class RelationshipProvider with ChangeNotifier {
             if (await file.exists()) {
               final storagePath =
                   'couples/$_coupleId/avatars/${_partnerId ?? 'partner'}.jpg';
-              await Supabase.instance.client.storage
-                  .from('avatars')
-                  .upload(
-                    storagePath,
-                    file,
-                    fileOptions: const FileOptions(upsert: true),
-                  );
-              final partnerUrl = Supabase.instance.client.storage
-                  .from('avatars')
-                  .getPublicUrl(storagePath);
+              final partnerUrl = await ProfileService.instance.uploadAvatar(
+                bucketName: 'avatars',
+                filePath: partnerPath,
+                storagePath: storagePath,
+              );
 
               // Evict old URL from cache before updating state
               if (_partnerAvatarPath != null &&
@@ -1779,11 +1811,7 @@ class RelationshipProvider with ChangeNotifier {
       }
 
       try {
-        final snap = await Supabase.instance.client
-            .from('license_details')
-            .select()
-            .eq('couple_id', _coupleId!)
-            .maybeSingle();
+        final snap = await ProfileService.instance.fetchLicenseDetails(_coupleId!);
         final creatorId = snap != null ? snap['creator_id'] : _userId;
         final isCreator = creatorId == _userId;
 
@@ -1801,9 +1829,7 @@ class RelationshipProvider with ChangeNotifier {
               _partnerAvatarPath;
         }
 
-        await Supabase.instance.client
-            .from('license_details')
-            .upsert(updateData);
+        await ProfileService.instance.upsertLicenseDetails(updateData);
       } catch (e) {
         debugPrint('Supabase setAvatars update failed: $e');
       }
@@ -1828,7 +1854,15 @@ class RelationshipProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  String generateCoupleCode() {
+  String generateCoupleCode({bool forceRegenerate = false}) {
+    if (!forceRegenerate && _coupleCode != null) {
+      return _coupleCode!;
+    }
+    if (_isGeneratingCode) {
+      return _coupleCode ?? '';
+    }
+    _isGeneratingCode = true;
+
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = Random();
     _coupleCode = String.fromCharCodes(
@@ -1838,20 +1872,55 @@ class RelationshipProvider with ChangeNotifier {
       ),
     );
 
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setString('couple_code', _coupleCode!);
-    });
+    SharedPreferences.getInstance().then((prefs) async {
+      try {
+        await prefs.setString('couple_code', _coupleCode!);
 
-    if (isFirebaseAvailable && _userId != null) {
-      Supabase.instance.client
-          .from('pairing_codes')
-          .upsert({
-            'code': _coupleCode,
-            'creator_id': _userId,
-            'created_at': DateTime.now().toIso8601String(),
-          })
-          .then((_) {});
-    }
+        if (isFirebaseAvailable && _userId != null) {
+          try {
+            // Check if user already has a couple_id
+            final userData = await Supabase.instance.client
+                .from('users')
+                .select('couple_id')
+                .eq('id', _userId!)
+                .maybeSingle();
+
+            String? existingCoupleId = userData?['couple_id'] as String?;
+            if (existingCoupleId == null) {
+              existingCoupleId = const Uuid().v4();
+              // Create the couple record
+              await Supabase.instance.client.from('couples').insert({
+                'id': existingCoupleId,
+                'story_title': 'Our Story',
+              });
+              // Update the user record
+              await Supabase.instance.client
+                  .from('users')
+                  .update({'couple_id': existingCoupleId})
+                  .eq('id', _userId!);
+              _coupleId = existingCoupleId;
+              await prefs.setString('couple_id', existingCoupleId);
+            } else {
+              _coupleId = existingCoupleId;
+              await prefs.setString('couple_id', existingCoupleId);
+            }
+
+            // Save code
+            await Supabase.instance.client
+                .from('pairing_codes')
+                .upsert({
+                  'code': _coupleCode,
+                  'creator_id': _userId,
+                  'created_at': DateTime.now().toIso8601String(),
+                });
+          } catch (e) {
+            debugPrint('Error in generateCoupleCode db setup: $e');
+          }
+        }
+      } finally {
+        _isGeneratingCode = false;
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
@@ -1860,68 +1929,82 @@ class RelationshipProvider with ChangeNotifier {
   }
 
   Future<bool> joinWithCode(String code) async {
-    final cleanCode = code.trim().toUpperCase();
-    if (cleanCode.length != 6) return false;
-
-    _coupleCode = cleanCode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('couple_code', cleanCode);
-
-    if (isFirebaseAvailable && _userId != null) {
-      try {
-        final data = await Supabase.instance.client
-            .from('pairing_codes')
-            .select()
-            .eq('code', cleanCode)
-            .maybeSingle();
-        if (data == null) {
-          return false;
-        }
-        final creatorId = data['creator_id'] as String;
-        final newCoupleId = const Uuid().v4();
-
-        await Supabase.instance.client.from('couples').insert({
-          'id': newCoupleId,
-          'story_title': _storyTitle ?? 'Our Story',
-        });
-
-        await Supabase.instance.client
-            .from('users')
-            .update({'couple_id': newCoupleId, 'partner_id': _userId})
-            .eq('id', creatorId);
-
-        await Supabase.instance.client
-            .from('users')
-            .update({'couple_id': newCoupleId, 'partner_id': creatorId})
-            .eq('id', _userId!);
-
-        await Supabase.instance.client
-            .from('pairing_codes')
-            .delete()
-            .eq('code', cleanCode);
-
-        _coupleId = newCoupleId;
-        _isPaired = true;
-        await prefs.setBool('is_paired', true);
-        notifyListeners();
-        return true;
-      } catch (e) {
-        debugPrint('Supabase joinWithCode failed: $e');
-        rethrow;
-      }
-    }
-
-    // Offline fallback validation (only if DB is unavailable)
-    _isPaired = true;
-    await prefs.setBool('is_paired', true);
+    if (_isJoining) return false;
+    _isJoining = true;
     notifyListeners();
-    return true;
+
+    try {
+      final cleanCode = code.trim().toUpperCase();
+      if (cleanCode.length != 6) return false;
+
+      _coupleCode = cleanCode;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('couple_code', cleanCode);
+
+      if (isFirebaseAvailable && _userId != null) {
+        try {
+          // Execute the atomic secure RPC join function via CoupleService
+          final result = await CoupleService.instance.joinWithCode(cleanCode);
+          final bool success = result['success'] as bool? ?? false;
+
+          if (!success) {
+            final errorMsg = result['error'] as String? ?? 'Pairing failed';
+            debugPrint('Supabase join_couple_with_code error: $errorMsg');
+            throw Exception(errorMsg);
+          }
+
+          final joinedCoupleId = result['couple_id'] as String;
+          final creatorId = result['partner_id'] as String;
+
+          _coupleId = joinedCoupleId;
+          _partnerId = creatorId;
+          _isPaired = true;
+
+          await prefs.setString('couple_id', _coupleId!);
+          await prefs.setString('partner_id', _partnerId!);
+          await prefs.setBool('is_paired', true);
+
+          // Fetch the couple details to load start date and time
+          final coupleData = await Supabase.instance.client
+              .from('couples')
+              .select()
+              .eq('id', _coupleId!)
+              .maybeSingle();
+
+          if (coupleData != null) {
+            final startStr = coupleData['start_date'] as String?;
+            if (startStr != null) {
+              _startDate = DateTime.parse(startStr);
+              await prefs.setString('relationship_start_date', startStr);
+            }
+            final hour = coupleData['start_time_hour'] as int?;
+            final minute = coupleData['start_time_minute'] as int?;
+            if (hour != null && minute != null) {
+              _startTime = TimeOfDay(hour: hour, minute: minute);
+              await prefs.setInt('relationship_start_hour', hour);
+              await prefs.setInt('relationship_start_minute', minute);
+            }
+            _storyTitle = coupleData['story_title'] as String? ?? 'Our Story';
+            await prefs.setString('story_title', _storyTitle!);
+          }
+          return true;
+        } catch (e) {
+          debugPrint('Error in joinWithCode: $e');
+          rethrow;
+        }
+      }
+      return false;
+    } finally {
+      _isJoining = false;
+      notifyListeners();
+    }
   }
 
   Future<void> completeOnboarding() async {
-    _isPaired = true;
+    _isPaired = _coupleId != null && _partnerId != null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_paired', true);
+    await prefs.setBool('is_paired', _isPaired);
+    await prefs.setBool('onboarding_completed', true);
 
     if (isFirebaseAvailable && _userId != null && _yourName != null) {
       try {
@@ -1964,45 +2047,72 @@ class RelationshipProvider with ChangeNotifier {
   }
 
   Future<void> unlinkPartner() async {
-    _isPaired = false;
-    _coupleCode = null;
-    _partnerName = null;
-    _partnerAvatarPath = null;
-    _partnerJoinDate = null;
-    _isPartnerOnline = false;
-    _presenceChannel?.unsubscribe();
-    _presenceChannel = null;
+    if (_isUnlinking) return;
+    _isUnlinking = true;
+    notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_paired', false);
-    await prefs.remove('couple_code');
-    await prefs.remove('partner_name');
-    await prefs.remove('partner_avatar_path');
-    await prefs.remove('partner_join_date');
+    try {
+      _isPaired = false;
+      _coupleCode = null;
+      _partnerName = null;
+      _partnerAvatarPath = null;
+      _partnerJoinDate = null;
+      _isPartnerOnline = false;
+      _presenceChannel?.unsubscribe();
+      _presenceChannel = null;
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_paired', false);
+      await prefs.remove('couple_code');
+      await prefs.remove('partner_name');
+      await prefs.remove('partner_avatar_path');
+      await prefs.remove('partner_join_date');
+
+      if (isFirebaseAvailable && _userId != null) {
+        await CoupleService.instance.unlinkPartner(userId: _userId!);
+      }
+    } catch (e) {
+      debugPrint('Error in unlinkPartner: $e');
+    } finally {
+      _isUnlinking = false;
+      notifyListeners();
+    }
+  }
+
+  bool get showPartnerDeletedNotice => _showPartnerDeletedNotice;
+
+  void clearPartnerDeletedNotice() {
+    _showPartnerDeletedNotice = false;
+    notifyListeners();
     if (isFirebaseAvailable && _userId != null) {
       Supabase.instance.client
           .from('users')
-          .update({'couple_id': null, 'partner_id': null})
+          .update({'partner_deleted_notice': false})
           .eq('id', _userId!)
           .then((_) {});
     }
+  }
 
-    notifyListeners();
+  Future<void> deleteAccount() async {
+    if (isFirebaseAvailable && _userId != null) {
+      try {
+        await AuthService.instance.deleteUserAccount();
+      } catch (e) {
+        debugPrint('Error calling delete_current_user RPC: $e');
+        try {
+          await Supabase.instance.client.from('users').delete().eq('id', _userId!);
+        } catch (_) {}
+      }
+    }
+    await logout();
   }
 
   Future<void> signUpWithEmail(String email, String password) async {
-    await Supabase.instance.client.auth.signUp(
-      email: email,
-      password: password,
-    );
+    await AuthService.instance.signUpWithEmail(email, password);
   }
 
   Future<void> signInWithEmail(String email, String password) async {
-    await Supabase.instance.client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    await AuthService.instance.signInWithEmail(email, password);
   }
 
   Future<void> signInWithGoogle() async {
@@ -2045,10 +2155,9 @@ class RelationshipProvider with ChangeNotifier {
       throw 'No ID Token found. Make sure serverClientId (Web Client ID) is configured correctly.';
     }
 
-    await Supabase.instance.client.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
+    await AuthService.instance.signInWithIdToken(
       idToken: idToken,
-      accessToken: accessToken,
+      accessToken: accessToken ?? '',
     );
   }
 
@@ -2089,7 +2198,21 @@ class RelationshipProvider with ChangeNotifier {
     _partnerSignature = null;
 
     final prefs = await SharedPreferences.getInstance();
+    final onboardingCompleted = prefs.getBool('onboarding_completed');
+    final startDate = prefs.getString('relationship_start_date');
+    final startHour = prefs.getInt('relationship_start_hour');
+    final startMinute = prefs.getInt('relationship_start_minute');
+    final yourAvatarPath = prefs.getString('your_avatar_path');
+    final yourName = prefs.getString('your_name');
+
     await prefs.clear();
+
+    if (onboardingCompleted != null) await prefs.setBool('onboarding_completed', onboardingCompleted);
+    if (startDate != null) await prefs.setString('relationship_start_date', startDate);
+    if (startHour != null) await prefs.setInt('relationship_start_hour', startHour);
+    if (startMinute != null) await prefs.setInt('relationship_start_minute', startMinute);
+    if (yourAvatarPath != null) await prefs.setString('your_avatar_path', yourAvatarPath);
+    if (yourName != null) await prefs.setString('your_name', yourName);
 
     _userSub?.cancel();
     _coupleSub?.cancel();
@@ -2101,7 +2224,7 @@ class RelationshipProvider with ChangeNotifier {
     _partnerJoinDate = null;
 
     if (isFirebaseAvailable) {
-      await Supabase.instance.client.auth.signOut();
+      await AuthService.instance.signOut();
       try {
         final googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
@@ -2126,52 +2249,27 @@ class RelationshipProvider with ChangeNotifier {
     return DateTime.now().difference(startDateTime);
   }
 
-  int get totalDays => relationshipDuration.inDays;
+  int get totalDays {
+    if (_startDate == null) return 0;
+    return DateHelper.calendarDaysBetween(_startDate!, DateTime.now());
+  }
+  
   int get totalHours => relationshipDuration.inHours;
   int get totalMinutes => relationshipDuration.inMinutes;
   int get totalSeconds => relationshipDuration.inSeconds;
 
   Map<String, int> get preciseAge {
-    final start = startDateTime;
-    final now = DateTime.now();
-
-    int years = now.year - start.year;
-    int months = now.month - start.month;
-    int days = now.day - start.day;
-    int hours = now.hour - start.hour;
-    int minutes = now.minute - start.minute;
-    int seconds = now.second - start.second;
-
-    if (seconds < 0) {
-      minutes--;
-      seconds += 60;
+    if (_startDate == null) {
+      return {
+        'years': 0,
+        'months': 0,
+        'days': 0,
+        'hours': 0,
+        'minutes': 0,
+        'seconds': 0,
+      };
     }
-    if (minutes < 0) {
-      hours--;
-      minutes += 60;
-    }
-    if (hours < 0) {
-      days--;
-      hours += 24;
-    }
-    if (days < 0) {
-      months--;
-      final previousMonth = DateTime(now.year, now.month, 0);
-      days += previousMonth.day;
-    }
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-
-    return {
-      'years': years,
-      'months': months,
-      'days': days,
-      'hours': hours,
-      'minutes': minutes,
-      'seconds': seconds,
-    };
+    return DateHelper.getPreciseAge(startDateTime, DateTime.now());
   }
 
   int get totalMonths {
@@ -2240,12 +2338,8 @@ class RelationshipProvider with ChangeNotifier {
 
     if (milestones.length < 5 && _startDate != null) {
       final nextYear = years + 1;
-      final anniversaryDate = DateTime(
-        _startDate!.year + nextYear,
-        _startDate!.month,
-        _startDate!.day,
-      );
-      final daysUntil = anniversaryDate.difference(DateTime.now()).inDays;
+      final anniversaryDate = DateHelper.getAnniversaryDate(_startDate!, nextYear);
+      final daysUntil = DateHelper.daysUntil(anniversaryDate);
       if (daysUntil > 0) {
         final ordinal = _getOrdinal(nextYear);
         milestones.add(
