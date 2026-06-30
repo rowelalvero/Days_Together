@@ -92,17 +92,17 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                                   ? FileImage(File(rp.partnerAvatarPath!))
                                   : null))
                           : null,
-                      child: (!partnerJoined ||
-                              rp.partnerAvatarPath == null ||
-                              (rp.partnerAvatarPath!.startsWith('http') == false &&
-                                  !File(rp.partnerAvatarPath!).existsSync()))
-                          ? Icon(Icons.person, color: widget.theme.textColor.withValues(alpha: 0.3))
-                          : null,
                       onForegroundImageError: (rp.partnerAvatarPath != null &&
                               rp.partnerAvatarPath!.startsWith('http'))
                           ? (exception, stackTrace) {
                               debugPrint('Error loading partner presence avatar: $exception');
                             }
+                          : null,
+                      child: (!partnerJoined ||
+                              rp.partnerAvatarPath == null ||
+                              (rp.partnerAvatarPath!.startsWith('http') == false &&
+                                  !File(rp.partnerAvatarPath!).existsSync()))
+                          ? Icon(Icons.person, color: widget.theme.textColor.withValues(alpha: 0.3))
                           : null,
                     ),
                   ),

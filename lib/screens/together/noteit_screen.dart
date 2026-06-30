@@ -8,6 +8,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/services/noteit_sync_manager.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -94,10 +95,14 @@ class _NoteitScreenState extends State<NoteitScreen>
 
   Future<void> _pickImage(ImageSource source) async {
     final permissionService = PermissionService();
-    final hasPermission = source == ImageSource.camera
-        ? await permissionService.requestCameraPermission(context)
-        : await permissionService.requestPhotosPermission(context);
-    if (!hasPermission) return;
+    if (!mounted) return;
+    final bool hasPermission;
+    if (source == ImageSource.camera) {
+      hasPermission = await permissionService.requestCameraPermission(context);
+    } else {
+      hasPermission = await permissionService.requestPhotosPermission(context);
+    }
+    if (!mounted || !hasPermission) return;
 
     try {
       final picked = await _picker.pickImage(
@@ -842,7 +847,13 @@ class _NoteitScreenState extends State<NoteitScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        item.sender == 'you' ? 'Sent' : 'Received',
+                        item.sender == 'you'
+                            ? (item.syncStatus == SyncStatus.sending
+                                ? '📤 Sending'
+                                : item.syncStatus == SyncStatus.failed
+                                    ? '⚠️ Failed'
+                                    : '✅ Sent')
+                            : 'Received',
                         style: AppTypography.bodyLarge(
                           fontSize: 8,
                           color: Colors.white70,
@@ -851,6 +862,12 @@ class _NoteitScreenState extends State<NoteitScreen>
                       ),
                     ),
                   ),
+                  if (item.sender == 'you')
+                    Positioned(
+                      bottom: 6,
+                      right: 8,
+                      child: _buildSyncStatusBadge(item, theme),
+                    ),
                 ],
               ),
             ),
@@ -858,6 +875,73 @@ class _NoteitScreenState extends State<NoteitScreen>
         );
       },
     );
+  }
+
+  Widget _buildSyncStatusBadge(NoteitItem item, LoveStoryTheme theme) {
+    switch (item.syncStatus) {
+      case SyncStatus.sending:
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: const BoxDecoration(
+            color: Colors.black54,
+            shape: BoxShape.circle,
+          ),
+          child: const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        );
+      case SyncStatus.failed:
+        return GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: theme.backgroundColor,
+                title: Text(
+                  'Sync Failed',
+                  style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+                ),
+                content: Text(
+                  'This love note couldn\'t be sent to your partner. Would you like to try sending it again?',
+                  style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.8)),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.6))),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      NoteitSyncManager.instance.retryTask(item.id);
+                    },
+                    child: Text('Retry Now', style: AppTypography.button(color: theme.accentColor)),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              color: Colors.redAccent,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.refresh_rounded,
+              size: 12,
+              color: Colors.white,
+            ),
+          ),
+        );
+      case SyncStatus.synced:
+        return const SizedBox.shrink();
+    }
   }
 
   void _showEnlargeNoteDialog(NoteitItem item, LoveStoryTheme theme) {
@@ -889,7 +973,13 @@ class _NoteitScreenState extends State<NoteitScreen>
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                item.sender == 'you' ? 'Sent by You' : 'Received from Partner',
+                item.sender == 'you'
+                    ? (item.syncStatus == SyncStatus.sending
+                        ? 'Sending Note...'
+                        : item.syncStatus == SyncStatus.failed
+                            ? 'Failed to Send'
+                            : 'Sent by You')
+                    : 'Received from Partner',
                 style: AppTypography.bodyLarge(
                   color: Colors.white,
                   fontSize: 13,

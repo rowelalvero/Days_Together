@@ -4,7 +4,6 @@ import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 class ThemeSelectorScreen extends StatelessWidget {
