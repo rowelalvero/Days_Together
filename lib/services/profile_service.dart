@@ -24,10 +24,10 @@ class ProfileService {
         .eq('id', coupleId);
   }
 
-  /// Updates fields in the `relationship_licenses` table.
+  /// Updates fields in the `license_details` table.
   Future<void> updateLicenseDetails(String coupleId, Map<String, dynamic> data) async {
     await Supabase.instance.client
-        .from('relationship_licenses')
+        .from('license_details')
         .update(data)
         .eq('couple_id', coupleId);
   }
@@ -35,7 +35,7 @@ class ProfileService {
   /// Fetches relationship license details for a specific couple.
   Future<Map<String, dynamic>?> fetchLicenseDetails(String coupleId) async {
     final list = await Supabase.instance.client
-        .from('relationship_licenses')
+        .from('license_details')
         .select()
         .eq('couple_id', coupleId);
     return list.isNotEmpty ? list.first : null;
