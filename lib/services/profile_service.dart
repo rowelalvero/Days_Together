@@ -32,6 +32,13 @@ class ProfileService {
         .eq('couple_id', coupleId);
   }
 
+  /// Upserts registry/license metadata in the `license_details` table.
+  Future<void> upsertLicenseDetails(Map<String, dynamic> data) async {
+    await Supabase.instance.client
+        .from('license_details')
+        .upsert(data);
+  }
+
   /// Fetches relationship license details for a specific couple.
   Future<Map<String, dynamic>?> fetchLicenseDetails(String coupleId) async {
     final list = await Supabase.instance.client
