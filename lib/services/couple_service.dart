@@ -16,13 +16,8 @@ class CoupleService {
     return Map<String, dynamic>.from(response);
   }
 
-  /// Unlinks two partners, clearing couple links on both user records.
-  Future<void> unlinkPartner({required String coupleId, required String userId}) async {
-    await Supabase.instance.client
-        .from('couples')
-        .update({'partner_id': null})
-        .eq('id', coupleId);
-        
+  /// Unlinks the current user, clearing couple and partner links in the database.
+  Future<void> unlinkPartner({required String userId}) async {
     await Supabase.instance.client
         .from('users')
         .update({'couple_id': null, 'partner_id': null})
