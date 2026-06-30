@@ -46,7 +46,7 @@ class _AuthScreenState extends State<AuthScreen> {
           final theme = context.read<ThemeProvider>().currentLoveTheme;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Verification email sent! Please check your inbox.'),
+              content: const Text('Verification link sent! Please check your email to activate your account.'),
               backgroundColor: theme.accentColor,
             ),
           );
@@ -130,7 +130,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    _isSignUp ? 'Grow Together' : 'Back in Your Arms',
+                    _isSignUp ? 'Create Your Shared Space' : 'Welcome Back',
                     style: AppTypography.cormorant(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -140,8 +140,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isSignUp
-                        ? 'Keep your most cherished moments safe and close.'
-                        : 'Access your shared world.',
+                        ? 'Begin your exclusive space to capture memories and stay in sync.'
+                        : 'Step back into your shared world.',
                     style: AppTypography.spectral(
                       fontSize: 16,
                       color: theme.textColor.withValues(alpha: 0.7),
@@ -346,7 +346,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                       ),
                                     )
                                   : Text(
-                                      _isSignUp ? 'Join the Story' : 'Enter Our World',
+                                      _isSignUp ? 'Create Account' : 'Sign In',
                                       style: AppTypography.button(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,

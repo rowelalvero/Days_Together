@@ -1,4 +1,4 @@
-import 'package:days_together/screens/onboarding/genesis_screen.dart';
+import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -67,7 +67,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your partner shared a 6-digit code with you.',
+                    'Enter the 6-character connection code sent by your partner.',
                     style: AppTypography.spectral(
                       fontSize: 16,
                       color: theme.textColor.withValues(alpha: 0.7),
@@ -125,7 +125,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                             if (value.isNotEmpty && index < 5) {
                               _focusNodes[index + 1].requestFocus();
                             }
-                            if (_fullCode.length == 6) {
+                            if (_fullCode.length == 6 && !_isValidating) {
                               _validateCode();
                             }
                           },
@@ -172,7 +172,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
                               ),
                             )
                           : Text(
-                              'Link Couple Code',
+                              'Link Connection Code',
                               style: AppTypography.button(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -191,6 +191,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
   }
 
   Future<void> _validateCode() async {
+    if (_isValidating) return;
     setState(() {
       _isValidating = true;
       _errorMessage = null;
@@ -202,19 +203,19 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
       if (success) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const GenesisScreen()),
+          MaterialPageRoute(builder: (_) => const AvatarCreationScreen()),
         );
       } else {
         setState(() {
           _errorMessage =
-              '❌ Hmm, that code doesn\'t exist. Please double-check with your partner.';
+              'Hmm, we couldn\'t find that connection code. Please check it with your partner.';
           _isValidating = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = '❌ Error pairing: ${e.toString().replaceAll('Exception: ', '')}';
+          _errorMessage = 'Connection error: ${e.toString().replaceAll('Exception: ', '')}';
           _isValidating = false;
         });
       }

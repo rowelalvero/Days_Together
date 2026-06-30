@@ -56,7 +56,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  "Let's put a face\nto the name.",
+                  "Let's add a face\nto your name.",
                   style: AppTypography.cormorant(
                     fontSize: 36,
                     color: theme.textColor,
@@ -66,7 +66,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'This is how your partner will see you.',
+                  'This is how your partner will see you in your shared space.',
                   style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -226,9 +226,9 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
   }
 
   Future<void> _completeSetup() async {
-    if (_yourNameController.text.isEmpty) {
+    if (_yourNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your name.')),
+        const SnackBar(content: Text('Please share your name to complete your profile.')),
       );
       return;
     }

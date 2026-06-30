@@ -49,7 +49,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Pick the exact day and time you became official.',
+                  'Select the day and time your beautiful journey began.',
                   style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.8),
@@ -57,7 +57,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Don't worry—you can change this later.",
+                  'You can always adjust this date later in settings.',
                   style: AppTypography.spectral(
                     fontSize: 13,
                     color: theme.textColor.withValues(alpha: 0.5),

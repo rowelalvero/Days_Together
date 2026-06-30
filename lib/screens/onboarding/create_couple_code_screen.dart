@@ -23,7 +23,8 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
   @override
   void initState() {
     super.initState();
-    _code = context.read<RelationshipProvider>().generateCoupleCode();
+    final provider = context.read<RelationshipProvider>();
+    _code = provider.coupleCode ?? provider.generateCoupleCode();
     _animController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -58,7 +59,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                 ),
                 const SizedBox(height: 40),
                 Text(
-                  'Your exclusive\ncouple code.',
+                  'Your unique\nconnection code.',
                   style: AppTypography.cormorant(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -68,7 +69,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Share this with your partner so they can join your story.',
+                  'Share this with your partner to invite them into your story.',
                   style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -111,7 +112,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'This code is unique to you. Keep it safe.',
+                          'This code is your key to connect. Keep it safe.',
                           style: AppTypography.caption(
                             fontSize: 13,
                             color: theme.textColor.withValues(alpha: 0.5),
@@ -145,7 +146,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                         icon: Icons.share_rounded,
                         onPressed: () {
                           Share.share(
-                            'Join me on Our Love Story! Use my couple code: $_code 💕',
+                            'Connect with me on Days Together! Enter my connection code: $_code to link our hearts 💕',
                           );
                         },
                         theme: theme,

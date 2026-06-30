@@ -30,7 +30,7 @@ class PairingSelectionScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'Are you starting fresh\nor joining the journey?',
+                  'How would you like to\nbegin your story?',
                   style: AppTypography.cormorant(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -40,7 +40,7 @@ class PairingSelectionScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Choose your path to begin.',
+                  'Choose a path to connect.',
                   style: AppTypography.spectral(
                     fontSize: 16,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -49,8 +49,8 @@ class PairingSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 50),
                 _PairingCard(
                   icon: Icons.favorite_rounded,
-                  title: "I'm Starting Our Story",
-                  subtitle: 'Create a couple code and invite your partner.',
+                  title: "Start Our Story",
+                  subtitle: "Generate a connection code to invite your partner.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () {
@@ -65,8 +65,8 @@ class PairingSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 _PairingCard(
                   icon: Icons.link_rounded,
-                  title: "I'm Joining My Partner",
-                  subtitle: 'Enter the code they gave you.',
+                  title: "Join My Partner",
+                  subtitle: "Enter the connection code shared by your partner.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () {

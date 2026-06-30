@@ -84,9 +84,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
               const SizedBox(height: 40),
               Text(
-                'For the ones you love.',
+                'A dedicated space for the two of you.',
                 style: AppTypography.cormorant(
-                  fontSize: 32,
+                  fontSize: 26,
                   fontStyle: FontStyle.italic,
                   color: theme.textColor,
                   fontWeight: FontWeight.w300,
@@ -106,7 +106,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 child: Column(
                   children: [
                     _buildActionButton(
-                      label: "Let's Get Started",
+                      label: 'Begin Your Story',
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -129,7 +129,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'A little magic is loading...',
+                      'Made with love for couples.',
                       style: AppTypography.spectral(
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
