@@ -301,7 +301,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
     }
     final url = item.networkImageUrl;
     if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/placeholder.jpg');
+    return const AssetImage('assets/images/app_icon.png');
   }
 }
 
@@ -521,7 +521,7 @@ class MemoryDetailScreen extends StatelessWidget {
     }
     final url = item.networkImageUrl;
     if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/placeholder.jpg');
+    return const AssetImage('assets/images/app_icon.png');
   }
 }
 
@@ -844,7 +844,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
     if (widget.item.networkImageUrl != null && widget.item.networkImageUrl!.isNotEmpty) {
       return NetworkImage(widget.item.networkImageUrl!);
     }
-    return const AssetImage('assets/images/placeholder.jpg');
+    return const AssetImage('assets/images/app_icon.png');
   }
 
   Future<void> _changeImage() async {

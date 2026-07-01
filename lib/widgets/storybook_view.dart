@@ -63,7 +63,7 @@ class _StorybookViewState extends State<StorybookView> {
     }
     final url = item.networkImageUrl;
     if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/placeholder.jpg');
+    return const AssetImage('assets/images/app_icon.png');
   }
 
   @override
