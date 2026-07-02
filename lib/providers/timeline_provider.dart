@@ -10,6 +10,7 @@ import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/repositories/timeline_repository.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TimelineProvider with ChangeNotifier {
@@ -276,13 +277,11 @@ class TimelineProvider with ChangeNotifier {
 
         // Trigger push notification to partner
         try {
-          await Supabase.instance.client.functions.invoke(
-            'send-push-notification',
-            body: {
-              'sender_id': _userId,
-              'title': 'New Memory Shared 📸',
-              'body': 'A new memory was added: ${item.title}',
-            },
+          await NotificationService().sendPartnerNotification(
+            title: 'New Memory Shared 📸',
+            body: 'A new memory was added: ${item.title}',
+            feature: 'timeline',
+            itemId: item.id,
           );
         } catch (fcmError) {
           debugPrint(
@@ -571,6 +570,19 @@ class TimelineProvider with ChangeNotifier {
       comments: updatedComments,
     );
     await updateTimelineItem(itemId, updatedItem);
+
+    if (_coupleId != null) {
+      try {
+        await NotificationService().sendPartnerNotification(
+          title: 'New Comment on Memory 💬',
+          body: '$authorName commented: "$content"',
+          feature: 'timeline',
+          itemId: itemId,
+        );
+      } catch (e) {
+        debugPrint('TimelineProvider: Failed to send comment notification: $e');
+      }
+    }
   }
 
   Future<void> deleteCommentFromItem(String itemId, String commentId) async {

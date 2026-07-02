@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/bucket_list_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class BucketListProvider with ChangeNotifier {
   static const String _storageKey = 'bucket_list_items';
@@ -121,6 +122,12 @@ class BucketListProvider with ChangeNotifier {
           'created_at': item.createdAt.toIso8601String(),
           'scheduled_at': item.scheduledAt?.toIso8601String(),
         });
+        NotificationService().sendPartnerNotification(
+          title: 'New Bucket List Idea',
+          body: '❤️ Your partner added a new bucket list idea:\n"$title"',
+          feature: 'bucket_list',
+          itemId: item.id,
+        );
       } catch (e) {
         debugPrint('BucketListProvider.addItem Supabase error: $e');
         _items.add(item);
@@ -146,6 +153,12 @@ class BucketListProvider with ChangeNotifier {
             .from('bucket_list')
             .update(updates)
             .eq('id', id);
+        NotificationService().sendPartnerNotification(
+          title: 'Bucket List Updated',
+          body: '📝 Your partner updated the bucket list item:\n"${title ?? 'Item'}"',
+          feature: 'bucket_list',
+          itemId: id,
+        );
       } catch (e) {
         debugPrint('BucketListProvider.updateItem Supabase error: $e');
         final index = _items.indexWhere((i) => i.id == id);
@@ -183,6 +196,14 @@ class BucketListProvider with ChangeNotifier {
           'is_completed': nextCompleted,
           'completed_at': nextCompletedAt?.toIso8601String(),
         }).eq('id', id);
+        if (nextCompleted) {
+          NotificationService().sendPartnerNotification(
+            title: 'Bucket List Completed!',
+            body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
+            feature: 'bucket_list',
+            itemId: id,
+          );
+        }
       } catch (e) {
         debugPrint('BucketListProvider.toggleItem Supabase error: $e');
         _items[index] = item.copyWith(
@@ -207,6 +228,12 @@ class BucketListProvider with ChangeNotifier {
             .from('bucket_list')
             .delete()
             .eq('id', id);
+        NotificationService().sendPartnerNotification(
+          title: 'Bucket List Item Deleted',
+          body: '🗑️ Your partner deleted a bucket list item.',
+          feature: 'bucket_list',
+          itemId: id,
+        );
 
         final remaining = _items.where((i) => i.id != id).toList();
         for (var i = 0; i < remaining.length; i++) {

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/time_capsule_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class TimeCapsuleProvider with ChangeNotifier {
   static const String _storageKey = 'time_capsules';
@@ -116,6 +117,13 @@ class TimeCapsuleProvider with ChangeNotifier {
           'is_opened': capsule.isOpened,
           'created_at': DateTime.now().toIso8601String(),
         });
+        final openDateStr = openDate.toLocal().toString().substring(0, 10);
+        NotificationService().sendPartnerNotification(
+          title: 'Time Capsule Created ⏳',
+          body: 'Your partner locked a new time capsule to be opened on $openDateStr!',
+          feature: 'time_capsule',
+          itemId: capsule.id,
+        );
       } catch (e) {
         debugPrint('TimeCapsuleProvider.createCapsule Supabase error: $e');
         _createLocalCapsule(capsule);
@@ -143,6 +151,12 @@ class TimeCapsuleProvider with ChangeNotifier {
             .from('time_capsules')
             .update({'is_opened': true})
             .eq('id', id);
+        NotificationService().sendPartnerNotification(
+          title: 'Time Capsule Opened 🔓',
+          body: 'Your partner opened a time capsule!',
+          feature: 'time_capsule',
+          itemId: id,
+        );
       } catch (e) {
         debugPrint('TimeCapsuleProvider.openCapsule Supabase error: $e');
         _openLocalCapsule(index, capsule);

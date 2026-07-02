@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class NoteitSyncTask {
   final String id;
@@ -277,6 +278,25 @@ class NoteitSyncManager {
         'created_at': task.createdAt.toIso8601String(),
         'background_color': task.backgroundColor?.toARGB32().toSigned(32),
       });
+
+      final feature = task.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes';
+      final title = task.type == NoteitType.drawing
+          ? 'New Doodle 🎨'
+          : task.type == NoteitType.photo
+              ? 'New Photo Note 📷'
+              : 'New Love Note ✍️';
+      final body = task.type == NoteitType.drawing
+          ? 'Your partner sent you a new doodle!'
+          : task.type == NoteitType.photo
+              ? 'Your partner shared a new photo note!'
+              : 'Your partner sent you a new love note!';
+
+      NotificationService().sendPartnerNotification(
+        title: title,
+        body: body,
+        feature: feature,
+        itemId: task.id,
+      );
 
       return true;
     } on PostgrestException catch (e) {

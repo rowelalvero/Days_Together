@@ -1425,6 +1425,11 @@ class RelationshipProvider with ChangeNotifier {
           finalCreatorKey: finalCreatorVal,
           finalPartnerKey: finalPartnerVal,
         });
+        NotificationService().sendPartnerNotification(
+          title: 'Profile Updated 📝',
+          body: 'Your partner updated their relationship profile details.',
+          feature: 'relationship',
+        );
       } catch (e) {
         debugPrint('Supabase _syncLicenseField failed: $e');
       }
@@ -1457,6 +1462,29 @@ class RelationshipProvider with ChangeNotifier {
           'creator_id': creatorId,
           snakeKey: finalVal,
         });
+        final bool isSignature = key.toLowerCase().contains('signature');
+        final bool bothSigned = _yourSignature != null && _partnerSignature != null;
+        if (isSignature) {
+          if (bothSigned) {
+            NotificationService().sendPartnerNotification(
+              title: 'License Generated! 📜',
+              body: 'Your relationship license is now signed and official!',
+              feature: 'relationship',
+            );
+          } else {
+            NotificationService().sendPartnerNotification(
+              title: 'License Signed! 📜',
+              body: 'Your partner signed the relationship license.',
+              feature: 'relationship',
+            );
+          }
+        } else {
+          NotificationService().sendPartnerNotification(
+            title: 'Profile Updated 📝',
+            body: 'Your partner updated their relationship profile details.',
+            feature: 'relationship',
+          );
+        }
       } catch (e) {
         debugPrint('Supabase _syncSingleLicenseField failed: $e');
       }
@@ -1830,6 +1858,11 @@ class RelationshipProvider with ChangeNotifier {
         }
 
         await ProfileService.instance.upsertLicenseDetails(updateData);
+        NotificationService().sendPartnerNotification(
+          title: 'Profile Photo Updated 📸',
+          body: 'Your partner updated their profile photo.',
+          feature: 'relationship',
+        );
       } catch (e) {
         debugPrint('Supabase setAvatars update failed: $e');
       }
@@ -1964,6 +1997,14 @@ class RelationshipProvider with ChangeNotifier {
           await prefs.setString('partner_id', _partnerId!);
           await prefs.setBool('is_paired', true);
 
+          try {
+            NotificationService().sendPartnerNotification(
+              title: 'Connected! 💞',
+              body: 'You and your partner are now paired!',
+              feature: 'relationship',
+            );
+          } catch (_) {}
+
           // Fetch the couple details to load start date and time
           final coupleData = await Supabase.instance.client
               .from('couples')
@@ -2069,6 +2110,13 @@ class RelationshipProvider with ChangeNotifier {
       await prefs.remove('partner_join_date');
 
       if (isFirebaseAvailable && _userId != null) {
+        try {
+          await NotificationService().sendPartnerNotification(
+            title: 'Relationship Unlinked 💔',
+            body: 'Your partner has unlinked from the relationship.',
+            feature: 'relationship',
+          );
+        } catch (_) {}
         await CoupleService.instance.unlinkPartner(userId: _userId!);
       }
     } catch (e) {

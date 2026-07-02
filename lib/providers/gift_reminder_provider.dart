@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/gift_reminder_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class GiftReminderProvider with ChangeNotifier {
   static const String _storageKey = 'gift_reminders';
@@ -117,6 +118,12 @@ class GiftReminderProvider with ChangeNotifier {
           'is_recurring_yearly': reminder.isRecurringYearly,
           'created_at': DateTime.now().toIso8601String(),
         });
+        NotificationService().sendPartnerNotification(
+          title: 'New Gift Idea / Reminder 🎁',
+          body: 'Your partner added a gift reminder: "$title"',
+          feature: 'gifts',
+          itemId: reminder.id,
+        );
       } catch (e) {
         debugPrint('GiftReminderProvider.addReminder Supabase error: $e');
         _reminders.add(reminder);
@@ -142,6 +149,12 @@ class GiftReminderProvider with ChangeNotifier {
             .from('gift_reminders')
             .update(updates)
             .eq('id', id);
+        NotificationService().sendPartnerNotification(
+          title: 'Gift Reminder Updated 🎁',
+          body: 'Your partner updated the gift reminder: "${title ?? 'Reminder'}"',
+          feature: 'gifts',
+          itemId: id,
+        );
       } catch (e) {
         debugPrint('GiftReminderProvider.updateReminder Supabase error: $e');
         _reminders[index] = _reminders[index].copyWith(
@@ -188,6 +201,12 @@ class GiftReminderProvider with ChangeNotifier {
             .from('gift_reminders')
             .delete()
             .eq('id', id);
+        NotificationService().sendPartnerNotification(
+          title: 'Gift Reminder Deleted 🎁',
+          body: 'Your partner removed a gift reminder.',
+          feature: 'gifts',
+          itemId: id,
+        );
       } catch (e) {
         debugPrint('GiftReminderProvider.deleteReminder Supabase error: $e');
         _reminders.removeWhere((r) => r.id == id);

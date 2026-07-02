@@ -11,6 +11,7 @@ import 'package:days_together/models/vault_item_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/services/notification_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
@@ -296,6 +297,12 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
             'image_url': imageUrl,
             'created_at': DateTime.now().toIso8601String(),
           });
+          NotificationService().sendPartnerNotification(
+            title: 'Vault Updated 🔒',
+            body: 'A new item was added to the shared Vault',
+            feature: 'vault',
+            itemId: photoId,
+          );
         } catch (e) {
           debugPrint('VaultProvider.addPhoto Supabase upload error: $e');
           _items.insert(0, newItem);
@@ -323,6 +330,12 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
           'content': content,
           'created_at': DateTime.now().toIso8601String(),
         });
+        NotificationService().sendPartnerNotification(
+          title: 'Vault Updated 🔒',
+          body: 'A new item was added to the shared Vault',
+          feature: 'vault',
+          itemId: item.id,
+        );
       } catch (e) {
         debugPrint('VaultProvider.addLetter Supabase error: $e');
         _items.insert(0, item);

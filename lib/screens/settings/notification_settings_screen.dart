@@ -314,7 +314,7 @@ class NotificationSettingsScreen extends StatelessWidget {
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: theme.accentColor,
+      activeThumbColor: theme.accentColor,
       inactiveTrackColor: theme.textColor.withValues(alpha: 0.1),
     );
   }

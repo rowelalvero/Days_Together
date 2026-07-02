@@ -7,6 +7,7 @@ import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/topic_card_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class TopicCardsProvider with ChangeNotifier {
   static const String _customCardsKey = 'topic_cards_custom';
@@ -309,6 +310,12 @@ class TopicCardsProvider with ChangeNotifier {
           'is_custom': true,
           'liked_by_user_ids': [],
         });
+        NotificationService().sendPartnerNotification(
+          title: 'New Topic Card Added 🃏',
+          body: 'Your partner added a custom topic card: "$question"',
+          feature: 'topic_cards',
+          itemId: newCard.id,
+        );
       } catch (e) {
         debugPrint('TopicCardsProvider.addCustomCard Supabase error: $e');
         _customCards.add(newCard);
@@ -364,6 +371,14 @@ class TopicCardsProvider with ChangeNotifier {
     // 1. Optimistic UI update
     if (nextLiked) {
       _likedCardIds.add(id);
+      if (_coupleId != null) {
+        NotificationService().sendPartnerNotification(
+          title: 'Topic Card Favorited 💖',
+          body: 'Your partner favorited a topic card!',
+          feature: 'topic_cards',
+          itemId: id,
+        );
+      }
     } else {
       _likedCardIds.remove(id);
     }

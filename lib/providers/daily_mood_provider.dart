@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/daily_mood_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class DailyMoodProvider with ChangeNotifier {
   static const String _moodKey = 'daily_moods';
@@ -301,13 +302,10 @@ class DailyMoodProvider with ChangeNotifier {
 
         // Trigger push notification to partner
         try {
-          await Supabase.instance.client.functions.invoke(
-            'send-push-notification',
-            body: {
-              'sender_id': _userId,
-              'title': 'Mood Updated 💖',
-              'body': 'Your partner just logged their mood!',
-            },
+          await NotificationService().sendPartnerNotification(
+            title: 'Mood Shared 💖',
+            body: 'Your partner shared their mood today.',
+            feature: 'love_meter',
           );
         } catch (fcmError) {
           debugPrint('DailyMoodProvider: Failed to trigger push notification: $fcmError');
@@ -354,14 +352,25 @@ class DailyMoodProvider with ChangeNotifier {
 
         // Trigger push notification to partner
         try {
-          await Supabase.instance.client.functions.invoke(
-            'send-push-notification',
-            body: {
-              'sender_id': _userId,
-              'title': 'Daily Sync Answered 💬',
-              'body': 'Your partner answered today\'s sync question!',
-            },
-          );
+          final partnerJoined = _partnerId != null;
+          final partnerAnswered = response != null &&
+              response['answers'] != null &&
+              partnerJoined &&
+              Map<String, dynamic>.from(response['answers']).containsKey(_partnerId);
+
+          if (partnerAnswered) {
+            await NotificationService().sendPartnerNotification(
+              title: 'Connection Prompt Completed 💬',
+              body: 'Both of you have completed today\'s connection prompt!',
+              feature: 'daily_prompt',
+            );
+          } else {
+            await NotificationService().sendPartnerNotification(
+              title: 'Connection Prompt Answered 💬',
+              body: 'Your partner answered today\'s connection prompt.',
+              feature: 'daily_prompt',
+            );
+          }
         } catch (fcmError) {
           debugPrint('DailyMoodProvider: Failed to trigger push notification: $fcmError');
         }

@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/notification_service.dart';
 
 class CalendarProvider with ChangeNotifier {
   static const String _storageKey = 'calendar_events';
@@ -118,6 +119,12 @@ class CalendarProvider with ChangeNotifier {
           'type': event.type.index,
           'is_recurring_yearly': event.isRecurringYearly,
         });
+        NotificationService().sendPartnerNotification(
+          title: 'New Calendar Event 📅',
+          body: 'Your partner added an event: "${event.title}"',
+          feature: 'calendar',
+          itemId: event.id,
+        );
       } catch (e) {
         debugPrint('CalendarProvider.addEvent Supabase error: $e');
         _events.add(event);
@@ -143,6 +150,12 @@ class CalendarProvider with ChangeNotifier {
           'type': updatedEvent.type.index,
           'is_recurring_yearly': updatedEvent.isRecurringYearly,
         }).eq('id', updatedEvent.id);
+        NotificationService().sendPartnerNotification(
+          title: 'Calendar Event Updated 📅',
+          body: 'Your partner updated the event: "${updatedEvent.title}"',
+          feature: 'calendar',
+          itemId: updatedEvent.id,
+        );
       } catch (e) {
         debugPrint('CalendarProvider.updateEvent Supabase error: $e');
         final index = _events.indexWhere((e) => e.id == updatedEvent.id);
@@ -166,6 +179,12 @@ class CalendarProvider with ChangeNotifier {
             .from('calendar_events')
             .delete()
             .eq('id', id);
+        NotificationService().sendPartnerNotification(
+          title: 'Calendar Event Deleted 📅',
+          body: 'Your partner removed a calendar event.',
+          feature: 'calendar',
+          itemId: id,
+        );
       } catch (e) {
         debugPrint('CalendarProvider.deleteEvent Supabase error: $e');
         _events.removeWhere((e) => e.id == id);
