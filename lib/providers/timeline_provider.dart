@@ -54,6 +54,7 @@ class TimelineProvider with ChangeNotifier {
 
   // Track locally deleted items to prevent them from re-appearing from the Supabase stream
   final Set<String> _locallyDeletedIds = {};
+  final Set<String> _localMutations = {};
 
   List<TimelineItemData> get timelineItems => List.unmodifiable(_timelineItems);
   bool get isLoading => _isLoading;
@@ -182,6 +183,10 @@ class TimelineProvider with ChangeNotifier {
               // Detect additions by partner
               final added = incoming.where((inc) => !_timelineItems.any((old) => old.id == inc.id)).toList();
               for (var item in added) {
+                if (_localMutations.contains(item.id)) {
+                  _localMutations.remove(item.id);
+                  continue;
+                }
                 RecentActivityService.instance.logActivity(
                   activityType: 'created',
                   title: 'Partner added a memory 📸',
@@ -201,6 +206,10 @@ class TimelineProvider with ChangeNotifier {
                       match.description != inc.description ||
                       match.date != inc.date ||
                       match.networkImageUrl != inc.networkImageUrl) {
+                    if (_localMutations.contains(inc.id)) {
+                      _localMutations.remove(inc.id);
+                      continue;
+                    }
                     RecentActivityService.instance.logActivity(
                       activityType: 'updated',
                       title: 'Partner updated a memory ✏️',
@@ -216,6 +225,10 @@ class TimelineProvider with ChangeNotifier {
               // Detect deletions by partner
               final deleted = _timelineItems.where((old) => !incoming.any((inc) => inc.id == old.id) && !_locallyDeletedIds.contains(old.id)).toList();
               for (var item in deleted) {
+                if (_localMutations.contains(item.id)) {
+                  _localMutations.remove(item.id);
+                  continue;
+                }
                 RecentActivityService.instance.logActivity(
                   activityType: 'deleted',
                   title: 'Partner deleted a memory 🗑️',
@@ -267,6 +280,7 @@ class TimelineProvider with ChangeNotifier {
   }
 
   Future<void> addTimelineItem(TimelineItemData item) async {
+    _localMutations.add(item.id);
     if (_coupleId != null) {
       try {
         String? downloadUrl;
@@ -381,6 +395,7 @@ class TimelineProvider with ChangeNotifier {
     String id,
     TimelineItemData updatedItem,
   ) async {
+    _localMutations.add(id);
     final index = _timelineItems.indexWhere((item) => item.id == id);
     if (index == -1) {
       debugPrint('TimelineProvider.updateTimelineItem: id $id not found');
@@ -492,6 +507,7 @@ class TimelineProvider with ChangeNotifier {
   }
 
   Future<void> deleteTimelineItem(String id) async {
+    _localMutations.add(id);
     final index = _timelineItems.indexWhere((item) => item.id == id);
     if (index == -1) {
       debugPrint('TimelineProvider.deleteTimelineItem: id $id not found');

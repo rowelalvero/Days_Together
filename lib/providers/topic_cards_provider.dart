@@ -19,6 +19,7 @@ class TopicCardsProvider with ChangeNotifier {
   List<TopicCard> _customCards = [];
   Set<String> _likedCardIds = {};
   Set<String> _partnerLikedCardIds = {};
+  final Set<String> _localMutations = {};
   Map<String, bool> _pendingLikes = {};
 
   String _activeCategory = 'All';
@@ -105,6 +106,10 @@ class TopicCardsProvider with ChangeNotifier {
         if (!_isLoading) {
           final added = newCustoms.where((inc) => !_customCards.any((old) => old.id == inc.id)).toList();
           for (var card in added) {
+            if (_localMutations.contains(card.id)) {
+              _localMutations.remove(card.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'created',
               title: "Partner added custom card 🎴",
@@ -337,6 +342,7 @@ class TopicCardsProvider with ChangeNotifier {
       isCustom: true,
       isLiked: false,
     );
+    _localMutations.add(newCard.id);
 
     if (_coupleId != null) {
       try {

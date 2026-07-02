@@ -18,6 +18,7 @@ class GiftReminderProvider with ChangeNotifier {
   String? _coupleId;
   String? _userId;
   StreamSubscription? _syncSub;
+  final Set<String> _localMutations = {};
 
   List<GiftReminder> get reminders => List.unmodifiable(_reminders);
   List<GiftReminder> get upcomingReminders {
@@ -75,6 +76,10 @@ class GiftReminderProvider with ChangeNotifier {
           // Detect additions by partner
           final added = incoming.where((inc) => !_reminders.any((old) => old.id == inc.id)).toList();
           for (var reminder in added) {
+            if (_localMutations.contains(reminder.id)) {
+              _localMutations.remove(reminder.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'created',
               title: "Partner's gift reminder added",
@@ -90,6 +95,10 @@ class GiftReminderProvider with ChangeNotifier {
           for (var reminder in completed) {
             final existedAndWasEnabled = _reminders.any((old) => old.id == reminder.id && old.isEnabled);
             if (existedAndWasEnabled) {
+              if (_localMutations.contains(reminder.id)) {
+                _localMutations.remove(reminder.id);
+                continue;
+              }
               RecentActivityService.instance.logActivity(
                 activityType: 'completed',
                 title: "Partner's gift reminder completed",
@@ -104,6 +113,10 @@ class GiftReminderProvider with ChangeNotifier {
           // Detect deletions by partner
           final deleted = _reminders.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
           for (var reminder in deleted) {
+            if (_localMutations.contains(reminder.id)) {
+              _localMutations.remove(reminder.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'deleted',
               title: "Partner's gift reminder deleted",
@@ -151,6 +164,7 @@ class GiftReminderProvider with ChangeNotifier {
 
   Future<void> addReminder(String title, DateTime date) async {
     final reminder = GiftReminder(title: title, date: date);
+    _localMutations.add(reminder.id);
 
     if (_coupleId != null) {
       try {
@@ -193,6 +207,7 @@ class GiftReminderProvider with ChangeNotifier {
   }
 
   Future<void> updateReminder(String id, {String? title, DateTime? date}) async {
+    _localMutations.add(id);
     final index = _reminders.indexWhere((r) => r.id == id);
     if (index == -1) return;
 
@@ -230,6 +245,7 @@ class GiftReminderProvider with ChangeNotifier {
   }
 
   Future<void> toggleReminder(String id) async {
+    _localMutations.add(id);
     final index = _reminders.indexWhere((r) => r.id == id);
     if (index == -1) return;
     final nextEnabled = !_reminders[index].isEnabled;
@@ -264,6 +280,7 @@ class GiftReminderProvider with ChangeNotifier {
   }
 
   Future<void> deleteReminder(String id) async {
+    _localMutations.add(id);
     if (_coupleId != null) {
       try {
         await Supabase.instance.client

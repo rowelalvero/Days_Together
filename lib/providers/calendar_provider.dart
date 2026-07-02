@@ -18,6 +18,7 @@ class CalendarProvider with ChangeNotifier {
   String? _coupleId;
   String? _userId;
   StreamSubscription? _syncSub;
+  final Set<String> _localMutations = {};
 
   List<CalendarEvent> get events => List.unmodifiable(_events);
   bool get isLoading => _isLoading;
@@ -77,6 +78,10 @@ class CalendarProvider with ChangeNotifier {
           // Detect additions by partner
           final added = incoming.where((inc) => !_events.any((old) => old.id == inc.id)).toList();
           for (var event in added) {
+            if (_localMutations.contains(event.id)) {
+              _localMutations.remove(event.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'created',
               title: "Partner's calendar event created",
@@ -93,6 +98,10 @@ class CalendarProvider with ChangeNotifier {
             return match.id.isNotEmpty && (match.title != inc.title || match.description != inc.description || match.date != inc.date);
           }).toList();
           for (var event in updated) {
+            if (_localMutations.contains(event.id)) {
+              _localMutations.remove(event.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'updated',
               title: "Partner's calendar event updated",
@@ -106,6 +115,10 @@ class CalendarProvider with ChangeNotifier {
           // Detect deletions by partner
           final deleted = _events.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
           for (var event in deleted) {
+            if (_localMutations.contains(event.id)) {
+              _localMutations.remove(event.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'deleted',
               title: "Partner's calendar event deleted",
@@ -152,6 +165,7 @@ class CalendarProvider with ChangeNotifier {
   }
 
   Future<void> addEvent(CalendarEvent event) async {
+    _localMutations.add(event.id);
     if (_coupleId != null) {
       try {
         await Supabase.instance.client
@@ -194,6 +208,7 @@ class CalendarProvider with ChangeNotifier {
   }
 
   Future<void> updateEvent(CalendarEvent updatedEvent) async {
+    _localMutations.add(updatedEvent.id);
     if (_coupleId != null) {
       try {
         await Supabase.instance.client
@@ -239,8 +254,8 @@ class CalendarProvider with ChangeNotifier {
   }
 
   Future<void> deleteEvent(String id) async {
+    _localMutations.add(id);
     final eventToDelete = _events.firstWhere((e) => e.id == id, orElse: () => CalendarEvent(id: id, title: 'Event', date: DateTime.now(), type: CalendarEventType.date));
-
     if (_coupleId != null) {
       try {
         await Supabase.instance.client

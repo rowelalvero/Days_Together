@@ -18,6 +18,7 @@ class TimeCapsuleProvider with ChangeNotifier {
   String? _coupleId;
   String? _userId;
   StreamSubscription? _syncSub;
+  final Set<String> _localMutations = {};
 
   List<TimeCapsule> get capsules => List.unmodifiable(_capsules);
   List<TimeCapsule> get lockedCapsules =>
@@ -76,6 +77,10 @@ class TimeCapsuleProvider with ChangeNotifier {
           // Detect additions by partner
           final added = incoming.where((inc) => !_capsules.any((old) => old.id == inc.id)).toList();
           for (var capsule in added) {
+            if (_localMutations.contains(capsule.id)) {
+              _localMutations.remove(capsule.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'created',
               title: "Partner's time capsule created ⏳",
@@ -89,6 +94,10 @@ class TimeCapsuleProvider with ChangeNotifier {
           // Detect openings by partner
           final opened = incoming.where((inc) => inc.isOpened && !_capsules.any((old) => old.id == inc.id && old.isOpened)).toList();
           for (var capsule in opened) {
+            if (_localMutations.contains(capsule.id)) {
+              _localMutations.remove(capsule.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'completed',
               title: "Partner's time capsule opened 🔓",
@@ -137,6 +146,7 @@ class TimeCapsuleProvider with ChangeNotifier {
 
   Future<void> createCapsule(String message, DateTime openDate) async {
     final capsule = TimeCapsule(message: message, openDate: openDate);
+    _localMutations.add(capsule.id);
 
     if (_coupleId != null) {
       try {
@@ -182,6 +192,7 @@ class TimeCapsuleProvider with ChangeNotifier {
   }
 
   Future<void> openCapsule(String id) async {
+    _localMutations.add(id);
     final index = _capsules.indexWhere((c) => c.id == id);
     if (index == -1) return;
     final capsule = _capsules[index];

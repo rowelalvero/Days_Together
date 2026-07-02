@@ -35,6 +35,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   String? _coupleId;
   String? _userId;
   StreamSubscription? _syncSub;
+  final Set<String> _localMutations = {};
 
   List<VaultItem> get items => _isUnlocked ? List.unmodifiable(_items) : [];
   List<VaultItem> get allItems => _isUnlocked ? List.unmodifiable(_items) : const [];
@@ -113,6 +114,10 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
           // Detect additions by partner
           final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
           for (var item in added) {
+            if (_localMutations.contains(item.id)) {
+              _localMutations.remove(item.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'created',
               title: "Partner added vault item 🔒",
@@ -126,6 +131,10 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
           // Detect deletions by partner
           final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
           for (var item in deleted) {
+            if (_localMutations.contains(item.id)) {
+              _localMutations.remove(item.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'deleted',
               title: "Partner removed vault item 🔒",
@@ -298,6 +307,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       if (picked == null) return;
       final directory = await getApplicationDocumentsDirectory();
       final photoId = const Uuid().v4();
+      _localMutations.add(photoId);
       final fileName = 'vault_$photoId.jpg';
       final newPath = '${directory.path}/$fileName';
       await File(picked.path).copy(newPath);
@@ -362,6 +372,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   Future<void> addLetter(String content) async {
     if (!_isUnlocked) return;
     final item = VaultItem(type: VaultItemType.letter, content: content);
+    _localMutations.add(item.id);
 
     if (_coupleId != null) {
       try {
@@ -399,6 +410,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   Future<void> deleteItem(String id) async {
+    _localMutations.add(id);
     final index = _items.indexWhere((i) => i.id == id);
     if (index == -1) return;
     final item = _items[index];

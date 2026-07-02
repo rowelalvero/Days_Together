@@ -18,6 +18,7 @@ class BucketListProvider with ChangeNotifier {
   String? _coupleId;
   String? _userId;
   StreamSubscription? _syncSub;
+  final Set<String> _localMutations = {};
 
   List<BucketListItem> get items => List.unmodifiable(_items);
   bool get isLoading => _isLoading;
@@ -75,6 +76,10 @@ class BucketListProvider with ChangeNotifier {
           // Detect additions
           final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
           for (var item in added) {
+            if (_localMutations.contains(item.id)) {
+              _localMutations.remove(item.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'created',
               title: "Partner's bucket list item added",
@@ -90,6 +95,10 @@ class BucketListProvider with ChangeNotifier {
           for (var item in completed) {
             final existedAndNotCompleted = _items.any((old) => old.id == item.id && !old.isCompleted);
             if (existedAndNotCompleted) {
+              if (_localMutations.contains(item.id)) {
+                _localMutations.remove(item.id);
+                continue;
+              }
               RecentActivityService.instance.logActivity(
                 activityType: 'completed',
                 title: "Partner's bucket list item completed",
@@ -104,6 +113,10 @@ class BucketListProvider with ChangeNotifier {
           // Detect deletions
           final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
           for (var item in deleted) {
+            if (_localMutations.contains(item.id)) {
+              _localMutations.remove(item.id);
+              continue;
+            }
             RecentActivityService.instance.logActivity(
               activityType: 'deleted',
               title: "Partner's bucket list item deleted",
@@ -156,6 +169,7 @@ class BucketListProvider with ChangeNotifier {
       order: _items.length,
       scheduledAt: scheduledAt,
     );
+    _localMutations.add(item.id);
 
     if (_coupleId != null) {
       try {
@@ -198,6 +212,7 @@ class BucketListProvider with ChangeNotifier {
   }
 
   Future<void> updateItem(String id, {String? title, DateTime? scheduledAt, bool clearDate = false}) async {
+    _localMutations.add(id);
     if (_coupleId != null) {
       try {
         final updates = <String, dynamic>{};
@@ -249,6 +264,7 @@ class BucketListProvider with ChangeNotifier {
   }
 
   Future<void> toggleItem(String id) async {
+    _localMutations.add(id);
     final index = _items.indexWhere((i) => i.id == id);
     if (index == -1) return;
     final item = _items[index];
@@ -298,6 +314,7 @@ class BucketListProvider with ChangeNotifier {
   }
 
   Future<void> deleteItem(String id) async {
+    _localMutations.add(id);
     final index = _items.indexWhere((i) => i.id == id);
     if (index == -1) return;
     final itemToDelete = _items[index];
