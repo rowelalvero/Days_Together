@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:days_together/main.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
+import 'package:days_together/widgets/shake_to_hug.dart';
 import 'package:days_together/screens/studio/time_capsule_screen.dart';
 import 'package:days_together/screens/together/bucket_list_screen.dart';
 import 'package:days_together/screens/together/calendar_screen.dart';
@@ -175,6 +176,9 @@ class NotificationService {
     if (state == null) return;
 
     switch (feature) {
+      case 'hug':
+        ShakeToHugWrapper.globalKey.currentState?.showReceivedHug();
+        break;
       case 'chat':
         state.push(MaterialPageRoute(builder: (_) => const LoveChatScreen()));
         break;

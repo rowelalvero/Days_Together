@@ -201,6 +201,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) => _handleBackInvoked(didPop, result),
       child: ShakeToHugWrapper(
+        key: ShakeToHugWrapper.globalKey,
         child: Scaffold(
           extendBody: true,
           body: Container(
