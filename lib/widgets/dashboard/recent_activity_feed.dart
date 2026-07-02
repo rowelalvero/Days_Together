@@ -6,6 +6,11 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/bucket_list_provider.dart';
+import 'package:days_together/providers/calendar_provider.dart';
+import 'package:days_together/providers/time_capsule_provider.dart';
+import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/models/noteit_model.dart';
 
 class RecentActivityFeed extends StatelessWidget {
   final TimelineProvider timelineProvider;
@@ -38,6 +43,17 @@ class RecentActivityFeed extends StatelessWidget {
   Widget build(BuildContext context) {
     final rp = Provider.of<RelationshipProvider>(context);
     final chatProvider = Provider.of<LoveChatProvider>(context);
+    final bucketProvider = Provider.of<BucketListProvider>(context);
+    final calendarProvider = Provider.of<CalendarProvider>(context);
+    final timeCapsuleProvider = Provider.of<TimeCapsuleProvider>(context);
+    final noteitProvider = Provider.of<NoteitProvider>(context);
+
+    final yourInitials = rp.yourName != null && rp.yourName!.isNotEmpty
+        ? rp.yourName!.substring(0, rp.yourName!.length >= 2 ? 2 : 1).toUpperCase()
+        : 'ME';
+    final partnerInitials = rp.partnerName != null && rp.partnerName!.isNotEmpty
+        ? rp.partnerName!.substring(0, rp.partnerName!.length >= 2 ? 2 : 1).toUpperCase()
+        : 'PA';
 
     // Map timeline items to activity logs
     final timelineLogs = timelineProvider.timelineItems.map((item) {
@@ -55,16 +71,7 @@ class RecentActivityFeed extends StatelessWidget {
           ? (rp.yourName ?? 'Me')
           : (rp.partnerName ?? 'Partner');
 
-      String initials = 'ME';
-      if (msg.senderId != 'you') {
-        initials = rp.partnerName != null && rp.partnerName!.length >= 2
-            ? rp.partnerName!.substring(0, 2).toUpperCase()
-            : 'PA';
-      } else {
-        initials = rp.yourName != null && rp.yourName!.length >= 2
-            ? rp.yourName!.substring(0, 2).toUpperCase()
-            : 'ME';
-      }
+      final initials = msg.senderId == 'you' ? yourInitials : partnerInitials;
 
       return _ActivityLog(
         title: 'Transmitted chat message',
@@ -74,10 +81,80 @@ class RecentActivityFeed extends StatelessWidget {
       );
     }).toList();
 
+    // Map bucket list items to activity logs
+    final List<_ActivityLog> bucketLogs = [];
+    for (final item in bucketProvider.items) {
+      bucketLogs.add(_ActivityLog(
+        title: 'Added to bucket list',
+        subtitle: 'Let\'s do: ${item.title}',
+        initials: 'CO',
+        timestamp: item.createdAt,
+      ));
+      if (item.isCompleted && item.completedAt != null) {
+        bucketLogs.add(_ActivityLog(
+          title: 'Completed bucket list item',
+          subtitle: 'We did: ${item.title} 🎉',
+          initials: 'CO',
+          timestamp: item.completedAt!,
+        ));
+      }
+    }
+
+    // Map calendar events to activity logs
+    final calendarLogs = calendarProvider.events.map((event) {
+      return _ActivityLog(
+        title: 'Scheduled event',
+        subtitle: '${event.title} - ${DateFormat('MMM dd').format(event.date)}',
+        initials: 'CO',
+        timestamp: event.date,
+      );
+    }).toList();
+
+    // Map time capsules to activity logs
+    final capsuleLogs = timeCapsuleProvider.capsules.map((capsule) {
+      return _ActivityLog(
+        title: 'Created time capsule',
+        subtitle: 'Locked until ${DateFormat('MMM dd, yyyy').format(capsule.openDate)}',
+        initials: 'CO',
+        timestamp: capsule.createdAt,
+      );
+    }).toList();
+
+    // Map noteit (Doodles/Love Notes) to activity logs
+    final noteitLogs = noteitProvider.notes.map((note) {
+      String title = 'Shared a note';
+      String subtitle = '';
+      if (note.type == NoteitType.drawing) {
+        title = 'Shared a doodle 🎨';
+        subtitle = 'Sketched something with love';
+      } else if (note.type == NoteitType.photo) {
+        title = 'Shared a photo 📸';
+        subtitle = 'Captured a beautiful moment';
+      } else if (note.type == NoteitType.text) {
+        title = 'Shared a love note ✍️';
+        subtitle = note.content ?? '';
+      }
+
+      final senderInitials = note.sender == 'you' ? yourInitials : partnerInitials;
+
+      return _ActivityLog(
+        title: title,
+        subtitle: subtitle,
+        initials: senderInitials,
+        timestamp: note.createdAt,
+      );
+    }).toList();
+
     // Combine and sort (newest first)
-    final allLogs = [...timelineLogs, ...chatLogs]
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    
+    final allLogs = [
+      ...timelineLogs,
+      ...chatLogs,
+      ...bucketLogs,
+      ...calendarLogs,
+      ...capsuleLogs,
+      ...noteitLogs,
+    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
     final displayLogs = allLogs.take(5).toList();
 
     if (displayLogs.isEmpty) {
