@@ -724,6 +724,7 @@ class RelationshipProfileScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.transparent,
       builder: (context) {
         return GlassContainer(
           borderRadius: 32,
