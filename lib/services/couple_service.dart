@@ -11,7 +11,7 @@ class CoupleService {
   Future<Map<String, dynamic>> joinWithCode(String code) async {
     final response = await Supabase.instance.client.rpc(
       'join_couple_with_code',
-      params: {'code': code},
+      params: {'pairing_code': code},
     );
     return Map<String, dynamic>.from(response);
   }
