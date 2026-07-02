@@ -256,9 +256,16 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
-                          Text(
-                            NumberFormat('#,###').format(daysRemaining),
-                            style: AppTypography.sectionHeader(fontSize: 24, fontWeight: FontWeight.w700, color: widget.theme.textColor.withValues(alpha: 0.9)),
+                          TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: 0, end: daysRemaining.toDouble()),
+                            duration: const Duration(milliseconds: 1400),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, _) {
+                              return Text(
+                                NumberFormat('#,###').format(value.toInt()),
+                                style: AppTypography.sectionHeader(fontSize: 24, fontWeight: FontWeight.w700, color: widget.theme.textColor.withValues(alpha: 0.9)),
+                              );
+                            },
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -283,21 +290,35 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   SizedBox(
                     width: 76,
                     height: 76,
-                    child: CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 7,
-                      backgroundColor: widget.theme.textColor.withValues(alpha: 0.05),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E), // Rose Accent
-                      ),
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: progress),
+                      duration: const Duration(milliseconds: 1400),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) {
+                        return CircularProgressIndicator(
+                          value: value,
+                          strokeWidth: 7,
+                          backgroundColor: widget.theme.textColor.withValues(alpha: 0.05),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '$percentComplete%',
-                        style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.w800, color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0, end: percentComplete.toDouble()),
+                        duration: const Duration(milliseconds: 1400),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          return Text(
+                            '${value.toInt()}%',
+                            style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.w800, color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
+                          );
+                        },
                       ),
                       Text(
                         'DONE',

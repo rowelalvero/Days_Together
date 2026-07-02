@@ -146,12 +146,12 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildUnit('Yr', age['years'] ?? 0),
-                _buildUnit('Mo', age['months'] ?? 0),
-                _buildUnit('Day', age['days'] ?? 0),
-                _buildUnit('Hr', age['hours'] ?? 0),
-                _buildUnit('Min', age['minutes'] ?? 0),
-                _buildUnit('Sec', age['seconds'] ?? 0),
+                _buildAnimatedUnit('Yr', age['years'] ?? 0, delay: 0),
+                _buildAnimatedUnit('Mo', age['months'] ?? 0, delay: 80),
+                _buildAnimatedUnit('Day', age['days'] ?? 0, delay: 160),
+                _buildAnimatedUnit('Hr', age['hours'] ?? 0, delay: 240),
+                _buildAnimatedUnit('Min', age['minutes'] ?? 0, delay: 320),
+                _buildLiveUnit('Sec', age['seconds'] ?? 0),
               ],
             ),
           ),
@@ -161,7 +161,41 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
   );
 }
 
-  Widget _buildUnit(String label, int val) {
+  Widget _buildAnimatedUnit(String label, int endValue, {int delay = 0}) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: endValue.toDouble()),
+            duration: Duration(milliseconds: 1200 + delay),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) {
+              return Text(
+                value.toInt().toString(),
+                style: AppTypography.body(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: widget.theme.textColor,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: AppTypography.body(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: widget.theme.textColor.withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveUnit(String label, int val) {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,

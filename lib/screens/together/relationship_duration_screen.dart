@@ -205,7 +205,7 @@ class RelationshipDurationScreen extends StatelessWidget {
     final months = age['months'] ?? 0;
     final days = age['days'] ?? 0;
 
-    Widget buildTile(String value, String label, String icon) {
+    Widget buildTile(int targetValue, String label, String icon) {
       return Expanded(
         child: GlassContainer(
           padding: const EdgeInsets.all(16),
@@ -217,13 +217,20 @@ class RelationshipDurationScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 22),
               ),
               const SizedBox(height: 8),
-              Text(
-                value,
-                style: AppTypography.sectionHeader(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: theme.textColor,
-                ),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: targetValue.toDouble()),
+                duration: const Duration(milliseconds: 1400),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) {
+                  return Text(
+                    '${value.toInt()}',
+                    style: AppTypography.sectionHeader(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textColor,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 4),
               Text(
@@ -242,11 +249,11 @@ class RelationshipDurationScreen extends StatelessWidget {
 
     return Row(
       children: [
-        buildTile('$years', years == 1 ? 'Year' : 'Years', '🎉'),
+        buildTile(years, years == 1 ? 'Year' : 'Years', '🎉'),
         const SizedBox(width: 12),
-        buildTile('$months', months == 1 ? 'Month' : 'Months', '🗓'),
+        buildTile(months, months == 1 ? 'Month' : 'Months', '🗓'),
         const SizedBox(width: 12),
-        buildTile('$days', days == 1 ? 'Day' : 'Days', '💖'),
+        buildTile(days, days == 1 ? 'Day' : 'Days', '💖'),
       ],
     );
   }
@@ -299,32 +306,46 @@ class RelationshipDurationScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: theme.accentColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$percent%',
-                  style: AppTypography.captionMono(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: theme.accentColor,
-                  ),
-                ),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: percent.toDouble()),
+                duration: const Duration(milliseconds: 1200),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: theme.accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${value.toInt()}%',
+                      style: AppTypography.captionMono(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: theme.accentColor,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: theme.textColor.withValues(alpha: 0.06),
-              valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
-            ),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 1400),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) {
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: value,
+                  minHeight: 8,
+                  backgroundColor: theme.textColor.withValues(alpha: 0.06),
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 12),
           Row(
@@ -469,13 +490,20 @@ class RelationshipDurationScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '$daysUntil',
-                style: AppTypography.sectionHeader(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: theme.textColor,
-                ),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: daysUntil.toDouble()),
+                duration: const Duration(milliseconds: 1400),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) {
+                  return Text(
+                    '${value.toInt()}',
+                    style: AppTypography.sectionHeader(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: theme.textColor,
+                    ),
+                  );
+                },
               ),
               Text(
                 'Days left',
@@ -577,6 +605,7 @@ class RelationshipDurationScreen extends StatelessWidget {
           itemCount: stats.length,
           itemBuilder: (context, index) {
             final item = stats[index];
+            final targetValue = int.tryParse(item.value) ?? 0;
             return GlassContainer(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               borderRadius: 16,
@@ -589,13 +618,20 @@ class RelationshipDurationScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          item.value,
-                          style: AppTypography.sectionHeader(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: theme.textColor,
-                          ),
+                        TweenAnimationBuilder<double>(
+                          tween: Tween<double>(begin: 0, end: targetValue.toDouble()),
+                          duration: Duration(milliseconds: 1000 + index * 120),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, _) {
+                            return Text(
+                              NumberFormat('#,###').format(value.toInt()),
+                              style: AppTypography.sectionHeader(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: theme.textColor,
+                              ),
+                            );
+                          },
                         ),
                         Text(
                           item.label,
@@ -993,14 +1029,32 @@ class _LiveStopwatchWidget extends StatefulWidget {
   State<_LiveStopwatchWidget> createState() => _LiveStopwatchWidgetState();
 }
 
-class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget> {
+class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
+    with SingleTickerProviderStateMixin {
   late Timer _timer;
   late Duration _difference;
+  late AnimationController _introController;
+  late Animation<double> _hoursAnimation;
 
   @override
   void initState() {
     super.initState();
     _difference = DateTime.now().difference(widget.startDate);
+
+    // Animate hours count-up on first load
+    _introController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+    _hoursAnimation = Tween<double>(
+      begin: 0,
+      end: _difference.inHours.toDouble(),
+    ).animate(CurvedAnimation(
+      parent: _introController,
+      curve: Curves.easeOutCubic,
+    ));
+    _introController.forward();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {
@@ -1013,6 +1067,7 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget> {
   @override
   void dispose() {
     _timer.cancel();
+    _introController.dispose();
     super.dispose();
   }
 
@@ -1074,29 +1129,37 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget> {
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildUnit(hourStr, 'Hours'),
-              Text(
-                ':',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: widget.theme.textColor.withValues(alpha: 0.4),
-                ),
-              ),
-              _buildUnit(minStr, 'Minutes'),
-              Text(
-                ':',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: widget.theme.textColor.withValues(alpha: 0.4),
-                ),
-              ),
-              _buildUnit(secStr, 'Seconds'),
-            ],
+          AnimatedBuilder(
+            animation: _introController,
+            builder: (context, _) {
+              final displayHours = _introController.isCompleted
+                  ? hourStr
+                  : NumberFormat('#,###').format(_hoursAnimation.value.toInt());
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildUnit(displayHours, 'Hours'),
+                  Text(
+                    ':',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: widget.theme.textColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  _buildUnit(minStr, 'Minutes'),
+                  Text(
+                    ':',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: widget.theme.textColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  _buildUnit(secStr, 'Seconds'),
+                ],
+              );
+            },
           ),
         ],
       ),

@@ -133,6 +133,7 @@ class RelationshipStatistics extends StatelessWidget {
             itemCount: stats.length,
             itemBuilder: (context, index) {
               final item = stats[index];
+              final numericValue = double.tryParse(item.value);
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
@@ -147,10 +148,36 @@ class RelationshipStatistics extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      item.value,
-                      style: AppTypography.body(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
-                    ),
+                    if (numericValue != null)
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0, end: numericValue),
+                        duration: Duration(milliseconds: 900 + index * 100),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          final display = item.value.contains('.')
+                              ? value.toStringAsFixed(1)
+                              : value.toInt().toString();
+                          return Text(
+                            display,
+                            style: AppTypography.body(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
+                          );
+                        },
+                      )
+                    else
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0, end: 1),
+                        duration: Duration(milliseconds: 600 + index * 100),
+                        curve: Curves.easeIn,
+                        builder: (context, value, _) {
+                          return Opacity(
+                            opacity: value,
+                            child: Text(
+                              item.value,
+                              style: AppTypography.body(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
+                            ),
+                          );
+                        },
+                      ),
                     const SizedBox(height: 4),
                     Text(
                       item.label,
