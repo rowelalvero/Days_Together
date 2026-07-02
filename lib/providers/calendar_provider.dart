@@ -7,6 +7,7 @@ import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class CalendarProvider with ChangeNotifier {
   static const String _storageKey = 'calendar_events';
@@ -53,29 +54,73 @@ class CalendarProvider with ChangeNotifier {
       tableName: 'calendar_events',
       coupleId: _coupleId!,
       onData: (dataList) {
-      _events = dataList.map((data) {
-        final hour = data['hour'] as int?;
-        final minute = data['minute'] as int?;
-        final typeIndex = data['type'] as int? ?? 4;
-        final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
-            ? CalendarEventType.values[typeIndex]
-            : CalendarEventType.other;
+        final incoming = dataList.map((data) {
+          final hour = data['hour'] as int?;
+          final minute = data['minute'] as int?;
+          final typeIndex = data['type'] as int? ?? 4;
+          final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
+              ? CalendarEventType.values[typeIndex]
+              : CalendarEventType.other;
 
-        return CalendarEvent(
-          id: data['id'] as String,
-          title: data['title'] ?? '',
-          description: data['description'] as String?,
-          date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-          time: hour != null && minute != null ? TimeOfDay(hour: hour, minute: minute) : null,
-          type: type,
-          isRecurringYearly: data['is_recurring_yearly'] ?? false,
-        );
-      }).toList();
+          return CalendarEvent(
+            id: data['id'] as String,
+            title: data['title'] ?? '',
+            description: data['description'] as String?,
+            date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
+            time: hour != null && minute != null ? TimeOfDay(hour: hour, minute: minute) : null,
+            type: type,
+            isRecurringYearly: data['is_recurring_yearly'] ?? false,
+          );
+        }).toList();
 
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
+        if (!_isLoading) {
+          // Detect additions by partner
+          final added = incoming.where((inc) => !_events.any((old) => old.id == inc.id)).toList();
+          for (var event in added) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'created',
+              title: "Partner's calendar event created",
+              description: 'Created: "${event.title}"',
+              icon: '📅',
+              referenceId: event.id,
+              route: 'calendar',
+            );
+          }
 
-      _persistLocalOnly();
+          // Detect edits by partner
+          final updated = incoming.where((inc) {
+            final match = _events.firstWhere((old) => old.id == inc.id, orElse: () => CalendarEvent(id: '', title: '', date: DateTime.now(), type: CalendarEventType.other));
+            return match.id.isNotEmpty && (match.title != inc.title || match.description != inc.description || match.date != inc.date);
+          }).toList();
+          for (var event in updated) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'updated',
+              title: "Partner's calendar event updated",
+              description: 'Updated: "${event.title}"',
+              icon: '✏️',
+              referenceId: event.id,
+              route: 'calendar',
+            );
+          }
+
+          // Detect deletions by partner
+          final deleted = _events.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+          for (var event in deleted) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'deleted',
+              title: "Partner's calendar event deleted",
+              description: 'Deleted: "${event.title}"',
+              icon: '🗑️',
+              referenceId: event.id,
+              route: 'calendar',
+            );
+          }
+        }
+
+        _events = incoming;
+        _isLoading = false;
+        if (!_disposed) notifyListeners();
+        _persistLocalOnly();
       },
       onError: (err) {
         debugPrint('CalendarProvider: Supabase sync error: $err');
@@ -137,6 +182,15 @@ class CalendarProvider with ChangeNotifier {
       _events.add(event);
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Calendar event created',
+      description: 'Created: "${event.title}"',
+      icon: '📅',
+      referenceId: event.id,
+      route: 'calendar',
+    );
   }
 
   Future<void> updateEvent(CalendarEvent updatedEvent) async {
@@ -173,9 +227,20 @@ class CalendarProvider with ChangeNotifier {
       _events[index] = updatedEvent;
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Calendar event updated',
+      description: 'Updated: "${updatedEvent.title}"',
+      icon: '✏️',
+      referenceId: updatedEvent.id,
+      route: 'calendar',
+    );
   }
 
   Future<void> deleteEvent(String id) async {
+    final eventToDelete = _events.firstWhere((e) => e.id == id, orElse: () => CalendarEvent(id: id, title: 'Event', date: DateTime.now(), type: CalendarEventType.date));
+
     if (_coupleId != null) {
       try {
         await Supabase.instance.client
@@ -197,6 +262,15 @@ class CalendarProvider with ChangeNotifier {
       _events.removeWhere((e) => e.id == id);
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'deleted',
+      title: 'Calendar event deleted',
+      description: 'Deleted: "${eventToDelete.title}"',
+      icon: '🗑️',
+      referenceId: id,
+      route: 'calendar',
+    );
   }
 
   List<CalendarEvent> getEventsForDay(DateTime day) {

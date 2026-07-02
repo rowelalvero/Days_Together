@@ -232,15 +232,16 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
             height: 50,
             child: ElevatedButton(
               onPressed: () async {
+                final noteText = _noteController.text.trim();
                 await provider.logMood(
                   _currentMoodScore.toInt(),
-                  note: _noteController.text.trim().isEmpty
-                      ? null
-                      : _noteController.text.trim(),
+                  note: noteText.isEmpty ? null : noteText,
                 );
-                setState(() {
-                  _isEditingMood = false;
-                });
+                if (mounted) {
+                  setState(() {
+                    _isEditingMood = false;
+                  });
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
@@ -426,9 +427,12 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
               height: 48,
               child: ElevatedButton(
                 onPressed: () async {
-                  if (_answerController.text.trim().isNotEmpty) {
-                    await provider.answerDailyQuestion(_answerController.text.trim());
-                    _answerController.clear();
+                  final text = _answerController.text.trim();
+                  if (text.isNotEmpty) {
+                    await provider.answerDailyQuestion(text);
+                    if (mounted) {
+                      _answerController.clear();
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(

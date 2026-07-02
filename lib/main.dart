@@ -9,6 +9,7 @@ import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/topic_cards_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/providers/recent_activity_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/notification_preferences_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
@@ -42,6 +43,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => RelationshipProvider()),
+        ChangeNotifierProvider(create: (_) => RecentActivityProvider()),
         ChangeNotifierProxyProvider<RelationshipProvider, TimelineProvider>(
           create: (_) => TimelineProvider(),
           update: (_, relationship, provider) =>

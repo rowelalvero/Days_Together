@@ -1,26 +1,62 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+
+// Providers & Models
+import 'package:days_together/providers/recent_activity_provider.dart';
+import 'package:days_together/models/local_activity_model.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
+import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
+import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/providers/gift_reminder_provider.dart';
 
-class RecentActivityFeed extends StatelessWidget {
-  final TimelineProvider timelineProvider;
+// Screens for Navigation
+import 'package:days_together/screens/together/bucket_list_screen.dart';
+import 'package:days_together/screens/together/calendar_screen.dart';
+import 'package:days_together/screens/studio/time_capsule_screen.dart';
+import 'package:days_together/screens/together/vault_screen.dart';
+import 'package:days_together/screens/together/noteit_screen.dart';
+import 'package:days_together/screens/together/topic_cards_screen.dart';
+import 'package:days_together/screens/together/gift_reminders_screen.dart';
+import 'package:days_together/screens/together/relationship_license_screen.dart';
+import 'package:days_together/screens/together/love_chat_screen.dart';
+import 'package:days_together/screens/love_story_screen.dart';
+
+class RecentActivityFeed extends StatefulWidget {
   final dynamic theme;
 
   const RecentActivityFeed({
     super.key,
-    required this.timelineProvider,
     required this.theme,
   });
+
+  @override
+  State<RecentActivityFeed> createState() => _RecentActivityFeedState();
+}
+
+class _RecentActivityFeedState extends State<RecentActivityFeed> {
+  Timer? _relativeTimeTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh relative timestamps every 30 seconds
+    _relativeTimeTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _relativeTimeTimer?.cancel();
+    super.dispose();
+  }
 
   String _formatRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -29,136 +65,219 @@ class RecentActivityFeed extends StatelessWidget {
     if (difference.inSeconds < 60) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
+      final mins = difference.inMinutes;
+      return '$mins ${mins == 1 ? 'min' : 'mins'} ago';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
+      final hrs = difference.inHours;
+      return '$hrs ${hrs == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
     } else if (difference.inDays < 7) {
       return '${difference.inDays}d ago';
     } else {
-      return DateFormat('MM/dd').format(dateTime);
+      return DateFormat('MMM dd').format(dateTime);
+    }
+  }
+
+  Color _featureColor(String feature) {
+    switch (feature) {
+      case 'chat':
+        return const Color(0xFF6366F1); // Indigo
+      case 'doodle_notes':
+      case 'love_notes':
+        return const Color(0xFFF59E0B); // Amber
+      case 'timeline':
+        return const Color(0xFF8B5CF6); // Purple
+      case 'bucket_list':
+        return const Color(0xFF14B8A6); // Teal
+      case 'calendar':
+        return const Color(0xFF3B82F6); // Blue
+      case 'time_capsule':
+        return const Color(0xFFF97316); // Orange
+      case 'vault':
+        return const Color(0xFF64748B); // Slate
+      case 'topic_cards':
+        return const Color(0xFFEC4899); // Pink
+      case 'gifts':
+        return const Color(0xFFEF4444); // Red
+      case 'love_meter':
+        return const Color(0xFFE11D48); // Rose
+      case 'relationship_profile':
+        return const Color(0xFFFF69B4); // Hot Pink
+      default:
+        return const Color(0xFF6366F1);
+    }
+  }
+
+  void _navigateToFeature(BuildContext context, LocalActivity activity) {
+    final route = activity.route;
+    final referenceId = activity.referenceId;
+
+    if (route == null) return;
+
+    bool exists = true;
+    Widget? targetScreen;
+
+    switch (route) {
+      case 'bucket_list':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<BucketListProvider>(context, listen: false);
+          exists = provider.items.any((i) => i.id == referenceId);
+        }
+        targetScreen = const BucketListScreen();
+        break;
+      case 'calendar':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<CalendarProvider>(context, listen: false);
+          exists = provider.events.any((e) => e.id == referenceId);
+        }
+        targetScreen = const CalendarScreen();
+        break;
+      case 'timeline':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<TimelineProvider>(context, listen: false);
+          exists = provider.timelineItems.any((i) => i.id == referenceId);
+        }
+        if (exists) {
+          LoveStoryScreen.of(context)?.setIndex(1); // Story/Timeline Tab
+          return;
+        }
+        break;
+      case 'time_capsule':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<TimeCapsuleProvider>(context, listen: false);
+          exists = provider.capsules.any((c) => c.id == referenceId);
+        }
+        targetScreen = const TimeCapsuleScreen();
+        break;
+      case 'vault':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<VaultProvider>(context, listen: false);
+          exists = provider.items.any((i) => i.id == referenceId);
+        }
+        targetScreen = const VaultScreen();
+        break;
+      case 'love_notes':
+      case 'doodle_notes':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<NoteitProvider>(context, listen: false);
+          exists = provider.notes.any((n) => n.id == referenceId);
+        }
+        targetScreen = const NoteitScreen();
+        break;
+      case 'topic_cards':
+        targetScreen = const TopicCardsScreen();
+        break;
+      case 'gifts':
+        if (referenceId != null && activity.activityType != 'deleted') {
+          final provider = Provider.of<GiftReminderProvider>(context, listen: false);
+          exists = provider.reminders.any((r) => r.id == referenceId);
+        }
+        targetScreen = const GiftRemindersScreen();
+        break;
+      case 'relationship_profile':
+        targetScreen = const RelationshipLicenseScreen();
+        break;
+      case 'chat':
+        targetScreen = const LoveChatScreen();
+        break;
+    }
+
+    if (!exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('The selected item no longer exists. Opening section...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    if (targetScreen != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => targetScreen!),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final rp = Provider.of<RelationshipProvider>(context);
-    final chatProvider = Provider.of<LoveChatProvider>(context);
-    final bucketProvider = Provider.of<BucketListProvider>(context);
-    final calendarProvider = Provider.of<CalendarProvider>(context);
-    final timeCapsuleProvider = Provider.of<TimeCapsuleProvider>(context);
-    final noteitProvider = Provider.of<NoteitProvider>(context);
+    final theme = widget.theme;
+    final activityProvider = Provider.of<RecentActivityProvider>(context);
+    final allActivities = activityProvider.activities;
+    final displayActivities = allActivities.take(6).toList();
 
-    final yourInitials = rp.yourName != null && rp.yourName!.isNotEmpty
-        ? rp.yourName!.substring(0, rp.yourName!.length >= 2 ? 2 : 1).toUpperCase()
-        : 'ME';
-    final partnerInitials = rp.partnerName != null && rp.partnerName!.isNotEmpty
-        ? rp.partnerName!.substring(0, rp.partnerName!.length >= 2 ? 2 : 1).toUpperCase()
-        : 'PA';
-
-    // Map timeline items to activity logs
-    final timelineLogs = timelineProvider.timelineItems.map((item) {
-      return _ActivityLog(
-        title: 'Created shared memory',
-        subtitle: '${item.title}: ${item.description}',
-        initials: 'CO', // Couple/Co-op
-        timestamp: item.date,
+    if (activityProvider.isLoading && allActivities.isEmpty) {
+      return GlassContainer(
+        padding: const EdgeInsets.all(20),
+        borderRadius: 28,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(theme, 0),
+            const SizedBox(height: 24),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(theme.textColor.withValues(alpha: 0.3)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       );
-    }).toList();
-
-    // Map chat messages to activity logs
-    final chatLogs = chatProvider.messages.map((msg) {
-      final senderName = msg.senderId == 'you'
-          ? (rp.yourName ?? 'Me')
-          : (rp.partnerName ?? 'Partner');
-
-      final initials = msg.senderId == 'you' ? yourInitials : partnerInitials;
-
-      return _ActivityLog(
-        title: 'Transmitted chat message',
-        subtitle: '$senderName: "${msg.content}"',
-        initials: initials,
-        timestamp: msg.createdAt,
-      );
-    }).toList();
-
-    // Map bucket list items to activity logs
-    final List<_ActivityLog> bucketLogs = [];
-    for (final item in bucketProvider.items) {
-      bucketLogs.add(_ActivityLog(
-        title: 'Added to bucket list',
-        subtitle: 'Let\'s do: ${item.title}',
-        initials: 'CO',
-        timestamp: item.createdAt,
-      ));
-      if (item.isCompleted && item.completedAt != null) {
-        bucketLogs.add(_ActivityLog(
-          title: 'Completed bucket list item',
-          subtitle: 'We did: ${item.title} 🎉',
-          initials: 'CO',
-          timestamp: item.completedAt!,
-        ));
-      }
     }
 
-    // Map calendar events to activity logs
-    final calendarLogs = calendarProvider.events.map((event) {
-      return _ActivityLog(
-        title: 'Scheduled event',
-        subtitle: '${event.title} - ${DateFormat('MMM dd').format(event.date)}',
-        initials: 'CO',
-        timestamp: event.date,
+    if (displayActivities.isEmpty) {
+      return GlassContainer(
+        padding: const EdgeInsets.all(20),
+        borderRadius: 28,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(theme, 0),
+            const SizedBox(height: 24),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  children: [
+                    const Text(
+                      '✨',
+                      style: TextStyle(fontSize: 28),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your story is just beginning',
+                      style: AppTypography.body(
+                        fontSize: 13,
+                        color: theme.textColor.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Activities will appear here as you use the app',
+                      style: AppTypography.caption(
+                        fontSize: 11,
+                        color: theme.textColor.withValues(alpha: 0.25),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       );
-    }).toList();
-
-    // Map time capsules to activity logs
-    final capsuleLogs = timeCapsuleProvider.capsules.map((capsule) {
-      return _ActivityLog(
-        title: 'Created time capsule',
-        subtitle: 'Locked until ${DateFormat('MMM dd, yyyy').format(capsule.openDate)}',
-        initials: 'CO',
-        timestamp: capsule.createdAt,
-      );
-    }).toList();
-
-    // Map noteit (Doodles/Love Notes) to activity logs
-    final noteitLogs = noteitProvider.notes.map((note) {
-      String title = 'Shared a note';
-      String subtitle = '';
-      if (note.type == NoteitType.drawing) {
-        title = 'Shared a doodle 🎨';
-        subtitle = 'Sketched something with love';
-      } else if (note.type == NoteitType.photo) {
-        title = 'Shared a photo 📸';
-        subtitle = 'Captured a beautiful moment';
-      } else if (note.type == NoteitType.text) {
-        title = 'Shared a love note ✍️';
-        subtitle = note.content ?? '';
-      }
-
-      final senderInitials = note.sender == 'you' ? yourInitials : partnerInitials;
-
-      return _ActivityLog(
-        title: title,
-        subtitle: subtitle,
-        initials: senderInitials,
-        timestamp: note.createdAt,
-      );
-    }).toList();
-
-    // Combine and sort (newest first)
-    final allLogs = [
-      ...timelineLogs,
-      ...chatLogs,
-      ...bucketLogs,
-      ...calendarLogs,
-      ...capsuleLogs,
-      ...noteitLogs,
-    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-    final displayLogs = allLogs.take(5).toList();
-
-    if (displayLogs.isEmpty) {
-      return const SizedBox.shrink();
     }
 
     return GlassContainer(
@@ -168,151 +287,15 @@ class RecentActivityFeed extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFEF4444).withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Recent Activities',
-                    style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor),
-                  ),
-                ],
-              ),
-              Text(
-                'LIVE LOGS',
-                style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.38)).copyWith(letterSpacing: 1.2),
-              ),
-            ],
-          ),
+          _buildHeader(theme, allActivities.length),
           const SizedBox(height: 16),
-          // Timeline list
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: displayLogs.length,
+            itemCount: displayActivities.length,
             itemBuilder: (context, index) {
-              final log = displayLogs[index];
-              return IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Timeline vertical line track
-                    SizedBox(
-                      width: 24,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Positioned(
-                            top: index == 0 ? 25 : 0, // Start line at avatar center
-                            bottom: index == displayLogs.length - 1 ? 25 : 0, // End line at avatar center
-                            child: Container(
-                              width: 1.5,
-                              color: theme.textColor.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          Positioned(
-                            top: 25, // Glowing blue dot aligned with avatar center
-                            child: Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: Colors.blueAccent,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.blueAccent.withValues(alpha: 0.5),
-                                    blurRadius: 6,
-                                    spreadRadius: 1.5,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Log details card
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Pink/Rose Initial Badge
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFEC4899), Color(0xFFE11D48)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  log.initials,
-                                  style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Log textual info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        log.title,
-                                        style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w700, color: theme.textColor),
-                                      ),
-                                      Text(
-                                        _formatRelativeTime(log.timestamp),
-                                        style: AppTypography.caption(fontSize: 9, color: theme.textColor.withValues(alpha: 0.3), fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    log.subtitle,
-                                    style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.54)),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              final activity = displayActivities[index];
+              return _buildActivityRow(theme, activity, index, displayActivities.length);
             },
           ),
           Divider(color: theme.textColor.withValues(alpha: 0.1), height: 24),
@@ -320,12 +303,20 @@ class RecentActivityFeed extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Shared Co-Lobby Stream',
-                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.3)),
+                'Local Activity Timeline',
+                style: AppTypography.caption(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: theme.textColor.withValues(alpha: 0.3),
+                ),
               ),
               Text(
-                '${allLogs.length} total',
-                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.3)),
+                '${allActivities.length} total',
+                style: AppTypography.caption(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: theme.textColor.withValues(alpha: 0.3),
+                ),
               ),
             ],
           ),
@@ -333,18 +324,184 @@ class RecentActivityFeed extends StatelessWidget {
       ),
     );
   }
-}
 
-class _ActivityLog {
-  final String title;
-  final String subtitle;
-  final String initials;
-  final DateTime timestamp;
+  Widget _buildHeader(dynamic theme, int totalCount) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: theme.accentColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.accentColor.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Recent Activities',
+              style: AppTypography.body(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: theme.textColor,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          'TIMELINE',
+          style: AppTypography.caption(
+            fontSize: 8,
+            fontWeight: FontWeight.w800,
+            color: theme.textColor.withValues(alpha: 0.38),
+          ).copyWith(letterSpacing: 1.2),
+        ),
+      ],
+    );
+  }
 
-  const _ActivityLog({
-    required this.title,
-    required this.subtitle,
-    required this.initials,
-    required this.timestamp,
-  });
+  Widget _buildActivityRow(dynamic theme, LocalActivity activity, int index, int totalCount) {
+    final featureColor = _featureColor(activity.route ?? '');
+    final icon = activity.icon;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Timeline vertical line track
+          SizedBox(
+            width: 24,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  top: index == 0 ? 25 : 0,
+                  bottom: index == totalCount - 1 ? 25 : 0,
+                  child: Container(
+                    width: 1.5,
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
+                ),
+                Positioned(
+                  top: 25,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: featureColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: featureColor.withValues(alpha: 0.5),
+                          blurRadius: 6,
+                          spreadRadius: 1.5,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Log details card (wrapped in InkWell for interactivity)
+          Expanded(
+            child: InkWell(
+              onTap: () => _navigateToFeature(context, activity),
+              borderRadius: BorderRadius.circular(16),
+              splashColor: featureColor.withValues(alpha: 0.1),
+              highlightColor: featureColor.withValues(alpha: 0.05),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon badge
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          colors: [
+                            featureColor,
+                            featureColor.withValues(alpha: 0.7),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          icon,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Log textual info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  activity.title,
+                                  style: AppTypography.body(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.textColor,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _formatRelativeTime(activity.timestamp),
+                                style: AppTypography.caption(
+                                  fontSize: 9,
+                                  color: theme.textColor.withValues(alpha: 0.3),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (activity.description.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              activity.description,
+                              style: AppTypography.bodyMedium(
+                                fontSize: 11,
+                                color: theme.textColor.withValues(alpha: 0.54),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

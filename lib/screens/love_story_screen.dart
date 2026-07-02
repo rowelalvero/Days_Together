@@ -32,12 +32,24 @@ class LoveStoryScreen extends StatefulWidget {
   const LoveStoryScreen({super.key, this.initialIndex = 0});
 
   @override
-  State<LoveStoryScreen> createState() => _LoveStoryScreenState();
+  State<LoveStoryScreen> createState() => LoveStoryScreenState();
+
+  static LoveStoryScreenState? of(BuildContext context) {
+    return context.findAncestorStateOfType<LoveStoryScreenState>();
+  }
 }
 
-class _LoveStoryScreenState extends State<LoveStoryScreen> {
+class LoveStoryScreenState extends State<LoveStoryScreen> {
   int _currentIndex = 0;
   DateTime? _lastBackPressTime;
+
+  void setIndex(int index) {
+    if (mounted) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -555,7 +567,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               theme: theme,
             ),
             const SizedBox(height: 24),
-            RecentActivityFeed(timelineProvider: tp, theme: theme),
+            RecentActivityFeed(theme: theme),
             const SizedBox(height: 120), // Bottom navigation padding
           ],
         ),

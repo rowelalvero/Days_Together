@@ -38,6 +38,7 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_secure_storage: ^9.0.0
   flutter_launcher_icons: ^0.13.1
+  sqflite: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,7 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/images/app_icon.png"
-  # Support Adaptive Icons on Android
-  adaptive_icon_background: "#FFFFFF"
+
+  # (Optional) Support Android Adaptive Icons (recommended for modern Android devices)
+  adaptive_icon_background: "#FFFFFF" # Background color or image
   adaptive_icon_foreground: "assets/images/app_icon.png"

@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   static const String _storageKey = 'vault_items';
@@ -88,29 +89,58 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       tableName: 'vault_items',
       coupleId: _coupleId!,
       onData: (dataList) {
-            _items = dataList.map((data) {
-              final typeIndex = data['type'] as int? ?? 0;
-              final type =
-                  (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
-                  ? VaultItemType.values[typeIndex]
-                  : VaultItemType.photo;
+        final incoming = dataList.map((data) {
+          final typeIndex = data['type'] as int? ?? 0;
+          final type =
+              (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+              ? VaultItemType.values[typeIndex]
+              : VaultItemType.photo;
 
-              return VaultItem(
-                id: data['id'] as String,
-                type: type,
-                content: data['content'] as String?,
-                imageUrl: data['image_url'] as String?,
-                createdAt: data['created_at'] != null
-                    ? DateTime.parse(data['created_at'] as String)
-                    : DateTime.now(),
-              );
-            }).toList();
+          return VaultItem(
+            id: data['id'] as String,
+            type: type,
+            content: data['content'] as String?,
+            imageUrl: data['image_url'] as String?,
+            createdAt: data['created_at'] != null
+                ? DateTime.parse(data['created_at'] as String)
+                : DateTime.now(),
+          );
+        }).toList();
 
-            _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-            _isLoading = false;
-            if (!_disposed) notifyListeners();
+        incoming.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-            _persistLocalOnly();
+        if (!_isLoading) {
+          // Detect additions by partner
+          final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
+          for (var item in added) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'created',
+              title: "Partner added vault item 🔒",
+              description: 'Added a new secure item to the Vault',
+              icon: '🔒',
+              referenceId: item.id,
+              route: 'vault',
+            );
+          }
+
+          // Detect deletions by partner
+          final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+          for (var item in deleted) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'deleted',
+              title: "Partner removed vault item 🔒",
+              description: 'Removed a secure item from the Vault',
+              icon: '🔒',
+              referenceId: item.id,
+              route: 'vault',
+            );
+          }
+        }
+
+        _items = incoming;
+        _isLoading = false;
+        if (!_disposed) notifyListeners();
+        _persistLocalOnly();
       },
       onError: (err) {
         debugPrint('VaultProvider: Supabase sync error: $err');
@@ -315,6 +345,15 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
         _items.insert(0, newItem);
         await _persist();
       }
+
+      await RecentActivityService.instance.logActivity(
+        activityType: 'created',
+        title: 'Added vault item 🔒',
+        description: 'Added a new secure item to the Vault',
+        icon: '🔒',
+        referenceId: photoId,
+        route: 'vault',
+      );
     } catch (e, st) {
       debugPrint('VaultProvider.addPhoto failed: $e\n$st');
     }
@@ -348,6 +387,15 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       _items.insert(0, item);
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Added vault item 🔒',
+      description: 'Added a new secure item to the Vault',
+      icon: '🔒',
+      referenceId: item.id,
+      route: 'vault',
+    );
   }
 
   Future<void> deleteItem(String id) async {
@@ -388,6 +436,15 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       _items.removeWhere((i) => i.id == id);
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'deleted',
+      title: 'Removed vault item 🔒',
+      description: 'Removed a secure item from the Vault',
+      icon: '🔒',
+      referenceId: id,
+      route: 'vault',
+    );
   }
 
   Future<void> _persist() async {

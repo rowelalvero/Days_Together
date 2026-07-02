@@ -8,6 +8,7 @@ import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/daily_mood_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class DailyMoodProvider with ChangeNotifier {
   static const String _moodKey = 'daily_moods';
@@ -132,23 +133,54 @@ class DailyMoodProvider with ChangeNotifier {
       tableName: 'moods',
       coupleId: _coupleId!,
       onData: (dataList) {
-      final allMoods = dataList.map((data) {
-        return DailyMood(
-          id: data['id'] as String,
-          userId: data['user_id'] as String?,
-          date: data['date'] ?? '',
-          moodScore: data['mood_score'] ?? 5,
-          note: data['note'] as String?,
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-        );
-      }).toList();
+        final allMoods = dataList.map((data) {
+          return DailyMood(
+            id: data['id'] as String,
+            userId: data['user_id'] as String?,
+            date: data['date'] ?? '',
+            moodScore: data['mood_score'] ?? 5,
+            note: data['note'] as String?,
+            createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+          );
+        }).toList();
 
-      _moods = allMoods.where((m) => m.userId == _userId).toList();
-      _partnerMoods = allMoods.where((m) => m.userId != _userId).toList();
+        final incomingPartnerMoods = allMoods.where((m) => m.userId != _userId).toList();
 
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
-      _persistLocalMoodsOnly();
+        if (!_isLoading) {
+          for (var mood in incomingPartnerMoods) {
+            final match = _partnerMoods.firstWhere((old) => old.id == mood.id, orElse: () => DailyMood(id: '', date: '', moodScore: 5));
+            if (match.id.isEmpty) {
+              RecentActivityService.instance.logActivity(
+                activityType: 'created',
+                title: 'Partner logged a mood ${_getMoodEmoji(mood.moodScore)}',
+                description: mood.note != null && mood.note!.isNotEmpty
+                    ? 'Feeling: "${mood.note}"'
+                    : 'Feeling changed',
+                icon: _getMoodEmoji(mood.moodScore),
+                referenceId: mood.id,
+                route: 'mood',
+              );
+            } else if (match.moodScore != mood.moodScore || match.note != mood.note) {
+              RecentActivityService.instance.logActivity(
+                activityType: 'updated',
+                title: 'Partner updated their mood ${_getMoodEmoji(mood.moodScore)}',
+                description: mood.note != null && mood.note!.isNotEmpty
+                    ? 'Feeling: "${mood.note}"'
+                    : 'Feeling changed',
+                icon: _getMoodEmoji(mood.moodScore),
+                referenceId: mood.id,
+                route: 'mood',
+              );
+            }
+          }
+        }
+
+        _moods = allMoods.where((m) => m.userId == _userId).toList();
+        _partnerMoods = incomingPartnerMoods;
+
+        _isLoading = false;
+        if (!_disposed) notifyListeners();
+        _persistLocalMoodsOnly();
       },
       onError: (err) {
         debugPrint('DailyMoodProvider: moods Supabase error: $err');
@@ -171,6 +203,17 @@ class DailyMoodProvider with ChangeNotifier {
         final myAnswer = answers[_userId];
         final partnerKey = _partnerId ?? answers.keys.firstWhere((k) => k != _userId, orElse: () => 'partner_simulator');
         final partnerAnswer = answers[partnerKey];
+
+        if (!_isLoading && partnerAnswer != null && (_todayQuestion == null || _todayQuestion!.partnerAnswer == null)) {
+          RecentActivityService.instance.logActivity(
+            activityType: 'completed',
+            title: "Partner answered today's question ❓",
+            description: 'Answered: "$questionText"',
+            icon: '❓',
+            referenceId: _todayString,
+            route: 'mood',
+          );
+        }
 
         _todayQuestion = DailySyncQuestion(
           question: questionText,
@@ -294,6 +337,14 @@ class DailyMoodProvider with ChangeNotifier {
     } else {
       _logLocalMood(nextMood);
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: "Today's mood updated",
+      description: "Shared today's mood score: $score/10",
+      icon: '❤️',
+      route: 'love_meter',
+    );
   }
 
   void _logLocalMood(DailyMood mood) {
@@ -358,6 +409,14 @@ class DailyMoodProvider with ChangeNotifier {
     } else {
       _answerLocal(answer);
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: "Connection prompt answered",
+      description: "Answered today's sync question",
+      icon: '❤️',
+      route: 'love_meter',
+    );
   }
 
   void _answerLocal(String answer) {
@@ -403,6 +462,23 @@ class DailyMoodProvider with ChangeNotifier {
       }
     } catch (e, st) {
       debugPrint('DailyMoodProvider._persistLocalQuestionOnly failed: $e\n$st');
+    }
+  }
+
+  String _getMoodEmoji(int score) {
+    switch (score) {
+      case 1:
+        return '😭';
+      case 2:
+        return '😢';
+      case 3:
+        return '😐';
+      case 4:
+        return '😊';
+      case 5:
+        return '😍';
+      default:
+        return '😊';
     }
   }
 

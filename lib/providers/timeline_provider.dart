@@ -12,6 +12,7 @@ import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class TimelineProvider with ChangeNotifier {
   final TimelineRepository _repository = TimelineRepository();
@@ -130,7 +131,7 @@ class TimelineProvider with ChangeNotifier {
               return !_locallyDeletedIds.contains(id);
             }).toList();
 
-            _timelineItems = activeDataList.map((data) {
+            final incoming = activeDataList.map((data) {
               final rawComments = data['comments'];
               List<CommentData> parsedComments = [];
               if (rawComments != null) {
@@ -173,9 +174,60 @@ class TimelineProvider with ChangeNotifier {
               );
             }).toList();
 
-            _timelineItems.sort((a, b) => _isAscending
+            incoming.sort((a, b) => _isAscending
                 ? a.date.compareTo(b.date)
                 : b.date.compareTo(a.date));
+
+            if (!_isLoading) {
+              // Detect additions by partner
+              final added = incoming.where((inc) => !_timelineItems.any((old) => old.id == inc.id)).toList();
+              for (var item in added) {
+                RecentActivityService.instance.logActivity(
+                  activityType: 'created',
+                  title: 'Partner added a memory 📸',
+                  description: 'Added: "${item.title}"',
+                  icon: '📸',
+                  referenceId: item.id,
+                  route: 'timeline',
+                );
+              }
+
+              // Detect edits/updates by partner
+              for (var inc in incoming) {
+                final matchIndex = _timelineItems.indexWhere((old) => old.id == inc.id);
+                if (matchIndex != -1) {
+                  final match = _timelineItems[matchIndex];
+                  if (match.title != inc.title ||
+                      match.description != inc.description ||
+                      match.date != inc.date ||
+                      match.networkImageUrl != inc.networkImageUrl) {
+                    RecentActivityService.instance.logActivity(
+                      activityType: 'updated',
+                      title: 'Partner updated a memory ✏️',
+                      description: 'Updated: "${inc.title}"',
+                      icon: '✏️',
+                      referenceId: inc.id,
+                      route: 'timeline',
+                    );
+                  }
+                }
+              }
+
+              // Detect deletions by partner
+              final deleted = _timelineItems.where((old) => !incoming.any((inc) => inc.id == old.id) && !_locallyDeletedIds.contains(old.id)).toList();
+              for (var item in deleted) {
+                RecentActivityService.instance.logActivity(
+                  activityType: 'deleted',
+                  title: 'Partner deleted a memory 🗑️',
+                  description: 'Deleted: "${item.title}"',
+                  icon: '🗑️',
+                  referenceId: item.id,
+                  route: 'timeline',
+                );
+              }
+            }
+
+            _timelineItems = incoming;
             for (var i = 0; i < _timelineItems.length; i++) {
               _timelineItems[i].position = i;
             }
@@ -314,6 +366,15 @@ class TimelineProvider with ChangeNotifier {
       _clampCurrentScrubIndex();
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Memory added 📸',
+      description: 'Added: "${item.title}"',
+      icon: '📸',
+      referenceId: item.id,
+      route: 'timeline',
+    );
   }
 
   Future<void> updateTimelineItem(
@@ -419,6 +480,15 @@ class TimelineProvider with ChangeNotifier {
       _clampCurrentScrubIndex();
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Memory updated ✏️',
+      description: 'Updated: "${updatedItem.title}"',
+      icon: '✏️',
+      referenceId: id,
+      route: 'timeline',
+    );
   }
 
   Future<void> deleteTimelineItem(String id) async {
@@ -475,6 +545,15 @@ class TimelineProvider with ChangeNotifier {
         debugPrint('TimelineProvider.deleteTimelineItem Supabase error: $e');
       }
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'deleted',
+      title: 'Memory deleted 🗑️',
+      description: 'Deleted: "${item.title}"',
+      icon: '🗑️',
+      referenceId: id,
+      route: 'timeline',
+    );
   }
 
   Future<void> reorderTimelineItems(int oldIndex, int newIndex) async {

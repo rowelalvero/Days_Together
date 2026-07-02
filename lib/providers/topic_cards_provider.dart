@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:days_together/models/topic_card_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class TopicCardsProvider with ChangeNotifier {
   static const String _customCardsKey = 'topic_cards_custom';
@@ -17,6 +18,7 @@ class TopicCardsProvider with ChangeNotifier {
   List<TopicCard> _defaultCards = [];
   List<TopicCard> _customCards = [];
   Set<String> _likedCardIds = {};
+  Set<String> _partnerLikedCardIds = {};
   Map<String, bool> _pendingLikes = {};
 
   String _activeCategory = 'All';
@@ -83,27 +85,41 @@ class TopicCardsProvider with ChangeNotifier {
       tableName: 'topic_cards',
       coupleId: _coupleId!,
       onData: (dataList) {
-      final List<TopicCard> newCustoms = [];
+        final List<TopicCard> newCustoms = [];
 
-      for (final data in dataList) {
-        final docId = data['id'] as String;
-        final isCustom = data['is_custom'] as bool? ?? false;
+        for (final data in dataList) {
+          final docId = data['id'] as String;
+          final isCustom = data['is_custom'] as bool? ?? false;
 
-        if (isCustom) {
-          newCustoms.add(TopicCard(
-            id: docId,
-            category: data['category'] ?? '',
-            question: data['question'] ?? '',
-            isCustom: true,
-            isLiked: _likedCardIds.contains(docId),
-          ));
+          if (isCustom) {
+            newCustoms.add(TopicCard(
+              id: docId,
+              category: data['category'] ?? '',
+              question: data['question'] ?? '',
+              isCustom: true,
+              isLiked: _likedCardIds.contains(docId),
+            ));
+          }
         }
-      }
 
-      _customCards = newCustoms;
-      _isLoading = false;
-      _updateActiveDeck();
-      _persistLocalOnly();
+        if (!_isLoading) {
+          final added = newCustoms.where((inc) => !_customCards.any((old) => old.id == inc.id)).toList();
+          for (var card in added) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'created',
+              title: "Partner added custom card 🎴",
+              description: 'Added: "${card.question}"',
+              icon: '🎴',
+              referenceId: card.id,
+              route: 'topic_cards',
+            );
+          }
+        }
+
+        _customCards = newCustoms;
+        _isLoading = false;
+        _updateActiveDeck();
+        _persistLocalOnly();
       },
       onError: (err) {
         debugPrint('TopicCardsProvider: Supabase cards sync error: $err');
@@ -118,6 +134,7 @@ class TopicCardsProvider with ChangeNotifier {
         .eq('couple_id', _coupleId!)
         .listen((dataList) {
       final Set<String> newLikes = {};
+      final Set<String> newPartnerLikes = {};
 
       for (final data in dataList) {
         final cardId = data['card_id'] as String;
@@ -125,9 +142,29 @@ class TopicCardsProvider with ChangeNotifier {
 
         if (userId == _userId) {
           newLikes.add(cardId);
+        } else {
+          newPartnerLikes.add(cardId);
         }
       }
 
+      if (!_isLoading) {
+        final addedLikes = newPartnerLikes.difference(_partnerLikedCardIds);
+        for (var cardId in addedLikes) {
+          final card = allCards.firstWhere((c) => c.id == cardId, orElse: () => TopicCard(id: cardId, category: 'All', question: '', isCustom: false));
+          if (card.question.isNotEmpty) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'updated',
+              title: "Partner liked card 💖",
+              description: 'Liked: "${card.question}"',
+              icon: '💖',
+              referenceId: cardId,
+              route: 'topic_cards',
+            );
+          }
+        }
+      }
+
+      _partnerLikedCardIds = newPartnerLikes;
       _likedCardIds = newLikes;
 
       // Apply local pending overrides to maintain visual consistency
@@ -330,6 +367,15 @@ class TopicCardsProvider with ChangeNotifier {
       await _saveCustomCards();
       _updateActiveDeck();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Created custom card 🎴',
+      description: 'Added: "$question"',
+      icon: '🎴',
+      referenceId: newCard.id,
+      route: 'topic_cards',
+    );
   }
 
   Future<void> deleteCard(String id) async {
@@ -394,6 +440,18 @@ class TopicCardsProvider with ChangeNotifier {
 
     // 3. Trigger async sync in background
     _syncPendingLikes();
+
+    if (nextLiked) {
+      final card = allCards.firstWhere((c) => c.id == id, orElse: () => TopicCard(id: id, category: 'All', question: '', isCustom: false));
+      await RecentActivityService.instance.logActivity(
+        activityType: 'updated',
+        title: 'Liked custom card 💖',
+        description: 'Liked: "${card.question}"',
+        icon: '💖',
+        referenceId: id,
+        route: 'topic_cards',
+      );
+    }
   }
 
   Future<void> _syncPendingLikes() async {

@@ -13,6 +13,7 @@ import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/services/auth_service.dart';
 import 'package:days_together/services/couple_service.dart';
 import 'package:days_together/services/profile_service.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 const Object _unset = Object();
 
@@ -1139,6 +1140,15 @@ class RelationshipProvider with ChangeNotifier {
           .then((_) {});
     }
     notifyListeners();
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Anniversary changed 💕',
+      description: 'Anniversary changed to ${date.toString().substring(0, 10)}',
+      icon: '💕',
+      referenceId: 'anniversary_date',
+      route: 'relationship_profile',
+    );
   }
 
   Future<void> setStartTime(TimeOfDay time) async {
@@ -1747,6 +1757,15 @@ class RelationshipProvider with ChangeNotifier {
       }
     }
     notifyListeners();
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Profile updated 💕',
+      description: 'Relationship profile details updated',
+      icon: '💕',
+      referenceId: 'relationship_profile_details',
+      route: 'relationship_profile',
+    );
   }
 
   Future<void> setAvatars({String? yourPath, String? partnerPath}) async {
@@ -1885,6 +1904,15 @@ class RelationshipProvider with ChangeNotifier {
       }
     }
     notifyListeners();
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Profile photo updated 💕',
+      description: 'Updated profile avatar photo',
+      icon: '📸',
+      referenceId: 'relationship_profile_avatar',
+      route: 'relationship_profile',
+    );
   }
 
   String generateCoupleCode({bool forceRegenerate = false}) {

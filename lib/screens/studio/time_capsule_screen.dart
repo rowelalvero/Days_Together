@@ -45,9 +45,14 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
-                  border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +69,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
+                          icon: Icon(
+                            Icons.close,
+                            color: theme.textColor.withValues(alpha: 0.7),
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -75,13 +83,18 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                       style: AppTypography.body(color: theme.textColor),
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: 'Write a letter, share a secret, or send a message to your future selves...\n\n"Dear future us..."',
-                        hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
+                        hintText:
+                            'Write a letter, share a secret, or send a message to your future selves...\n\n"Dear future us..."',
+                        hintStyle: AppTypography.body(
+                          color: theme.textColor.withValues(alpha: 0.3),
+                        ),
                         filled: true,
                         fillColor: theme.textColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+                          borderSide: BorderSide(
+                            color: theme.textColor.withValues(alpha: 0.1),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -101,11 +114,11 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                           builder: (context, child) {
                             return Theme(
                               data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.dark(
-                                  primary: theme.accentColor,
-                                  onPrimary: Colors.white,
-                                  surface: theme.secondaryColor,
-                                  onSurface: Colors.white,
+                                colorScheme: ColorScheme.fromSeed(
+                                  seedColor: theme.accentColor,
+                                  brightness: theme.isDark
+                                      ? Brightness.dark
+                                      : Brightness.light,
                                 ),
                               ),
                               child: child!,
@@ -119,30 +132,40 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _selectedDate == null
-                                ? 'Select Unlock Date'
-                                : DateFormat('MMMM dd, yyyy').format(_selectedDate!),
-                            style: AppTypography.body(
-                              color: _selectedDate == null
-                                  ? theme.textColor.withValues(alpha: 0.4)
-                                  : theme.textColor,
-                              fontSize: 16,
-                            ),
+                          color: theme.textColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.1),
                           ),
-                          Icon(Icons.calendar_today_rounded, color: theme.textColor.withValues(alpha: 0.7)),
-                        ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedDate == null
+                                  ? 'Select Unlock Date'
+                                  : DateFormat(
+                                      'MMMM dd, yyyy',
+                                    ).format(_selectedDate!),
+                              style: AppTypography.body(
+                                color: _selectedDate == null
+                                    ? theme.textColor.withValues(alpha: 0.4)
+                                    : theme.textColor,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              color: theme.textColor.withValues(alpha: 0.7),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -150,15 +173,18 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          if (_messageController.text.trim().isNotEmpty && _selectedDate != null) {
+                          if (_messageController.text.trim().isNotEmpty &&
+                              _selectedDate != null) {
                             context.read<TimeCapsuleProvider>().createCapsule(
-                                  _messageController.text.trim(),
-                                  _selectedDate!,
-                                );
+                              _messageController.text.trim(),
+                              _selectedDate!,
+                            );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('🔒 Time Capsule sealed and locked away!'),
+                                content: Text(
+                                  '🔒 Time Capsule sealed and locked away!',
+                                ),
                                 backgroundColor: Colors.pinkAccent,
                               ),
                             );
@@ -173,7 +199,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                         ),
                         child: Text(
                           'Seal Time Capsule',
-                          style: AppTypography.button(color: Colors.white, fontSize: 14),
+                          style: AppTypography.button(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -187,7 +216,12 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  void _showCapsuleDetailDialog(BuildContext context, TimeCapsule capsule, dynamic theme, TimeCapsuleProvider provider) {
+  void _showCapsuleDetailDialog(
+    BuildContext context,
+    TimeCapsule capsule,
+    dynamic theme,
+    TimeCapsuleProvider provider,
+  ) {
     if (!capsule.isOpened && capsule.canOpen) {
       provider.openCapsule(capsule.id);
     }
@@ -197,12 +231,17 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: theme.primaryColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: Row(
             children: [
               const Icon(Icons.drafts_rounded, color: Colors.pinkAccent),
               const SizedBox(width: 12),
-              Text('Opened Capsule', style: AppTypography.cardTitle(color: theme.textColor)),
+              Text(
+                'Opened Capsule',
+                style: AppTypography.cardTitle(color: theme.textColor),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -212,7 +251,9 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
               children: [
                 Text(
                   'Created: ${DateFormat('MMMM dd, yyyy').format(capsule.createdAt)}',
-                  style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.54)),
+                  style: AppTypography.bodyMedium(
+                    color: theme.textColor.withValues(alpha: 0.54),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -229,7 +270,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close', style: AppTypography.button(color: theme.accentColor)),
+              child: Text(
+                'Close',
+                style: AppTypography.button(color: theme.accentColor),
+              ),
             ),
           ],
         );
@@ -259,8 +303,8 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                   child: provider.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : provider.capsules.isEmpty
-                          ? _buildEmptyState(theme)
-                          : _buildCapsuleLists(provider, theme),
+                      ? _buildEmptyState(theme)
+                      : _buildCapsuleLists(provider, theme),
                 ),
               ],
             ),
@@ -281,7 +325,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
@@ -353,8 +400,15 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildCapsuleCard(TimeCapsule capsule, dynamic theme, TimeCapsuleProvider provider, bool isOpenable) {
-    final formattedOpenDate = DateFormat('MMMM dd, yyyy').format(capsule.openDate);
+  Widget _buildCapsuleCard(
+    TimeCapsule capsule,
+    dynamic theme,
+    TimeCapsuleProvider provider,
+    bool isOpenable,
+  ) {
+    final formattedOpenDate = DateFormat(
+      'MMMM dd, yyyy',
+    ).format(capsule.openDate);
     final daysLeft = capsule.openDate.difference(DateTime.now()).inDays;
 
     return Container(
@@ -363,8 +417,8 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
         color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isOpenable 
-              ? Colors.green.withValues(alpha: 0.3) 
+          color: isOpenable
+              ? Colors.green.withValues(alpha: 0.3)
               : theme.textColor.withValues(alpha: 0.1),
         ),
       ),
@@ -373,19 +427,22 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: (capsule.isOpened 
-                    ? Colors.pinkAccent 
-                    : (isOpenable ? Colors.green : Colors.grey))
-                .withValues(alpha: 0.15),
+            color:
+                (capsule.isOpened
+                        ? Colors.pinkAccent
+                        : (isOpenable ? Colors.green : Colors.grey))
+                    .withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: Icon(
-            capsule.isOpened 
-                ? Icons.drafts_rounded 
+            capsule.isOpened
+                ? Icons.drafts_rounded
                 : (isOpenable ? Icons.lock_open_rounded : Icons.lock_rounded),
-            color: capsule.isOpened 
-                ? Colors.pinkAccent 
-                : (isOpenable ? Colors.green : theme.textColor.withValues(alpha: 0.6)),
+            color: capsule.isOpened
+                ? Colors.pinkAccent
+                : (isOpenable
+                      ? Colors.green
+                      : theme.textColor.withValues(alpha: 0.6)),
             size: 20,
           ),
         ),
@@ -409,10 +466,12 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             capsule.isOpened
                 ? 'Opened: $formattedOpenDate'
                 : (isOpenable
-                    ? 'Ready to open now!'
-                    : 'Unlocks: $formattedOpenDate ($daysLeft days)'),
+                      ? 'Ready to open now!'
+                      : 'Unlocks: $formattedOpenDate ($daysLeft days)'),
             style: AppTypography.bodyMedium(
-              color: isOpenable ? Colors.green : theme.textColor.withValues(alpha: 0.6),
+              color: isOpenable
+                  ? Colors.green
+                  : theme.textColor.withValues(alpha: 0.6),
               fontSize: 12,
             ),
           ),
@@ -422,34 +481,59 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
           children: [
             if (isOpenable || capsule.isOpened)
               IconButton(
-                icon: Icon(Icons.arrow_forward_ios_rounded, color: theme.textColor.withValues(alpha: 0.7), size: 16),
-                onPressed: () => _showCapsuleDetailDialog(context, capsule, theme, provider),
+                icon: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: theme.textColor.withValues(alpha: 0.7),
+                  size: 16,
+                ),
+                onPressed: () =>
+                    _showCapsuleDetailDialog(context, capsule, theme, provider),
               )
             else
-              Icon(Icons.timer_outlined, color: theme.textColor.withValues(alpha: 0.38), size: 18),
+              Icon(
+                Icons.timer_outlined,
+                color: theme.textColor.withValues(alpha: 0.38),
+                size: 18,
+              ),
             IconButton(
-              icon: Icon(Icons.delete_outline_rounded, color: theme.textColor.withValues(alpha: 0.38)),
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                color: theme.textColor.withValues(alpha: 0.38),
+              ),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: theme.primaryColor,
-                    title: Text('Delete Time Capsule?', style: AppTypography.cardTitle(color: theme.textColor)),
+                    title: Text(
+                      'Delete Time Capsule?',
+                      style: AppTypography.cardTitle(color: theme.textColor),
+                    ),
                     content: Text(
                       'Are you sure you want to delete this time capsule? Its contents will be permanently lost.',
-                      style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
+                      style: AppTypography.body(
+                        color: theme.textColor.withValues(alpha: 0.7),
+                      ),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
+                        child: Text(
+                          'Cancel',
+                          style: AppTypography.button(
+                            color: theme.textColor.withValues(alpha: 0.7),
+                          ),
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
                           provider.deleteCapsule(capsule.id);
                           Navigator.pop(context);
                         },
-                        child: Text('Delete', style: AppTypography.button(color: theme.accentColor)),
+                        child: Text(
+                          'Delete',
+                          style: AppTypography.button(color: theme.accentColor),
+                        ),
                       ),
                     ],
                   ),

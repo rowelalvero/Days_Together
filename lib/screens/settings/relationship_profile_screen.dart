@@ -26,9 +26,7 @@ class RelationshipProfileScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: themeProvider.currentGradient,
-        ),
+        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -36,7 +34,10 @@ class RelationshipProfileScreen extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -71,7 +72,10 @@ class RelationshipProfileScreen extends StatelessWidget {
         opacity: 0.3,
         child: Text(
           'UID: ${rp.userId?.substring(0, 8) ?? "None"} • CID: ${rp.coupleId?.substring(0, 8) ?? "None"}',
-          style: AppTypography.captionMono(fontSize: 10, color: theme.textColor),
+          style: AppTypography.captionMono(
+            fontSize: 10,
+            color: theme.textColor,
+          ),
         ),
       ),
     );
@@ -103,7 +107,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderSection(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  Widget _buildHeaderSection(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     final partnerJoined = rp.partnerId != null;
     return GlassContainer(
       width: double.infinity,
@@ -114,7 +122,11 @@ class RelationshipProfileScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildAvatarWidget(rp.yourAvatarPath, rp.yourName ?? 'You', theme),
+              _buildAvatarWidget(
+                rp.yourAvatarPath,
+                rp.yourName ?? 'You',
+                theme,
+              ),
               Container(
                 width: 48,
                 height: 48,
@@ -129,7 +141,11 @@ class RelationshipProfileScreen extends StatelessWidget {
                 ),
               ),
               if (partnerJoined)
-                _buildAvatarWidget(rp.partnerAvatarPath, rp.partnerName ?? 'Partner', theme)
+                _buildAvatarWidget(
+                  rp.partnerAvatarPath,
+                  rp.partnerName ?? 'Partner',
+                  theme,
+                )
               else
                 _buildAvatarPlaceholder(theme),
             ],
@@ -255,10 +271,18 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  Widget _buildInfoCard(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     final start = rp.startDate;
-    final formattedStart = start != null ? DateFormat('MMMM dd, yyyy').format(start) : 'Not Set';
-    final formattedTime = rp.startTime != null ? rp.startTime!.format(context) : '12:00 AM';
+    final formattedStart = start != null
+        ? DateFormat('MMMM dd, yyyy').format(start)
+        : 'Not Set';
+    final formattedTime = rp.startTime != null
+        ? rp.startTime!.format(context)
+        : '12:00 AM';
     final ageStr = rp.relationshipAge;
 
     return Column(
@@ -305,13 +329,17 @@ class RelationshipProfileScreen extends StatelessWidget {
             _StatTile(
               icon: Icons.person_pin_rounded,
               label: 'Your Join Date',
-              value: rp.yourJoinDate != null ? DateFormat('MMM dd, yyyy').format(rp.yourJoinDate!) : '...',
+              value: rp.yourJoinDate != null
+                  ? DateFormat('MMM dd, yyyy').format(rp.yourJoinDate!)
+                  : '...',
               theme: theme,
             ),
             _StatTile(
               icon: Icons.people_outline_rounded,
               label: 'Partner Join Date',
-              value: rp.partnerJoinDate != null ? DateFormat('MMM dd, yyyy').format(rp.partnerJoinDate!) : 'Waiting...',
+              value: rp.partnerJoinDate != null
+                  ? DateFormat('MMM dd, yyyy').format(rp.partnerJoinDate!)
+                  : 'Waiting...',
               theme: theme,
             ),
           ],
@@ -320,7 +348,12 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBentoSection({required String title, required List<Widget> items, bool isFullWidth = false, required dynamic theme}) {
+  Widget _buildBentoSection({
+    required String title,
+    required List<Widget> items,
+    bool isFullWidth = false,
+    required dynamic theme,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -328,12 +361,25 @@ class RelationshipProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.only(left: 8, bottom: 12),
           child: Text(
             title.toUpperCase(),
-            style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(letterSpacing: 1.5),
+            style: AppTypography.captionMono(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: theme.accentColor,
+            ).copyWith(letterSpacing: 1.5),
           ),
         ),
         if (items.length > 1 && !isFullWidth)
           Row(
-            children: items.map((item) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: item))).toList(),
+            children: items
+                .map(
+                  (item) => Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: item,
+                    ),
+                  ),
+                )
+                .toList(),
           )
         else
           ...items,
@@ -341,7 +387,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _editDate(BuildContext context, RelationshipProvider rp, dynamic theme) async {
+  Future<void> _editDate(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) async {
     final date = await showDatePicker(
       context: context,
       initialDate: rp.startDate ?? DateTime.now(),
@@ -349,7 +399,10 @@ class RelationshipProfileScreen extends StatelessWidget {
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.fromSeed(seedColor: theme.accentColor, brightness: theme.isDark ? Brightness.dark : Brightness.light),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: theme.accentColor,
+            brightness: theme.isDark ? Brightness.dark : Brightness.light,
+          ),
         ),
         child: child!,
       ),
@@ -357,13 +410,20 @@ class RelationshipProfileScreen extends StatelessWidget {
     if (date != null) await rp.setStartDate(date);
   }
 
-  Future<void> _editTime(BuildContext context, RelationshipProvider rp, dynamic theme) async {
+  Future<void> _editTime(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) async {
     final time = await showTimePicker(
       context: context,
       initialTime: rp.startTime ?? TimeOfDay.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.fromSeed(seedColor: theme.accentColor, brightness: theme.isDark ? Brightness.dark : Brightness.light),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: theme.accentColor,
+            brightness: theme.isDark ? Brightness.dark : Brightness.light,
+          ),
         ),
         child: child!,
       ),
@@ -371,7 +431,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     if (time != null) await rp.setStartTime(time);
   }
 
-  Widget _buildInvitationCodeSection(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  Widget _buildInvitationCodeSection(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     final code = rp.coupleCode ?? '';
     return GlassContainer(
       width: double.infinity,
@@ -429,7 +493,9 @@ class RelationshipProfileScreen extends StatelessWidget {
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: code));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Code copied to clipboard!')),
+                          const SnackBar(
+                            content: Text('Code copied to clipboard!'),
+                          ),
                         );
                       },
                       theme: theme,
@@ -438,7 +504,9 @@ class RelationshipProfileScreen extends StatelessWidget {
                     _buildIconButton(
                       icon: Icons.share_rounded,
                       onTap: () {
-                        Share.share("Let's connect our Love Story! Here is my invitation code: $code 💕");
+                        Share.share(
+                          "Let's connect our Love Story! Here is my invitation code: $code 💕",
+                        );
                       },
                       theme: theme,
                     ),
@@ -452,7 +520,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIconButton({required IconData icon, required VoidCallback onTap, required dynamic theme}) {
+  Widget _buildIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required dynamic theme,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -466,7 +538,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUnlinkButton(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  Widget _buildUnlinkButton(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     final partnerJoined = rp.partnerId != null;
     if (!partnerJoined) {
       return const SizedBox.shrink();
@@ -481,7 +557,9 @@ class RelationshipProfileScreen extends StatelessWidget {
         onPressed: () => _showUnlinkConfirmation(context, rp, theme),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Text(
           partnerJoined ? 'Unlink Relationship' : 'Cancel Relationship Request',
@@ -495,7 +573,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDeleteAccountButton(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  Widget _buildDeleteAccountButton(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -506,7 +588,9 @@ class RelationshipProfileScreen extends StatelessWidget {
         onPressed: () => _showDeleteAccountConfirmation(context, rp, theme),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Text(
           'Delete Account',
@@ -520,7 +604,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteAccountConfirmation(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  void _showDeleteAccountConfirmation(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -567,13 +655,15 @@ class RelationshipProfileScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       Navigator.pop(dialogContext); // Close confirmation dialog
-                      
+
                       // Show loading spinner dialog
                       showDialog(
                         context: context,
                         barrierDismissible: false,
                         builder: (_) => const Center(
-                          child: CircularProgressIndicator(color: Colors.redAccent),
+                          child: CircularProgressIndicator(
+                            color: Colors.redAccent,
+                          ),
                         ),
                       );
 
@@ -581,13 +671,17 @@ class RelationshipProfileScreen extends StatelessWidget {
                         await rp.deleteAccount();
                         if (context.mounted) {
                           Navigator.pop(context); // Dismiss loading spinner
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          Navigator.of(
+                            context,
+                          ).popUntil((route) => route.isFirst);
                         }
                       } catch (e) {
                         if (context.mounted) {
                           Navigator.pop(context); // Dismiss loading
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to delete account: $e')),
+                            SnackBar(
+                              content: Text('Failed to delete account: $e'),
+                            ),
                           );
                         }
                       }
@@ -602,9 +696,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                     ),
                     child: Text(
                       'Delete',
-                      style: AppTypography.body(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTypography.body(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -616,7 +708,11 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showUnlinkConfirmation(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  void _showUnlinkConfirmation(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     final partnerJoined = rp.partnerId != null;
     showDialog(
       context: context,
@@ -684,7 +780,9 @@ class RelationshipProfileScreen extends StatelessWidget {
                       onPressed: () async {
                         Navigator.pop(context); // close dialog
                         await rp.unlinkPartner();
-                        if (context.mounted) Navigator.pop(context); // exit profile screen
+                        if (context.mounted) {
+                          Navigator.pop(context); // exit profile screen
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
@@ -696,9 +794,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                       ),
                       child: Text(
                         partnerJoined ? 'Disconnect' : 'Cancel Code',
-                        style: AppTypography.body(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.body(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -734,74 +830,76 @@ class RelationshipProfileScreen extends StatelessWidget {
             left: 24,
             right: 24,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Personalize Your Story',
-                style: AppTypography.sectionHeader(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textColor,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Edit Your Profiles',
+                  style: AppTypography.sectionHeader(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              _buildAvatarRow(context, rp, theme, true),
-              const SizedBox(height: 20),
-              _buildNameField(yourController, 'Your Name', theme),
-              if (partnerJoined) ...[
                 const SizedBox(height: 32),
-                _buildAvatarRow(context, rp, theme, false),
+                _buildAvatarRow(context, rp, theme, true),
                 const SizedBox(height: 20),
-                _buildNameField(partnerController, "Partner's Name", theme),
-              ],
-              const SizedBox(height: 40),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'Discard Changes',
-                        style: AppTypography.body(
-                          color: theme.textColor.withValues(alpha: 0.54),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (partnerJoined) {
-                          await rp.setNames(
-                            yourController.text.trim(),
-                            partnerController.text.trim(),
-                          );
-                        } else {
-                          await rp.setYourName(yourController.text.trim());
-                        }
-                        if (context.mounted) Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.accentColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Save Profile Details',
-                        style: AppTypography.body(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
+                _buildNameField(yourController, 'Your Name', theme),
+                if (partnerJoined) ...[
+                  const SizedBox(height: 32),
+                  _buildAvatarRow(context, rp, theme, false),
+                  const SizedBox(height: 20),
+                  _buildNameField(partnerController, "Partner's Name", theme),
                 ],
-              ),
-            ],
+                const SizedBox(height: 40),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Discard Changes',
+                          style: AppTypography.body(
+                            color: theme.textColor.withValues(alpha: 0.54),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (partnerJoined) {
+                            await rp.setNames(
+                              yourController.text.trim(),
+                              partnerController.text.trim(),
+                            );
+                          } else {
+                            await rp.setYourName(yourController.text.trim());
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.accentColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Save Profile Details',
+                          style: AppTypography.body(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -933,19 +1031,31 @@ class _StatTile extends StatelessWidget {
                     label.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.4)).copyWith(letterSpacing: 0.5),
+                    style: AppTypography.captionMono(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textColor.withValues(alpha: 0.4),
+                    ).copyWith(letterSpacing: 0.5),
                   ),
                 ),
                 if (onTap != null) ...[
                   const SizedBox(width: 8),
-                  Icon(Icons.edit_rounded, color: theme.accentColor.withValues(alpha: 0.5), size: 14),
+                  Icon(
+                    Icons.edit_rounded,
+                    color: theme.accentColor.withValues(alpha: 0.5),
+                    size: 14,
+                  ),
                 ],
               ],
             ),
             const SizedBox(height: 12),
             Text(
               value,
-              style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textColor),
+              style: AppTypography.body(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: theme.textColor,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

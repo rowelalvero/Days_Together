@@ -24,10 +24,15 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     super.dispose();
   }
 
-  void _showReminderSheet(BuildContext context, {GiftReminder? existingReminder}) {
+  void _showReminderSheet(
+    BuildContext context, {
+    GiftReminder? existingReminder,
+  }) {
     _titleController.text = existingReminder?.title ?? '';
     _selectedDate = existingReminder?.date;
-    _selectedTime = existingReminder?.date != null ? TimeOfDay.fromDateTime(existingReminder!.date) : null;
+    _selectedTime = existingReminder?.date != null
+        ? TimeOfDay.fromDateTime(existingReminder!.date)
+        : null;
 
     showModalBottomSheet(
       context: context,
@@ -50,9 +55,14 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     topLeft: Radius.circular(32),
                     topRight: Radius.circular(32),
                   ),
-                  border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +71,9 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          existingReminder == null ? '🎁 New Gift Reminder' : '🎁 Edit Gift Reminder',
+                          existingReminder == null
+                              ? '🎁 New Gift Reminder'
+                              : '🎁 Edit Gift Reminder',
                           style: AppTypography.cardTitle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -69,7 +81,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
+                          icon: Icon(
+                            Icons.close,
+                            color: theme.textColor.withValues(alpha: 0.7),
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -80,12 +95,16 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       style: AppTypography.body(color: theme.textColor),
                       decoration: InputDecoration(
                         hintText: 'e.g. Partner\'s Birthday, Valentine\'s Day',
-                        hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
+                        hintStyle: AppTypography.body(
+                          color: theme.textColor.withValues(alpha: 0.3),
+                        ),
                         filled: true,
                         fillColor: theme.textColor.withValues(alpha: 0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+                          borderSide: BorderSide(
+                            color: theme.textColor.withValues(alpha: 0.1),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
@@ -108,11 +127,11 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                 builder: (context, child) {
                                   return Theme(
                                     data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.dark(
-                                        primary: theme.accentColor,
-                                        onPrimary: Colors.white,
-                                        surface: theme.secondaryColor,
-                                        onSurface: Colors.white,
+                                      colorScheme: ColorScheme.fromSeed(
+                                        seedColor: theme.accentColor,
+                                        brightness: theme.isDark
+                                            ? Brightness.dark
+                                            : Brightness.light,
                                       ),
                                     ),
                                     child: child!,
@@ -126,30 +145,46 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                               }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: theme.textColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                                border: Border.all(
+                                  color: theme.textColor.withValues(alpha: 0.1),
+                                ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
                                       _selectedDate == null
                                           ? 'Select Date'
-                                          : DateFormat('MMM dd, yyyy').format(_selectedDate!),
+                                          : DateFormat(
+                                              'MMM dd, yyyy',
+                                            ).format(_selectedDate!),
                                       style: AppTypography.body(
                                         color: _selectedDate == null
-                                            ? theme.textColor.withValues(alpha: 0.4)
+                                            ? theme.textColor.withValues(
+                                                alpha: 0.4,
+                                              )
                                             : theme.textColor,
                                         fontSize: 14,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  Icon(Icons.calendar_today_rounded, size: 18, color: theme.textColor.withValues(alpha: 0.7)),
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 18,
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -165,9 +200,11 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                 builder: (context, child) {
                                   return Theme(
                                     data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.dark(
-                                        primary: theme.accentColor,
-                                        surface: theme.secondaryColor,
+                                      colorScheme: ColorScheme.fromSeed(
+                                        seedColor: theme.accentColor,
+                                        brightness: theme.isDark
+                                            ? Brightness.dark
+                                            : Brightness.light,
                                       ),
                                     ),
                                     child: child!,
@@ -181,14 +218,20 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                               }
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: theme.textColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(15),
-                                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                                border: Border.all(
+                                  color: theme.textColor.withValues(alpha: 0.1),
+                                ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -196,8 +239,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                           ? 'Set Time'
                                           : _selectedTime!.format(context),
                                       style: AppTypography.body(
-                                        color: _selectedTime == null
-                                            ? theme.textColor.withValues(alpha: 0.4)
+                                        color: _selectedDate == null
+                                            ? theme.textColor.withValues(
+                                                alpha: 0.3,
+                                              )
                                             : theme.textColor,
                                         fontSize: 14,
                                       ),
@@ -206,11 +251,25 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                                   ),
                                   if (_selectedTime != null)
                                     GestureDetector(
-                                      onTap: () => setModalState(() => _selectedTime = null),
-                                      child: Icon(Icons.clear, size: 18, color: theme.textColor.withValues(alpha: 0.38)),
+                                      onTap: () => setModalState(
+                                        () => _selectedTime = null,
+                                      ),
+                                      child: Icon(
+                                        Icons.clear,
+                                        size: 18,
+                                        color: theme.textColor.withValues(
+                                          alpha: 0.38,
+                                        ),
+                                      ),
                                     )
                                   else
-                                    Icon(Icons.access_time_rounded, size: 18, color: theme.textColor.withValues(alpha: 0.7)),
+                                    Icon(
+                                      Icons.access_time_rounded,
+                                      size: 18,
+                                      color: theme.textColor.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -224,7 +283,8 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          if (_titleController.text.trim().isNotEmpty && _selectedDate != null) {
+                          if (_titleController.text.trim().isNotEmpty &&
+                              _selectedDate != null) {
                             final combinedDate = DateTime(
                               _selectedDate!.year,
                               _selectedDate!.month,
@@ -235,11 +295,13 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
 
                             if (existingReminder == null) {
                               context.read<GiftReminderProvider>().addReminder(
-                                    _titleController.text.trim(),
-                                    combinedDate,
-                                  );
+                                _titleController.text.trim(),
+                                combinedDate,
+                              );
                             } else {
-                              context.read<GiftReminderProvider>().updateReminder(
+                              context
+                                  .read<GiftReminderProvider>()
+                                  .updateReminder(
                                     existingReminder.id,
                                     title: _titleController.text.trim(),
                                     date: combinedDate,
@@ -256,8 +318,14 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                           ),
                         ),
                         child: Text(
-                          existingReminder == null ? 'Add Reminder' : 'Update Reminder',
-                          style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
+                          existingReminder == null
+                              ? 'Add Reminder'
+                              : 'Update Reminder',
+                          style: AppTypography.button(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -293,8 +361,8 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                   child: giftProvider.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : giftProvider.reminders.isEmpty
-                          ? _buildEmptyState(theme)
-                          : _buildListView(giftProvider, theme),
+                      ? _buildEmptyState(theme)
+                      : _buildListView(giftProvider, theme),
                 ),
               ],
             ),
@@ -316,7 +384,10 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           Expanded(
@@ -358,7 +429,11 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     );
   }
 
-  Widget _buildReminderCard(GiftReminder reminder, dynamic theme, GiftReminderProvider provider) {
+  Widget _buildReminderCard(
+    GiftReminder reminder,
+    dynamic theme,
+    GiftReminderProvider provider,
+  ) {
     final dateStr = DateFormat('MMMM dd').format(reminder.date);
     final daysLeft = reminder.daysUntil;
     String countdownStr;
@@ -376,8 +451,8 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
         color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: reminder.isEnabled 
-              ? theme.textColor.withValues(alpha: 0.1) 
+          color: reminder.isEnabled
+              ? theme.textColor.withValues(alpha: 0.1)
               : theme.textColor.withValues(alpha: 0.03),
         ),
       ),
@@ -390,15 +465,18 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: (reminder.isEnabled ? Colors.orangeAccent : Colors.grey)
-                        .withValues(alpha: 0.15),
+                    color:
+                        (reminder.isEnabled ? Colors.orangeAccent : Colors.grey)
+                            .withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '🎁',
                     style: AppTypography.body(
                       fontSize: 20,
-                      color: reminder.isEnabled ? Colors.white : theme.textColor.withValues(alpha: 0.24),
+                      color: reminder.isEnabled
+                          ? Colors.white
+                          : theme.textColor.withValues(alpha: 0.24),
                     ),
                   ),
                 ),
@@ -409,19 +487,26 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     children: [
                       Text(
                         reminder.title,
-                        style: AppTypography.body(
-                          color: reminder.isEnabled ? theme.textColor : theme.textColor.withValues(alpha: 0.38),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ).copyWith(
-                          decoration: reminder.isEnabled ? null : TextDecoration.lineThrough,
-                        ),
+                        style:
+                            AppTypography.body(
+                              color: reminder.isEnabled
+                                  ? theme.textColor
+                                  : theme.textColor.withValues(alpha: 0.38),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ).copyWith(
+                              decoration: reminder.isEnabled
+                                  ? null
+                                  : TextDecoration.lineThrough,
+                            ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$dateStr${reminder.date.hour != 0 || reminder.date.minute != 0 ? ' at ${DateFormat.jm().format(reminder.date)}' : ''} (Next: ${DateFormat('MMMM dd, yyyy').format(reminder.nextOccurrence)})',
                         style: AppTypography.caption(
-                          color: reminder.isEnabled ? theme.textColor.withValues(alpha: 0.6) : theme.textColor.withValues(alpha: 0.24),
+                          color: reminder.isEnabled
+                              ? theme.textColor.withValues(alpha: 0.6)
+                              : theme.textColor.withValues(alpha: 0.24),
                           fontSize: 12,
                         ),
                       ),
@@ -444,10 +529,16 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: reminder.isEnabled
-                        ? (daysLeft <= 14 ? Colors.redAccent : theme.accentColor).withValues(alpha: 0.15)
+                        ? (daysLeft <= 14
+                                  ? Colors.redAccent
+                                  : theme.accentColor)
+                              .withValues(alpha: 0.15)
                         : theme.textColor.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -455,7 +546,9 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                     countdownStr,
                     style: AppTypography.caption(
                       color: reminder.isEnabled
-                          ? (daysLeft <= 14 ? Colors.redAccent : theme.accentColor)
+                          ? (daysLeft <= 14
+                                ? Colors.redAccent
+                                : theme.accentColor)
                           : theme.textColor.withValues(alpha: 0.3),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
@@ -465,32 +558,60 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.edit_outlined, color: theme.textColor.withValues(alpha: 0.38)),
-                      onPressed: () => _showReminderSheet(context, existingReminder: reminder),
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        color: theme.textColor.withValues(alpha: 0.38),
+                      ),
+                      onPressed: () => _showReminderSheet(
+                        context,
+                        existingReminder: reminder,
+                      ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete_outline_rounded, color: theme.textColor.withValues(alpha: 0.38)),
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: theme.textColor.withValues(alpha: 0.38),
+                      ),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: theme.primaryColor,
-                            title: Text('Delete Reminder?', style: AppTypography.cardTitle(color: theme.textColor)),
+                            title: Text(
+                              'Delete Reminder?',
+                              style: AppTypography.cardTitle(
+                                color: theme.textColor,
+                              ),
+                            ),
                             content: Text(
                               'Are you sure you want to delete this reminder?',
-                              style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
+                              style: AppTypography.body(
+                                color: theme.textColor.withValues(alpha: 0.7),
+                              ),
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
+                                child: Text(
+                                  'Cancel',
+                                  style: AppTypography.button(
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
                               ),
                               TextButton(
                                 onPressed: () {
                                   provider.deleteReminder(reminder.id);
                                   Navigator.pop(context);
                                 },
-                                child: Text('Delete', style: AppTypography.button(color: theme.accentColor)),
+                                child: Text(
+                                  'Delete',
+                                  style: AppTypography.button(
+                                    color: theme.accentColor,
+                                  ),
+                                ),
                               ),
                             ],
                           ),

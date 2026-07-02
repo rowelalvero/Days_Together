@@ -7,6 +7,7 @@ import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/time_capsule_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class TimeCapsuleProvider with ChangeNotifier {
   static const String _storageKey = 'time_capsules';
@@ -59,7 +60,7 @@ class TimeCapsuleProvider with ChangeNotifier {
       tableName: 'time_capsules',
       coupleId: _coupleId!,
       onData: (dataList) {
-        _capsules = dataList.map((data) {
+        final incoming = dataList.map((data) {
           return TimeCapsule(
             id: data['id'] as String,
             message: data['message'] ?? '',
@@ -69,10 +70,39 @@ class TimeCapsuleProvider with ChangeNotifier {
           );
         }).toList();
 
-        _capsules.sort((a, b) => a.openDate.compareTo(b.openDate));
+        incoming.sort((a, b) => a.openDate.compareTo(b.openDate));
+
+        if (!_isLoading) {
+          // Detect additions by partner
+          final added = incoming.where((inc) => !_capsules.any((old) => old.id == inc.id)).toList();
+          for (var capsule in added) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'created',
+              title: "Partner's time capsule created ⏳",
+              description: 'Locked a new time capsule to be opened later',
+              icon: '⏳',
+              referenceId: capsule.id,
+              route: 'time_capsule',
+            );
+          }
+
+          // Detect openings by partner
+          final opened = incoming.where((inc) => inc.isOpened && !_capsules.any((old) => old.id == inc.id && old.isOpened)).toList();
+          for (var capsule in opened) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'completed',
+              title: "Partner's time capsule opened 🔓",
+              description: 'Opened a locked time capsule',
+              icon: '🔓',
+              referenceId: capsule.id,
+              route: 'time_capsule',
+            );
+          }
+        }
+
+        _capsules = incoming;
         _isLoading = false;
         if (!_disposed) notifyListeners();
-
         _persistLocalOnly();
       },
       onError: (err) {
@@ -134,6 +164,15 @@ class TimeCapsuleProvider with ChangeNotifier {
     } else {
       _createLocalCapsule(capsule);
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Time Capsule created ⏳',
+      description: 'Locked a new time capsule to be opened later',
+      icon: '⏳',
+      referenceId: capsule.id,
+      route: 'time_capsule',
+    );
   }
 
   void _createLocalCapsule(TimeCapsule capsule) {
@@ -167,6 +206,15 @@ class TimeCapsuleProvider with ChangeNotifier {
     } else {
       _openLocalCapsule(index, capsule);
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'completed',
+      title: 'Time Capsule opened 🔓',
+      description: 'Opened a locked time capsule',
+      icon: '🔓',
+      referenceId: id,
+      route: 'time_capsule',
+    );
   }
 
   void _openLocalCapsule(int index, TimeCapsule capsule) {

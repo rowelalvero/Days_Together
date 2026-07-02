@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
+import 'package:days_together/services/recent_activity_service.dart';
 
 class NoteitProvider with ChangeNotifier {
   static const String _storageKey = 'love_notes_items';
@@ -121,6 +122,51 @@ class NoteitProvider with ChangeNotifier {
           }
         }
 
+        if (!_isLoading) {
+          // Detect additions by partner
+          final added = serverNotes.where((srv) => srv.sender == 'partner' && !_notes.any((old) => old.id == srv.id)).toList();
+          for (var note in added) {
+            String title = 'Partner sent a love note 💌';
+            String desc = 'Shared a new text love note';
+            String icon = '✍️';
+            String route = 'love_notes';
+
+            if (note.type == NoteitType.drawing) {
+              title = 'Partner created a doodle 🎨';
+              desc = 'Drew and shared a new doodle';
+              icon = '🎨';
+              route = 'doodle_notes';
+            } else if (note.type == NoteitType.photo) {
+              title = 'Partner shared photo note 📸';
+              desc = 'Shared a new photo note';
+              icon = '📷';
+              route = 'love_notes';
+            }
+
+            RecentActivityService.instance.logActivity(
+              activityType: 'created',
+              title: title,
+              description: desc,
+              icon: icon,
+              referenceId: note.id,
+              route: route,
+            );
+          }
+
+          // Detect deletions by partner
+          final deleted = _notes.where((old) => old.sender == 'partner' && !serverNotes.any((srv) => srv.id == old.id)).toList();
+          for (var note in deleted) {
+            RecentActivityService.instance.logActivity(
+              activityType: 'deleted',
+              title: note.type == NoteitType.drawing ? "Partner's doodle deleted 🗑️" : "Partner's love note deleted 🗑️",
+              description: note.type == NoteitType.drawing ? 'Partner deleted a doodle' : 'Partner deleted a love note',
+              icon: '🗑️',
+              referenceId: note.id,
+              route: note.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+            );
+          }
+        }
+
         _notes = mergedMap.values.toList();
         _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         _isLoading = false;
@@ -213,6 +259,15 @@ class NoteitProvider with ChangeNotifier {
     } else {
       updateItemSyncStatus(newItem.id, SyncStatus.failed);
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Created doodle 🎨',
+      description: 'Drew and shared a new doodle',
+      icon: '🎨',
+      referenceId: newItem.id,
+      route: 'doodle_notes',
+    );
   }
 
   Future<void> sendText(String text, Color bgColor) async {
@@ -240,6 +295,15 @@ class NoteitProvider with ChangeNotifier {
     } else {
       updateItemSyncStatus(newItem.id, SyncStatus.failed);
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Sent love note 💌',
+      description: 'Shared a new text love note',
+      icon: '✍️',
+      referenceId: newItem.id,
+      route: 'love_notes',
+    );
   }
 
   Future<void> sendPhoto(String originalPath) async {
@@ -273,6 +337,15 @@ class NoteitProvider with ChangeNotifier {
       } else {
         updateItemSyncStatus(noteId, SyncStatus.failed);
       }
+
+      await RecentActivityService.instance.logActivity(
+        activityType: 'created',
+        title: 'Sent photo note 📸',
+        description: 'Shared a new photo note',
+        icon: '📷',
+        referenceId: newItem.id,
+        route: 'love_notes',
+      );
     } catch (e) {
       debugPrint('NoteitProvider.sendPhoto failed: $e');
     }
@@ -281,10 +354,10 @@ class NoteitProvider with ChangeNotifier {
   Future<void> deleteNote(String id) async {
     final index = _notes.indexWhere((n) => n.id == id);
     if (index == -1) return;
-    final item = _notes[index];
-    if (item.imagePath != null) {
+    final noteToDelete = _notes[index];
+    if (noteToDelete.imagePath != null) {
       try {
-        final file = File(item.imagePath!);
+        final file = File(noteToDelete.imagePath!);
         if (await file.exists()) await file.delete();
       } catch (e) {
         debugPrint('NoteitProvider: Failed to delete image file: $e');
@@ -295,7 +368,7 @@ class NoteitProvider with ChangeNotifier {
       try {
         await Supabase.instance.client.from('love_notes').delete().eq('id', id);
 
-        if (item.type == NoteitType.photo) {
+        if (noteToDelete.type == NoteitType.photo) {
           try {
             final storagePath = 'couples/$_coupleId/love_notes/$id.jpg';
             await Supabase.instance.client.storage.from('love-notes').remove([
@@ -312,6 +385,15 @@ class NoteitProvider with ChangeNotifier {
       _notes.removeAt(index);
       await _persist();
     }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'deleted',
+      title: noteToDelete.type == NoteitType.drawing ? 'Doodle deleted 🗑️' : 'Love note deleted 🗑️',
+      description: noteToDelete.type == NoteitType.drawing ? 'Deleted a doodle' : 'Deleted a love note',
+      icon: '🗑️',
+      referenceId: id,
+      route: noteToDelete.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+    );
   }
 
   String _generateHeartStrokes() {
