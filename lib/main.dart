@@ -22,6 +22,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:days_together/services/notification_service.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -123,6 +125,7 @@ class MyApp extends StatelessWidget {
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
 
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Our Love Story',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

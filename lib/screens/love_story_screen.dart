@@ -28,7 +28,8 @@ import 'package:days_together/themes/app_typography.dart';
 
 
 class LoveStoryScreen extends StatefulWidget {
-  const LoveStoryScreen({super.key});
+  final int initialIndex;
+  const LoveStoryScreen({super.key, this.initialIndex = 0});
 
   @override
   State<LoveStoryScreen> createState() => _LoveStoryScreenState();
@@ -41,6 +42,7 @@ class _LoveStoryScreenState extends State<LoveStoryScreen> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rp = context.read<RelationshipProvider>();
       rp.addListener(_checkPartnerDeletedNotice);
