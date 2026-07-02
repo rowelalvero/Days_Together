@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { sender_id, title, body, data } = await req.json();
+    const { sender_id, title, body, feature, item_id, data } = await req.json();
 
     if (!sender_id || !title || !body) {
       return new Response(JSON.stringify({ error: "Missing parameters" }), {
@@ -52,7 +52,77 @@ serve(async (req) => {
       });
     }
 
-    // 3. Get partner device tokens
+    // 3. Fetch partner's notification preferences
+    const { data: prefs, error: prefsErr } = await supabase
+      .from('user_notification_preferences')
+      .select('*')
+      .eq('user_id', partner.id)
+      .single();
+
+    if (!prefsErr && prefs) {
+      // Check Mute All
+      if (prefs.mute_all) {
+        return new Response(JSON.stringify({ success: true, message: "Mute all is enabled, skipped" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+
+      // Check Feature Specific Toggle
+      if (feature) {
+        const prefKey = `${feature}_enabled`;
+        if (Object.prototype.hasOwnProperty.call(prefs, prefKey) && !prefs[prefKey]) {
+          return new Response(JSON.stringify({ success: true, message: `Notification for feature ${feature} is disabled, skipped` }), {
+            status: 200,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+      }
+
+      // Check Quiet Hours
+      if (prefs.quiet_hours_enabled) {
+        let isQuietHours = false;
+        try {
+          const targetTz = prefs.timezone || 'UTC';
+          const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: targetTz,
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: false
+          });
+          const parts = formatter.formatToParts(new Date());
+          const hourPart = parts.find(p => p.type === 'hour');
+          const minPart = parts.find(p => p.type === 'minute');
+          if (hourPart && minPart) {
+            const currentHour = parseInt(hourPart.value, 10);
+            const currentMin = parseInt(minPart.value, 10);
+            const currentMinutes = currentHour * 60 + currentMin;
+
+            const [startHour, startMin] = prefs.quiet_hours_start.split(':').map(Number);
+            const [endHour, endMin] = prefs.quiet_hours_end.split(':').map(Number);
+            const startMinutes = startHour * 60 + startMin;
+            const endMinutes = endHour * 60 + endMin;
+
+            if (startMinutes < endMinutes) {
+              isQuietHours = currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+            } else {
+              isQuietHours = currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+            }
+          }
+        } catch (e) {
+          console.error("Error checking quiet hours:", e);
+        }
+
+        if (isQuietHours) {
+          return new Response(JSON.stringify({ success: true, message: "Quiet hours active, skipped" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+      }
+    }
+
+    // 4. Get partner device tokens
     const { data: tokenRows, error: tokenErr } = await supabase
       .from('user_fcm_tokens')
       .select('token')
@@ -67,14 +137,32 @@ serve(async (req) => {
 
     const tokens = tokenRows.map((r) => r.token);
 
-    // 4. Generate FCM OAuth2 Access Token using Deno and Firebase credentials
+    // 5. Generate FCM OAuth2 Access Token
     if (!FIREBASE_SERVICE_ACCOUNT) {
       throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_JSON secret in Supabase dashboard");
     }
     const credentials = JSON.parse(FIREBASE_SERVICE_ACCOUNT);
     const accessToken = await getAccessToken(credentials);
 
-    // 5. Send FCM alerts
+    // 6. Standardize Payload Data
+    const fcmData: Record<string, string> = {
+      click_action: "FLUTTER_NOTIFICATION_CLICK",
+      notification_type: feature || "general",
+      sender_id: sender_id,
+      couple_id: sender.couple_id,
+      feature: feature || "general",
+      item_id: item_id || "",
+      timestamp: new Date().toISOString(),
+      deep_link: feature ? `app://days_together/${feature}` : "",
+    };
+
+    if (data) {
+      for (const [key, val] of Object.entries(data)) {
+        fcmData[key] = String(val);
+      }
+    }
+
+    // 7. Send FCM alerts
     const results = [];
     for (const token of tokens) {
       const response = await fetch(
@@ -89,7 +177,7 @@ serve(async (req) => {
             message: {
               token: token,
               notification: { title, body },
-              data: data || {},
+              data: fcmData,
             },
           }),
         }
