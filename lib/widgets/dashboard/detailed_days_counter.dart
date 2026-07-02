@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
+import 'package:days_together/screens/together/relationship_duration_screen.dart';
+
 class DetailedDaysCounter extends StatefulWidget {
   final RelationshipProvider relationshipProvider;
   final dynamic theme;
@@ -43,10 +45,34 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
     final totalDays = rp.totalDays;
     final startDate = rp.startDate ?? DateTime.now();
 
-    return GlassContainer(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      borderRadius: 28,
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const RelationshipDurationScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: animation.drive(Tween<Offset>(
+                    begin: const Offset(0.0, 0.05),
+                    end: Offset.zero,
+                  ).chain(CurveTween(curve: Curves.easeOutCubic))),
+                  child: child,
+                ),
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 350),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(28),
+      child: GlassContainer(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        borderRadius: 28,
       child: Column(
         children: [
           // Top Badge
@@ -78,13 +104,20 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                 shaderCallback: (bounds) => LinearGradient(
                   colors: [widget.theme.accentColor, Colors.amberAccent],
                 ).createShader(bounds),
-                child: Text(
-                  NumberFormat('#,###').format(totalDays),
-                  style: AppTypography.mainCounter(
-                    fontSize: 72,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                  ),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: totalDays.toDouble()),
+                  duration: const Duration(milliseconds: 1600),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Text(
+                      NumberFormat('#,###').format(value.toInt()),
+                      style: AppTypography.mainCounter(
+                        fontSize: 72,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 2),
@@ -124,8 +157,9 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildUnit(String label, int val) {
     return Expanded(

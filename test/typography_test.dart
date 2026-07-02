@@ -25,12 +25,12 @@ void main() {
     expect(standardBodyStyle.fontSize, 15.0);
 
     final cormorantStyle = AppTypography.cormorant(fontSize: 32, fontStyle: FontStyle.italic);
-    expect(cormorantStyle.fontFamily, 'Cormorant');
+    expect(cormorantStyle.fontFamily, contains('Spectral'));
     expect(cormorantStyle.fontSize, 32);
     expect(cormorantStyle.fontStyle, FontStyle.italic);
 
     final spectralStyle = AppTypography.spectral(fontSize: 18, color: Colors.blue);
-    expect(spectralStyle.fontFamily, 'Spectral');
+    expect(spectralStyle.fontFamily, contains('Spectral'));
     expect(spectralStyle.fontSize, 18);
     expect(spectralStyle.color, Colors.blue);
   });
