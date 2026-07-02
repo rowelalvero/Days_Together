@@ -41,15 +41,6 @@ class DailyMoodProvider with ChangeNotifier {
 
   DailyMood? get partnerTodayMood {
     try {
-      if (_partnerMoods.isEmpty) {
-        // Return simulated partner mood if none logged
-        return DailyMood(
-          userId: 'partner_simulator',
-          date: _todayString,
-          moodScore: 8,
-          note: 'Feeling great!',
-        );
-      }
       return _partnerMoods.firstWhere((m) => m.date == _todayString);
     } catch (_) {
       return null;
@@ -64,23 +55,6 @@ class DailyMoodProvider with ChangeNotifier {
   }
 
   List<DailyMood> get partnerRecentMoods {
-    if (_partnerMoods.isEmpty) {
-      // Return simulated partner moods for comparison if empty
-      final list = <DailyMood>[];
-      final now = DateTime.now();
-      for (int i = 6; i >= 0; i--) {
-        final date = now.subtract(Duration(days: i));
-        final dateStr = DateFormat('yyyy-MM-dd').format(date);
-        final score = 6 + ((i * 3) % 4);
-        list.add(DailyMood(
-          id: 'simulated_partner_$dateStr',
-          userId: 'partner_simulator',
-          date: dateStr,
-          moodScore: score,
-        ));
-      }
-      return list;
-    }
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
     final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
     return _partnerMoods.where((m) => m.date.compareTo(cutoffStr) >= 0).toList()
