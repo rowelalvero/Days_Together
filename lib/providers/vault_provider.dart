@@ -59,7 +59,10 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   void updateRelationship(RelationshipProvider relationship) {
-    if (_coupleId != relationship.coupleId || _userId != relationship.userId) {
+    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
+    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
+
+    if (credentialsChanged || shouldSubscribe) {
       _coupleId = relationship.coupleId;
       _userId = relationship.userId;
 

@@ -81,7 +81,10 @@ class DailyMoodProvider with ChangeNotifier {
   }
 
   void updateRelationship(RelationshipProvider relationship) {
-    if (_coupleId != relationship.coupleId || _userId != relationship.userId || _partnerId != relationship.partnerId) {
+    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId || _partnerId != relationship.partnerId;
+    final bool shouldSubscribe = (_moodsSub == null || _questionSub == null) && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
+
+    if (credentialsChanged || shouldSubscribe) {
       _coupleId = relationship.coupleId;
       _userId = relationship.userId;
       _partnerId = relationship.partnerId;

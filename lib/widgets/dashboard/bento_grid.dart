@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -60,113 +61,7 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildDoodleNotesBentoCard(BuildContext context) {
-    return Consumer<NoteitProvider>(
-      builder: (context, noteit, child) {
-        final notes = noteit.notes;
-        final latest = notes.isNotEmpty ? notes.first : null;
-        
-        String footerText = 'No shared notes';
-        if (latest != null) {
-          final senderName = latest.sender == 'you' ? 'You' : 'Partner';
-          footerText = '$senderName • ${_formatRelativeTime(latest.createdAt)}';
-        }
-
-        return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NoteitScreen()),
-          ),
-          borderRadius: BorderRadius.circular(24),
-          child: GlassContainer(
-            padding: const EdgeInsets.all(20),
-            borderRadius: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: theme.accentColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'DOODLE NOTES',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
-                      ),
-                    ),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: theme.accentColor.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.draw_outlined,
-                          color: theme.accentColor,
-                          size: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Doodles & Notes',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: theme.textColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: _buildNoteItContent(context, noteit),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        footerText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Row(
-                      children: [
-                        Text(
-                          'Draw & Write',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 9,
-                          color: theme.accentColor,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    return DoodleNotesBentoCard(theme: theme);
   }
 
   Widget _buildSharedCalendarBentoCard(BuildContext context) {
@@ -749,135 +644,7 @@ class BentoGrid extends StatelessWidget {
     }
   }
 
-  Widget _buildNoteItContent(BuildContext context, NoteitProvider noteit) {
-    final notes = noteit.notes;
 
-    if (notes.isEmpty) {
-      return Text(
-        'Draw a sketch, write a note, or share a photo to surprise your partner! 💌',
-        style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
-      );
-    }
-
-    final latest = notes.first;
-    final senderName = latest.sender == 'you' ? 'You' : 'Partner';
-
-    String previewText = '';
-    Widget previewImage = const SizedBox.shrink();
-
-    if (latest.type == NoteitType.text) {
-      previewText = latest.content ?? '';
-      previewImage = Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: latest.backgroundColor ?? theme.accentColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.chat_bubble_outline_rounded,
-            color: Colors.white,
-            size: 16,
-          ),
-        ),
-      );
-    } else if (latest.type == NoteitType.drawing) {
-      previewText = 'Doodle Drawing 🎨';
-      previewImage = Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: latest.backgroundColor ?? const Color(0xFF0F0B1A),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: theme.textColor.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: CustomPaint(
-            painter: ScaleDrawingPainter(
-              strokes: NoteitItem.deserializeStrokes(latest.content),
-              color: Colors.white,
-              strokeWidth: 2.0,
-            ),
-          ),
-        ),
-      );
-    } else if (latest.type == NoteitType.photo) {
-      previewText = 'Shared Photo 📸';
-      previewImage = Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: theme.textColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: theme.textColor.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: latest.imagePath != null && File(latest.imagePath!).existsSync()
-              ? Image.file(
-                  File(latest.imagePath!),
-                  fit: BoxFit.cover,
-                )
-              : Icon(
-                  Icons.photo_rounded,
-                  color: theme.textColor.withValues(alpha: 0.6),
-                  size: 16,
-                ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        previewImage,
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                previewText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.95)),
-              ),
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  Text(
-                    senderName,
-                    style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.bold, color: theme.accentColor),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 3,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: theme.textColor.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatRelativeTime(latest.createdAt),
-                    style: AppTypography.captionMono(fontSize: 9, color: theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildCalendarContent(BuildContext context, CalendarProvider calendar) {
     final events = calendar.events.toList();
@@ -1811,6 +1578,313 @@ class BentoGrid extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class DoodleNotesBentoCard extends StatefulWidget {
+  final dynamic theme;
+  const DoodleNotesBentoCard({super.key, required this.theme});
+
+  @override
+  State<DoodleNotesBentoCard> createState() => _DoodleNotesBentoCardState();
+}
+
+class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start periodic timer to refresh relative timestamps automatically every 30 seconds
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _formatRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final localDateTime = dateTime.toLocal();
+    final localNow = now.toLocal();
+
+    // Check if same day
+    final isSameDay = localDateTime.year == localNow.year &&
+        localDateTime.month == localNow.month &&
+        localDateTime.day == localNow.day;
+
+    if (isSameDay) {
+      final difference = localNow.difference(localDateTime);
+      if (difference.inSeconds < 60) {
+        return 'Just now';
+      } else if (difference.inMinutes < 60) {
+        final mins = difference.inMinutes;
+        return '$mins ${mins == 1 ? "minute" : "minutes"} ago';
+      } else {
+        final hours = difference.inHours;
+        return '$hours ${hours == 1 ? "hour" : "hours"} ago';
+      }
+    }
+
+    // Check if yesterday
+    final yesterday = localNow.subtract(const Duration(days: 1));
+    final isYesterday = localDateTime.year == yesterday.year &&
+        localDateTime.month == yesterday.month &&
+        localDateTime.day == yesterday.day;
+
+    if (isYesterday) {
+      return 'Yesterday';
+    }
+
+    // Formatted date for older entries (using locale)
+    return DateFormat.yMMMd().format(localDateTime);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<NoteitProvider>(
+      builder: (context, noteit, child) {
+        final notes = noteit.notes;
+        final latest = notes.isNotEmpty ? notes.first : null;
+
+        String footerText = 'No shared notes';
+        if (latest != null) {
+          final senderName = latest.sender == 'you' ? 'You' : 'Partner';
+          footerText = '$senderName • ${_formatRelativeTime(latest.createdAt)}';
+        }
+
+        return InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NoteitScreen()),
+          ),
+          borderRadius: BorderRadius.circular(24),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: widget.theme.accentColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'DOODLE NOTES',
+                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: widget.theme.accentColor).copyWith(
+                          letterSpacing: 0.5),
+                      ),
+                    ),
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: widget.theme.accentColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.draw_outlined,
+                          color: widget.theme.accentColor,
+                          size: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Doodles & Notes',
+                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: widget.theme.textColor),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: widget.theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _buildNoteItContent(context, noteit),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        footerText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(fontSize: 10, color: widget.theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Text(
+                          'Draw & Write',
+                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: widget.theme.accentColor),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 9,
+                          color: widget.theme.accentColor,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNoteItContent(BuildContext context, NoteitProvider noteit) {
+    final notes = noteit.notes;
+
+    if (notes.isEmpty) {
+      return Text(
+        'Draw a sketch, write a note, or share a photo to surprise your partner! 💌',
+        style: AppTypography.bodyMedium(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.7), height: 1.4),
+      );
+    }
+
+    final latest = notes.first;
+    final senderName = latest.sender == 'you' ? 'You' : 'Partner';
+
+    String previewText = '';
+    Widget previewImage = const SizedBox.shrink();
+
+    if (latest.type == NoteitType.text) {
+      previewText = latest.content ?? '';
+      previewImage = Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: latest.backgroundColor ?? widget.theme.accentColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: Colors.white,
+            size: 16,
+          ),
+        ),
+      );
+    } else if (latest.type == NoteitType.drawing) {
+      previewText = 'Doodle Drawing 🎨';
+      previewImage = Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: latest.backgroundColor ?? const Color(0xFF0F0B1A),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: widget.theme.textColor.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: CustomPaint(
+            painter: ScaleDrawingPainter(
+              strokes: NoteitItem.deserializeStrokes(latest.content),
+              color: Colors.white,
+              strokeWidth: 2.0,
+            ),
+          ),
+        ),
+      );
+    } else if (latest.type == NoteitType.photo) {
+      previewText = 'Shared Photo 📸';
+      previewImage = Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: widget.theme.textColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: widget.theme.textColor.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: latest.imagePath != null && File(latest.imagePath!).existsSync()
+              ? Image.file(
+                  File(latest.imagePath!),
+                  fit: BoxFit.cover,
+                )
+              : Icon(
+                  Icons.photo_rounded,
+                  color: widget.theme.textColor.withValues(alpha: 0.6),
+                  size: 16,
+                ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        previewImage,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                previewText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: widget.theme.textColor.withValues(alpha: 0.95)),
+              ),
+              const SizedBox(height: 3),
+              Row(
+                children: [
+                  Text(
+                    senderName,
+                    style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.bold, color: widget.theme.accentColor),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 3,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: widget.theme.textColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _formatRelativeTime(latest.createdAt),
+                    style: AppTypography.captionMono(fontSize: 9, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             ],
           ),
