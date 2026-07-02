@@ -8,18 +8,28 @@ import 'package:days_together/widgets/theme_selector.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 import 'package:days_together/screens/settings/relationship_profile_screen.dart';
+import 'package:days_together/screens/settings/notification_settings_screen.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/main.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
 
-  Future<void> _pickAvatar(BuildContext context, RelationshipProvider rp, bool isYou) async {
-    final hasPermission = await PermissionService().requestPhotosPermission(context);
+  Future<void> _pickAvatar(
+    BuildContext context,
+    RelationshipProvider rp,
+    bool isYou,
+  ) async {
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
     if (!hasPermission) return;
 
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
     if (pickedFile != null) {
       if (isYou) {
         await rp.setAvatars(yourPath: pickedFile.path);
@@ -29,7 +39,11 @@ class SettingsTab extends StatelessWidget {
     }
   }
 
-  void _editProfileDialog(BuildContext context, RelationshipProvider rp, dynamic theme) {
+  void _editProfileDialog(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
     final yourController = TextEditingController(text: rp.yourName);
     final partnerController = TextEditingController(text: rp.partnerName);
     final partnerJoined = rp.partnerId != null;
@@ -88,7 +102,10 @@ class SettingsTab extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (partnerJoined) {
-                          await rp.setNames(yourController.text.trim(), partnerController.text.trim());
+                          await rp.setNames(
+                            yourController.text.trim(),
+                            partnerController.text.trim(),
+                          );
                         } else {
                           await rp.setYourName(yourController.text.trim());
                         }
@@ -98,14 +115,14 @@ class SettingsTab extends StatelessWidget {
                         backgroundColor: theme.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         elevation: 0,
                       ),
                       child: Text(
                         'Save Profile Details',
-                        style: AppTypography.body(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.body(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -118,7 +135,12 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarRow(BuildContext context, RelationshipProvider rp, dynamic theme, bool isYou) {
+  Widget _buildAvatarRow(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+    bool isYou,
+  ) {
     final path = isYou ? rp.yourAvatarPath : rp.partnerAvatarPath;
     return GestureDetector(
       onTap: () => _pickAvatar(context, rp, isYou),
@@ -134,8 +156,15 @@ class SettingsTab extends StatelessWidget {
             bottom: 0,
             child: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: theme.accentColor, shape: BoxShape.circle),
-              child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+              decoration: BoxDecoration(
+                color: theme.accentColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -143,7 +172,11 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildNameField(TextEditingController controller, String label, dynamic theme) {
+  Widget _buildNameField(
+    TextEditingController controller,
+    String label,
+    dynamic theme,
+  ) {
     return GlassContainer(
       opacity: 0.05,
       borderRadius: 16,
@@ -153,7 +186,10 @@ class SettingsTab extends StatelessWidget {
         style: AppTypography.body(color: theme.textColor),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.3), fontSize: 12),
+          labelStyle: AppTypography.caption(
+            color: theme.textColor.withValues(alpha: 0.3),
+            fontSize: 12,
+          ),
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
         ),
@@ -162,7 +198,10 @@ class SettingsTab extends StatelessWidget {
   }
 
   void _showLogoutConfirmation(BuildContext context, RelationshipProvider rp) {
-    final theme = Provider.of<ThemeProvider>(context, listen: false).currentLoveTheme;
+    final theme = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).currentLoveTheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -249,7 +288,7 @@ class SettingsTab extends StatelessWidget {
                 color: theme.textColor,
               ),
             ),
-             const SizedBox(height: 32),
+            const SizedBox(height: 32),
             _buildLiquidProfileCard(rp, theme, context),
             const SizedBox(height: 40),
             _buildSectionHeader('Experience', theme),
@@ -261,21 +300,42 @@ class SettingsTab extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ThemeSelectorScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const ThemeSelectorScreen(),
+                  ),
                 );
               },
             ),
-             const SizedBox(height: 32),
-            _buildSectionHeader('Connection', theme),
+            const SizedBox(height: 12),
             _buildModernTile(
-              icon: Icons.favorite_outline_rounded,
-              title: 'Relationship Profile',
-              subtitle: rp.partnerId != null ? 'Connected with partner' : 'Waiting for connection',
+              icon: Icons.notifications_none_rounded,
+              title: 'Notifications',
+              subtitle: 'Configure alerts & quiet hours',
               theme: theme,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RelationshipProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationSettingsScreen(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+            _buildSectionHeader('Connection', theme),
+            _buildModernTile(
+              icon: Icons.favorite_outline_rounded,
+              title: 'Relationship Profile',
+              subtitle: rp.partnerId != null
+                  ? 'Connected with partner'
+                  : 'Waiting for connection',
+              theme: theme,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RelationshipProfileScreen(),
+                  ),
                 );
               },
             ),
@@ -289,13 +349,16 @@ class SettingsTab extends StatelessWidget {
               theme: theme,
               onTap: () => _showLogoutConfirmation(context, rp),
             ),
-             const SizedBox(height: 48),
+            const SizedBox(height: 48),
             Center(
               child: Opacity(
                 opacity: 0.2,
                 child: Text(
                   'Version 0.1.0 • Built with ❤️',
-                  style: AppTypography.caption(fontSize: 12, fontWeight: FontWeight.w500),
+                  style: AppTypography.caption(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
@@ -306,7 +369,11 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildLiquidProfileCard(RelationshipProvider provider, dynamic theme, BuildContext context) {
+  Widget _buildLiquidProfileCard(
+    RelationshipProvider provider,
+    dynamic theme,
+    BuildContext context,
+  ) {
     final partnerJoined = provider.partnerId != null;
 
     return GlassContainer(
@@ -318,23 +385,31 @@ class SettingsTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMiniAvatar(provider.yourAvatarPath, provider.yourName ?? 'You', theme),
+              _buildMiniAvatar(
+                provider.yourAvatarPath,
+                provider.yourName ?? 'You',
+                theme,
+              ),
               Icon(Icons.favorite_rounded, color: theme.accentColor, size: 28),
               _buildMiniAvatar(
                 partnerJoined ? provider.partnerAvatarPath : null,
-                partnerJoined ? (provider.partnerName ?? 'Partner') : 'Waiting...',
+                partnerJoined
+                    ? (provider.partnerName ?? 'Partner')
+                    : 'Waiting...',
                 theme,
               ),
             ],
           ),
-           const SizedBox(height: 24),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => _editProfileDialog(context, provider, theme),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               child: Text(
@@ -364,7 +439,7 @@ class SettingsTab extends StatelessWidget {
               placeholderColor: theme.textColor.withValues(alpha: 0.1),
             ),
           ),
-           const SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             name,
             textAlign: TextAlign.center,
@@ -381,7 +456,7 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-   Widget _buildSectionHeader(String title, dynamic theme) {
+  Widget _buildSectionHeader(String title, dynamic theme) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 16),
       child: Text(
@@ -407,15 +482,39 @@ class SettingsTab extends StatelessWidget {
       opacity: 0.03,
       child: ListTile(
         onTap: onTap,
-         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: theme.textColor.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: theme.textColor.withValues(alpha: 0.7), size: 20),
+          decoration: BoxDecoration(
+            color: theme.textColor.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: theme.textColor.withValues(alpha: 0.7),
+            size: 20,
+          ),
         ),
-        title: Text(title, style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.w600, fontSize: 15)),
-        subtitle: Text(subtitle, style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.4), fontSize: 12)),
-        trailing: Icon(Icons.chevron_right_rounded, color: theme.textColor.withValues(alpha: 0.24), size: 20),
+        title: Text(
+          title,
+          style: AppTypography.body(
+            color: theme.textColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.caption(
+            color: theme.textColor.withValues(alpha: 0.4),
+            fontSize: 12,
+          ),
+        ),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          color: theme.textColor.withValues(alpha: 0.24),
+          size: 20,
+        ),
       ),
     );
   }
@@ -433,13 +532,28 @@ class SettingsTab extends StatelessWidget {
         ],
       ),
       child: ListTile(
-         leading: Container(
+        leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+            color: Colors.amber,
+            shape: BoxShape.circle,
+          ),
           child: const Icon(Icons.star_rounded, color: Colors.white, size: 20),
         ),
-        title: Text('Premium Studio', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
-        subtitle: Text('Unlock exclusive liquid glass themes', style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.54), fontSize: 11)),
+        title: Text(
+          'Premium Studio',
+          style: AppTypography.body(
+            color: theme.textColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          'Unlock exclusive liquid glass themes',
+          style: AppTypography.caption(
+            color: theme.textColor.withValues(alpha: 0.54),
+            fontSize: 11,
+          ),
+        ),
         trailing: Switch.adaptive(
           value: provider.isPremium,
           onChanged: (val) => provider.setPremium(val),
