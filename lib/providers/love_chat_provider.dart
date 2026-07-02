@@ -61,7 +61,7 @@ class LoveChatProvider with ChangeNotifier {
           senderId: senderType,
           senderName: (senderType == 'you') ? 'Me' : 'Partner',
           content: data['content'] as String? ?? '',
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String).toLocal() : DateTime.now(),
           isPinned: false,
         );
       }).toList();
@@ -130,7 +130,7 @@ class LoveChatProvider with ChangeNotifier {
           'type': 'chat',
           'content': content,
           'sender_id': _userId,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         });
 
         // Trigger push notification to partner
@@ -195,7 +195,7 @@ class LoveChatProvider with ChangeNotifier {
           'type': 'chat',
           'content': replyContent,
           'sender_id': 'partner_sim',
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': DateTime.now().toUtc().toIso8601String(),
         });
       } catch (e) {
         debugPrint('LoveChatProvider.simulatePartnerResponse Supabase error: $e');

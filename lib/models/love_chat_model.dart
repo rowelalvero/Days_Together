@@ -52,7 +52,7 @@ class LoveChatMessage {
       senderName: json['senderName'] as String? ?? 'Me',
       content: json['content'] as String? ?? '',
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
+          ? DateTime.parse(json['createdAt'] as String).toLocal()
           : DateTime.now(),
       isPinned: json['isPinned'] as bool? ?? false,
     );

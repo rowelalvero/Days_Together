@@ -158,7 +158,7 @@ class TimelineProvider with ChangeNotifier {
                 imagePath: data['image_path'] as String?,
                 networkImageUrl: data['network_image_url'] as String?,
                 date: data['date'] != null
-                    ? DateTime.parse(data['date'] as String)
+                    ? DateTime.parse(data['date'] as String).toLocal()
                     : DateTime.now(),
                 isImageCard: data['is_image_card'] ?? false,
                 position: data['position'] ?? 0,
@@ -246,7 +246,7 @@ class TimelineProvider with ChangeNotifier {
           'location': item.location,
           'image_path': item.imagePath,
           'network_image_url': downloadUrl ?? item.networkImageUrl,
-          'date': item.date.toIso8601String(),
+          'date': item.date.toUtc().toIso8601String(),
           'is_image_card': item.isImageCard,
           'position': calculatedPosition,
           'mood': item.mood,
@@ -367,7 +367,7 @@ class TimelineProvider with ChangeNotifier {
           'location': updatedItem.location,
           'image_path': updatedItem.imagePath,
           'network_image_url': downloadUrl,
-          'date': updatedItem.date.toIso8601String(),
+          'date': updatedItem.date.toUtc().toIso8601String(),
           'is_image_card': updatedItem.isImageCard,
           'position': calculatedPosition,
           'mood': updatedItem.mood,
