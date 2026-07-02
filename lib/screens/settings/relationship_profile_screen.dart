@@ -8,6 +8,9 @@ import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/app_avatar.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/widgets/cached_avatar.dart';
 
 class RelationshipProfileScreen extends StatelessWidget {
   const RelationshipProfileScreen({super.key});
@@ -178,6 +181,26 @@ class RelationshipProfileScreen extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => _editProfileDialog(context, rp, theme),
+            icon: Icon(Icons.edit_rounded, color: theme.textColor, size: 16),
+            label: Text(
+              'Edit Profile',
+              style: AppTypography.body(
+                color: theme.textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: theme.textColor.withValues(alpha: 0.2)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
         ],
       ),
     );
@@ -686,6 +709,188 @@ class RelationshipProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _editProfileDialog(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
+    final yourController = TextEditingController(text: rp.yourName);
+    final partnerController = TextEditingController(text: rp.partnerName);
+    final partnerJoined = rp.partnerId != null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return GlassContainer(
+          borderRadius: 32,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 30,
+            top: 30,
+            left: 24,
+            right: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Personalize Your Story',
+                style: AppTypography.sectionHeader(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textColor,
+                ),
+              ),
+              const SizedBox(height: 32),
+              _buildAvatarRow(context, rp, theme, true),
+              const SizedBox(height: 20),
+              _buildNameField(yourController, 'Your Name', theme),
+              if (partnerJoined) ...[
+                const SizedBox(height: 32),
+                _buildAvatarRow(context, rp, theme, false),
+                const SizedBox(height: 20),
+                _buildNameField(partnerController, "Partner's Name", theme),
+              ],
+              const SizedBox(height: 40),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Discard Changes',
+                        style: AppTypography.body(
+                          color: theme.textColor.withValues(alpha: 0.54),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (partnerJoined) {
+                          await rp.setNames(
+                            yourController.text.trim(),
+                            partnerController.text.trim(),
+                          );
+                        } else {
+                          await rp.setYourName(yourController.text.trim());
+                        }
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.accentColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Save Profile Details',
+                        style: AppTypography.body(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatarRow(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+    bool isYou,
+  ) {
+    final path = isYou ? rp.yourAvatarPath : rp.partnerAvatarPath;
+    return GestureDetector(
+      onTap: () => _pickAvatar(context, rp, isYou),
+      child: Stack(
+        children: [
+          CachedAvatar(
+            path: path,
+            radius: 40,
+            placeholderColor: theme.textColor.withValues(alpha: 0.1),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.accentColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNameField(
+    TextEditingController controller,
+    String label,
+    dynamic theme,
+  ) {
+    return GlassContainer(
+      opacity: 0.05,
+      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: TextField(
+        controller: controller,
+        style: AppTypography.body(color: theme.textColor),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: AppTypography.caption(
+            color: theme.textColor.withValues(alpha: 0.3),
+            fontSize: 12,
+          ),
+          border: InputBorder.none,
+          focusedBorder: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAvatar(
+    BuildContext context,
+    RelationshipProvider rp,
+    bool isYou,
+  ) async {
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
+    if (!hasPermission) return;
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+    if (pickedFile != null) {
+      if (isYou) {
+        await rp.setAvatars(yourPath: pickedFile.path);
+      } else {
+        await rp.setAvatars(partnerPath: pickedFile.path);
+      }
+    }
   }
 }
 
