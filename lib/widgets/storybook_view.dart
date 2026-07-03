@@ -6,7 +6,7 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/comments_sidebar.dart';
+import 'package:days_together/widgets/memory_notes_section.dart';
 
 class StorybookView extends StatefulWidget {
   final List<TimelineItemData> items;
@@ -242,7 +242,46 @@ class _StorybookViewState extends State<StorybookView> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
-                              onTap: () => CommentsSidebar.show(context, item),
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => DraggableScrollableSheet(
+                                    initialChildSize: 0.8,
+                                    minChildSize: 0.4,
+                                    maxChildSize: 0.95,
+                                    builder: (_, controller) => GlassContainer(
+                                      borderRadius: 24,
+                                      opacity: 0.22,
+                                      blur: 25,
+                                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 5,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white24,
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              controller: controller,
+                                              child: MemoryNotesSection(
+                                                item: item,
+                                                scrollController: controller,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                               child: GlassContainer(
                                 borderRadius: 20,
                                 opacity: 0.15,
@@ -251,7 +290,7 @@ class _StorybookViewState extends State<StorybookView> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      Icons.chat_bubble_outline_rounded,
+                                      Icons.draw_rounded,
                                       size: 16,
                                       color: theme.accentColor,
                                     ),
@@ -266,7 +305,7 @@ class _StorybookViewState extends State<StorybookView> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'chats',
+                                      item.comments.length == 1 ? 'note' : 'notes',
                                       style: AppTypography.bodyMedium(
                                         color: cardSecondaryTextColor,
                                         fontSize: 11,

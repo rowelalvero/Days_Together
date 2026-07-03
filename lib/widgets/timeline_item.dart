@@ -4,7 +4,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/comments_sidebar.dart';
+import 'package:days_together/widgets/memory_notes_section.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
@@ -305,10 +305,33 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
   }
 }
 
-class MemoryDetailScreen extends StatelessWidget {
+class MemoryDetailScreen extends StatefulWidget {
   final TimelineItemData item;
 
   const MemoryDetailScreen({super.key, required this.item});
+
+  @override
+  State<MemoryDetailScreen> createState() => _MemoryDetailScreenState();
+}
+
+class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToNotes() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -316,8 +339,8 @@ class MemoryDetailScreen extends StatelessWidget {
     final theme = themeProvider.currentLoveTheme;
     final timelineProvider = context.watch<TimelineProvider>();
     final currentItem = timelineProvider.timelineItems.firstWhere(
-      (i) => i.id == item.id,
-      orElse: () => item,
+      (i) => i.id == widget.item.id,
+      orElse: () => widget.item,
     );
 
     return Scaffold(
@@ -327,6 +350,7 @@ class MemoryDetailScreen extends StatelessWidget {
         child: Stack(
           children: [
             CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 SliverAppBar(
                   expandedHeight: currentItem.imagePath != null || currentItem.networkImageUrl != null ? 350 : 120,
@@ -338,13 +362,13 @@ class MemoryDetailScreen extends StatelessWidget {
                   ),
                   actions: [
                     IconButton(
-                      icon: Icon(Icons.chat_bubble_outline_rounded, color: theme.accentColor, size: 24),
-                      onPressed: () {
-                        CommentsSidebar.show(context, currentItem);
-                      },
+                      icon: Icon(Icons.rate_review_outlined, color: theme.accentColor, size: 24),
+                      tooltip: 'Notes',
+                      onPressed: _scrollToNotes,
                     ),
                     IconButton(
                       icon: Icon(Icons.edit_note_rounded, color: theme.accentColor, size: 28),
+                      tooltip: 'Edit Memory',
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -469,37 +493,9 @@ class MemoryDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                            onTap: () => CommentsSidebar.show(context, currentItem),
-                            child: GlassContainer(
-                              borderRadius: 20,
-                              opacity: 0.15,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.chat_bubble_outline_rounded, size: 16, color: theme.accentColor),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    '${currentItem.comments.length}',
-                                    style: AppTypography.bodyLarge(
-                                      color: theme.textColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'chats',
-                                    style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        MemoryNotesSection(
+                          item: currentItem,
+                          scrollController: _scrollController,
                         ),
                       ],
                     ),
