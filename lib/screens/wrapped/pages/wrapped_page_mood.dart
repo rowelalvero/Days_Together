@@ -81,12 +81,10 @@ class WrappedPageMood extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 if (data.bestMoodMonth != null)
-                  Expanded(
-                    child: _buildStatChip(
-                      '🌟 Best month',
-                      data.bestMoodMonth!,
-                      delay: 1000,
-                    ),
+                  _buildStatChip(
+                    '🌟 Best month',
+                    data.bestMoodMonth!,
+                    delay: 1000,
                   ),
               ],
             ),

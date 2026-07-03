@@ -27,11 +27,12 @@ class WrappedPageStats extends StatelessWidget {
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
               duration: const Duration(milliseconds: 600),
-              builder: (_, v, c) => Opacity(opacity: v, child: c),
+              builder: (context, v, child) =>
+                  Opacity(opacity: v, child: child),
               child: Text(
                 'Your Year in Numbers',
                 style: AppTypography.mainCounter(
-                  fontSize: 30,
+                  fontSize: 28,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                 ),
@@ -42,80 +43,97 @@ class WrappedPageStats extends StatelessWidget {
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
               duration: const Duration(milliseconds: 700),
-              builder: (_, v, c) => Opacity(opacity: v, child: c),
+              builder: (context, v, child) =>
+                  Opacity(opacity: v, child: child),
               child: Text(
                 '${data.year} at a glance',
                 style: AppTypography.cormorant(
-                  fontSize: 18,
+                  fontSize: 16,
                   color: Colors.white.withValues(alpha: 0.55),
                   fontWeight: FontWeight.w400,
-                ).copyWith(fontStyle: FontStyle.italic),
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 28),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.4,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                // 1.55 gives tiles enough height to hold emoji + counter + label
+                childAspectRatio: 1.55,
               ),
               itemCount: stats.length,
               itemBuilder: (context, i) {
                 final s = stats[i];
                 return TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: 1),
-                  duration: Duration(milliseconds: 600 + i * 100),
+                  duration: Duration(milliseconds: 550 + i * 100),
                   curve: Curves.easeOutCubic,
-                  builder: (_, v, child) => Transform.translate(
-                    offset: Offset(0, 20 * (1 - v)),
+                  builder: (context, v, child) => Transform.translate(
+                    offset: Offset(0, 18 * (1 - v)),
                     child: Opacity(opacity: v, child: child),
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(s.emoji,
-                            style: const TextStyle(fontSize: 24)),
-                        const SizedBox(height: 6),
-                        WrappedAnimatedCounter(
-                          endValue: s.value,
-                          duration: Duration(milliseconds: 1000 + i * 80),
-                          style: AppTypography.mainCounter(
-                            fontSize: 32,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          s.label,
-                          style: AppTypography.caption(
-                            fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.45),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Extract tile to its own widget — avoids competing
+                  // ParentData from any ancestor Flex context.
+                  child: _StatTile(stat: s, index: i),
                 );
               },
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Separate StatelessWidget so the tile has its own render subtree,
+/// preventing any ParentData bleed from builder closures.
+class _StatTile extends StatelessWidget {
+  final _Stat stat;
+  final int index;
+  const _StatTile({required this.stat, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,   // don't force expand
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(stat.emoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 4),
+          WrappedAnimatedCounter(
+            endValue: stat.value,
+            duration: Duration(milliseconds: 900 + index * 80),
+            style: AppTypography.mainCounter(
+              fontSize: 26,
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            stat.label,
+            style: AppTypography.caption(
+              fontSize: 10,
+              color: Colors.white.withValues(alpha: 0.45),
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
