@@ -2,17 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/providers/bucket_list_provider.dart';
+import 'package:days_together/providers/daily_mood_provider.dart';
+import 'package:days_together/providers/calendar_provider.dart';
+import 'package:days_together/providers/time_capsule_provider.dart';
+import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/theme_selector.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 import 'package:days_together/screens/settings/relationship_profile_screen.dart';
 import 'package:days_together/screens/settings/notification_settings_screen.dart';
+import 'package:days_together/screens/wrapped/wrapped_service.dart';
+import 'package:days_together/screens/wrapped/wrapped_screen.dart';
+import 'package:days_together/screens/wrapped/wrapped_archive_screen.dart';
 import 'package:days_together/main.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
 
+  Future<void> _launchWrapped(BuildContext context) async {
+    final year = DateTime.now().year;
+    final rp = context.read<RelationshipProvider>();
+    final tp = context.read<TimelineProvider>();
+    final np = context.read<NoteitProvider>();
+    final bp = context.read<BucketListProvider>();
+    final mp = context.read<DailyMoodProvider>();
+    final cp = context.read<CalendarProvider>();
+    final cap = context.read<TimeCapsuleProvider>();
+    final vp = context.read<VaultProvider>();
+
+    final data = WrappedService.aggregate(
+      year: year,
+      rp: rp, tp: tp, np: np, bp: bp, mp: mp, cp: cp, cap: cap, vp: vp,
+    );
+
+    if (!context.mounted) return;
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => WrappedScreen(data: data),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
+  }
 
 
   void _showLogoutConfirmation(BuildContext context, RelationshipProvider rp) {
@@ -139,6 +178,10 @@ class SettingsTab extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 12),
+            _buildWrappedTile(theme, context),
+            const SizedBox(height: 8),
+            _buildWrappedArchiveTile(theme, context),
             const SizedBox(height: 32),
             _buildSectionHeader('Connection', theme),
             _buildModernTile(
@@ -183,6 +226,89 @@ class SettingsTab extends StatelessWidget {
             const SizedBox(height: 96),
           ],
         ),
+      ),
+    );
+  }
+
+
+  Widget _buildWrappedTile(dynamic theme, BuildContext context) {
+    return GestureDetector(
+      onTap: () => _launchWrapped(context),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF6B21A8), Color(0xFFBE185D), Color(0xFF1D4ED8)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6B21A8).withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Center(
+                child: Text('❤️', style: TextStyle(fontSize: 22)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Days Together Wrapped',
+                    style: AppTypography.body(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Your ${DateTime.now().year} year in review',
+                    style: AppTypography.body(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWrappedArchiveTile(dynamic theme, BuildContext context) {
+    return _buildModernTile(
+      icon: Icons.history_rounded,
+      title: 'Wrapped Archive',
+      subtitle: 'Revisit past years',
+      theme: theme,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const WrappedArchiveScreen()),
       ),
     );
   }
