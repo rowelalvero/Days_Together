@@ -47,3 +47,5 @@ app.*.map.json
 # Environment variables
 .env
 
+# Google Cloud Service Account
+service-account.json
