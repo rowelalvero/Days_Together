@@ -151,15 +151,6 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
             ],
           ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          "Leave a heartfelt thought that you'll both enjoy reading again in the future.",
-          style: AppTypography.bodyMedium(
-            color: theme.textColor.withValues(alpha: 0.5),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 14),
 
         // Notes List
         if (sortedNotes.isEmpty)
@@ -226,7 +217,7 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
             : theme.accentColor.withValues(alpha: 0.08))
         : (isDark
             ? Colors.white.withValues(alpha: 0.04)
-            : Colors.black.withValues(alpha: 0.035));
+            : Colors.white); // Solid white for better contrast in light mode
 
     final cardBorderColor = note.isPinned
         ? (isDark
@@ -234,15 +225,15 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
             : theme.accentColor.withValues(alpha: 0.35))
         : (isDark
             ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.08));
+            : Colors.black.withValues(alpha: 0.12)); // Darker border
 
     final paperLineColor = isDark
         ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.045);
+        : Colors.black.withValues(alpha: 0.07); // Darker lines
 
     final paperMarginColor = isDark
         ? const Color(0xFFF43F5E).withValues(alpha: 0.15)
-        : const Color(0xFFF43F5E).withValues(alpha: 0.22);
+        : const Color(0xFFF43F5E).withValues(alpha: 0.3); // More visible margin
 
     final washiTapeColor = isDark
         ? Colors.white.withValues(alpha: 0.12)
@@ -250,11 +241,11 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
 
     final washiTapeBorderColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.08);
+        : Colors.black.withValues(alpha: 0.12);
 
     final shadowColor = isDark
         ? Colors.black.withValues(alpha: 0.04)
-        : Colors.black.withValues(alpha: 0.06);
+        : Colors.black.withValues(alpha: 0.1); // Stronger shadow
 
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 16),
