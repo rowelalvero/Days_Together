@@ -22,6 +22,8 @@ import 'package:days_together/widgets/raster_canvas.dart';
 import 'package:days_together/widgets/custom_backgrounds.dart';
 import 'package:days_together/models/canvas_document.dart';
 import 'package:days_together/utils/canvas_mapping.dart';
+import 'package:days_together/widgets/rich_text_editor_overlay.dart';
+import 'package:uuid/uuid.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -227,17 +229,38 @@ class _NoteitScreenState extends State<NoteitScreen>
     }
   }
 
-  void _addText() {
-    _controller.settings = _controller.settings.copyWith(
-      text: TextSettings(
-        textStyle: TextStyle(
-          fontSize: 22,
-          color: _brushColor,
-          fontWeight: FontWeight.normal,
+  void _addText() async {
+    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    final result = await Navigator.push<CanvasTextOverlay>(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black54,
+        pageBuilder: (context, _, __) => RichTextEditorOverlay(
+          theme: theme,
         ),
       ),
     );
-    _controller.addText();
+    
+    if (result != null && result.text.trim().isNotEmpty) {
+      final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
+      final center = renderBox == null
+          ? const Offset(300, 300)
+          : Offset(renderBox.size.width / 2, renderBox.size.height / 2);
+          
+      final textDrawable = TextDrawable(
+        text: result.text,
+        position: center,
+        style: TextStyle(
+          fontSize: result.fontSize,
+          color: Color(result.color),
+          fontWeight: result.isBold ? FontWeight.bold : FontWeight.normal,
+          fontStyle: result.isItalic ? FontStyle.italic : FontStyle.normal,
+          decoration: result.isUnderline ? TextDecoration.underline : TextDecoration.none,
+        ),
+      );
+      _controller.addDrawables([textDrawable]);
+    }
   }
 
   Future<void> _importImage(ImageSource source) async {
@@ -569,6 +592,54 @@ class _NoteitScreenState extends State<NoteitScreen>
                     onPressed: () => _bringForward(selectedObj),
                     tooltip: 'Bring Forward',
                   ),
+                  if (selectedObj is TextDrawable)
+                    IconButton(
+                      icon: Icon(Icons.edit_rounded, color: theme.textColor),
+                      onPressed: () async {
+                        final initial = CanvasTextOverlay(
+                          id: const Uuid().v4(),
+                          text: selectedObj.text,
+                          x: selectedObj.position.dx,
+                          y: selectedObj.position.dy,
+                          scale: selectedObj.scale,
+                          color: selectedObj.style.color?.toARGB32() ?? 0xFFFFFFFF,
+                          backgroundColor: 0,
+                          fontSize: selectedObj.style.fontSize ?? 20.0,
+                          isBold: selectedObj.style.fontWeight == FontWeight.bold,
+                          isItalic: selectedObj.style.fontStyle == FontStyle.italic,
+                          isUnderline: selectedObj.style.decoration == TextDecoration.underline,
+                          alignment: 'center',
+                        );
+                        
+                        final result = await Navigator.push<CanvasTextOverlay>(
+                          context,
+                          PageRouteBuilder(
+                            opaque: false,
+                            barrierColor: Colors.black54,
+                            pageBuilder: (context, _, __) => RichTextEditorOverlay(
+                              initialOverlay: initial,
+                              theme: theme,
+                            ),
+                          ),
+                        );
+                        
+                        if (result != null) {
+                          final updated = selectedObj.copyWith(
+                            text: result.text,
+                            style: selectedObj.style.copyWith(
+                              fontSize: result.fontSize,
+                              color: Color(result.color),
+                              fontWeight: result.isBold ? FontWeight.bold : FontWeight.normal,
+                              fontStyle: result.isItalic ? FontStyle.italic : FontStyle.normal,
+                              decoration: result.isUnderline ? TextDecoration.underline : TextDecoration.none,
+                            ),
+                          );
+                          _controller.replaceDrawable(selectedObj, updated);
+                          _controller.selectObjectDrawable(updated);
+                        }
+                      },
+                      tooltip: 'Edit Text Style',
+                    ),
                   IconButton(
                     icon: Icon(Icons.copy_rounded, color: theme.textColor),
                     onPressed: () => _duplicateSelected(selectedObj),
