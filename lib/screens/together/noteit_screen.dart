@@ -925,6 +925,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                             ),
                           ),
                         ),
+                      );
                     }),
                     GestureDetector(
                       onTap: () async {
