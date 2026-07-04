@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/models/canvas_document.dart';
 import 'package:days_together/widgets/custom_backgrounds.dart';
 
@@ -77,6 +78,7 @@ class CanvasMapping {
           text: d.text,
           color: d.style.color?.toARGB32() ?? 0xFF000000,
           fontSize: d.style.fontSize ?? 14.0,
+          fontFamily: d.style.fontFamily ?? 'Spectral',
           isBold: d.style.fontWeight == FontWeight.bold,
           isItalic: d.style.fontStyle == FontStyle.italic,
           isUnderline: d.style.decoration == TextDecoration.underline,
@@ -100,7 +102,7 @@ class CanvasMapping {
           x: d.position.dx,
           y: d.position.dy,
           scale: d.scale,
-          rotationAngle: d.rotationAngle,
+          rotation: d.rotationAngle,
           shapeType: 'rectangle',
           width: d.size.width,
           height: d.size.height,
@@ -116,7 +118,7 @@ class CanvasMapping {
           x: d.position.dx,
           y: d.position.dy,
           scale: d.scale,
-          rotationAngle: d.rotationAngle,
+          rotation: d.rotationAngle,
           shapeType: 'oval',
           width: d.size.width,
           height: d.size.height,
@@ -132,10 +134,10 @@ class CanvasMapping {
           x: d.position.dx,
           y: d.position.dy,
           scale: d.scale,
-          rotationAngle: d.rotationAngle,
+          rotation: d.rotationAngle,
           shapeType: 'line',
-          width: d.size.width,
-          height: d.size.height,
+          width: d.length,
+          height: 0,
           color: d.paint.color.toARGB32(),
           strokeWidth: d.paint.strokeWidth,
           locked: d.locked,
@@ -147,10 +149,10 @@ class CanvasMapping {
           x: d.position.dx,
           y: d.position.dy,
           scale: d.scale,
-          rotationAngle: d.rotationAngle,
+          rotation: d.rotationAngle,
           shapeType: 'arrow',
-          width: d.size.width,
-          height: d.size.height,
+          width: d.length,
+          height: 0,
           color: d.paint.color.toARGB32(),
           strokeWidth: d.paint.strokeWidth,
           locked: d.locked,
@@ -213,14 +215,7 @@ class CanvasMapping {
           position: Offset(obj.x, obj.y),
           scale: obj.scale,
           rotation: obj.rotation,
-          style: TextStyle(
-            color: Color(obj.color),
-            fontSize: obj.fontSize,
-            fontFamily: obj.fontFamily,
-            fontWeight: obj.isBold ? FontWeight.bold : FontWeight.normal,
-            fontStyle: obj.isItalic ? FontStyle.italic : FontStyle.normal,
-            decoration: obj.isUnderline ? TextDecoration.underline : TextDecoration.none,
-          ),
+          style: _getTextStyle(obj),
           locked: obj.locked,
           hidden: obj.hidden,
         ));
@@ -259,7 +254,7 @@ class CanvasMapping {
           case 'line':
             drawables.add(LineDrawable(
               paint: paint,
-              size: size,
+              length: obj.width,
               position: pos,
               scale: obj.scale,
               rotationAngle: obj.rotation,
@@ -270,7 +265,7 @@ class CanvasMapping {
           case 'arrow':
             drawables.add(ArrowDrawable(
               paint: paint,
-              size: size,
+              length: obj.width,
               position: pos,
               scale: obj.scale,
               rotationAngle: obj.rotation,
@@ -307,5 +302,27 @@ class CanvasMapping {
       completer.complete(img);
     });
     return completer.future;
+  }
+
+  static TextStyle _getTextStyle(TextObject obj) {
+    try {
+      return GoogleFonts.getFont(
+        obj.fontFamily,
+        color: Color(obj.color),
+        fontSize: obj.fontSize,
+        fontWeight: obj.isBold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: obj.isItalic ? FontStyle.italic : FontStyle.normal,
+        decoration: obj.isUnderline ? TextDecoration.underline : TextDecoration.none,
+      );
+    } catch (_) {
+      return TextStyle(
+        color: Color(obj.color),
+        fontSize: obj.fontSize,
+        fontFamily: obj.fontFamily,
+        fontWeight: obj.isBold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: obj.isItalic ? FontStyle.italic : FontStyle.normal,
+        decoration: obj.isUnderline ? TextDecoration.underline : TextDecoration.none,
+      );
+    }
   }
 }

@@ -789,9 +789,10 @@ class _NoteitScreenState extends State<NoteitScreen>
 
     String matchedFont = _activeFontFamily;
     if (selectedText != null && selectedText.style.fontFamily != null) {
-      final family = selectedText.style.fontFamily!;
+      final family = selectedText.style.fontFamily!.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
       for (final f in _fontFamilies) {
-        if (family.toLowerCase().contains(f.toLowerCase())) {
+        final cleanF = f.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
+        if (family.contains(cleanF)) {
           matchedFont = f;
           break;
         }
@@ -850,6 +851,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                     onSelected: (selected) {
                       if (selected) {
                         setState(() {
+                          _activeFontFamily = font;
                           if (selectedText != null) {
                             final updated = selectedText.copyWith(
                               style: _getTextStyle(
@@ -863,8 +865,6 @@ class _NoteitScreenState extends State<NoteitScreen>
                             );
                             _controller.replaceDrawable(selectedText, updated);
                             _controller.selectObjectDrawable(updated);
-                          } else {
-                            _activeFontFamily = font;
                           }
                         });
                       }
