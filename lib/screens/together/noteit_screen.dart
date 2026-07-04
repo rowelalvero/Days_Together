@@ -98,6 +98,9 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   void _onControllerUpdated() {
+    if (mounted) {
+      setState(() {});
+    }
     _saveDraft();
   }
 
