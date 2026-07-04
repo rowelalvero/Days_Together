@@ -29,7 +29,7 @@ class _NoteitScreenState extends State<NoteitScreen>
   final GlobalKey<RasterCanvasState> _canvasKey = GlobalKey<RasterCanvasState>();
 
   // Canvas State
-  Color _canvasBgColor = const Color(0xFF0F0B1A);
+  Color _canvasBgColor = Colors.white;
   String? _pickedPhotoPath;
   String? _drawingLayerBase64;
   final List<CanvasTextOverlay> _textOverlays = [];
@@ -64,7 +64,7 @@ class _NoteitScreenState extends State<NoteitScreen>
 
   void _clearAllCanvas() {
     setState(() {
-      _canvasBgColor = const Color(0xFF0F0B1A);
+      _canvasBgColor = Colors.white;
       _pickedPhotoPath = null;
       _drawingLayerBase64 = null;
       _textOverlays.clear();
@@ -721,7 +721,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: item.backgroundColor ?? const Color(0xFF0F0B1A),
+                color: item.backgroundColor ?? Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: theme.textColor.withValues(alpha: 0.2), width: 2),
               ),

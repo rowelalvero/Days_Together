@@ -1802,7 +1802,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: latest.backgroundColor ?? const Color(0xFF0F0B1A),
+          color: latest.backgroundColor ?? Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: widget.theme.textColor.withValues(alpha: 0.1),
