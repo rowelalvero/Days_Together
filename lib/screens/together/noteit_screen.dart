@@ -39,8 +39,8 @@ class _NoteitScreenState extends State<NoteitScreen>
   
   late PainterController _controller;
   
-  // Active Modes: 'hand', 'select', 'pen', 'pencil', 'marker', 'eraser', 'shapes'
-  String _activeMode = 'hand';
+  // Active Modes: 'select', 'pen', 'pencil', 'marker', 'eraser', 'shapes'
+  String _activeMode = 'pen';
   String _activeShape = 'rectangle'; // 'rectangle', 'oval', 'line', 'arrow'
   
   Color _brushColor = const Color(0xFFFF4D6D);
@@ -84,14 +84,12 @@ class _NoteitScreenState extends State<NoteitScreen>
     _controller = PainterController(
       settings: PainterSettings(
         freeStyle: const FreeStyleSettings(
-          mode: FreeStyleMode.none,
+          mode: FreeStyleMode.draw,
           color: Color(0xFFFF4D6D),
           strokeWidth: 4.0,
         ),
         scale: const ScaleSettings(
-          enabled: true,
-          minScale: 0.5,
-          maxScale: 10.0,
+          enabled: false,
         ),
       ),
     );
@@ -308,10 +306,39 @@ class _NoteitScreenState extends State<NoteitScreen>
     return completer.future;
   }
 
-  void _resetZoom() {
-    setState(() {
-      _controller.transformationController.value = Matrix4.identity();
-    });
+  void _clearCanvas(LoveStoryTheme theme) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: theme.backgroundColor,
+        title: Text(
+          'Clear Canvas?',
+          style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to clear all doodles, shapes, text, and reset the canvas background?',
+          style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.6))),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _controller.clearDrawables();
+                _bgColor = Colors.white;
+                _bgType = 'color';
+                _updateBackground();
+              });
+            },
+            child: Text('Clear All', style: AppTypography.button(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _duplicateSelected(ObjectDrawable selected) {
@@ -481,9 +508,9 @@ class _NoteitScreenState extends State<NoteitScreen>
                   tooltip: 'Redo',
                 ),
                 IconButton(
-                  icon: Icon(Icons.refresh_rounded, color: theme.textColor),
-                  onPressed: () => _resetZoom(),
-                  tooltip: 'Reset Zoom',
+                  icon: Icon(Icons.delete_sweep_rounded, color: theme.textColor),
+                  onPressed: () => _clearCanvas(theme),
+                  tooltip: 'Clear Canvas',
                 ),
                 IconButton(
                   icon: Icon(Icons.palette_outlined, color: theme.textColor),
@@ -859,8 +886,7 @@ class _NoteitScreenState extends State<NoteitScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               // Mode Selectors
-              _buildToolbarButton(Icons.pan_tool_rounded, 'hand', 'Pan View'),
-              _buildToolbarButton(Icons.front_hand_rounded, 'select', 'Select Object'),
+              _buildToolbarButton(Icons.near_me_rounded, 'select', 'Select Object'),
               _buildToolbarButton(Icons.edit_rounded, 'pen', 'Pen'),
               _buildToolbarButton(Icons.brush_rounded, 'pencil', 'Pencil'),
               _buildToolbarButton(Icons.border_color_rounded, 'marker', 'Marker'),
