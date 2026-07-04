@@ -137,8 +137,12 @@ class RasterCanvasState extends State<RasterCanvas> {
       _lastDrawableCount = _controller.drawables.length;
       _lastBackground = _controller.value.background;
       
-      widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
-      _notifyParent();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
+          _notifyParent();
+        }
+      });
     }
   }
 
@@ -196,18 +200,15 @@ class RasterCanvasState extends State<RasterCanvas> {
 
   void undo() {
     _controller.undo();
-    widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
   }
 
   void redo() {
     _controller.redo();
-    widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
   }
 
   void clearAll() {
     _controller.clearDrawables();
     _controller.background = null;
-    widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
   }
 
   int _colorToRgba(Color color) {
