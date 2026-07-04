@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,10 @@ import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
+import 'package:days_together/widgets/color_picker_dialog.dart';
+import 'package:days_together/widgets/raster_canvas.dart';
+import 'package:days_together/widgets/text_overlay_widget.dart';
+import 'package:days_together/widgets/rich_text_editor_overlay.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -21,20 +26,18 @@ class _NoteitScreenState extends State<NoteitScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
+  final GlobalKey<RasterCanvasState> _canvasKey = GlobalKey<RasterCanvasState>();
 
-  // Doodle state
-  final List<List<Offset>> _doodleStrokes = [];
-  List<Offset> _currentStroke = [];
-  Color _brushColor = const Color(0xFFFF4D6D);
-  double _strokeWidth = 4.0;
-  Color _doodleBgColor = const Color(0xFF0F0B1A);
-
-  // Sticky Note state
-  final _textController = TextEditingController();
-  Color _stickyBgColor = const Color(0xFF590D22);
-
-  // Photo state
+  // Canvas State
+  Color _canvasBgColor = const Color(0xFF0F0B1A);
   String? _pickedPhotoPath;
+  String? _drawingLayerBase64;
+  final List<CanvasTextOverlay> _textOverlays = [];
+
+  // Active Tool & Brush Options
+  CanvasTool _activeTool = CanvasTool.pen;
+  double _strokeWidth = 4.0;
+  Color _brushColor = const Color(0xFFFF4D6D);
 
   final List<Color> _paletteColors = [
     const Color(0xFFFF4D6D), // pink
@@ -47,50 +50,26 @@ class _NoteitScreenState extends State<NoteitScreen>
     Colors.greenAccent,
   ];
 
-  final List<Color> _canvasBgColors = [
-    const Color(0xFF0F0B1A), // midnight
-    const Color(0xFF1B0C1E), // deep violet
-    const Color(0xFF001220), // dark blue
-    const Color(0xFF2B1B17), // sand dark
-  ];
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _textController.dispose();
     super.dispose();
   }
 
-  void _undoDoodle() {
-    if (_doodleStrokes.isNotEmpty) {
-      setState(() {
-        _doodleStrokes.removeLast();
-      });
-    }
-  }
-
-  void _clearDoodle() {
+  void _clearAllCanvas() {
     setState(() {
-      _doodleStrokes.clear();
+      _canvasBgColor = const Color(0xFF0F0B1A);
+      _pickedPhotoPath = null;
+      _drawingLayerBase64 = null;
+      _textOverlays.clear();
+      _canvasKey.currentState?.clearAll();
     });
-  }
-
-  String _serializeDoodle() {
-    return _doodleStrokes
-        .map(
-          (stroke) => stroke
-              .map(
-                (p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}',
-              )
-              .join(';'),
-        )
-        .join('|');
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -118,6 +97,39 @@ class _NoteitScreenState extends State<NoteitScreen>
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
+    }
+  }
+
+  Future<void> _openCustomColorPicker(LoveStoryTheme theme) async {
+    final pickedColor = await showDialog<Color>(
+      context: context,
+      builder: (ctx) => ColorPickerDialog(
+        initialColor: _brushColor,
+        theme: theme,
+      ),
+    );
+    if (pickedColor != null) {
+      setState(() {
+        _brushColor = pickedColor;
+      });
+    }
+  }
+
+  Future<void> _addTextOverlay(LoveStoryTheme theme) async {
+    final newOverlay = await Navigator.push<CanvasTextOverlay>(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black54,
+        pageBuilder: (context, _, __) => RichTextEditorOverlay(
+          theme: theme,
+        ),
+      ),
+    );
+    if (newOverlay != null) {
+      setState(() {
+        _textOverlays.add(newOverlay);
+      });
     }
   }
 
@@ -149,11 +161,8 @@ class _NoteitScreenState extends State<NoteitScreen>
           indicatorColor: theme.accentColor,
           labelColor: theme.textColor,
           unselectedLabelColor: theme.textColor.withValues(alpha: 0.5),
-          isScrollable: true,
           tabs: const [
-            Tab(text: '🎨 Doodle'),
-            Tab(text: '📝 Text Note'),
-            Tab(text: '📸 Photo'),
+            Tab(text: '🎨 Editor'),
             Tab(text: '📜 History'),
           ],
         ),
@@ -166,9 +175,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _buildDoodleCanvas(theme, provider),
-              _buildStickyNoteEditor(theme, provider),
-              _buildPhotoPicker(theme, provider),
+              _buildCanvasEditor(theme, provider),
               _buildHistoryLog(theme, provider),
             ],
           ),
@@ -177,30 +184,36 @@ class _NoteitScreenState extends State<NoteitScreen>
     );
   }
 
-  // 2. DOODLE CANVAS
-  Widget _buildDoodleCanvas(LoveStoryTheme theme, NoteitProvider provider) {
+  Widget _buildCanvasEditor(LoveStoryTheme theme, NoteitProvider provider) {
     return Column(
       children: [
-        // Palette & Brush controls
+        // Top options: Undo, Clear, Tool sizes
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
             children: [
               IconButton(
-                icon: Icon(Icons.undo_rounded, color: theme.textColor),
-                onPressed: _undoDoodle,
-                tooltip: 'Undo last stroke',
+                icon: Icon(Icons.delete_outline_rounded, color: theme.textColor),
+                onPressed: _clearAllCanvas,
+                tooltip: 'Clear Canvas',
               ),
               IconButton(
-                icon: Icon(
-                  Icons.delete_outline_rounded,
-                  color: theme.textColor,
-                ),
-                onPressed: _clearDoodle,
-                tooltip: 'Clear canvas',
+                icon: Icon(Icons.text_fields_rounded, color: theme.textColor),
+                onPressed: () => _addTextOverlay(theme),
+                tooltip: 'Add Text',
               ),
+              IconButton(
+                icon: Icon(Icons.photo_library_outlined, color: theme.textColor),
+                onPressed: () => _pickImage(ImageSource.gallery),
+                tooltip: 'Background Photo',
+              ),
+              if (_pickedPhotoPath != null)
+                IconButton(
+                  icon: const Icon(Icons.no_photography_outlined, color: Colors.redAccent),
+                  onPressed: () => setState(() => _pickedPhotoPath = null),
+                  tooltip: 'Remove Background Photo',
+                ),
               const Spacer(),
-              // Size selector indicator
               Text(
                 'Size:',
                 style: AppTypography.body(
@@ -213,7 +226,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                 child: Slider(
                   value: _strokeWidth,
                   min: 1.0,
-                  max: 12.0,
+                  max: 20.0,
                   activeColor: theme.accentColor,
                   inactiveColor: theme.textColor.withValues(alpha: 0.1),
                   onChanged: (val) {
@@ -227,21 +240,158 @@ class _NoteitScreenState extends State<NoteitScreen>
           ),
         ),
 
-        // Color selection pills
+        // Square Canvas Stack
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _canvasBgColor,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.15),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 15,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Background Photo
+                        if (_pickedPhotoPath != null)
+                          Positioned.fill(
+                            child: Image.file(
+                              File(_pickedPhotoPath!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        
+                        // Drawing Layer
+                        Positioned.fill(
+                          child: RasterCanvas(
+                            key: _canvasKey,
+                            brushColor: _brushColor,
+                            strokeWidth: _strokeWidth,
+                            activeTool: _activeTool,
+                            initialBase64: _drawingLayerBase64,
+                            onDrawingLayerChanged: (base64) {
+                              _drawingLayerBase64 = base64;
+                            },
+                            onCanvasBgColorChanged: (color) {
+                              setState(() {
+                                _canvasBgColor = color;
+                              });
+                            },
+                          ),
+                        ),
+
+                        // Text Overlays
+                        ..._textOverlays.map((overlay) {
+                          return TextOverlayWidget(
+                            overlay: overlay,
+                            onUpdate: (updated) {
+                              setState(() {
+                                final idx = _textOverlays.indexWhere((o) => o.id == updated.id);
+                                if (idx != -1) {
+                                  _textOverlays[idx] = updated;
+                                }
+                              });
+                            },
+                            onTap: () async {
+                              final updatedOverlay = await Navigator.push<CanvasTextOverlay>(
+                                context,
+                                PageRouteBuilder(
+                                  opaque: false,
+                                  barrierColor: Colors.black54,
+                                  pageBuilder: (context, _, __) => RichTextEditorOverlay(
+                                    initialOverlay: overlay,
+                                    theme: theme,
+                                  ),
+                                ),
+                              );
+                              if (updatedOverlay != null) {
+                                setState(() {
+                                  final idx = _textOverlays.indexWhere((o) => o.id == overlay.id);
+                                  if (idx != -1) {
+                                    _textOverlays[idx] = updatedOverlay;
+                                  }
+                                });
+                              }
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Brush Pen Selector Row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildToolButton(CanvasTool.pencil, Icons.edit_outlined, 'Pencil'),
+              _buildToolButton(CanvasTool.pen, Icons.brush_rounded, 'Pen'),
+              _buildToolButton(CanvasTool.marker, Icons.border_color_rounded, 'Marker'),
+              _buildToolButton(CanvasTool.bucket, Icons.format_color_fill_rounded, 'Bucket'),
+              _buildToolButton(CanvasTool.eraser, Icons.cleaning_services_rounded, 'Eraser'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Color selection palette
         SizedBox(
           height: 38,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _paletteColors.length,
+            itemCount: _paletteColors.length + 1,
             itemBuilder: (ctx, i) {
+              if (i == _paletteColors.length) {
+                // Custom color picker button
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => _openCustomColorPicker(theme),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                        gradient: const SweepGradient(
+                          colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                        ),
+                      ),
+                      child: Icon(Icons.add_rounded, color: theme.textColor, size: 20),
+                    ),
+                  ),
+                );
+              }
+
               final color = _paletteColors[i];
-              final isSelected = _brushColor == color;
+              final isSelected = _brushColor.toARGB32() == color.toARGB32();
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: InkWell(
+                child: GestureDetector(
                   onTap: () => setState(() => _brushColor = color),
-                  borderRadius: BorderRadius.circular(20),
                   child: Container(
                     width: 34,
                     height: 34,
@@ -250,7 +400,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected ? theme.textColor : Colors.transparent,
-                        width: 2,
+                        width: 2.5,
                       ),
                       boxShadow: [
                         if (isSelected)
@@ -269,124 +419,37 @@ class _NoteitScreenState extends State<NoteitScreen>
         ),
         const SizedBox(height: 12),
 
-        // Drawing Area
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: AspectRatio(
-              aspectRatio: 1.0, // square aspect ratio widget canvas
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _doodleBgColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.15),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 15,
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: GestureDetector(
-                    onPanStart: (details) {
-                      setState(() {
-                        _currentStroke = [details.localPosition];
-                        _doodleStrokes.add(_currentStroke);
-                      });
-                    },
-                    onPanUpdate: (details) {
-                      setState(() {
-                        _currentStroke.add(details.localPosition);
-                      });
-                    },
-                    onPanEnd: (details) {
-                      _currentStroke = [];
-                    },
-                    child: CustomPaint(
-                      painter: CustomDrawingPainter(
-                        strokes: _doodleStrokes,
-                        brushColor: _brushColor,
-                        strokeWidth: _strokeWidth,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Background options & Action buttons
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              Text(
-                'BG:',
-                style: AppTypography.bodyLarge(
-                  color: theme.textColor.withValues(alpha: 0.6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ..._canvasBgColors.map((bg) {
-                final isSel = _doodleBgColor == bg;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _doodleBgColor = bg),
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: bg,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSel
-                              ? theme.accentColor
-                              : theme.textColor.withValues(alpha: 0.2),
-                          width: isSel ? 2 : 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-
         // Send Button
         Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 50,
             child: ElevatedButton.icon(
               onPressed: () {
-                if (_doodleStrokes.isEmpty) {
+                if (_drawingLayerBase64 == null && _textOverlays.isEmpty && _pickedPhotoPath == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please draw something first! 🎨'),
+                      content: Text('Please create something on the canvas first! 🎨'),
                       backgroundColor: Colors.redAccent,
                     ),
                   );
                   return;
                 }
-                provider.sendDrawing(_serializeDoodle(), _doodleBgColor);
-                _clearDoodle();
-                _tabController.animateTo(3); // Switch to History tab
+                
+                final canvasData = CanvasData(
+                  backgroundColor: _canvasBgColor.toARGB32(),
+                  drawingLayer: _drawingLayerBase64,
+                  textOverlays: _textOverlays,
+                );
+                
+                provider.sendCanvas(jsonEncode(canvasData.toJson()), _pickedPhotoPath);
+                _clearAllCanvas();
+                _tabController.animateTo(1); // Switch to History
+                
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Doodle sent to partner! 🚀'),
+                    content: Text('Canvas sent to partner! 🚀'),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -413,336 +476,39 @@ class _NoteitScreenState extends State<NoteitScreen>
     );
   }
 
-  // 3. STICKY NOTE EDITOR
-  Widget _buildStickyNoteEditor(LoveStoryTheme theme, NoteitProvider provider) {
-    final cardBgColors = [
-      const Color(0xFF590D22), // deep red
-      const Color(0xFF10002B), // purple
-      const Color(0xFF03045E), // royal blue
-      const Color(0xFF1B4332), // green
-    ];
+  Widget _buildToolButton(CanvasTool tool, IconData icon, String tooltip) {
+    final theme = context.watch<ThemeProvider>().currentLoveTheme;
+    final isSelected = _activeTool == tool;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Write Sticky Note',
-            style: AppTypography.sectionHeader(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: theme.textColor,
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _activeTool = tool;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isSelected ? theme.accentColor : Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected ? Colors.transparent : theme.textColor.withValues(alpha: 0.2),
+              width: 1.5,
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Colored Card Text Box
-          Container(
-            height: 180,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _stickyBgColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: theme.textColor.withValues(alpha: 0.15),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _textController,
-              maxLines: 6,
-              style: AppTypography.lora(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                fontStyle: FontStyle.italic,
-                color: Colors.white,
-              ),
-              maxLength: 120,
-              decoration: InputDecoration(
-                hintText: 'Dear love, hope you have a beautiful day! ❤️',
-                hintStyle: AppTypography.lora(
-                  color: Colors.white.withValues(alpha: 0.4),
-                  fontStyle: FontStyle.italic,
-                  fontSize: 16,
-                ),
-                border: InputBorder.none,
-                counterStyle: AppTypography.caption(
-                  color: Colors.white60,
-                  fontSize: 10,
-                ),
-              ),
-            ),
+          child: Icon(
+            icon,
+            color: isSelected ? Colors.white : theme.textColor,
+            size: 22,
           ),
-          const SizedBox(height: 20),
-
-          // Card Color options
-          Row(
-            children: [
-              Text(
-                'CARD BG:',
-                style: AppTypography.bodyLarge(
-                  color: theme.textColor.withValues(alpha: 0.6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ...cardBgColors.map((bg) {
-                final isSel = _stickyBgColor == bg;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _stickyBgColor = bg),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: bg,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSel
-                              ? theme.accentColor
-                              : theme.textColor.withValues(alpha: 0.2),
-                          width: isSel ? 2 : 1,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-          const SizedBox(height: 36),
-
-          // Send Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                if (_textController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please write a message first! ✍️'),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
-                  return;
-                }
-                provider.sendText(_textController.text.trim(), _stickyBgColor);
-                _textController.clear();
-                _tabController.animateTo(3); // Switch to History tab
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Note shared with your partner! 🚀'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.send_rounded),
-              label: Text(
-                'Send Note',
-                style: AppTypography.bodyLarge(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  // 4. PHOTO PICKER
-  Widget _buildPhotoPicker(LoveStoryTheme theme, NoteitProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Share a Photo',
-            style: AppTypography.sectionHeader(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: theme.textColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: theme.textColor.withValues(alpha: 0.15),
-                  width: 1.5,
-                ),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: _pickedPhotoPath == null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo_outlined,
-                              size: 48,
-                              color: theme.textColor.withValues(alpha: 0.3),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Select a photo to share directly\nto your partner\'s screen.',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.body(
-                                fontSize: 13,
-                                color: theme.textColor.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                OutlinedButton.icon(
-                                  onPressed: () =>
-                                      _pickImage(ImageSource.gallery),
-                                  icon: const Icon(
-                                    Icons.photo_library_outlined,
-                                  ),
-                                  label: const Text('Gallery'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: theme.textColor,
-                                    side: BorderSide(
-                                      color: theme.textColor.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                OutlinedButton.icon(
-                                  onPressed: () =>
-                                      _pickImage(ImageSource.camera),
-                                  icon: const Icon(Icons.camera_alt_outlined),
-                                  label: const Text('Camera'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: theme.textColor,
-                                    side: BorderSide(
-                                      color: theme.textColor.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    : Stack(
-                        children: [
-                          Positioned.fill(
-                            child:
-                                _pickedPhotoPath != null &&
-                                    File(_pickedPhotoPath!).existsSync()
-                                ? Image.file(
-                                    File(_pickedPhotoPath!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : const Center(
-                                    child: Icon(
-                                      Icons.image,
-                                      color: Colors.white24,
-                                    ),
-                                  ),
-                          ),
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: IconButton(
-                              icon: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black45,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                              onPressed: () =>
-                                  setState(() => _pickedPhotoPath = null),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Send button
-          if (_pickedPhotoPath != null)
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  provider.sendPhoto(_pickedPhotoPath!);
-                  setState(() {
-                    _pickedPhotoPath = null;
-                  });
-                  _tabController.animateTo(3); // Switch to History tab
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Photo shared with your partner! 📸🚀'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.send_rounded),
-                label: Text(
-                  'Send Photo',
-                  style: AppTypography.bodyLarge(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.accentColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // 5. HISTORY LOG
+  // 4. HISTORY LOG
   Widget _buildHistoryLog(LoveStoryTheme theme, NoteitProvider provider) {
     final list = provider.notes;
     if (list.isEmpty) {
@@ -803,11 +569,11 @@ class _NoteitScreenState extends State<NoteitScreen>
                     child: const Text('Cancel'),
                     onPressed: () => Navigator.pop(ctx),
                   ),
-                      TextButton(
-                        child: Text(
-                          'Delete',
-                          style: AppTypography.button(color: Colors.redAccent),
-                        ),
+                  TextButton(
+                    child: Text(
+                      'Delete',
+                      style: AppTypography.button(color: Colors.redAccent),
+                    ),
                     onPressed: () {
                       Navigator.pop(ctx);
                       provider.deleteNote(item.id);
@@ -819,8 +585,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           },
           child: Container(
             decoration: BoxDecoration(
-              color:
-                  item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
+              color: item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
             ),
@@ -994,6 +759,88 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   Widget _buildWidgetContent(NoteitItem item) {
+    if (CanvasData.isJson(item.content)) {
+      try {
+        final canvasData = CanvasData.fromJson(jsonDecode(item.content!));
+        return FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: 600,
+            height: 600,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // 1. Photo background if exists (either local imagePath or remote imageUrl)
+                if (item.imagePath != null && File(item.imagePath!).existsSync())
+                  Positioned.fill(
+                    child: Image.file(File(item.imagePath!), fit: BoxFit.cover),
+                  )
+                else if (item.imageUrl != null)
+                  Positioned.fill(
+                    child: Image.network(item.imageUrl!, fit: BoxFit.cover),
+                  ),
+                
+                // 2. Drawing layer if exists
+                if (canvasData.drawingLayer != null && canvasData.drawingLayer!.isNotEmpty)
+                  Positioned.fill(
+                    child: Image.memory(
+                      base64Decode(canvasData.drawingLayer!),
+                      fit: BoxFit.cover,
+                      gaplessPlayback: true,
+                    ),
+                  ),
+
+                // 3. Text overlays
+                ...canvasData.textOverlays.map((overlay) {
+                  final textStyle = AppTypography.lora(
+                    fontSize: overlay.fontSize,
+                    fontWeight: overlay.isBold ? FontWeight.bold : FontWeight.normal,
+                    fontStyle: overlay.isItalic ? FontStyle.italic : FontStyle.normal,
+                    color: Color(overlay.color),
+                  ).copyWith(
+                    decoration: overlay.isUnderline ? TextDecoration.underline : TextDecoration.none,
+                  );
+                  
+                  final alignment = overlay.alignment == 'left'
+                      ? TextAlign.left
+                      : overlay.alignment == 'right'
+                          ? TextAlign.right
+                          : TextAlign.center;
+                  
+                  return Positioned(
+                    left: overlay.x,
+                    top: overlay.y,
+                    child: Transform.scale(
+                      scale: overlay.scale,
+                      alignment: Alignment.center,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: overlay.backgroundColor == 0
+                              ? Colors.transparent
+                              : Color(overlay.backgroundColor),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(maxWidth: 280),
+                        child: Text(
+                          overlay.text,
+                          textAlign: alignment,
+                          style: textStyle,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error parsing unified canvas json: $e');
+      }
+    }
+
+    // Legacy Fallback Painter
     if (item.type == NoteitType.drawing) {
       return CustomPaint(
         painter: ScaleDrawingPainter(
@@ -1046,45 +893,5 @@ class _NoteitScreenState extends State<NoteitScreen>
       }
       return Container(color: Colors.grey);
     }
-  }
-}
-
-// ── CUSTOM CUSTOM PAINTERS ──
-
-class CustomDrawingPainter extends CustomPainter {
-  final List<List<Offset>> strokes;
-  final Color brushColor;
-  final double strokeWidth;
-
-  CustomDrawingPainter({
-    required this.strokes,
-    required this.brushColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = brushColor
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    for (final stroke in strokes) {
-      if (stroke.isEmpty) continue;
-      final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
-      for (int i = 1; i < stroke.length; i++) {
-        path.lineTo(stroke[i].dx, stroke[i].dy);
-      }
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomDrawingPainter oldDelegate) {
-    return oldDelegate.strokes != strokes ||
-        oldDelegate.brushColor != brushColor ||
-        oldDelegate.strokeWidth != strokeWidth;
   }
 }
