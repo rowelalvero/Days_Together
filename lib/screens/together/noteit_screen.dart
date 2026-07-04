@@ -50,6 +50,16 @@ class _NoteitScreenState extends State<NoteitScreen>
   bool _isBold = false;
   bool _isItalic = false;
   bool _isUnderline = false;
+  Color _highlightColor = Colors.transparent;
+  final List<Color> _highlightColors = [
+    Colors.transparent,
+    const Color(0xFFFFF2B2),
+    const Color(0xFFC7F9CC),
+    const Color(0xFFBEE9E8),
+    const Color(0xFFFFD6E0),
+    const Color(0xFFE8DBFC),
+    const Color(0xFFFFE5D9),
+  ];
   String _activeFontFamily = 'Spectral';
   final List<String> _fontFamilies = [
     'Spectral',
@@ -252,12 +262,15 @@ class _NoteitScreenState extends State<NoteitScreen>
     required bool isItalic,
     required bool isUnderline,
     required String fontFamily,
+    required Color highlightColor,
   }) {
+    final bg = highlightColor != Colors.transparent ? highlightColor : null;
     try {
       return GoogleFonts.getFont(
         fontFamily,
         fontSize: fontSize,
         color: color,
+        backgroundColor: bg,
         fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
         fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
         decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
@@ -267,6 +280,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         fontFamily: fontFamily,
         fontSize: fontSize,
         color: color,
+        backgroundColor: bg,
         fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
         fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
         decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
@@ -297,6 +311,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           isItalic: _isItalic,
           isUnderline: _isUnderline,
           fontFamily: _activeFontFamily,
+          highlightColor: _highlightColor,
         ),
       );
       _controller.addDrawables([textDrawable]);
@@ -786,6 +801,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     final bool isItalic = selectedText != null ? (selectedText.style.fontStyle == FontStyle.italic) : _isItalic;
     final bool isUnderline = selectedText != null ? (selectedText.style.decoration == TextDecoration.underline) : _isUnderline;
     final Color activeColor = selectedText != null ? (selectedText.style.color ?? _brushColor) : _brushColor;
+    final Color activeHighlight = selectedText != null ? (selectedText.style.backgroundColor ?? Colors.transparent) : _highlightColor;
 
     String matchedFont = _activeFontFamily;
     if (selectedText != null && selectedText.style.fontFamily != null) {
@@ -808,10 +824,11 @@ class _NoteitScreenState extends State<NoteitScreen>
         border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Horizontal Font Family selector list
+          // Row 1: Font Family selector list
           SizedBox(
-            height: 40,
+            height: 36,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _fontFamilies.length,
@@ -824,20 +841,20 @@ class _NoteitScreenState extends State<NoteitScreen>
                   fontStyle = GoogleFonts.getFont(
                     font,
                     color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   );
                 } catch (_) {
                   fontStyle = TextStyle(
                     fontFamily: font,
                     color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   );
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: 6),
                   child: ChoiceChip(
                     label: Text(font, style: fontStyle),
                     selected: isSelected,
@@ -848,6 +865,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                       width: isSelected ? 1.5 : 1.0,
                     ),
                     showCheckmark: false,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     onSelected: (selected) {
                       if (selected) {
                         setState(() {
@@ -861,6 +879,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                                 isItalic: selectedText.style.fontStyle == FontStyle.italic,
                                 isUnderline: selectedText.style.decoration == TextDecoration.underline,
                                 fontFamily: font,
+                                highlightColor: activeHighlight,
                               ),
                             );
                             _controller.replaceDrawable(selectedText, updated);
@@ -875,75 +894,18 @@ class _NoteitScreenState extends State<NoteitScreen>
             ),
           ),
           const SizedBox(height: 8),
-          // Formatting controls & Color Picker Row
+
+          // Row 2: Text Color Selection
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Formatting toggles
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.format_bold, color: isBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
-                    onPressed: () {
-                      setState(() {
-                        if (selectedText != null) {
-                          final updated = selectedText.copyWith(
-                            style: selectedText.style.copyWith(
-                              fontWeight: isBold ? FontWeight.normal : FontWeight.bold,
-                            ),
-                          );
-                          _controller.replaceDrawable(selectedText, updated);
-                          _controller.selectObjectDrawable(updated);
-                        } else {
-                          _isBold = !_isBold;
-                        }
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.format_italic, color: isItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
-                    onPressed: () {
-                      setState(() {
-                        if (selectedText != null) {
-                          final updated = selectedText.copyWith(
-                            style: selectedText.style.copyWith(
-                              fontStyle: isItalic ? FontStyle.normal : FontStyle.italic,
-                            ),
-                          );
-                          _controller.replaceDrawable(selectedText, updated);
-                          _controller.selectObjectDrawable(updated);
-                        } else {
-                          _isItalic = !_isItalic;
-                        }
-                      });
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.format_underlined, color: isUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
-                    onPressed: () {
-                      setState(() {
-                        if (selectedText != null) {
-                          final updated = selectedText.copyWith(
-                            style: selectedText.style.copyWith(
-                              decoration: isUnderline ? TextDecoration.none : TextDecoration.underline,
-                            ),
-                          );
-                          _controller.replaceDrawable(selectedText, updated);
-                          _controller.selectObjectDrawable(updated);
-                        } else {
-                          _isUnderline = !_isUnderline;
-                        }
-                      });
-                    },
-                  ),
-                ],
+              Text(
+                'Text:',
+                style: AppTypography.body(color: theme.textColor, fontSize: 12).copyWith(fontWeight: FontWeight.bold),
               ),
-              
-              // Horizontal palette selection in remaining space
+              const SizedBox(width: 8),
               Expanded(
                 child: SizedBox(
-                  height: 38,
+                  height: 32,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: _paletteColors.length + 1,
@@ -960,29 +922,36 @@ class _NoteitScreenState extends State<NoteitScreen>
                             );
                             if (pickedColor != null) {
                               setState(() {
+                                _brushColor = pickedColor;
                                 if (selectedText != null) {
                                   final updated = selectedText.copyWith(
-                                    style: selectedText.style.copyWith(color: pickedColor),
+                                    style: _getTextStyle(
+                                      fontSize: selectedText.style.fontSize ?? 20.0,
+                                      color: pickedColor,
+                                      isBold: selectedText.style.fontWeight == FontWeight.bold,
+                                      isItalic: selectedText.style.fontStyle == FontStyle.italic,
+                                      isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                      fontFamily: matchedFont,
+                                      highlightColor: activeHighlight,
+                                    ),
                                   );
                                   _controller.replaceDrawable(selectedText, updated);
                                   _controller.selectObjectDrawable(updated);
-                                } else {
-                                  _brushColor = pickedColor;
                                 }
                               });
                             }
                           },
                           child: Container(
-                            width: 32,
-                            height: 32,
+                            width: 28,
+                            height: 28,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                              border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.2),
                               gradient: const SweepGradient(
                                 colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
                               ),
                             ),
-                            child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
+                            child: Icon(Icons.add_rounded, color: theme.textColor, size: 16),
                           ),
                         );
                       }
@@ -990,30 +959,37 @@ class _NoteitScreenState extends State<NoteitScreen>
                       final color = _paletteColors[i];
                       final isSelected = activeColor.toARGB32() == color.toARGB32();
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: 6),
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
+                              _brushColor = color;
                               if (selectedText != null) {
                                 final updated = selectedText.copyWith(
-                                  style: selectedText.style.copyWith(color: color),
+                                  style: _getTextStyle(
+                                    fontSize: selectedText.style.fontSize ?? 20.0,
+                                    color: color,
+                                    isBold: selectedText.style.fontWeight == FontWeight.bold,
+                                    isItalic: selectedText.style.fontStyle == FontStyle.italic,
+                                    isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                    fontFamily: matchedFont,
+                                    highlightColor: activeHighlight,
+                                  ),
                                 );
                                 _controller.replaceDrawable(selectedText, updated);
                                 _controller.selectObjectDrawable(updated);
-                              } else {
-                                _brushColor = color;
                               }
                             });
                           },
                           child: Container(
-                            width: 32,
-                            height: 32,
+                            width: 28,
+                            height: 28,
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: isSelected ? theme.textColor : Colors.transparent,
-                                width: 2.0,
+                                width: 1.8,
                               ),
                             ),
                           ),
@@ -1022,6 +998,195 @@ class _NoteitScreenState extends State<NoteitScreen>
                     },
                   ),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Row 3: Highlight Color Selection
+          Row(
+            children: [
+              Text(
+                'Highlight:',
+                style: AppTypography.body(color: theme.textColor, fontSize: 12).copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 32,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _highlightColors.length + 1,
+                    itemBuilder: (ctx, i) {
+                      if (i == _highlightColors.length) {
+                        return GestureDetector(
+                          onTap: () async {
+                            final pickedColor = await showDialog<Color>(
+                              context: context,
+                              builder: (ctx) => ColorPickerDialog(
+                                initialColor: activeHighlight == Colors.transparent ? Colors.yellow.withValues(alpha: 0.3) : activeHighlight,
+                                theme: theme,
+                              ),
+                            );
+                            if (pickedColor != null) {
+                              setState(() {
+                                _highlightColor = pickedColor;
+                                if (selectedText != null) {
+                                  final updated = selectedText.copyWith(
+                                    style: _getTextStyle(
+                                      fontSize: selectedText.style.fontSize ?? 20.0,
+                                      color: activeColor,
+                                      isBold: selectedText.style.fontWeight == FontWeight.bold,
+                                      isItalic: selectedText.style.fontStyle == FontStyle.italic,
+                                      isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                      fontFamily: matchedFont,
+                                      highlightColor: pickedColor,
+                                    ),
+                                  );
+                                  _controller.replaceDrawable(selectedText, updated);
+                                  _controller.selectObjectDrawable(updated);
+                                }
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.2),
+                              gradient: const SweepGradient(
+                                colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                              ),
+                            ),
+                            child: Icon(Icons.add_rounded, color: theme.textColor, size: 16),
+                          ),
+                        );
+                      }
+
+                      final color = _highlightColors[i];
+                      final isSelected = activeHighlight.toARGB32() == color.toARGB32();
+                      final isTransparent = color == Colors.transparent;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _highlightColor = color;
+                              if (selectedText != null) {
+                                final updated = selectedText.copyWith(
+                                  style: _getTextStyle(
+                                    fontSize: selectedText.style.fontSize ?? 20.0,
+                                    color: activeColor,
+                                    isBold: selectedText.style.fontWeight == FontWeight.bold,
+                                    isItalic: selectedText.style.fontStyle == FontStyle.italic,
+                                    isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                    fontFamily: matchedFont,
+                                    highlightColor: color,
+                                  ),
+                                );
+                                _controller.replaceDrawable(selectedText, updated);
+                                _controller.selectObjectDrawable(updated);
+                              }
+                            });
+                          },
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: isTransparent ? Colors.grey.withValues(alpha: 0.2) : color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? theme.textColor : Colors.transparent,
+                                width: 1.8,
+                              ),
+                            ),
+                            child: isTransparent
+                                ? Icon(Icons.format_color_reset_rounded, size: 14, color: theme.textColor.withValues(alpha: 0.6))
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Row 4: Formatting controls
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.format_bold, color: isBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                onPressed: () {
+                  setState(() {
+                    _isBold = !_isBold;
+                    if (selectedText != null) {
+                      final updated = selectedText.copyWith(
+                        style: _getTextStyle(
+                          fontSize: selectedText.style.fontSize ?? 20.0,
+                          color: activeColor,
+                          isBold: !isBold,
+                          isItalic: isItalic,
+                          isUnderline: isUnderline,
+                          fontFamily: matchedFont,
+                          highlightColor: activeHighlight,
+                        ),
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.format_italic, color: isItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                onPressed: () {
+                  setState(() {
+                    _isItalic = !_isItalic;
+                    if (selectedText != null) {
+                      final updated = selectedText.copyWith(
+                        style: _getTextStyle(
+                          fontSize: selectedText.style.fontSize ?? 20.0,
+                          color: activeColor,
+                          isBold: isBold,
+                          isItalic: !isItalic,
+                          isUnderline: isUnderline,
+                          fontFamily: matchedFont,
+                          highlightColor: activeHighlight,
+                        ),
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.format_underlined, color: isUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                onPressed: () {
+                  setState(() {
+                    _isUnderline = !_isUnderline;
+                    if (selectedText != null) {
+                      final updated = selectedText.copyWith(
+                        style: _getTextStyle(
+                          fontSize: selectedText.style.fontSize ?? 20.0,
+                          color: activeColor,
+                          isBold: isBold,
+                          isItalic: isItalic,
+                          isUnderline: !isUnderline,
+                          fontFamily: matchedFont,
+                          highlightColor: activeHighlight,
+                        ),
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    }
+                  });
+                },
               ),
             ],
           ),

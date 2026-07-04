@@ -79,6 +79,7 @@ class CanvasMapping {
           color: d.style.color?.toARGB32() ?? 0xFF000000,
           fontSize: d.style.fontSize ?? 14.0,
           fontFamily: d.style.fontFamily ?? 'Spectral',
+          backgroundColor: d.style.backgroundColor?.toARGB32() ?? 0,
           isBold: d.style.fontWeight == FontWeight.bold,
           isItalic: d.style.fontStyle == FontStyle.italic,
           isUnderline: d.style.decoration == TextDecoration.underline,
@@ -305,11 +306,13 @@ class CanvasMapping {
   }
 
   static TextStyle _getTextStyle(TextObject obj) {
+    final bg = obj.backgroundColor != 0 ? Color(obj.backgroundColor) : null;
     try {
       return GoogleFonts.getFont(
         obj.fontFamily,
         color: Color(obj.color),
         fontSize: obj.fontSize,
+        backgroundColor: bg,
         fontWeight: obj.isBold ? FontWeight.bold : FontWeight.normal,
         fontStyle: obj.isItalic ? FontStyle.italic : FontStyle.normal,
         decoration: obj.isUnderline ? TextDecoration.underline : TextDecoration.none,
@@ -319,6 +322,7 @@ class CanvasMapping {
         color: Color(obj.color),
         fontSize: obj.fontSize,
         fontFamily: obj.fontFamily,
+        backgroundColor: bg,
         fontWeight: obj.isBold ? FontWeight.bold : FontWeight.normal,
         fontStyle: obj.isItalic ? FontStyle.italic : FontStyle.normal,
         decoration: obj.isUnderline ? TextDecoration.underline : TextDecoration.none,

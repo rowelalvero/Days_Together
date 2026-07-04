@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 class CanvasPoint {
   final double x;
@@ -143,6 +142,7 @@ class TextObject extends CanvasObject {
   final int color;
   final double fontSize;
   final String fontFamily;
+  final int backgroundColor;
   final bool isBold;
   final bool isItalic;
   final bool isUnderline;
@@ -159,6 +159,7 @@ class TextObject extends CanvasObject {
     required this.color,
     required this.fontSize,
     this.fontFamily = 'Roboto',
+    this.backgroundColor = 0,
     this.isBold = false,
     this.isItalic = false,
     this.isUnderline = false,
@@ -178,6 +179,7 @@ class TextObject extends CanvasObject {
         'color': color,
         'fontSize': fontSize,
         'fontFamily': fontFamily,
+        'backgroundColor': backgroundColor,
         'isBold': isBold,
         'isItalic': isItalic,
         'isUnderline': isUnderline,
@@ -195,6 +197,7 @@ class TextObject extends CanvasObject {
         color: json['color'] as int,
         fontSize: (json['fontSize'] as num).toDouble(),
         fontFamily: json['fontFamily'] as String? ?? 'Roboto',
+        backgroundColor: json['backgroundColor'] as int? ?? 0,
         isBold: json['isBold'] as bool? ?? false,
         isItalic: json['isItalic'] as bool? ?? false,
         isUnderline: json['isUnderline'] as bool? ?? false,
