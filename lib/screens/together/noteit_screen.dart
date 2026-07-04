@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_painter_v2/flutter_painter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -49,6 +50,19 @@ class _NoteitScreenState extends State<NoteitScreen>
   bool _isBold = false;
   bool _isItalic = false;
   bool _isUnderline = false;
+  String _activeFontFamily = 'Spectral';
+  final List<String> _fontFamilies = [
+    'Spectral',
+    'Cormorant Garamond',
+    'Outfit',
+    'Montserrat',
+    'Playfair Display',
+    'Pacifico',
+    'Dancing Script',
+    'Great Vibes',
+    'Caveat',
+    'Amatic SC',
+  ];
   
   // Background configuration
   String _bgType = 'color'; // 'color', 'gradient', 'grid', 'dots', 'notebook'
@@ -231,6 +245,35 @@ class _NoteitScreenState extends State<NoteitScreen>
     }
   }
 
+  TextStyle _getTextStyle({
+    required double fontSize,
+    required Color color,
+    required bool isBold,
+    required bool isItalic,
+    required bool isUnderline,
+    required String fontFamily,
+  }) {
+    try {
+      return GoogleFonts.getFont(
+        fontFamily,
+        fontSize: fontSize,
+        color: color,
+        fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+        decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
+      );
+    } catch (_) {
+      return TextStyle(
+        fontFamily: fontFamily,
+        fontSize: fontSize,
+        color: color,
+        fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+        fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+        decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
+      );
+    }
+  }
+
   void _addText() async {
     setState(() {
       _activeMode = 'text';
@@ -247,12 +290,13 @@ class _NoteitScreenState extends State<NoteitScreen>
       final textDrawable = TextDrawable(
         text: text,
         position: center,
-        style: TextStyle(
+        style: _getTextStyle(
           fontSize: _fontSize,
           color: _brushColor,
-          fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
-          fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
-          decoration: _isUnderline ? TextDecoration.underline : TextDecoration.none,
+          isBold: _isBold,
+          isItalic: _isItalic,
+          isUnderline: _isUnderline,
+          fontFamily: _activeFontFamily,
         ),
       );
       _controller.addDrawables([textDrawable]);
@@ -738,11 +782,21 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   Widget _buildTextPropertiesPanel(LoveStoryTheme theme, TextDrawable? selectedText) {
-    final double fontSize = selectedText != null ? (selectedText.style.fontSize ?? 20.0) : _fontSize;
     final bool isBold = selectedText != null ? (selectedText.style.fontWeight == FontWeight.bold) : _isBold;
     final bool isItalic = selectedText != null ? (selectedText.style.fontStyle == FontStyle.italic) : _isItalic;
     final bool isUnderline = selectedText != null ? (selectedText.style.decoration == TextDecoration.underline) : _isUnderline;
     final Color activeColor = selectedText != null ? (selectedText.style.color ?? _brushColor) : _brushColor;
+
+    String matchedFont = _activeFontFamily;
+    if (selectedText != null && selectedText.style.fontFamily != null) {
+      final family = selectedText.style.fontFamily!;
+      for (final f in _fontFamilies) {
+        if (family.toLowerCase().contains(f.toLowerCase())) {
+          matchedFont = f;
+          break;
+        }
+      }
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -754,169 +808,222 @@ class _NoteitScreenState extends State<NoteitScreen>
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Text(
-                'Size:',
-                style: AppTypography.body(color: theme.textColor, fontSize: 13),
-              ),
-              Expanded(
-                child: Slider(
-                  value: fontSize.clamp(12.0, 72.0),
-                  min: 12.0,
-                  max: 72.0,
-                  activeColor: theme.accentColor,
-                  inactiveColor: theme.textColor.withValues(alpha: 0.1),
-                  onChanged: (val) {
-                    setState(() {
-                      if (selectedText != null) {
-                        final updated = selectedText.copyWith(
-                          style: selectedText.style.copyWith(fontSize: val),
-                        );
-                        _controller.replaceDrawable(selectedText, updated);
-                        _controller.selectObjectDrawable(updated);
-                      } else {
-                        _fontSize = val;
-                      }
-                    });
-                  },
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.format_bold, color: isBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
-                onPressed: () {
-                  setState(() {
-                    if (selectedText != null) {
-                      final updated = selectedText.copyWith(
-                        style: selectedText.style.copyWith(
-                          fontWeight: isBold ? FontWeight.normal : FontWeight.bold,
-                        ),
-                      );
-                      _controller.replaceDrawable(selectedText, updated);
-                      _controller.selectObjectDrawable(updated);
-                    } else {
-                      _isBold = !_isBold;
-                    }
-                  });
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.format_italic, color: isItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
-                onPressed: () {
-                  setState(() {
-                    if (selectedText != null) {
-                      final updated = selectedText.copyWith(
-                        style: selectedText.style.copyWith(
-                          fontStyle: isItalic ? FontStyle.normal : FontStyle.italic,
-                        ),
-                      );
-                      _controller.replaceDrawable(selectedText, updated);
-                      _controller.selectObjectDrawable(updated);
-                    } else {
-                      _isItalic = !_isItalic;
-                    }
-                  });
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.format_underlined, color: isUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
-                onPressed: () {
-                  setState(() {
-                    if (selectedText != null) {
-                      final updated = selectedText.copyWith(
-                        style: selectedText.style.copyWith(
-                          decoration: isUnderline ? TextDecoration.none : TextDecoration.underline,
-                        ),
-                      );
-                      _controller.replaceDrawable(selectedText, updated);
-                      _controller.selectObjectDrawable(updated);
-                    } else {
-                      _isUnderline = !_isUnderline;
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
+          // Horizontal Font Family selector list
           SizedBox(
-            height: 38,
+            height: 40,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _paletteColors.length + 1,
-              itemBuilder: (ctx, i) {
-                if (i == _paletteColors.length) {
-                  return GestureDetector(
-                    onTap: () async {
-                      final pickedColor = await showDialog<Color>(
-                        context: context,
-                        builder: (ctx) => ColorPickerDialog(
-                          initialColor: activeColor,
-                          theme: theme,
-                        ),
-                      );
-                      if (pickedColor != null) {
+              itemCount: _fontFamilies.length,
+              itemBuilder: (ctx, idx) {
+                final font = _fontFamilies[idx];
+                final isSelected = matchedFont == font;
+                
+                TextStyle fontStyle = const TextStyle();
+                try {
+                  fontStyle = GoogleFonts.getFont(
+                    font,
+                    color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  );
+                } catch (_) {
+                  fontStyle = TextStyle(
+                    fontFamily: font,
+                    color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(font, style: fontStyle),
+                    selected: isSelected,
+                    selectedColor: theme.accentColor.withValues(alpha: 0.15),
+                    backgroundColor: Colors.transparent,
+                    side: BorderSide(
+                      color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                      width: isSelected ? 1.5 : 1.0,
+                    ),
+                    showCheckmark: false,
+                    onSelected: (selected) {
+                      if (selected) {
                         setState(() {
                           if (selectedText != null) {
                             final updated = selectedText.copyWith(
-                              style: selectedText.style.copyWith(color: pickedColor),
+                              style: _getTextStyle(
+                                fontSize: selectedText.style.fontSize ?? 20.0,
+                                color: selectedText.style.color ?? _brushColor,
+                                isBold: selectedText.style.fontWeight == FontWeight.bold,
+                                isItalic: selectedText.style.fontStyle == FontStyle.italic,
+                                isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                fontFamily: font,
+                              ),
                             );
                             _controller.replaceDrawable(selectedText, updated);
                             _controller.selectObjectDrawable(updated);
                           } else {
-                            _brushColor = pickedColor;
+                            _activeFontFamily = font;
                           }
                         });
                       }
                     },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
-                        gradient: const SweepGradient(
-                          colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
-                        ),
-                      ),
-                      child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
-                    ),
-                  );
-                }
-
-                final color = _paletteColors[i];
-                final isSelected = activeColor.toARGB32() == color.toARGB32();
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (selectedText != null) {
-                          final updated = selectedText.copyWith(
-                            style: selectedText.style.copyWith(color: color),
-                          );
-                          _controller.replaceDrawable(selectedText, updated);
-                          _controller.selectObjectDrawable(updated);
-                        } else {
-                          _brushColor = color;
-                        }
-                      });
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected ? theme.textColor : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
                   ),
                 );
               },
             ),
+          ),
+          const SizedBox(height: 8),
+          // Formatting controls & Color Picker Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Formatting toggles
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.format_bold, color: isBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                    onPressed: () {
+                      setState(() {
+                        if (selectedText != null) {
+                          final updated = selectedText.copyWith(
+                            style: selectedText.style.copyWith(
+                              fontWeight: isBold ? FontWeight.normal : FontWeight.bold,
+                            ),
+                          );
+                          _controller.replaceDrawable(selectedText, updated);
+                          _controller.selectObjectDrawable(updated);
+                        } else {
+                          _isBold = !_isBold;
+                        }
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.format_italic, color: isItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                    onPressed: () {
+                      setState(() {
+                        if (selectedText != null) {
+                          final updated = selectedText.copyWith(
+                            style: selectedText.style.copyWith(
+                              fontStyle: isItalic ? FontStyle.normal : FontStyle.italic,
+                            ),
+                          );
+                          _controller.replaceDrawable(selectedText, updated);
+                          _controller.selectObjectDrawable(updated);
+                        } else {
+                          _isItalic = !_isItalic;
+                        }
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.format_underlined, color: isUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                    onPressed: () {
+                      setState(() {
+                        if (selectedText != null) {
+                          final updated = selectedText.copyWith(
+                            style: selectedText.style.copyWith(
+                              decoration: isUnderline ? TextDecoration.none : TextDecoration.underline,
+                            ),
+                          );
+                          _controller.replaceDrawable(selectedText, updated);
+                          _controller.selectObjectDrawable(updated);
+                        } else {
+                          _isUnderline = !_isUnderline;
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+              
+              // Horizontal palette selection in remaining space
+              Expanded(
+                child: SizedBox(
+                  height: 38,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _paletteColors.length + 1,
+                    itemBuilder: (ctx, i) {
+                      if (i == _paletteColors.length) {
+                        return GestureDetector(
+                          onTap: () async {
+                            final pickedColor = await showDialog<Color>(
+                              context: context,
+                              builder: (ctx) => ColorPickerDialog(
+                                initialColor: activeColor,
+                                theme: theme,
+                              ),
+                            );
+                            if (pickedColor != null) {
+                              setState(() {
+                                if (selectedText != null) {
+                                  final updated = selectedText.copyWith(
+                                    style: selectedText.style.copyWith(color: pickedColor),
+                                  );
+                                  _controller.replaceDrawable(selectedText, updated);
+                                  _controller.selectObjectDrawable(updated);
+                                } else {
+                                  _brushColor = pickedColor;
+                                }
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                              gradient: const SweepGradient(
+                                colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                              ),
+                            ),
+                            child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
+                          ),
+                        );
+                      }
+
+                      final color = _paletteColors[i];
+                      final isSelected = activeColor.toARGB32() == color.toARGB32();
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (selectedText != null) {
+                                final updated = selectedText.copyWith(
+                                  style: selectedText.style.copyWith(color: color),
+                                );
+                                _controller.replaceDrawable(selectedText, updated);
+                                _controller.selectObjectDrawable(updated);
+                              } else {
+                                _brushColor = color;
+                              }
+                            });
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? theme.textColor : Colors.transparent,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
