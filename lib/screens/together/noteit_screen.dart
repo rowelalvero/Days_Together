@@ -40,6 +40,8 @@ class _NoteitScreenState extends State<NoteitScreen>
   
   // Active Modes: 'select', 'pen', 'pencil', 'marker', 'eraser', 'shapes'
   String _activeMode = 'pen';
+  bool _isPropertiesPanelExpanded = true;
+  ObjectDrawable? _lastSelectedObj;
   String _activeShape = 'rectangle'; // 'rectangle', 'oval', 'line', 'arrow'
   
   Color _brushColor = const Color(0xFFFF4D6D);
@@ -289,10 +291,20 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   void _addText() async {
+    final wasActive = _activeMode == 'text';
     setState(() {
-      _activeMode = 'text';
-      _updateSettings();
+      if (wasActive) {
+        _isPropertiesPanelExpanded = !_isPropertiesPanelExpanded;
+      } else {
+        _activeMode = 'text';
+        _isPropertiesPanelExpanded = true;
+        _updateSettings();
+      }
     });
+
+    if (wasActive && !_isPropertiesPanelExpanded) {
+      return;
+    }
 
     final text = await _showTextInputDialog("");
     if (text != null && text.trim().isNotEmpty) {
@@ -644,6 +656,12 @@ class _NoteitScreenState extends State<NoteitScreen>
 
   Widget _buildCanvasWorkspace(LoveStoryTheme theme, NoteitProvider provider) {
     final selectedObj = _controller.value.selectedObjectDrawable;
+    if (selectedObj != _lastSelectedObj) {
+      _lastSelectedObj = selectedObj;
+      if (selectedObj != null) {
+        _isPropertiesPanelExpanded = true;
+      }
+    }
     
     return Stack(
       children: [
@@ -779,14 +797,16 @@ class _NoteitScreenState extends State<NoteitScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (selectedObj != null)
-                (selectedObj is TextDrawable
-                    ? _buildTextPropertiesPanel(theme, selectedObj)
-                    : _buildPropertiesPanel(theme))
-              else if (_activeMode == 'text')
-                _buildTextPropertiesPanel(theme, null)
-              else if (_activeMode != 'select')
-                _buildPropertiesPanel(theme),
+              if (_isPropertiesPanelExpanded) ...[
+                if (selectedObj != null)
+                  (selectedObj is TextDrawable
+                      ? _buildTextPropertiesPanel(theme, selectedObj)
+                      : _buildPropertiesPanel(theme))
+                else if (_activeMode == 'text')
+                  _buildTextPropertiesPanel(theme, null)
+                else if (_activeMode != 'select')
+                  _buildPropertiesPanel(theme),
+              ],
 
               _buildBottomFloatingToolbar(theme),
             ],
@@ -1409,8 +1429,13 @@ class _NoteitScreenState extends State<NoteitScreen>
       child: GestureDetector(
         onTap: () {
           setState(() {
-            _activeMode = mode;
-            _updateSettings();
+            if (_activeMode == mode) {
+              _isPropertiesPanelExpanded = !_isPropertiesPanelExpanded;
+            } else {
+              _activeMode = mode;
+              _isPropertiesPanelExpanded = true;
+              _updateSettings();
+            }
           });
         },
         child: Container(
