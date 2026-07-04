@@ -1,6 +1,6 @@
 # Unified Scrapbook Canvas Design Spec
 
-We are unifying the doodle, text note, and photo features into a single, interactive, rectangular canvas editor. This document outlines the technical architecture, data model, controls, interactions, and verification plan.
+We are unifying the doodle, text note, and photo features into a single, interactive, square canvas editor. This document outlines the technical architecture, data model, controls, interactions, and verification plan.
 
 ## Goal
 
