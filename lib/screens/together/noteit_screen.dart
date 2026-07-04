@@ -530,21 +530,26 @@ class _NoteitScreenState extends State<NoteitScreen>
         Positioned.fill(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 120), // Leave space for properties & toolbar
-            child: Container(
-              margin: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  margin: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: RasterCanvas(
-                  controller: _controller,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: RasterCanvas(
+                      controller: _controller,
+                    ),
+                  ),
                 ),
               ),
             ),
