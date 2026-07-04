@@ -13,6 +13,7 @@ class RasterCanvas extends StatefulWidget {
   final String? initialBase64;
   final Function(String base64) onDrawingLayerChanged;
   final Function(Color color) onCanvasBgColorChanged;
+  final Function(bool canUndo, bool canRedo)? onUndoRedoStateChanged;
 
   const RasterCanvas({
     super.key,
@@ -22,6 +23,7 @@ class RasterCanvas extends StatefulWidget {
     this.initialBase64,
     required this.onDrawingLayerChanged,
     required this.onCanvasBgColorChanged,
+    this.onUndoRedoStateChanged,
   });
 
   @override
@@ -33,6 +35,63 @@ class RasterCanvasState extends State<RasterCanvas> {
   bool _isDrawing = false;
   Offset? _lastPoint;
   final int _canvasSize = 600;
+
+  final List<ui.Image> _undoStack = [];
+  final List<ui.Image> _redoStack = [];
+
+  bool get canUndo => _undoStack.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
+
+  void _saveToUndoStack() {
+    if (_drawingImage == null) return;
+    _undoStack.add(_drawingImage!);
+    _clearRedoStack();
+    _notifyUndoRedoState();
+  }
+
+  void _clearRedoStack() {
+    for (final img in _redoStack) {
+      img.dispose();
+    }
+    _redoStack.clear();
+  }
+
+  void _notifyUndoRedoState() {
+    widget.onUndoRedoStateChanged?.call(_undoStack.isNotEmpty, _redoStack.isNotEmpty);
+  }
+
+  void undo() {
+    if (_undoStack.isEmpty || _drawingImage == null) return;
+    final previousState = _undoStack.removeLast();
+    _redoStack.add(_drawingImage!);
+    setState(() {
+      _drawingImage = previousState;
+    });
+    _notifyParent();
+    _notifyUndoRedoState();
+  }
+
+  void redo() {
+    if (_redoStack.isEmpty || _drawingImage == null) return;
+    final nextState = _redoStack.removeLast();
+    _undoStack.add(_drawingImage!);
+    setState(() {
+      _drawingImage = nextState;
+    });
+    _notifyParent();
+    _notifyUndoRedoState();
+  }
+
+  @override
+  void dispose() {
+    for (final img in _undoStack) {
+      img.dispose();
+    }
+    for (final img in _redoStack) {
+      img.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -96,6 +155,7 @@ class RasterCanvasState extends State<RasterCanvas> {
   }
 
   void clearAll() {
+    _saveToUndoStack();
     _clearCanvas();
   }
 
@@ -111,6 +171,7 @@ class RasterCanvasState extends State<RasterCanvas> {
   // Flood fill BFS algorithm in Dart
   Future<void> _performFloodFill(Offset localPos) async {
     if (_drawingImage == null) return;
+    _saveToUndoStack();
 
     // Map gesture offset to 600x600 canvas coordinate
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
@@ -177,6 +238,7 @@ class RasterCanvasState extends State<RasterCanvas> {
       _performFloodFill(details.localPosition);
       return;
     }
+    _saveToUndoStack();
     setState(() {
       _isDrawing = true;
       final RenderBox renderBox = context.findRenderObject() as RenderBox;

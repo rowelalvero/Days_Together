@@ -33,6 +33,8 @@ class _NoteitScreenState extends State<NoteitScreen>
   String? _pickedPhotoPath;
   String? _drawingLayerBase64;
   final List<CanvasTextOverlay> _textOverlays = [];
+  bool _canUndo = false;
+  bool _canRedo = false;
 
   // Active Tool & Brush Options
   CanvasTool _activeTool = CanvasTool.pen;
@@ -68,6 +70,8 @@ class _NoteitScreenState extends State<NoteitScreen>
       _pickedPhotoPath = null;
       _drawingLayerBase64 = null;
       _textOverlays.clear();
+      _canUndo = false;
+      _canRedo = false;
       _canvasKey.currentState?.clearAll();
     });
   }
@@ -198,6 +202,22 @@ class _NoteitScreenState extends State<NoteitScreen>
                 tooltip: 'Clear Canvas',
               ),
               IconButton(
+                icon: Icon(
+                  Icons.undo_rounded,
+                  color: _canUndo ? theme.textColor : theme.textColor.withValues(alpha: 0.3),
+                ),
+                onPressed: _canUndo ? () => _canvasKey.currentState?.undo() : null,
+                tooltip: 'Undo',
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.redo_rounded,
+                  color: _canRedo ? theme.textColor : theme.textColor.withValues(alpha: 0.3),
+                ),
+                onPressed: _canRedo ? () => _canvasKey.currentState?.redo() : null,
+                tooltip: 'Redo',
+              ),
+              IconButton(
                 icon: Icon(Icons.text_fields_rounded, color: theme.textColor),
                 onPressed: () => _addTextOverlay(theme),
                 tooltip: 'Add Text',
@@ -290,6 +310,12 @@ class _NoteitScreenState extends State<NoteitScreen>
                             onCanvasBgColorChanged: (color) {
                               setState(() {
                                 _canvasBgColor = color;
+                              });
+                            },
+                            onUndoRedoStateChanged: (canUndo, canRedo) {
+                              setState(() {
+                                _canUndo = canUndo;
+                                _canRedo = canRedo;
                               });
                             },
                           ),
