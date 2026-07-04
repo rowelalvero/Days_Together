@@ -286,7 +286,9 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   void _resetZoom() {
-    _controller.transformationController.value = Matrix4.identity();
+    setState(() {
+      _controller.transformationController.value = Matrix4.identity();
+    });
   }
 
   void _duplicateSelected(ObjectDrawable selected) {
