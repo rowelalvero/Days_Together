@@ -882,36 +882,29 @@ class _NoteitScreenState extends State<NoteitScreen>
             const SizedBox(height: 16),
             Text('Solid Color Picker:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 38,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _paletteColors.length,
-                itemBuilder: (ctx, i) {
-                  final color = _paletteColors[i];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _bgColor = color;
-                          _bgType = 'color';
-                          _updateBackground();
-                        });
-                      },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                        ),
-                      ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _paletteColors.map((color) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _bgColor = color;
+                      _bgType = 'color';
+                      _updateBackground();
+                    });
+                  },
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ),
