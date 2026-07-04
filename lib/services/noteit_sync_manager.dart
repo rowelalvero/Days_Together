@@ -238,8 +238,8 @@ class NoteitSyncManager {
     try {
       String? imageUrl;
 
-      // Handle file uploads for photo types
-      if (task.type == NoteitType.photo && task.imagePath != null) {
+      // Handle file uploads for any task with local image path
+      if (task.imagePath != null) {
         final file = File(task.imagePath!);
         if (!await file.exists()) {
           // Unrecoverable error: local file deleted

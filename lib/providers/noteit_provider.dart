@@ -351,6 +351,57 @@ class NoteitProvider with ChangeNotifier {
     }
   }
 
+  Future<void> sendCanvas(String jsonContent, String? localImagePath) async {
+    final noteId = const Uuid().v4();
+    String? finalLocalPath;
+    
+    if (localImagePath != null) {
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = 'noteit_canvas_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        finalLocalPath = '${directory.path}/$fileName';
+        await File(localImagePath).copy(finalLocalPath);
+      } catch (e) {
+        debugPrint('NoteitProvider: Failed to copy canvas background: $e');
+      }
+    }
+
+    final newItem = NoteitItem(
+      id: noteId,
+      type: NoteitType.drawing, // Use drawing as unified type
+      content: jsonContent,
+      imagePath: finalLocalPath,
+      sender: 'you',
+      syncStatus: SyncStatus.sending,
+    );
+
+    _notes.insert(0, newItem);
+    await _persist();
+
+    if (_coupleId != null && _userId != null) {
+      await NoteitSyncManager.instance.enqueue(
+        NoteitSyncTask(
+          id: noteId,
+          type: NoteitType.drawing,
+          content: jsonContent,
+          imagePath: finalLocalPath,
+          createdAt: newItem.createdAt,
+        ),
+      );
+    } else {
+      updateItemSyncStatus(noteId, SyncStatus.failed);
+    }
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: 'Created canvas note 🎨',
+      description: 'Shared an interactive canvas note',
+      icon: '🎨',
+      referenceId: noteId,
+      route: 'doodle_notes',
+    );
+  }
+
   Future<void> deleteNote(String id) async {
     final index = _notes.indexWhere((n) => n.id == id);
     if (index == -1) return;
