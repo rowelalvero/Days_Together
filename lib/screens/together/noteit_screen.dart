@@ -62,6 +62,7 @@ class _NoteitScreenState extends State<NoteitScreen>
   ];
 
   int _currentTabIndex = 0;
+  int _canvasKeyCounter = 0;
 
   @override
   void initState() {
@@ -288,6 +289,7 @@ class _NoteitScreenState extends State<NoteitScreen>
   void _resetZoom() {
     setState(() {
       _controller.transformationController.value = Matrix4.identity();
+      _canvasKeyCounter++;
     });
   }
 
@@ -521,6 +523,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: RasterCanvas(
+                  key: ValueKey('canvas_viewport_$_canvasKeyCounter'),
                   controller: _controller,
                 ),
               ),
