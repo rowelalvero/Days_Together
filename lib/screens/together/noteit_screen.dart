@@ -22,8 +22,6 @@ import 'package:days_together/widgets/raster_canvas.dart';
 import 'package:days_together/widgets/custom_backgrounds.dart';
 import 'package:days_together/models/canvas_document.dart';
 import 'package:days_together/utils/canvas_mapping.dart';
-import 'package:days_together/widgets/rich_text_editor_overlay.dart';
-import 'package:uuid/uuid.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -45,6 +43,12 @@ class _NoteitScreenState extends State<NoteitScreen>
   
   Color _brushColor = const Color(0xFFFF4D6D);
   double _strokeWidth = 4.0;
+  
+  // Rich Text Configuration State
+  double _fontSize = 20.0;
+  bool _isBold = false;
+  bool _isItalic = false;
+  bool _isUnderline = false;
   
   // Background configuration
   String _bgType = 'color'; // 'color', 'gradient', 'grid', 'dots', 'notebook'
@@ -228,37 +232,68 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   void _addText() async {
-    final theme = context.read<ThemeProvider>().currentLoveTheme;
-    final result = await Navigator.push<CanvasTextOverlay>(
-      context,
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black54,
-        pageBuilder: (context, _, __) => RichTextEditorOverlay(
-          theme: theme,
-        ),
-      ),
-    );
-    
-    if (result != null && result.text.trim().isNotEmpty) {
+    setState(() {
+      _activeMode = 'text';
+      _updateSettings();
+    });
+
+    final text = await _showTextInputDialog("");
+    if (text != null && text.trim().isNotEmpty) {
       final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
       final center = renderBox == null
           ? const Offset(300, 300)
           : Offset(renderBox.size.width / 2, renderBox.size.height / 2);
           
       final textDrawable = TextDrawable(
-        text: result.text,
+        text: text,
         position: center,
         style: TextStyle(
-          fontSize: result.fontSize,
-          color: Color(result.color),
-          fontWeight: result.isBold ? FontWeight.bold : FontWeight.normal,
-          fontStyle: result.isItalic ? FontStyle.italic : FontStyle.normal,
-          decoration: result.isUnderline ? TextDecoration.underline : TextDecoration.none,
+          fontSize: _fontSize,
+          color: _brushColor,
+          fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
+          fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
+          decoration: _isUnderline ? TextDecoration.underline : TextDecoration.none,
         ),
       );
       _controller.addDrawables([textDrawable]);
+      _controller.selectObjectDrawable(textDrawable);
     }
+  }
+
+  Future<String?> _showTextInputDialog(String initialText) {
+    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    final textController = TextEditingController(text: initialText);
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: theme.backgroundColor,
+        title: Text(
+          initialText.isEmpty ? 'Add Text' : 'Edit Text',
+          style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          style: AppTypography.body(color: theme.textColor),
+          decoration: InputDecoration(
+            hintText: 'Type something...',
+            hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.5)),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.2))),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.accentColor)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.6))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, textController.text),
+            child: Text('Save', style: AppTypography.button(color: theme.accentColor)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _importImage(ImageSource source) async {
@@ -628,49 +663,14 @@ class _NoteitScreenState extends State<NoteitScreen>
                     IconButton(
                       icon: Icon(Icons.edit_rounded, color: theme.textColor),
                       onPressed: () async {
-                        final initial = CanvasTextOverlay(
-                          id: const Uuid().v4(),
-                          text: selectedObj.text,
-                          x: selectedObj.position.dx,
-                          y: selectedObj.position.dy,
-                          scale: selectedObj.scale,
-                          color: selectedObj.style.color?.toARGB32() ?? 0xFFFFFFFF,
-                          backgroundColor: 0,
-                          fontSize: selectedObj.style.fontSize ?? 20.0,
-                          isBold: selectedObj.style.fontWeight == FontWeight.bold,
-                          isItalic: selectedObj.style.fontStyle == FontStyle.italic,
-                          isUnderline: selectedObj.style.decoration == TextDecoration.underline,
-                          alignment: 'center',
-                        );
-                        
-                        final result = await Navigator.push<CanvasTextOverlay>(
-                          context,
-                          PageRouteBuilder(
-                            opaque: false,
-                            barrierColor: Colors.black54,
-                            pageBuilder: (context, _, __) => RichTextEditorOverlay(
-                              initialOverlay: initial,
-                              theme: theme,
-                            ),
-                          ),
-                        );
-                        
-                        if (result != null) {
-                          final updated = selectedObj.copyWith(
-                            text: result.text,
-                            style: selectedObj.style.copyWith(
-                              fontSize: result.fontSize,
-                              color: Color(result.color),
-                              fontWeight: result.isBold ? FontWeight.bold : FontWeight.normal,
-                              fontStyle: result.isItalic ? FontStyle.italic : FontStyle.normal,
-                              decoration: result.isUnderline ? TextDecoration.underline : TextDecoration.none,
-                            ),
-                          );
+                        final text = await _showTextInputDialog(selectedObj.text);
+                        if (text != null && text.trim().isNotEmpty) {
+                          final updated = selectedObj.copyWith(text: text);
                           _controller.replaceDrawable(selectedObj, updated);
                           _controller.selectObjectDrawable(updated);
                         }
                       },
-                      tooltip: 'Edit Text Style',
+                      tooltip: 'Edit Text Content',
                     ),
                   IconButton(
                     icon: Icon(Icons.copy_rounded, color: theme.textColor),
@@ -720,7 +720,13 @@ class _NoteitScreenState extends State<NoteitScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_activeMode != 'hand' && _activeMode != 'select')
+              if (selectedObj != null)
+                (selectedObj is TextDrawable
+                    ? _buildTextPropertiesPanel(theme, selectedObj)
+                    : _buildPropertiesPanel(theme))
+              else if (_activeMode == 'text')
+                _buildTextPropertiesPanel(theme, null)
+              else if (_activeMode != 'select')
                 _buildPropertiesPanel(theme),
 
               _buildBottomFloatingToolbar(theme),
@@ -728,6 +734,192 @@ class _NoteitScreenState extends State<NoteitScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTextPropertiesPanel(LoveStoryTheme theme, TextDrawable? selectedText) {
+    final double fontSize = selectedText != null ? (selectedText.style.fontSize ?? 20.0) : _fontSize;
+    final bool isBold = selectedText != null ? (selectedText.style.fontWeight == FontWeight.bold) : _isBold;
+    final bool isItalic = selectedText != null ? (selectedText.style.fontStyle == FontStyle.italic) : _isItalic;
+    final bool isUnderline = selectedText != null ? (selectedText.style.decoration == TextDecoration.underline) : _isUnderline;
+    final Color activeColor = selectedText != null ? (selectedText.style.color ?? _brushColor) : _brushColor;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.backgroundColor.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(
+                'Size:',
+                style: AppTypography.body(color: theme.textColor, fontSize: 13),
+              ),
+              Expanded(
+                child: Slider(
+                  value: fontSize.clamp(12.0, 72.0),
+                  min: 12.0,
+                  max: 72.0,
+                  activeColor: theme.accentColor,
+                  inactiveColor: theme.textColor.withValues(alpha: 0.1),
+                  onChanged: (val) {
+                    setState(() {
+                      if (selectedText != null) {
+                        final updated = selectedText.copyWith(
+                          style: selectedText.style.copyWith(fontSize: val),
+                        );
+                        _controller.replaceDrawable(selectedText, updated);
+                        _controller.selectObjectDrawable(updated);
+                      } else {
+                        _fontSize = val;
+                      }
+                    });
+                  },
+                ),
+              ),
+              IconButton(
+                icon: Icon(Icons.format_bold, color: isBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                onPressed: () {
+                  setState(() {
+                    if (selectedText != null) {
+                      final updated = selectedText.copyWith(
+                        style: selectedText.style.copyWith(
+                          fontWeight: isBold ? FontWeight.normal : FontWeight.bold,
+                        ),
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    } else {
+                      _isBold = !_isBold;
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.format_italic, color: isItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                onPressed: () {
+                  setState(() {
+                    if (selectedText != null) {
+                      final updated = selectedText.copyWith(
+                        style: selectedText.style.copyWith(
+                          fontStyle: isItalic ? FontStyle.normal : FontStyle.italic,
+                        ),
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    } else {
+                      _isItalic = !_isItalic;
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.format_underlined, color: isUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                onPressed: () {
+                  setState(() {
+                    if (selectedText != null) {
+                      final updated = selectedText.copyWith(
+                        style: selectedText.style.copyWith(
+                          decoration: isUnderline ? TextDecoration.none : TextDecoration.underline,
+                        ),
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    } else {
+                      _isUnderline = !_isUnderline;
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
+          SizedBox(
+            height: 38,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _paletteColors.length + 1,
+              itemBuilder: (ctx, i) {
+                if (i == _paletteColors.length) {
+                  return GestureDetector(
+                    onTap: () async {
+                      final pickedColor = await showDialog<Color>(
+                        context: context,
+                        builder: (ctx) => ColorPickerDialog(
+                          initialColor: activeColor,
+                          theme: theme,
+                        ),
+                      );
+                      if (pickedColor != null) {
+                        setState(() {
+                          if (selectedText != null) {
+                            final updated = selectedText.copyWith(
+                              style: selectedText.style.copyWith(color: pickedColor),
+                            );
+                            _controller.replaceDrawable(selectedText, updated);
+                            _controller.selectObjectDrawable(updated);
+                          } else {
+                            _brushColor = pickedColor;
+                          }
+                        });
+                      }
+                    },
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                        gradient: const SweepGradient(
+                          colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                        ),
+                      ),
+                      child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
+                    ),
+                  );
+                }
+
+                final color = _paletteColors[i];
+                final isSelected = activeColor.toARGB32() == color.toARGB32();
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (selectedText != null) {
+                          final updated = selectedText.copyWith(
+                            style: selectedText.style.copyWith(color: color),
+                          );
+                          _controller.replaceDrawable(selectedText, updated);
+                          _controller.selectObjectDrawable(updated);
+                        } else {
+                          _brushColor = color;
+                        }
+                      });
+                    },
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? theme.textColor : Colors.transparent,
+                          width: 2.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
