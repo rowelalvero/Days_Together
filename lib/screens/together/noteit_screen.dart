@@ -1275,72 +1275,74 @@ class _NoteitScreenState extends State<NoteitScreen>
           ),
           
           // Row with color palette picker
-          SizedBox(
-            height: 38,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _paletteColors.length + 1,
-              itemBuilder: (ctx, i) {
-                if (i == _paletteColors.length) {
-                  return GestureDetector(
-                    onTap: () async {
-                      final pickedColor = await showDialog<Color>(
-                        context: context,
-                        builder: (ctx) => ColorPickerDialog(
-                          initialColor: _brushColor,
-                          theme: theme,
+          if (_activeMode != 'eraser') ...[
+            SizedBox(
+              height: 38,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _paletteColors.length + 1,
+                itemBuilder: (ctx, i) {
+                  if (i == _paletteColors.length) {
+                    return GestureDetector(
+                      onTap: () async {
+                        final pickedColor = await showDialog<Color>(
+                          context: context,
+                          builder: (ctx) => ColorPickerDialog(
+                            initialColor: _brushColor,
+                            theme: theme,
+                          ),
+                        );
+                        if (pickedColor != null) {
+                          setState(() {
+                            _brushColor = pickedColor;
+                            _updateSettings();
+                          });
+                        }
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                          gradient: const SweepGradient(
+                            colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                          ),
                         ),
-                      );
-                      if (pickedColor != null) {
+                        child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
+                      ),
+                    );
+                  }
+
+                  final color = _paletteColors[i];
+                  final isSelected = _brushColor.toARGB32() == color.toARGB32();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
                         setState(() {
-                          _brushColor = pickedColor;
+                          _brushColor = color;
                           _updateSettings();
                         });
-                      }
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
-                        gradient: const SweepGradient(
-                          colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? theme.textColor : Colors.transparent,
+                            width: 2.0,
+                          ),
                         ),
                       ),
-                      child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
                     ),
                   );
-                }
-
-                final color = _paletteColors[i];
-                final isSelected = _brushColor.toARGB32() == color.toARGB32();
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _brushColor = color;
-                        _updateSettings();
-                      });
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected ? theme.textColor : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+                },
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
