@@ -310,13 +310,13 @@ class _NoteitScreenState extends State<NoteitScreen>
     final text = await _showTextInputDialog("");
     if (text != null && text.trim().isNotEmpty) {
       final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
-      final center = renderBox == null
-          ? const Offset(300, 300)
-          : Offset(renderBox.size.width / 2, renderBox.size.height / 2);
-          
-      final textDrawable = CustomTextDrawable(
+      final canvasWidth = renderBox?.size.width ?? 600.0;
+      final canvasHeight = renderBox?.size.height ?? 600.0;
+      final centerY = canvasHeight / 2;
+      
+      final tempDrawable = CustomTextDrawable(
         text: text,
-        position: center,
+        position: Offset(canvasWidth / 2, centerY),
         style: _getTextStyle(
           fontSize: _fontSize,
           color: _brushColor,
@@ -328,6 +328,21 @@ class _NoteitScreenState extends State<NoteitScreen>
         ),
         textAlign: _textAlign,
       );
+      
+      final textWidth = tempDrawable.getSize().width * tempDrawable.scale;
+      double newX = canvasWidth / 2;
+      const double margin = 20.0;
+      
+      if (_textAlign == TextAlign.left) {
+        newX = (textWidth / 2) + margin;
+      } else if (_textAlign == TextAlign.right) {
+        newX = canvasWidth - (textWidth / 2) - margin;
+      }
+      
+      final textDrawable = tempDrawable.copyWith(
+        position: Offset(newX, centerY),
+      );
+      
       _controller.addDrawables([textDrawable]);
       _controller.selectObjectDrawable(textDrawable);
     }
@@ -1245,8 +1260,24 @@ class _NoteitScreenState extends State<NoteitScreen>
                   setState(() {
                     _textAlign = nextAlign;
                     if (selectedText != null && selectedText is CustomTextDrawable) {
+                      final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
+                      final canvasWidth = renderBox?.size.width ?? 600.0;
+                      final textWidth = selectedText.getSize().width * selectedText.scale;
+                      
+                      double newX = selectedText.position.dx;
+                      const double margin = 20.0;
+                      
+                      if (nextAlign == TextAlign.left) {
+                        newX = (textWidth / 2) + margin;
+                      } else if (nextAlign == TextAlign.center) {
+                        newX = canvasWidth / 2;
+                      } else if (nextAlign == TextAlign.right) {
+                        newX = canvasWidth - (textWidth / 2) - margin;
+                      }
+                      
                       final updated = selectedText.copyWith(
                         textAlign: nextAlign,
+                        position: Offset(newX, selectedText.position.dy),
                       );
                       _controller.replaceDrawable(selectedText, updated);
                       _controller.selectObjectDrawable(updated);
