@@ -62,7 +62,6 @@ class _NoteitScreenState extends State<NoteitScreen>
   ];
 
   int _currentTabIndex = 0;
-  int _canvasKeyCounter = 0;
 
   @override
   void initState() {
@@ -289,7 +288,6 @@ class _NoteitScreenState extends State<NoteitScreen>
   void _resetZoom() {
     setState(() {
       _controller.transformationController.value = Matrix4.identity();
-      _canvasKeyCounter++;
     });
   }
 
@@ -523,7 +521,6 @@ class _NoteitScreenState extends State<NoteitScreen>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: RasterCanvas(
-                  key: ValueKey('canvas_viewport_$_canvasKeyCounter'),
                   controller: _controller,
                 ),
               ),
@@ -870,74 +867,124 @@ class _NoteitScreenState extends State<NoteitScreen>
   void _showBackgroundSettingsDialog(LoveStoryTheme theme) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: theme.backgroundColor,
-        title: Text(
-          'Canvas Settings',
-          style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Background Template:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: theme.backgroundColor,
+            title: Text(
+              'Canvas Settings',
+              style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildBgOptionButton('color', 'Solid White', Colors.white),
-                _buildBgOptionButton('grid', 'Grid Lines', Colors.white),
-                _buildBgOptionButton('dots', 'Dot Grid', Colors.white),
-                _buildBgOptionButton('notebook', 'Notebook', const Color(0xFFF9F9FB)),
-                _buildBgOptionButton('gradient', 'Gradient', Colors.white),
+                Text('Background Template:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildBgOptionButton(setDialogState, 'color', 'Solid color', Colors.white),
+                    _buildBgOptionButton(setDialogState, 'grid', 'Grid Lines', Colors.white),
+                    _buildBgOptionButton(setDialogState, 'dots', 'Dot Grid', Colors.white),
+                    _buildBgOptionButton(setDialogState, 'notebook', 'Notebook', const Color(0xFFF9F9FB)),
+                    _buildBgOptionButton(setDialogState, 'gradient', 'Gradient', Colors.white),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text('Solid Color Picker:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ..._paletteColors.map((color) {
+                      final isSelectedColor = _bgType == 'color' && _bgColor.toARGB32() == color.toARGB32();
+                      return GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            _bgColor = color;
+                            _bgType = 'color';
+                          });
+                          setState(() {
+                            _bgColor = color;
+                            _bgType = 'color';
+                            _updateBackground();
+                          });
+                        },
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelectedColor ? theme.textColor : Colors.grey.withValues(alpha: 0.3),
+                              width: isSelectedColor ? 2.5 : 1.0,
+                            ),
+                          ),
+                        ),
+                    }),
+                    GestureDetector(
+                      onTap: () async {
+                        final pickedColor = await showDialog<Color>(
+                          context: context,
+                          builder: (ctx2) => ColorPickerDialog(
+                            initialColor: _bgColor,
+                            theme: theme,
+                          ),
+                        );
+                        if (pickedColor != null) {
+                          setDialogState(() {
+                            _bgColor = pickedColor;
+                            _bgType = 'color';
+                          });
+                          setState(() {
+                            _bgColor = pickedColor;
+                            _bgType = 'color';
+                            _updateBackground();
+                          });
+                        }
+                      },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                          gradient: const SweepGradient(
+                            colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                          ),
+                        ),
+                        child: Icon(Icons.add_rounded, color: theme.textColor, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text('Solid Color Picker:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _paletteColors.map((color) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _bgColor = color;
-                      _bgType = 'color';
-                      _updateBackground();
-                    });
-                  },
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Done', style: AppTypography.button(color: theme.accentColor)),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Done', style: AppTypography.button(color: theme.accentColor)),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
 
-  Widget _buildBgOptionButton(String type, String label, Color previewColor) {
+  Widget _buildBgOptionButton(StateSetter setDialogState, String type, String label, Color previewColor) {
     final isSelected = _bgType == type;
     final theme = context.read<ThemeProvider>().currentLoveTheme;
 
     return OutlinedButton(
       onPressed: () {
+        setDialogState(() {
+          _bgType = type;
+        });
         setState(() {
           _bgType = type;
           _updateBackground();
