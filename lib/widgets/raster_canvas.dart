@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_painter_v2/flutter_painter.dart';
 
 enum CanvasTool { pen, pencil, marker, eraser, bucket }
 
@@ -31,135 +32,184 @@ class RasterCanvas extends StatefulWidget {
 }
 
 class RasterCanvasState extends State<RasterCanvas> {
-  ui.Image? _drawingImage;
-  bool _isDrawing = false;
-  Offset? _lastPoint;
+  late PainterController _controller;
   final int _canvasSize = 600;
+  int _lastDrawableCount = 0;
+  BackgroundDrawable? _lastBackground;
+  bool _isProcessing = false;
 
-  final List<ui.Image> _undoStack = [];
-  final List<ui.Image> _redoStack = [];
-
-  bool get canUndo => _undoStack.isNotEmpty;
-  bool get canRedo => _redoStack.isNotEmpty;
-
-  void _saveToUndoStack() {
-    if (_drawingImage == null) return;
-    _undoStack.add(_drawingImage!);
-    _clearRedoStack();
-    _notifyUndoRedoState();
-  }
-
-  void _clearRedoStack() {
-    for (final img in _redoStack) {
-      img.dispose();
-    }
-    _redoStack.clear();
-  }
-
-  void _notifyUndoRedoState() {
-    widget.onUndoRedoStateChanged?.call(_undoStack.isNotEmpty, _redoStack.isNotEmpty);
-  }
-
-  void undo() {
-    if (_undoStack.isEmpty || _drawingImage == null) return;
-    final previousState = _undoStack.removeLast();
-    _redoStack.add(_drawingImage!);
-    setState(() {
-      _drawingImage = previousState;
-    });
-    _notifyParent();
-    _notifyUndoRedoState();
-  }
-
-  void redo() {
-    if (_redoStack.isEmpty || _drawingImage == null) return;
-    final nextState = _redoStack.removeLast();
-    _undoStack.add(_drawingImage!);
-    setState(() {
-      _drawingImage = nextState;
-    });
-    _notifyParent();
-    _notifyUndoRedoState();
-  }
-
-  @override
-  void dispose() {
-    for (final img in _undoStack) {
-      img.dispose();
-    }
-    for (final img in _redoStack) {
-      img.dispose();
-    }
-    super.dispose();
-  }
+  bool get canUndo => _controller.canUndo;
+  bool get canRedo => _controller.canRedo;
 
   @override
   void initState() {
     super.initState();
-    _initCanvas();
+    _initController();
+    _loadFromBase64();
+  }
+
+  void _initController() {
+    _controller = PainterController(
+      settings: PainterSettings(
+        freeStyle: FreeStyleSettings(
+          color: widget.brushColor,
+          strokeWidth: widget.strokeWidth,
+          mode: _getFreeStyleMode(widget.activeTool),
+        ),
+      ),
+    );
+    _controller.addListener(_onControllerChanged);
+  }
+
+  FreeStyleMode _getFreeStyleMode(CanvasTool tool) {
+    switch (tool) {
+      case CanvasTool.pen:
+      case CanvasTool.pencil:
+      case CanvasTool.marker:
+        return FreeStyleMode.draw;
+      case CanvasTool.eraser:
+        return FreeStyleMode.erase;
+      case CanvasTool.bucket:
+        return FreeStyleMode.none;
+    }
+  }
+
+  Color _getBrushColorForTool(CanvasTool tool, Color baseColor) {
+    switch (tool) {
+      case CanvasTool.pencil:
+        return baseColor.withValues(alpha: 0.7);
+      case CanvasTool.marker:
+        return baseColor.withValues(alpha: 0.35);
+      default:
+        return baseColor;
+    }
+  }
+
+  double _getStrokeWidthForTool(CanvasTool tool, double baseWidth) {
+    switch (tool) {
+      case CanvasTool.pencil:
+        return baseWidth * 0.7;
+      case CanvasTool.marker:
+        return baseWidth * 2.5;
+      case CanvasTool.eraser:
+        return baseWidth * 3.0;
+      default:
+        return baseWidth;
+    }
   }
 
   @override
   void didUpdateWidget(RasterCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
+    // Update settings dynamically on controller
+    final color = _getBrushColorForTool(widget.activeTool, widget.brushColor);
+    final width = _getStrokeWidthForTool(widget.activeTool, widget.strokeWidth);
+    final mode = _getFreeStyleMode(widget.activeTool);
+
+    _controller.settings = _controller.settings.copyWith(
+      freeStyle: FreeStyleSettings(
+        color: color,
+        strokeWidth: width,
+        mode: mode,
+      ),
+    );
+
     if (widget.initialBase64 != oldWidget.initialBase64) {
       _loadFromBase64();
     }
   }
 
-  Future<void> _initCanvas() async {
-    if (widget.initialBase64 != null && widget.initialBase64!.isNotEmpty) {
-      await _loadFromBase64();
-    } else {
-      await _clearCanvas();
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (_isProcessing) return;
+    
+    final drawablesChanged = _controller.drawables.length != _lastDrawableCount;
+    final bgChanged = _controller.value.background != _lastBackground;
+    
+    if (drawablesChanged || bgChanged) {
+      _lastDrawableCount = _controller.drawables.length;
+      _lastBackground = _controller.value.background;
+      
+      widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
+      _notifyParent();
     }
   }
 
-  Future<void> _clearCanvas() async {
-    final recorder = ui.PictureRecorder();
-    Canvas(recorder); // Create canvas to bind to recorder
-    
-    // Draw nothing, keep transparent
-    final picture = recorder.endRecording();
-    final img = await picture.toImage(_canvasSize, _canvasSize);
-    
-    if (mounted) {
-      setState(() {
-        _drawingImage = img;
-      });
-      _notifyParent();
+  Future<void> _notifyParent() async {
+    if (_isProcessing) return;
+    try {
+      // Temporarily remove background to export ONLY the drawing layer
+      final bg = _controller.value.background;
+      _isProcessing = true;
+      _controller.background = null;
+      
+      final image = await _controller.renderImage(Size(_canvasSize.toDouble(), _canvasSize.toDouble()));
+      _controller.background = bg;
+      _isProcessing = false;
+      
+      final pngData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (pngData != null) {
+        final base64String = base64Encode(pngData.buffer.asUint8List());
+        widget.onDrawingLayerChanged(base64String);
+      }
+    } catch (e) {
+      _isProcessing = false;
+      debugPrint('RasterCanvas: Error rendering image: $e');
     }
   }
 
   Future<void> _loadFromBase64() async {
     if (widget.initialBase64 == null || widget.initialBase64!.isEmpty) {
-      await _clearCanvas();
+      _controller.clearDrawables();
       return;
     }
     try {
+      _isProcessing = true;
       final bytes = base64Decode(widget.initialBase64!);
       final completer = Completer<ui.Image>();
       ui.decodeImageFromList(bytes, (img) {
         completer.complete(img);
       });
       final img = await completer.future;
-      if (mounted) {
-        setState(() {
-          _drawingImage = img;
-        });
-      }
+      
+      final imageDrawable = ImageDrawable(
+        image: img,
+        position: Offset(_canvasSize / 2, _canvasSize / 2),
+      );
+      
+      _controller.clearDrawables();
+      _controller.addDrawables([imageDrawable]);
+      _lastDrawableCount = _controller.drawables.length;
+      _isProcessing = false;
     } catch (e) {
+      _isProcessing = false;
       debugPrint('RasterCanvas: Error loading base64: $e');
-      await _clearCanvas();
     }
   }
 
-  void clearAll() {
-    _saveToUndoStack();
-    _clearCanvas();
+  void undo() {
+    _controller.undo();
+    widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
   }
 
-  // Helper: Convert Flutter Color to RGBA 32-bit int (little-endian byte order: R, G, B, A)
+  void redo() {
+    _controller.redo();
+    widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
+  }
+
+  void clearAll() {
+    _controller.clearDrawables();
+    _controller.background = null;
+    widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
+  }
+
   int _colorToRgba(Color color) {
     final r = (color.r * 255.0).round().clamp(0, 255);
     final g = (color.g * 255.0).round().clamp(0, 255);
@@ -168,195 +218,109 @@ class RasterCanvasState extends State<RasterCanvas> {
     return (a << 24) | (b << 16) | (g << 8) | r;
   }
 
-  // Flood fill BFS algorithm in Dart
   Future<void> _performFloodFill(Offset localPos) async {
-    if (_drawingImage == null) return;
-    _saveToUndoStack();
+    try {
+      _isProcessing = true;
+      // 1. Render current composition to get pixels
+      final bg = _controller.value.background;
+      _isProcessing = true;
+      _controller.background = null;
+      final image = await _controller.renderImage(Size(_canvasSize.toDouble(), _canvasSize.toDouble()));
+      _controller.background = bg;
 
-    // Map gesture offset to 600x600 canvas coordinate
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final int startX = ((localPos.dx / size.width) * _canvasSize).clamp(0, _canvasSize - 1).toInt();
-    final int startY = ((localPos.dy / size.height) * _canvasSize).clamp(0, _canvasSize - 1).toInt();
-
-    final byteData = await _drawingImage!.toByteData(format: ui.ImageByteFormat.rawRgba);
-    if (byteData == null) return;
-
-    final Uint32List pixels = byteData.buffer.asUint32List();
-    final int targetIndex = startY * _canvasSize + startX;
-    final int targetColor = pixels[targetIndex];
-    final int replacementColor = _colorToRgba(widget.brushColor);
-
-    // If target color is transparent (Alpha channel is 0), update canvas background color instead
-    if ((targetColor & 0xFF000000) == 0) {
-      widget.onCanvasBgColorChanged(widget.brushColor);
-      return;
-    }
-
-    if (targetColor == replacementColor) return;
-
-    // Run queue-based flood fill
-    final queue = <int>[];
-    queue.add(targetIndex);
-    
-    while (queue.isNotEmpty) {
-      final idx = queue.removeAt(0);
-      if (pixels[idx] == targetColor) {
-        pixels[idx] = replacementColor;
-        
-        final x = idx % _canvasSize;
-        final y = idx ~/ _canvasSize;
-        
-        if (x > 0 && pixels[idx - 1] == targetColor) queue.add(idx - 1);
-        if (x < _canvasSize - 1 && pixels[idx + 1] == targetColor) queue.add(idx + 1);
-        if (y > 0 && pixels[idx - _canvasSize] == targetColor) queue.add(idx - _canvasSize);
-        if (y < _canvasSize - 1 && pixels[idx + _canvasSize] == targetColor) queue.add(idx + _canvasSize);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      if (byteData == null) {
+        _isProcessing = false;
+        return;
       }
-    }
+      final Uint32List pixels = byteData.buffer.asUint32List();
 
-    // Convert pixel buffer back to ui.Image
-    final completer = Completer<ui.Image>();
-    ui.decodeImageFromPixels(
-      byteData.buffer.asUint8List(),
-      _canvasSize,
-      _canvasSize,
-      ui.PixelFormat.rgba8888,
-      (img) => completer.complete(img),
-    );
-
-    final finalImg = await completer.future;
-    if (mounted) {
-      setState(() {
-        _drawingImage = finalImg;
-      });
-      _notifyParent();
-    }
-  }
-
-  void _onPanStart(DragStartDetails details) {
-    if (widget.activeTool == CanvasTool.bucket) {
-      _performFloodFill(details.localPosition);
-      return;
-    }
-    _saveToUndoStack();
-    setState(() {
-      _isDrawing = true;
+      if (!mounted) {
+        _isProcessing = false;
+        return;
+      }
       final RenderBox renderBox = context.findRenderObject() as RenderBox;
       final size = renderBox.size;
-      _lastPoint = Offset(
-        (details.localPosition.dx / size.width) * _canvasSize,
-        (details.localPosition.dy / size.height) * _canvasSize,
-      );
-    });
-  }
+      final targetX = ((localPos.dx / size.width) * _canvasSize).round().clamp(0, _canvasSize - 1);
+      final targetY = ((localPos.dy / size.height) * _canvasSize).round().clamp(0, _canvasSize - 1);
+      final targetIdx = targetY * _canvasSize + targetX;
 
-  void _onPanUpdate(DragUpdateDetails details) {
-    if (!_isDrawing || _lastPoint == null || _drawingImage == null) return;
+      final targetColor = pixels[targetIdx];
+      final fillColor = _colorToRgba(widget.brushColor);
 
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final currentPoint = Offset(
-      (details.localPosition.dx / size.width) * _canvasSize,
-      (details.localPosition.dy / size.height) * _canvasSize,
-    );
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    // 1. Draw existing image first
-    canvas.drawImage(_drawingImage!, Offset.zero, Paint());
-
-    // 2. Configure pen paint based on active tool
-    final paint = Paint()
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..strokeWidth = widget.strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    switch (widget.activeTool) {
-      case CanvasTool.pen:
-        paint.color = widget.brushColor;
-        break;
-      case CanvasTool.pencil:
-        paint.color = widget.brushColor.withValues(alpha: 0.7);
-        paint.strokeWidth = widget.strokeWidth * 0.7;
-        break;
-      case CanvasTool.marker:
-        paint.color = widget.brushColor.withValues(alpha: 0.35);
-        paint.strokeWidth = widget.strokeWidth * 2.5;
-        break;
-      case CanvasTool.eraser:
-        paint.color = Colors.black; // Color doesn't matter for clear blendmode
-        paint.blendMode = ui.BlendMode.clear;
-        paint.strokeWidth = widget.strokeWidth * 3;
-        break;
-      default:
-        break;
-    }
-
-    // 3. Draw the line segment
-    canvas.drawLine(_lastPoint!, currentPoint, paint);
-
-    final picture = recorder.endRecording();
-    picture.toImage(_canvasSize, _canvasSize).then((img) {
-      if (mounted) {
-        setState(() {
-          _drawingImage = img;
-          _lastPoint = currentPoint;
-        });
+      if (targetColor == fillColor) {
+        _isProcessing = false;
+        return;
       }
-    });
-  }
 
-  void _onPanEnd(DragEndDetails details) {
-    if (!_isDrawing) return;
-    setState(() {
-      _isDrawing = false;
-      _lastPoint = null;
-    });
-    _notifyParent();
-  }
+      // Check if transparent
+      if ((targetColor & 0xFF000000) == 0) {
+        // Change canvas background color
+        _controller.background = widget.brushColor.backgroundDrawable;
+        widget.onCanvasBgColorChanged(widget.brushColor);
+        _isProcessing = false;
+        widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
+        return;
+      }
 
-  Future<void> _notifyParent() async {
-    if (_drawingImage == null) return;
-    final pngData = await _drawingImage!.toByteData(format: ui.ImageByteFormat.png);
-    if (pngData != null) {
-      final base64String = base64Encode(pngData.buffer.asUint8List());
-      widget.onDrawingLayerChanged(base64String);
+      // Perform BFS Flood Fill on pixels
+      final List<int> queue = [targetIdx];
+      int head = 0;
+
+      while (head < queue.length) {
+        final idx = queue[head++];
+        if (pixels[idx] == targetColor) {
+          pixels[idx] = fillColor;
+          
+          final x = idx % _canvasSize;
+          final y = idx ~/ _canvasSize;
+          
+          if (x > 0 && pixels[idx - 1] == targetColor) queue.add(idx - 1);
+          if (x < _canvasSize - 1 && pixels[idx + 1] == targetColor) queue.add(idx + 1);
+          if (y > 0 && pixels[idx - _canvasSize] == targetColor) queue.add(idx - _canvasSize);
+          if (y < _canvasSize - 1 && pixels[idx + _canvasSize] == targetColor) queue.add(idx + _canvasSize);
+        }
+      }
+
+      // Convert pixel buffer back to ui.Image
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromPixels(
+        byteData.buffer.asUint8List(),
+        _canvasSize,
+        _canvasSize,
+        ui.PixelFormat.rgba8888,
+        (img) => completer.complete(img),
+      );
+
+      final finalImg = await completer.future;
+      final imageDrawable = ImageDrawable(
+        image: finalImg,
+        position: Offset(_canvasSize / 2, _canvasSize / 2),
+      );
+
+      _controller.clearDrawables();
+      _controller.addDrawables([imageDrawable]);
+      _lastDrawableCount = _controller.drawables.length;
+      _isProcessing = false;
+
+      widget.onUndoRedoStateChanged?.call(_controller.canUndo, _controller.canRedo);
+      _notifyParent();
+    } catch (e) {
+      _isProcessing = false;
+      debugPrint('RasterCanvas: Error performing flood fill: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final useBucket = widget.activeTool == CanvasTool.bucket;
+
     return GestureDetector(
-      onPanStart: _onPanStart,
-      onPanUpdate: _onPanUpdate,
-      onPanEnd: _onPanEnd,
-      child: CustomPaint(
-        painter: _DrawingPainter(image: _drawingImage),
-        size: Size.infinite,
+      behavior: HitTestBehavior.translucent,
+      onTapDown: useBucket ? (details) => _performFloodFill(details.localPosition) : null,
+      child: FlutterPainter(
+        controller: _controller,
       ),
     );
-  }
-}
-
-class _DrawingPainter extends CustomPainter {
-  final ui.Image? image;
-
-  _DrawingPainter({required this.image});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (image == null) return;
-    
-    // Draw the 600x600 image scaled to fit the custom paint size
-    final src = Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble());
-    final dst = Rect.fromLTWH(0, 0, size.width, size.height);
-    canvas.drawImageRect(image!, src, dst, Paint());
-  }
-
-  @override
-  bool shouldRepaint(covariant _DrawingPainter oldDelegate) {
-    return oldDelegate.image != image;
   }
 }
