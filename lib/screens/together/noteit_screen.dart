@@ -52,6 +52,7 @@ class _NoteitScreenState extends State<NoteitScreen>
   bool _isBold = false;
   bool _isItalic = false;
   bool _isUnderline = false;
+  TextAlign _textAlign = TextAlign.center;
   Color _highlightColor = Colors.transparent;
   final List<Color> _highlightColors = [
     Colors.transparent,
@@ -313,7 +314,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           ? const Offset(300, 300)
           : Offset(renderBox.size.width / 2, renderBox.size.height / 2);
           
-      final textDrawable = TextDrawable(
+      final textDrawable = CustomTextDrawable(
         text: text,
         position: center,
         style: _getTextStyle(
@@ -325,6 +326,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           fontFamily: _activeFontFamily,
           highlightColor: _highlightColor,
         ),
+        textAlign: _textAlign,
       );
       _controller.addDrawables([textDrawable]);
       _controller.selectObjectDrawable(textDrawable);
@@ -822,6 +824,33 @@ class _NoteitScreenState extends State<NoteitScreen>
     final bool isUnderline = selectedText != null ? (selectedText.style.decoration == TextDecoration.underline) : _isUnderline;
     final Color activeColor = selectedText != null ? (selectedText.style.color ?? _brushColor) : _brushColor;
     final Color activeHighlight = selectedText != null ? (selectedText.style.backgroundColor ?? Colors.transparent) : _highlightColor;
+    final TextAlign activeAlign = (selectedText != null && selectedText is CustomTextDrawable)
+        ? selectedText.textAlign
+        : _textAlign;
+
+    IconData getAlignIcon(TextAlign align) {
+      switch (align) {
+        case TextAlign.left:
+          return Icons.format_align_left_rounded;
+        case TextAlign.right:
+          return Icons.format_align_right_rounded;
+        case TextAlign.center:
+        default:
+          return Icons.format_align_center_rounded;
+      }
+    }
+
+    TextAlign getNextAlign(TextAlign align) {
+      switch (align) {
+        case TextAlign.left:
+          return TextAlign.center;
+        case TextAlign.center:
+          return TextAlign.right;
+        case TextAlign.right:
+        default:
+          return TextAlign.left;
+      }
+    }
 
     String matchedFont = _activeFontFamily;
     if (selectedText != null && selectedText.style.fontFamily != null) {
@@ -1207,6 +1236,24 @@ class _NoteitScreenState extends State<NoteitScreen>
                     }
                   });
                 },
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(getAlignIcon(activeAlign), color: theme.accentColor),
+                onPressed: () {
+                  final nextAlign = getNextAlign(activeAlign);
+                  setState(() {
+                    _textAlign = nextAlign;
+                    if (selectedText != null && selectedText is CustomTextDrawable) {
+                      final updated = selectedText.copyWith(
+                        textAlign: nextAlign,
+                      );
+                      _controller.replaceDrawable(selectedText, updated);
+                      _controller.selectObjectDrawable(updated);
+                    }
+                  });
+                },
+                tooltip: 'Cycle Text Alignment',
               ),
             ],
           ),

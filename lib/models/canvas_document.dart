@@ -143,6 +143,7 @@ class TextObject extends CanvasObject {
   final double fontSize;
   final String fontFamily;
   final int backgroundColor;
+  final String textAlign;
   final bool isBold;
   final bool isItalic;
   final bool isUnderline;
@@ -160,6 +161,7 @@ class TextObject extends CanvasObject {
     required this.fontSize,
     this.fontFamily = 'Roboto',
     this.backgroundColor = 0,
+    this.textAlign = 'center',
     this.isBold = false,
     this.isItalic = false,
     this.isUnderline = false,
@@ -180,6 +182,7 @@ class TextObject extends CanvasObject {
         'fontSize': fontSize,
         'fontFamily': fontFamily,
         'backgroundColor': backgroundColor,
+        'textAlign': textAlign,
         'isBold': isBold,
         'isItalic': isItalic,
         'isUnderline': isUnderline,
@@ -198,6 +201,7 @@ class TextObject extends CanvasObject {
         fontSize: (json['fontSize'] as num).toDouble(),
         fontFamily: json['fontFamily'] as String? ?? 'Roboto',
         backgroundColor: json['backgroundColor'] as int? ?? 0,
+        textAlign: json['textAlign'] as String? ?? 'center',
         isBold: json['isBold'] as bool? ?? false,
         isItalic: json['isItalic'] as bool? ?? false,
         isUnderline: json['isUnderline'] as bool? ?? false,

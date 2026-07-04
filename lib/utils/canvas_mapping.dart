@@ -80,6 +80,7 @@ class CanvasMapping {
           fontSize: d.style.fontSize ?? 14.0,
           fontFamily: d.style.fontFamily ?? 'Spectral',
           backgroundColor: d.style.backgroundColor?.toARGB32() ?? 0,
+          textAlign: (d is CustomTextDrawable) ? d.textAlign.toString().split('.').last : 'center',
           isBold: d.style.fontWeight == FontWeight.bold,
           isItalic: d.style.fontStyle == FontStyle.italic,
           isUnderline: d.style.decoration == TextDecoration.underline,
@@ -211,7 +212,14 @@ class CanvasMapping {
           ));
         }
       } else if (obj is TextObject) {
-        drawables.add(TextDrawable(
+        TextAlign align = TextAlign.center;
+        for (final a in TextAlign.values) {
+          if (a.toString().split('.').last == obj.textAlign) {
+            align = a;
+            break;
+          }
+        }
+        drawables.add(CustomTextDrawable(
           text: obj.text,
           position: Offset(obj.x, obj.y),
           scale: obj.scale,
@@ -219,6 +227,7 @@ class CanvasMapping {
           style: _getTextStyle(obj),
           locked: obj.locked,
           hidden: obj.hidden,
+          textAlign: align,
         ));
       } else if (obj is ShapeObject) {
         final paint = Paint()
@@ -328,5 +337,70 @@ class CanvasMapping {
         decoration: obj.isUnderline ? TextDecoration.underline : TextDecoration.none,
       );
     }
+  }
+}
+
+class CustomTextDrawable extends TextDrawable {
+  final TextAlign textAlign;
+  late final TextPainter _customTextPainter;
+
+  CustomTextDrawable({
+    required super.text,
+    required super.position,
+    super.rotation,
+    super.scale,
+    super.style,
+    super.direction,
+    super.locked,
+    super.hidden,
+    super.assists,
+    this.textAlign = TextAlign.center,
+  }) : super() {
+    _customTextPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textAlign: textAlign,
+      textScaler: TextScaler.linear(scale),
+      textDirection: direction,
+    );
+  }
+
+  @override
+  void drawObject(Canvas canvas, Size size) {
+    _customTextPainter.layout(maxWidth: size.width * scale);
+    _customTextPainter.paint(canvas,
+        position - Offset(_customTextPainter.width / 2, _customTextPainter.height / 2));
+  }
+
+  @override
+  Size getSize({double minWidth = 0.0, double maxWidth = double.infinity}) {
+    _customTextPainter.layout(minWidth: minWidth, maxWidth: maxWidth * scale);
+    return _customTextPainter.size;
+  }
+
+  @override
+  CustomTextDrawable copyWith({
+    bool? hidden,
+    Set<ObjectDrawableAssist>? assists,
+    String? text,
+    Offset? position,
+    double? rotation,
+    double? scale,
+    TextStyle? style,
+    bool? locked,
+    TextDirection? direction,
+    TextAlign? textAlign,
+  }) {
+    return CustomTextDrawable(
+      text: text ?? this.text,
+      position: position ?? this.position,
+      rotation: rotation ?? rotationAngle,
+      scale: scale ?? this.scale,
+      style: style ?? this.style,
+      direction: direction ?? this.direction,
+      assists: assists ?? this.assists,
+      hidden: hidden ?? this.hidden,
+      locked: locked ?? this.locked,
+      textAlign: textAlign ?? this.textAlign,
+    );
   }
 }
