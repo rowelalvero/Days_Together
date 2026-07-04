@@ -61,10 +61,19 @@ class _NoteitScreenState extends State<NoteitScreen>
     Colors.black,
   ];
 
+  int _currentTabIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {
+          _currentTabIndex = _tabController.index;
+        });
+      }
+    });
     _initController();
     _loadDraft();
   }
@@ -425,6 +434,30 @@ class _NoteitScreenState extends State<NoteitScreen>
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: _currentTabIndex == 0
+            ? [
+                IconButton(
+                  icon: Icon(Icons.undo_rounded, color: theme.textColor),
+                  onPressed: _controller.canUndo ? () => _controller.undo() : null,
+                  tooltip: 'Undo',
+                ),
+                IconButton(
+                  icon: Icon(Icons.redo_rounded, color: theme.textColor),
+                  onPressed: _controller.canRedo ? () => _controller.redo() : null,
+                  tooltip: 'Redo',
+                ),
+                IconButton(
+                  icon: Icon(Icons.refresh_rounded, color: theme.textColor),
+                  onPressed: () => _resetZoom(),
+                  tooltip: 'Reset Zoom',
+                ),
+                IconButton(
+                  icon: Icon(Icons.palette_outlined, color: theme.textColor),
+                  onPressed: () => _showBackgroundSettingsDialog(theme),
+                  tooltip: 'Canvas Settings',
+                ),
+              ]
+            : null,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: theme.accentColor,
@@ -543,6 +576,28 @@ class _NoteitScreenState extends State<NoteitScreen>
             ),
           ),
 
+        // Floating Send Button
+        Positioned(
+          bottom: 110,
+          right: 20,
+          child: FloatingActionButton.extended(
+            onPressed: _isSaving ? null : () => _sendCanvas(provider, theme),
+            backgroundColor: theme.accentColor,
+            elevation: 4,
+            icon: _isSaving 
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Icon(Icons.send_rounded, color: Colors.white),
+            label: Text(
+              'Send',
+              style: AppTypography.body(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+
         // Bottom Configuration Sheets
         Positioned(
           bottom: 0,
@@ -551,12 +606,10 @@ class _NoteitScreenState extends State<NoteitScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Properties Panel (only show if drawing/shapes tools are active)
               if (_activeMode != 'hand' && _activeMode != 'select')
                 _buildPropertiesPanel(theme),
 
-              // Bottom Floating Toolbar
-              _buildBottomFloatingToolbar(theme, provider),
+              _buildBottomFloatingToolbar(theme),
             ],
           ),
         ),
@@ -695,7 +748,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     );
   }
 
-  Widget _buildBottomFloatingToolbar(LoveStoryTheme theme, NoteitProvider provider) {
+  Widget _buildBottomFloatingToolbar(LoveStoryTheme theme) {
     return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, bottom: 12, top: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -713,96 +766,58 @@ class _NoteitScreenState extends State<NoteitScreen>
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Mode Selectors
-            Row(
-              children: [
-                _buildToolbarButton(Icons.pan_tool_rounded, 'hand', 'Pan View'),
-                _buildToolbarButton(Icons.front_hand_rounded, 'select', 'Select Object'),
-                _buildToolbarButton(Icons.edit_rounded, 'pen', 'Pen'),
-                _buildToolbarButton(Icons.brush_rounded, 'pencil', 'Pencil'),
-                _buildToolbarButton(Icons.border_color_rounded, 'marker', 'Marker'),
-                _buildToolbarButton(Icons.cleaning_services_rounded, 'eraser', 'Eraser'),
-                _buildToolbarButton(Icons.category_rounded, 'shapes', 'Shapes'),
-              ],
-            ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Mode Selectors
+              _buildToolbarButton(Icons.pan_tool_rounded, 'hand', 'Pan View'),
+              _buildToolbarButton(Icons.front_hand_rounded, 'select', 'Select Object'),
+              _buildToolbarButton(Icons.edit_rounded, 'pen', 'Pen'),
+              _buildToolbarButton(Icons.brush_rounded, 'pencil', 'Pencil'),
+              _buildToolbarButton(Icons.border_color_rounded, 'marker', 'Marker'),
+              _buildToolbarButton(Icons.cleaning_services_rounded, 'eraser', 'Eraser'),
+              _buildToolbarButton(Icons.category_rounded, 'shapes', 'Shapes'),
 
-            const VerticalDivider(width: 12, thickness: 1, indent: 8, endIndent: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Container(
+                  width: 1,
+                  height: 20,
+                  color: theme.textColor.withValues(alpha: 0.15),
+                ),
+              ),
 
-            // Content Actions
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.text_fields_rounded),
-                  onPressed: _addText,
-                  tooltip: 'Add Text',
-                  color: theme.textColor,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.photo_library_rounded),
-                  onPressed: () => _importImage(ImageSource.gallery),
-                  tooltip: 'Import Image',
-                  color: theme.textColor,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.photo_camera_rounded),
-                  onPressed: () => _importImage(ImageSource.camera),
-                  tooltip: 'Take Photo',
-                  color: theme.textColor,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-
-            const VerticalDivider(width: 12, thickness: 1, indent: 8, endIndent: 8),
-
-            // Background & Export Settings
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.palette_outlined),
-                  onPressed: () => _showBackgroundSettingsDialog(theme),
-                  tooltip: 'Background Settings',
-                  color: theme.textColor,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded),
-                  onPressed: () => _resetZoom(),
-                  tooltip: 'Reset Zoom',
-                  color: theme.textColor,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: _isSaving 
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 1.5),
-                        )
-                      : const Icon(Icons.send_rounded),
-                  onPressed: _isSaving ? null : () => _sendCanvas(provider, theme),
-                  tooltip: 'Send to Partner',
-                  color: theme.accentColor,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ],
+              // Content Actions
+              IconButton(
+                icon: const Icon(Icons.text_fields_rounded),
+                onPressed: _addText,
+                tooltip: 'Add Text',
+                color: theme.textColor,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                icon: const Icon(Icons.photo_library_rounded),
+                onPressed: () => _importImage(ImageSource.gallery),
+                tooltip: 'Import Image',
+                color: theme.textColor,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                icon: const Icon(Icons.photo_camera_rounded),
+                onPressed: () => _importImage(ImageSource.camera),
+                tooltip: 'Take Photo',
+                color: theme.textColor,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
         ),
       ),
     );
