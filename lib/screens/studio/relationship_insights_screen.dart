@@ -12,10 +12,12 @@ class RelationshipInsightsScreen extends StatefulWidget {
   const RelationshipInsightsScreen({super.key});
 
   @override
-  State<RelationshipInsightsScreen> createState() => _RelationshipInsightsScreenState();
+  State<RelationshipInsightsScreen> createState() =>
+      _RelationshipInsightsScreenState();
 }
 
-class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen> {
+class _RelationshipInsightsScreenState
+    extends State<RelationshipInsightsScreen> {
   bool _isRefreshing = false;
 
   void _refreshInsights() async {
@@ -30,7 +32,10 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('✨ Insights updated successfully!'),
-          backgroundColor: context.read<ThemeProvider>().currentLoveTheme.accentColor,
+          backgroundColor: context
+              .read<ThemeProvider>()
+              .currentLoveTheme
+              .accentColor,
         ),
       );
     }
@@ -91,13 +96,21 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
                 _buildAppBar(context, theme),
                 Expanded(
                   child: _isRefreshing
-                      ? Center(child: CircularProgressIndicator(color: theme.accentColor))
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: theme.accentColor,
+                          ),
+                        )
                       : ListView.builder(
                           physics: const BouncingScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
                           itemCount: insights.length,
                           itemBuilder: (context, index) {
-                            return _buildInsightCard(insights[index], theme, index);
+                            return _buildInsightCard(
+                              insights[index],
+                              theme,
+                              index,
+                            );
                           },
                         ),
                 ),
@@ -120,7 +133,10 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
@@ -129,7 +145,7 @@ class _RelationshipInsightsScreenState extends State<RelationshipInsightsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Love Insights',
+                  'Relationship Insights',
                   style: AppTypography.cormorant(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

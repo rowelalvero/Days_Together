@@ -99,9 +99,82 @@ class DailyMoodProvider with ChangeNotifier {
         if (hasListeners) {
           _initSupabaseSync();
         }
+        _fetchInitialData();
       } else {
-        _loadData();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _moods = [];
+    _partnerMoods = [];
+    _todayQuestion = _generateTodayQuestion();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_moodKey);
+      await prefs.remove(_partnerMoodKey);
+      await prefs.remove(_questionKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      // 1. Fetch moods
+      final List<dynamic> moodsRes = await Supabase.instance.client
+          .from('moods')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final List<DailyMood> incomingMyMoods = [];
+      final List<DailyMood> incomingPartnerMoods = [];
+      for (final data in moodsRes) {
+        final m = DailyMood(
+          id: data['id'] as String?,
+          userId: data['user_id'] as String?,
+          date: data['date'] as String? ?? '',
+          moodScore: data['mood_score'] as int? ?? 5,
+          note: data['note'] as String?,
+        );
+        if (m.userId == _userId) {
+          incomingMyMoods.add(m);
+        } else {
+          incomingPartnerMoods.add(m);
+        }
+      }
+      _moods = incomingMyMoods;
+      _partnerMoods = incomingPartnerMoods;
+      await _persistLocalMoodsOnly();
+
+      // 2. Fetch daily sync question
+      final qRes = await Supabase.instance.client
+          .from('daily_sync_questions')
+          .select()
+          .eq('couple_id', _coupleId!)
+          .eq('date', _todayString)
+          .maybeSingle();
+
+      if (qRes != null) {
+        final questionText = qRes['question'] as String? ?? '';
+        final answers = Map<String, dynamic>.from(qRes['answers'] ?? {});
+        final myAnswer = answers[_userId];
+        final partnerKey = _partnerId ?? answers.keys.firstWhere((k) => k != _userId, orElse: () => 'partner_simulator');
+        final partnerAnswer = answers[partnerKey];
+
+        _todayQuestion = DailySyncQuestion(
+          question: questionText,
+          myAnswer: myAnswer as String?,
+          partnerAnswer: partnerAnswer as String?,
+          date: _todayString,
+        );
+      } else {
+        _todayQuestion = _generateTodayQuestion();
+      }
+      await _persistLocalQuestionOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('DailyMoodProvider._fetchInitialData error: $e');
     }
   }
 

@@ -70,9 +70,77 @@ class TopicCardsProvider with ChangeNotifier {
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadData();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _customCards = [];
+    _likedCardIds = {};
+    _partnerLikedCardIds = {};
+    _pendingLikes = {};
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_customCardsKey);
+      await prefs.remove(_likedCardIdsKey);
+      await prefs.remove(_pendingLikesKey);
+    } catch (_) {}
+    _currentIndex = 0;
+    _updateActiveDeck();
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      // 1. Fetch custom cards
+      final List<dynamic> cardsRes = await Supabase.instance.client
+          .from('topic_cards')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsedCards = cardsRes.map((data) {
+        return TopicCard(
+          id: data['id'] as String,
+          category: data['category'] ?? '',
+          question: data['question'] ?? '',
+          isCustom: true,
+          isLiked: false,
+        );
+      }).toList();
+      _customCards = parsedCards;
+      await _saveCustomCards();
+
+      // 2. Fetch card likes
+      final List<dynamic> likesRes = await Supabase.instance.client
+          .from('topic_card_likes')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final Set<String> myLikes = {};
+      final Set<String> partnerLikes = {};
+      for (final data in likesRes) {
+        final cardId = data['card_id'] as String? ?? '';
+        final likedByUserId = data['user_id'] as String? ?? '';
+        final isLikedVal = data['is_liked'] as bool? ?? false;
+        if (isLikedVal) {
+          if (likedByUserId == _userId) {
+            myLikes.add(cardId);
+          } else {
+            partnerLikes.add(cardId);
+          }
+        }
+      }
+      _likedCardIds = myLikes;
+      _partnerLikedCardIds = partnerLikes;
+      await _saveLikedCardIds();
+
+      _currentIndex = 0;
+      _updateActiveDeck();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('TopicCardsProvider._fetchInitialData error: $e');
     }
   }
 

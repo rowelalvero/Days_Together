@@ -45,9 +45,44 @@ class GiftReminderProvider with ChangeNotifier {
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadReminders();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _reminders = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('gift_reminders')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        return GiftReminder(
+          id: data['id'] as String,
+          title: data['title'] ?? '',
+          date: data['date'] != null
+              ? DateTime.parse(data['date'] as String)
+              : DateTime.now(),
+        );
+      }).toList();
+
+      _reminders = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('GiftReminderProvider._fetchInitialData error: $e');
     }
   }
 

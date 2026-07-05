@@ -75,9 +75,54 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
           _userId != null &&
           relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadItems();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _items = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('vault_items')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        final typeIndex = data['type'] as int? ?? 0;
+        final type =
+            (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+                ? VaultItemType.values[typeIndex]
+                : VaultItemType.photo;
+
+        return VaultItem(
+          id: data['id'] as String,
+          type: type,
+          content: data['content'] as String?,
+          imagePath: data['image_path'] as String?,
+          imageUrl: data['network_image_url'] as String?,
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at'] as String)
+              : DateTime.now(),
+        );
+      }).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      _items = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('VaultProvider._fetchInitialData error: $e');
     }
   }
 

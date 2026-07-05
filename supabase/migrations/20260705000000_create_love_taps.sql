@@ -41,3 +41,6 @@ CREATE POLICY "Enable update for same couple" ON public.love_taps
 
 -- 5. Create performance index
 CREATE INDEX IF NOT EXISTS love_taps_couple_id_date_idx ON public.love_taps (couple_id, date);
+
+-- 6. Add to realtime publication
+ALTER PUBLICATION supabase_realtime ADD TABLE public.love_taps;

@@ -247,6 +247,7 @@ class _StorybookViewState extends State<StorybookView> {
                                   context: context,
                                   isScrollControlled: true,
                                   backgroundColor: Colors.transparent,
+                                  barrierColor: Colors.transparent,
                                   builder: (context) => DraggableScrollableSheet(
                                     initialChildSize: 0.8,
                                     minChildSize: 0.4,

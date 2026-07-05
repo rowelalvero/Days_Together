@@ -1108,7 +1108,7 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
     final secStr = seconds.toString().padLeft(2, '0');
 
     return GlassContainer(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       borderRadius: 24,
       child: Column(
         children: [
@@ -1160,6 +1160,69 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
                 ],
               );
             },
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            child: Divider(
+              height: 1,
+              thickness: 0.5,
+              color: Colors.white10,
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      NumberFormat('#,###').format(_difference.inMinutes),
+                      style: AppTypography.sectionHeader(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: widget.theme.textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Total Minutes Passed',
+                      style: AppTypography.caption(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: widget.theme.textColor.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 0.5,
+                height: 32,
+                color: Colors.white10,
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      NumberFormat('#,###').format(_difference.inSeconds),
+                      style: AppTypography.sectionHeader(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: widget.theme.textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Total Seconds Passed',
+                      style: AppTypography.caption(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: widget.theme.textColor.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

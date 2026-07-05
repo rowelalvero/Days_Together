@@ -39,9 +39,51 @@ class LoveChatProvider with ChangeNotifier {
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadMessages();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _messages = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    _prepopulateWelcome();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('love_notes')
+          .select()
+          .eq('couple_id', _coupleId!)
+          .eq('type', 'chat');
+      final parsed = res.map((data) {
+        final senderId = data['sender_id'] as String? ?? '';
+        final senderType = (senderId == _userId) ? 'you' : 'partner';
+        return LoveChatMessage(
+          id: data['id'] as String,
+          senderId: senderType,
+          senderName: (senderType == 'you') ? 'Me' : 'Partner',
+          content: data['content'] as String? ?? '',
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at'] as String).toLocal()
+              : DateTime.now(),
+          isPinned: false,
+        );
+      }).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      _messages = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('LoveChatProvider._fetchInitialData error: $e');
     }
   }
 

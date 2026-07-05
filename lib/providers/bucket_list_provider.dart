@@ -43,9 +43,53 @@ class BucketListProvider with ChangeNotifier {
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadItems();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _items = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('bucket_list')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        return BucketListItem(
+          id: data['id'] as String,
+          title: data['title'] ?? '',
+          isCompleted: data['is_completed'] ?? false,
+          completedAt: data['completed_at'] != null
+              ? DateTime.parse(data['completed_at'] as String)
+              : null,
+          order: data['order_index'] ?? 0,
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at'] as String)
+              : DateTime.now(),
+          scheduledAt: data['scheduled_at'] != null
+              ? DateTime.parse(data['scheduled_at'] as String)
+              : null,
+        );
+      }).toList()
+        ..sort((a, b) => a.order.compareTo(b.order));
+
+      _items = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('BucketListProvider._fetchInitialData error: $e');
     }
   }
 

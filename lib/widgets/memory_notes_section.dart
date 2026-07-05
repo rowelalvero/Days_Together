@@ -496,6 +496,7 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.transparent,
       builder: (ctx) => GlassContainer(
         borderRadius: 24,
         opacity: 0.15,

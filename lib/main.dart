@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
 import 'package:days_together/providers/gift_reminder_provider.dart';
@@ -27,88 +29,105 @@ import 'package:days_together/services/notification_service.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await dotenv.load(fileName: ".env");
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? '',
-      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-    );
-    await NotificationService().init();
-  } catch (e) {
-    debugPrint('Supabase failed to initialize: $e');
-  }
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => RelationshipProvider()),
-        ChangeNotifierProvider(create: (_) => RecentActivityProvider()),
-        ChangeNotifierProxyProvider<RelationshipProvider, TimelineProvider>(
-          create: (_) => TimelineProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, BucketListProvider>(
-          create: (_) => BucketListProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, TimeCapsuleProvider>(
-          create: (_) => TimeCapsuleProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, DailyMoodProvider>(
-          create: (_) => DailyMoodProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, GiftReminderProvider>(
-          create: (_) => GiftReminderProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, VaultProvider>(
-          create: (_) => VaultProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, CalendarProvider>(
-          create: (_) => CalendarProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, TopicCardsProvider>(
-          create: (_) => TopicCardsProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, NoteitProvider>(
-          create: (_) => NoteitProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, LoveChatProvider>(
-          create: (_) => LoveChatProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, CurrentlyProvider>(
-          create: (_) => CurrentlyProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, NotificationPreferencesProvider>(
-          create: (_) => NotificationPreferencesProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
+    // Handle Flutter framework errors gracefully
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      debugPrint('Captured FlutterError: ${details.exception}');
+    };
+
+    // Handle platform/asynchronous errors globally (e.g. Supabase Stream errors)
+    PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      debugPrint('Captured PlatformDispatcher error: $error');
+      return true; // Return true to indicate error is handled
+    };
+
+    try {
+      await dotenv.load(fileName: ".env");
+      await Supabase.initialize(
+        url: dotenv.env['SUPABASE_URL'] ?? '',
+        publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+      );
+      await NotificationService().init();
+    } catch (e) {
+      debugPrint('Supabase failed to initialize: $e');
+    }
+
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => RelationshipProvider()),
+          ChangeNotifierProvider(create: (_) => RecentActivityProvider()),
+          ChangeNotifierProxyProvider<RelationshipProvider, TimelineProvider>(
+            create: (_) => TimelineProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, BucketListProvider>(
+            create: (_) => BucketListProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, TimeCapsuleProvider>(
+            create: (_) => TimeCapsuleProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, DailyMoodProvider>(
+            create: (_) => DailyMoodProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, GiftReminderProvider>(
+            create: (_) => GiftReminderProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, VaultProvider>(
+            create: (_) => VaultProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, CalendarProvider>(
+            create: (_) => CalendarProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, TopicCardsProvider>(
+            create: (_) => TopicCardsProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, NoteitProvider>(
+            create: (_) => NoteitProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, LoveChatProvider>(
+            create: (_) => LoveChatProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, CurrentlyProvider>(
+            create: (_) => CurrentlyProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+          ChangeNotifierProxyProvider<RelationshipProvider, NotificationPreferencesProvider>(
+            create: (_) => NotificationPreferencesProvider(),
+            update: (_, relationship, provider) =>
+                provider!..updateRelationship(relationship),
+          ),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  }, (error, stack) {
+    debugPrint('Captured unhandled runZonedGuarded error: $error');
+  });
 }
 
 class MyApp extends StatelessWidget {

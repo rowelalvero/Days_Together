@@ -228,255 +228,212 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
       animation: Listenable.merge([_celebrationController, _pulseController]),
       builder: (context, child) {
         final celebrationVal = _celebrationController.value;
-        final pulseVal = _pulseController.value;
 
         // Custom borders and shadows for completion/glow states
-        BorderSide borderSide = BorderSide(
+        final borderSide = BorderSide(
           color: theme.textColor.withValues(alpha: 0.08),
           width: 1.5,
         );
 
-        List<BoxShadow>? shadows;
-
-        if (currently.state == LoveTapState.mutual) {
-          final glowOpacity = 0.15 + (0.15 * pulseVal) * (1.0 - celebrationVal * 0.5);
-          borderSide = BorderSide(
-            color: theme.accentColor.withValues(alpha: 0.5 + 0.3 * sin(pulseVal * pi)),
-            width: 2.0,
-          );
-          shadows = [
-            BoxShadow(
-              color: theme.accentColor.withValues(alpha: glowOpacity),
-              blurRadius: 16 + 10 * pulseVal,
-              spreadRadius: 2,
-            ),
-          ];
-        }
-
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Core Card Container
-            Container(
-              decoration: BoxDecoration(
-                boxShadow: shadows,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: GlassContainer(
-                padding: const EdgeInsets.all(18),
-                borderRadius: 24,
-                border: Border.fromBorderSide(borderSide),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: GlassContainer(
+            padding: const EdgeInsets.all(18),
+            borderRadius: 24,
+            border: Border.fromBorderSide(borderSide),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
+                    // Partner Avatar Stack
+                    Stack(
                       children: [
-                        // Partner Avatar Stack
-                        Stack(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isOnline ? Colors.greenAccent : theme.textColor.withValues(alpha: 0.1),
-                                  width: 2,
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                radius: 24,
-                                backgroundColor: theme.textColor.withValues(alpha: 0.1),
-                                foregroundImage: partnerJoined && rp.partnerAvatarPath != null
-                                    ? (rp.partnerAvatarPath!.startsWith('http')
-                                        ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
-                                        : (File(rp.partnerAvatarPath!).existsSync()
-                                            ? FileImage(File(rp.partnerAvatarPath!))
-                                            : null))
-                                    : null,
-                                child: (!partnerJoined || rp.partnerAvatarPath == null)
-                                    ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.3))
-                                    : null,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isOnline ? Colors.greenAccent : theme.textColor.withValues(alpha: 0.1),
+                              width: 2,
                             ),
-                            Positioned(
-                              right: 1,
-                              bottom: 1,
-                              child: Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: isOnline ? Colors.greenAccent : Colors.grey,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: theme.backgroundColor, width: 2),
-                                ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundColor: theme.textColor.withValues(alpha: 0.1),
+                            foregroundImage: partnerJoined && rp.partnerAvatarPath != null
+                                ? (rp.partnerAvatarPath!.startsWith('http')
+                                    ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
+                                    : (File(rp.partnerAvatarPath!).existsSync()
+                                        ? FileImage(File(rp.partnerAvatarPath!))
+                                        : null))
+                                : null,
+                            child: (!partnerJoined || rp.partnerAvatarPath == null)
+                                ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.3))
+                                : null,
+                          ),
+                        ),
+                        Positioned(
+                          right: 1,
+                          bottom: 1,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: isOnline ? Colors.greenAccent : Colors.grey,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: theme.backgroundColor, width: 2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 14),
+                    // Partner Name & Online Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            rp.partnerName ?? 'Waiting for partner...',
+                            style: AppTypography.body(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isOnline ? 'Online • Just now' : 'Offline',
+                            style: AppTypography.caption(
+                              fontSize: 10,
+                              color: theme.textColor.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Love Tap Button
+                    _buildLoveTapButton(currently, theme),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Current Status Activity Text
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    (partnerActivity == null || partnerActivity.trim().isEmpty)
+                        ? 'No activity shared yet'
+                        : partnerActivity,
+                    style: AppTypography.body(
+                      fontSize: 13,
+                      color: theme.textColor.withValues(alpha: 0.8),
+                    ).copyWith(fontStyle: FontStyle.italic),
+                  ),
+                ),
+                const Divider(color: Colors.white10, height: 20),
+                // Bottom Controls: Self Activity Editor & Streaks
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Self status edit trigger
+                    GestureDetector(
+                      onTap: () => _showEditActivitySheet(context, rp),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: theme.textColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit_note_rounded,
+                              size: 14,
+                              color: theme.accentColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              (rp.yourActivity == null || rp.yourActivity!.trim().isEmpty)
+                                  ? "Share what you're doing..."
+                                  : rp.yourActivity!,
+                              style: AppTypography.caption(
+                                fontSize: 11,
+                                color: theme.textColor.withValues(alpha: 0.7),
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
-                        const SizedBox(width: 14),
-                        // Partner Name & Online Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                rp.partnerName ?? 'Waiting for partner...',
-                                style: AppTypography.body(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.textColor,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isOnline ? 'Online • Just now' : 'Offline',
-                                style: AppTypography.caption(
-                                  fontSize: 10,
-                                  color: theme.textColor.withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Love Tap Button
-                        _buildLoveTapButton(currently, theme),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    // Current Status Activity Text
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        (partnerActivity == null || partnerActivity.trim().isEmpty)
-                            ? 'No activity shared yet'
-                            : partnerActivity,
-                        style: AppTypography.body(
-                          fontSize: 13,
-                          color: theme.textColor.withValues(alpha: 0.8),
-                        ).copyWith(fontStyle: FontStyle.italic),
                       ),
                     ),
-                    const Divider(color: Colors.white10, height: 20),
-                    // Bottom Controls: Self Activity Editor & Streaks
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Self status edit trigger
-                        GestureDetector(
-                          onTap: () => _showEditActivitySheet(context, rp),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: theme.textColor.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.edit_note_rounded,
-                                  size: 14,
-                                  color: theme.accentColor,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  (rp.yourActivity == null || rp.yourActivity!.trim().isEmpty)
-                                      ? "Share what you're doing..."
-                                      : rp.yourActivity!,
-                                  style: AppTypography.caption(
-                                    fontSize: 11,
-                                    color: theme.textColor.withValues(alpha: 0.7),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Streak count
-                        if (currently.history.currentStreak > 0)
-                          Row(
-                            children: [
-                              Text(
-                                '🔥',
-                                style: AppTypography.caption(fontSize: 13),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${currently.history.currentStreak} Day Streak',
-                                style: AppTypography.caption(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.textColor.withValues(alpha: 0.8),
-                                ),
-                              ),
-                            ],
-                          )
-                        else
+                    // Streak count
+                    if (currently.history.currentStreak > 0)
+                      Row(
+                        children: [
                           Text(
-                            'Tap to connect today ❤️',
+                            '🔥',
+                            style: AppTypography.caption(fontSize: 13),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${currently.history.currentStreak} Day Streak',
                             style: AppTypography.caption(
-                              fontSize: 10,
-                              color: theme.textColor.withValues(alpha: 0.4),
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textColor.withValues(alpha: 0.8),
                             ),
                           ),
-                      ],
-                    ),
-                    // Successful Completion Message
-                    if (currently.state == LoveTapState.mutual) ...[
-                      const SizedBox(height: 12),
-                      AnimatedOpacity(
-                        opacity: celebrationVal > 0.1 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 550),
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: theme.accentColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              _successMessage,
-                              style: AppTypography.caption(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: theme.accentColor,
-                              ),
-                            ),
-                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        'Tap to connect today ❤️',
+                        style: AppTypography.caption(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.4),
                         ),
                       ),
-                    ],
                   ],
                 ),
-              ),
+                // Successful Completion Message
+                if (currently.state == LoveTapState.mutual) ...[
+                  const SizedBox(height: 12),
+                  AnimatedOpacity(
+                    opacity: celebrationVal > 0.1 ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 550),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: theme.accentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          _successMessage,
+                          style: AppTypography.caption(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: theme.accentColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-            // Floating Hearts Celebration Layer
-            if (celebrationVal > 0 && celebrationVal < 1.0)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    painter: FloatingHeartsPainter(progress: celebrationVal, accentColor: theme.accentColor),
-                  ),
-                ),
-              ),
-            // Sparkles Celebration Layer
-            if (celebrationVal > 0 && celebrationVal < 1.0)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: CustomPaint(
-                    painter: SparkleParticlesPainter(progress: celebrationVal, accentColor: theme.accentColor),
-                  ),
-                ),
-              ),
-          ],
+          ),
         );
       },
     );
@@ -516,7 +473,57 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
         break;
     }
 
-    return ScaleTransition(
+    final celebrationVal = _celebrationController.value;
+    final pulseVal = _pulseController.value;
+
+    Border? buttonBorder;
+    List<BoxShadow>? buttonShadows;
+
+    if (currently.state == LoveTapState.mutual) {
+      final pulseColor = theme.accentColor.withValues(alpha: 0.3 + 0.3 * sin(pulseVal * pi));
+      buttonBorder = Border.all(
+        color: pulseColor,
+        width: 1.5,
+      );
+      buttonShadows = [
+        BoxShadow(
+          color: theme.accentColor.withValues(alpha: 0.1 + 0.1 * pulseVal),
+          blurRadius: 8 + 6 * pulseVal,
+          spreadRadius: 1,
+        ),
+      ];
+    } else {
+      buttonBorder = Border.all(
+        color: theme.textColor.withValues(alpha: 0.04),
+      );
+    }
+
+    Widget buttonContent = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: buttonColor,
+        borderRadius: BorderRadius.circular(16),
+        border: buttonBorder,
+        boxShadow: buttonShadows,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: iconColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTypography.body(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: theme.textColor.withValues(alpha: active ? 0.9 : 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Widget animatedButton = ScaleTransition(
       scale: Tween<double>(begin: 1.0, end: 1.2).animate(
         CurvedAnimation(
           parent: _heartController,
@@ -525,32 +532,32 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
       ),
       child: GestureDetector(
         onTap: active ? () => _triggerTap(currently) : null,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: buttonColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.textColor.withValues(alpha: 0.04),
+        child: buttonContent,
+      ),
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        animatedButton,
+        if (celebrationVal > 0 && celebrationVal < 1.0)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: FloatingHeartsPainter(progress: celebrationVal, accentColor: theme.accentColor),
+              ),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 13, color: iconColor),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: AppTypography.body(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textColor.withValues(alpha: active ? 0.9 : 0.6),
-                ),
+        if (celebrationVal > 0 && celebrationVal < 1.0)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: SparkleParticlesPainter(progress: celebrationVal, accentColor: theme.accentColor),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 }

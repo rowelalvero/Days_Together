@@ -111,9 +111,79 @@ class TimelineProvider with ChangeNotifier {
           _userId != null &&
           relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadTimeline();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _timelineItems = [];
+    try {
+      await _repository.saveTimelineItems([]);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('timeline_items')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        final rawComments = data['comments'];
+        List<CommentData> parsedComments = [];
+        if (rawComments != null) {
+          if (rawComments is List) {
+            parsedComments = rawComments
+                .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+                .toList();
+          } else if (rawComments is String) {
+            try {
+              final decoded = jsonDecode(rawComments);
+              if (decoded is List) {
+                parsedComments = decoded
+                    .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+                    .toList();
+              }
+            } catch (_) {}
+          }
+        }
+        return TimelineItemData(
+          id: data['id'] as String,
+          title: data['title'] ?? '',
+          description: data['description'] ?? '',
+          location: data['location'] as String?,
+          imagePath: data['image_path'] as String?,
+          networkImageUrl: data['network_image_url'] as String?,
+          date: data['date'] != null
+              ? DateTime.parse(data['date'] as String).toLocal()
+              : DateTime.now(),
+          isImageCard: data['is_image_card'] ?? false,
+          position: data['position'] ?? 0,
+          mood: data['mood'] ?? '😍',
+          photoUrls: List<String>.from(data['photo_urls'] ?? []),
+          isPinned: data['is_pinned'] ?? false,
+          comments: parsedComments,
+        );
+      }).toList();
+
+      parsed.sort((a, b) => _isAscending
+          ? a.date.compareTo(b.date)
+          : b.date.compareTo(a.date));
+
+      for (var i = 0; i < parsed.length; i++) {
+        parsed[i].position = i;
+      }
+
+      _timelineItems = parsed;
+      await _repository.saveTimelineItems(_timelineItems);
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('TimelineProvider._fetchInitialData error: $e');
     }
   }
 

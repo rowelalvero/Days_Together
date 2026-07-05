@@ -46,9 +46,49 @@ class TimeCapsuleProvider with ChangeNotifier {
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadCapsules();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _capsules = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('time_capsules')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        return TimeCapsule(
+          id: data['id'] as String,
+          message: data['message'] ?? '',
+          openDate: data['open_date'] != null
+              ? DateTime.parse(data['open_date'] as String).toLocal()
+              : DateTime.now(),
+          isOpened: data['is_opened'] ?? false,
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at'] as String).toLocal()
+              : DateTime.now(),
+        );
+      }).toList()
+        ..sort((a, b) => a.openDate.compareTo(b.openDate));
+
+      _capsules = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('TimeCapsuleProvider._fetchInitialData error: $e');
     }
   }
 

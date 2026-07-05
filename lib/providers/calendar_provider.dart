@@ -40,9 +40,57 @@ class CalendarProvider with ChangeNotifier {
 
       if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
         _initSupabaseSync();
+        _fetchInitialData();
       } else {
-        _loadEvents();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _events = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('calendar_events')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        final hour = data['hour'] as int?;
+        final minute = data['minute'] as int?;
+        final typeIndex = data['type'] as int? ?? 4;
+        final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
+            ? CalendarEventType.values[typeIndex]
+            : CalendarEventType.other;
+
+        return CalendarEvent(
+          id: data['id'] as String,
+          title: data['title'] ?? '',
+          description: data['description'] as String?,
+          date: data['date'] != null
+              ? DateTime.parse(data['date'] as String)
+              : DateTime.now(),
+          time: (hour != null && minute != null)
+              ? TimeOfDay(hour: hour, minute: minute)
+              : null,
+          type: type,
+          isRecurringYearly: data['is_recurring_yearly'] ?? false,
+        );
+      }).toList();
+
+      _events = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('CalendarProvider._fetchInitialData error: $e');
     }
   }
 

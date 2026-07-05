@@ -338,7 +338,7 @@ class BentoGrid extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'EMOTIONAL MAP',
+                        'EMOTIONAL TREND',
                         style: AppTypography.cardCategory(
                           fontSize: 8.5,
                           fontWeight: FontWeight.w800,
@@ -371,7 +371,7 @@ class BentoGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Emotional Map',
+                      'Emotional Wave Map',
                       style: AppTypography.cardTitle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -631,7 +631,7 @@ class BentoGrid extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'LOVE CHAT',
+                        'CHAT',
                         style: AppTypography.cardCategory(
                           fontSize: 8.5,
                           fontWeight: FontWeight.w800,
@@ -661,7 +661,7 @@ class BentoGrid extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Love Chat Space',
+                  'Chat Space',
                   style: AppTypography.cardTitle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -972,7 +972,7 @@ class BentoGrid extends StatelessWidget {
 
     if (recent.length < 2) {
       return Container(
-        height: 60,
+        height: 150,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
@@ -1012,84 +1012,194 @@ class BentoGrid extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 70,
+      height: 150,
       width: double.infinity,
-      child: LineChart(
-        LineChartData(
-          gridData: const FlGridData(show: false),
-          titlesData: const FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          minX: 0,
-          maxX: 6,
-          minY: 0,
-          maxY: 11,
-          lineTouchData: const LineTouchData(enabled: false),
-          lineBarsData: [
-            // User Line
-            if (userSpots.length >= 2)
-              LineChartBarData(
-                spots: userSpots,
-                isCurved: true,
-                color: theme.accentColor,
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: true,
-                  checkToShowDot: (spot, barData) =>
-                      spot.x == barData.spots.last.x,
-                  getDotPainter: (spot, percent, barData, index) =>
-                      FlDotCirclePainter(
-                        radius: 4,
-                        color: theme.accentColor,
-                        strokeWidth: 1.5,
-                        strokeColor: Colors.white,
-                      ),
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.accentColor.withValues(alpha: 0.15),
-                      theme.accentColor.withValues(alpha: 0.0),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-            // Partner Line
-            if (partnerSpots.length >= 2)
-              LineChartBarData(
-                spots: partnerSpots,
-                isCurved: true,
-                color: theme.textColor.withValues(alpha: 0.2),
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: true,
-                  checkToShowDot: (spot, barData) =>
-                      spot.x == barData.spots.last.x,
-                  getDotPainter: (spot, percent, barData, index) =>
-                      FlDotCirclePainter(
-                        radius: 4,
-                        color: theme.textColor.withValues(alpha: 0.2),
-                        strokeWidth: 1.5,
-                        strokeColor: Colors.white,
-                      ),
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.textColor.withValues(alpha: 0.05),
-                      theme.textColor.withValues(alpha: 0.0),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8.0, right: 12.0),
+        child: LineChart(
+          LineChartData(
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              getDrawingHorizontalLine: (value) {
+                return FlLine(
+                  color: theme.textColor.withValues(alpha: 0.05),
+                  strokeWidth: 1,
+                );
+              },
+            ),
+            titlesData: FlTitlesData(
+              show: true,
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 28,
+                  interval: 2.5,
+                  getTitlesWidget: (value, meta) {
+                    String emoji = '';
+                    if (value == 10) {
+                      emoji = '😄';
+                    } else if (value == 7.5) {
+                      emoji = '🙂';
+                    } else if (value == 5.0) {
+                      emoji = '😐';
+                    } else if (value == 2.5) {
+                      emoji = '😢';
+                    } else if (value == 0.0) {
+                      emoji = '😭';
+                    }
+
+                    if (emoji.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Text(emoji, style: const TextStyle(fontSize: 12));
+                  },
                 ),
               ),
-          ],
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 22,
+                  interval: 1,
+                  getTitlesWidget: (value, meta) {
+                    final idx = value.toInt();
+                    if (idx >= 0 && idx < dates.length) {
+                      final dateStr = dates[idx];
+                      try {
+                        final date = DateTime.parse(dateStr);
+                        final label = DateFormat(
+                          'E',
+                        ).format(date); // Mon, Tue...
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            label,
+                            style: AppTypography.captionMono(
+                              fontSize: 9,
+                              color: theme.textColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        );
+                      } catch (_) {}
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ),
+            borderData: FlBorderData(show: false),
+            minX: 0,
+            maxX: 6,
+            minY: 0,
+            maxY: 10,
+            lineTouchData: LineTouchData(
+              enabled: true,
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipColor: (touchedSpot) =>
+                    theme.backgroundColor.withValues(alpha: 0.95),
+                tooltipBorder: BorderSide(
+                  color: theme.textColor.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+                tooltipRoundedRadius: 12,
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((barSpot) {
+                    final score = barSpot.y.toInt();
+                    final isUser = barSpot.barIndex == 0;
+                    final label = isUser ? 'You' : 'Partner';
+                    final scoreEmoji = score >= 9
+                        ? '😄'
+                        : score >= 7
+                        ? '🙂'
+                        : score >= 5
+                        ? '😐'
+                        : score >= 3
+                        ? '😢'
+                        : '😭';
+                    return LineTooltipItem(
+                      '$label: $scoreEmoji ($score)',
+                      TextStyle(
+                        color: isUser
+                            ? theme.accentColor
+                            : theme.textColor.withValues(alpha: 0.7),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
+            lineBarsData: [
+              // User Line
+              if (userSpots.isNotEmpty)
+                LineChartBarData(
+                  spots: userSpots,
+                  isCurved: true,
+                  color: theme.accentColor,
+                  barWidth: 3,
+                  isStrokeCapRound: true,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, barData, index) =>
+                        FlDotCirclePainter(
+                          radius: 3.5,
+                          color: theme.accentColor,
+                          strokeWidth: 1.0,
+                          strokeColor: Colors.white,
+                        ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.accentColor.withValues(alpha: 0.15),
+                        theme.accentColor.withValues(alpha: 0.0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              // Partner Line
+              if (partnerSpots.isNotEmpty)
+                LineChartBarData(
+                  spots: partnerSpots,
+                  isCurved: true,
+                  color: theme.textColor.withValues(alpha: 0.2),
+                  barWidth: 3,
+                  isStrokeCapRound: true,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, barData, index) =>
+                        FlDotCirclePainter(
+                          radius: 3.5,
+                          color: theme.textColor.withValues(alpha: 0.3),
+                          strokeWidth: 1.0,
+                          strokeColor: Colors.white,
+                        ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.textColor.withValues(alpha: 0.05),
+                        theme.textColor.withValues(alpha: 0.0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

@@ -64,12 +64,61 @@ class NoteitProvider with ChangeNotifier {
         NoteitSyncManager.instance.initialize(this);
         if (relationship.isFirebaseAvailable) {
           _initSupabaseSync();
+          _fetchInitialData();
         } else {
           _loadNotes();
         }
       } else {
-        _loadNotes();
+        _clearLocalCache();
       }
+    }
+  }
+
+  Future<void> _clearLocalCache() async {
+    _notes = [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (_) {}
+    if (!_disposed) notifyListeners();
+  }
+
+  Future<void> _fetchInitialData() async {
+    if (_coupleId == null) return;
+    try {
+      final List<dynamic> res = await Supabase.instance.client
+          .from('love_notes')
+          .select()
+          .eq('couple_id', _coupleId!);
+      final parsed = res.map((data) {
+        final typeIndex = data['type'] as int? ?? 0;
+        final type =
+            (typeIndex >= 0 && typeIndex < NoteitType.values.length)
+                ? NoteitType.values[typeIndex]
+                : NoteitType.drawing;
+
+        final senderId = data['sender_id'] as String?;
+        final senderType = senderId == _userId ? 'me' : 'partner';
+
+        return NoteitItem(
+          id: data['id'] as String,
+          type: type,
+          content: data['content'] as String?,
+          imagePath: data['image_path'] as String?,
+          imageUrl: data['network_image_url'] as String?,
+          sender: senderType,
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at'] as String).toLocal()
+              : DateTime.now(),
+        );
+      }).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      _notes = parsed;
+      await _persistLocalOnly();
+      if (!_disposed) notifyListeners();
+    } catch (e) {
+      debugPrint('NoteitProvider._fetchInitialData error: $e');
     }
   }
 
