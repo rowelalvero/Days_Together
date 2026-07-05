@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
@@ -193,6 +196,17 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
   ) {
     final isRevealed = _revealedMessageIds.contains(message.id);
 
+    final isScrapbook = message.content.startsWith('[scrapbook]:');
+    NoteitItem? scrapbookItem;
+    if (isScrapbook) {
+      try {
+        final payload = message.content.substring('[scrapbook]:'.length);
+        scrapbookItem = NoteitItem.fromJson(jsonDecode(payload));
+      } catch (e) {
+        debugPrint('Failed to parse scrapbook chat message: $e');
+      }
+    }
+
     // Grouped message bubble spacing
     final bottomPadding = isLastInGroup ? 14.0 : 3.0;
 
@@ -260,6 +274,171 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
       }
     }
 
+    Widget bubbleContent;
+    if (isScrapbook && scrapbookItem != null) {
+      Widget canvasContent = const SizedBox.shrink();
+      if (scrapbookItem.type == NoteitType.text) {
+        canvasContent = Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            scrapbookItem.content ?? '',
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTypography.lora(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              fontStyle: FontStyle.italic,
+              color: Colors.white,
+              height: 1.3,
+            ),
+          ),
+        );
+      } else if (scrapbookItem.type == NoteitType.drawing) {
+        Widget drawingWidget;
+        if (scrapbookItem.imagePath != null && File(scrapbookItem.imagePath!).existsSync()) {
+          drawingWidget = Image.file(
+            File(scrapbookItem.imagePath!),
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          );
+        } else if (scrapbookItem.imageUrl != null && scrapbookItem.imageUrl!.isNotEmpty) {
+          drawingWidget = Image.network(
+            scrapbookItem.imageUrl!,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+          );
+        } else {
+          drawingWidget = CustomPaint(
+            painter: ScaleDrawingPainter(
+              strokes: NoteitItem.deserializeStrokes(scrapbookItem.content),
+              color: theme.textColor,
+              strokeWidth: 2.0,
+            ),
+          );
+        }
+        canvasContent = drawingWidget;
+      } else if (scrapbookItem.type == NoteitType.photo) {
+        canvasContent = scrapbookItem.imagePath != null && File(scrapbookItem.imagePath!).existsSync()
+            ? Image.file(
+                File(scrapbookItem.imagePath!),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              )
+            : scrapbookItem.imageUrl != null && scrapbookItem.imageUrl!.isNotEmpty
+                ? Image.network(
+                    scrapbookItem.imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+                  )
+                : Center(
+                    child: Icon(
+                      Icons.photo_rounded,
+                      color: theme.textColor.withValues(alpha: 0.6),
+                      size: 24,
+                    ),
+                  );
+      }
+
+      bubbleContent = Container(
+        width: 180,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.backgroundColor.withValues(alpha: 0.95),
+          borderRadius: borderRadius,
+          border: Border.all(
+            color: theme.textColor.withValues(alpha: 0.15),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Polaroid-like square canvas
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: scrapbookItem.backgroundColor ?? theme.accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: canvasContent,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            // Caption
+            Row(
+              children: [
+                Icon(
+                  scrapbookItem.type == NoteitType.text
+                      ? Icons.note_alt_rounded
+                      : scrapbookItem.type == NoteitType.photo
+                          ? Icons.image_rounded
+                          : Icons.palette_rounded,
+                  size: 11,
+                  color: theme.accentColor,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    scrapbookItem.type == NoteitType.text
+                        ? 'Scrapbook Note'
+                        : scrapbookItem.type == NoteitType.photo
+                            ? 'Scrapbook Photo'
+                            : 'Scrapbook Doodle',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textColor.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    } else {
+      bubbleContent = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isMe
+              ? theme.accentColor.withValues(alpha: 0.18)
+              : theme.textColor.withValues(alpha: 0.05),
+          borderRadius: borderRadius,
+          border: Border.all(
+            color: theme.textColor.withValues(alpha: 0.05),
+          ),
+        ),
+        child: Text(
+          message.content,
+          style: AppTypography.body(
+            color: theme.textColor,
+            fontSize: 14,
+            height: 1.35,
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
       child: Column(
@@ -296,35 +475,20 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
           // Bubble Wrapper
           GestureDetector(
             onTap: () {
-              setState(() {
-                if (isRevealed) {
-                  _revealedMessageIds.remove(message.id);
-                } else {
-                  _revealedMessageIds.add(message.id);
-                }
-              });
+              if (isScrapbook && scrapbookItem != null) {
+                _showEnlargeNoteDialog(context, scrapbookItem, theme);
+              } else {
+                setState(() {
+                  if (isRevealed) {
+                    _revealedMessageIds.remove(message.id);
+                  } else {
+                    _revealedMessageIds.add(message.id);
+                  }
+                });
+              }
             },
             onLongPress: () => _showActions(context, message, provider),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isMe
-                    ? theme.accentColor.withValues(alpha: 0.18)
-                    : theme.textColor.withValues(alpha: 0.05),
-                borderRadius: borderRadius,
-                border: Border.all(
-                  color: theme.textColor.withValues(alpha: 0.05),
-                ),
-              ),
-              child: Text(
-                message.content,
-                style: AppTypography.body(
-                  color: theme.textColor,
-                  fontSize: 14,
-                  height: 1.35,
-                ),
-              ),
-            ),
+            child: bubbleContent,
           ),
 
           // Tapped revealed timestamp
@@ -440,5 +604,105 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
         ],
       ),
     );
+  }
+
+  void _showEnlargeNoteDialog(BuildContext context, NoteitItem item, dynamic theme) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                color: item.backgroundColor ?? Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: theme.textColor.withValues(alpha: 0.2),
+                  width: 2,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: _buildWidgetContent(item, theme),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                item.sender == 'you' ? 'Sent by You' : 'Received from Partner',
+                style: AppTypography.bodyLarge(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWidgetContent(NoteitItem item, dynamic theme) {
+    if (item.imagePath != null && File(item.imagePath!).existsSync()) {
+      return Image.file(
+        File(item.imagePath!),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    } else if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
+      return Image.network(
+        item.imageUrl!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return const Center(child: CircularProgressIndicator());
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(Icons.broken_image, color: Colors.grey),
+          );
+        },
+      );
+    }
+
+    if (item.type == NoteitType.drawing) {
+      return CustomPaint(
+        painter: ScaleDrawingPainter(
+          strokes: NoteitItem.deserializeStrokes(item.content),
+          color: theme.textColor,
+          strokeWidth: 3.5,
+        ),
+      );
+    } else if (item.type == NoteitType.text) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.center,
+        child: Text(
+          item.content ?? '',
+          textAlign: TextAlign.center,
+          style: AppTypography.lora(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontStyle: FontStyle.italic,
+            color: Colors.white,
+            height: 1.4,
+          ),
+        ),
+      );
+    }
+    return Container(color: Colors.grey);
   }
 }

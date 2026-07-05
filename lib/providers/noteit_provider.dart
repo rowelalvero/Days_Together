@@ -207,7 +207,7 @@ class NoteitProvider with ChangeNotifier {
       NoteitItem(
         type: NoteitType.text,
         content:
-            'Hi there! Welcome to Doodle Notes! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
+            'Hi there! Welcome to Scrapbook! 💌 Draw a doodle, choose a picture, or write a note to send it directly to your partner!',
         sender: 'partner',
         createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
         backgroundColor: const Color(0xFF9D4EDD),
@@ -350,8 +350,7 @@ class NoteitProvider with ChangeNotifier {
       debugPrint('NoteitProvider.sendPhoto failed: $e');
     }
   }
-
-  Future<void> sendCanvas(String jsonContent, String? localImagePath) async {
+  Future<NoteitItem> sendCanvas(String jsonContent, String? localImagePath) async {
     final noteId = const Uuid().v4();
     String? finalLocalPath;
     
@@ -362,7 +361,7 @@ class NoteitProvider with ChangeNotifier {
         finalLocalPath = '${directory.path}/$fileName';
         await File(localImagePath).copy(finalLocalPath);
       } catch (e) {
-        debugPrint('NoteitProvider: Failed to copy canvas background: $e');
+        debugPrint('NoteitProvider: Failed to copy scrapbook background: $e');
       }
     }
 
@@ -394,12 +393,14 @@ class NoteitProvider with ChangeNotifier {
 
     await RecentActivityService.instance.logActivity(
       activityType: 'created',
-      title: 'Created canvas note 🎨',
-      description: 'Shared an interactive canvas note',
+      title: 'Created scrapbook canvas note 🎨',
+      description: 'Shared an interactive scrapbook canvas note',
       icon: '🎨',
       referenceId: noteId,
       route: 'doodle_notes',
     );
+    
+    return newItem;
   }
 
   Future<void> deleteNote(String id) async {

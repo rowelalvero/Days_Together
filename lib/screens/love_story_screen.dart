@@ -19,6 +19,7 @@ import 'package:days_together/widgets/dashboard/milestone_card.dart';
 import 'package:days_together/widgets/dashboard/memory_highlight_carousel.dart';
 import 'package:days_together/widgets/dashboard/relationship_statistics.dart';
 import 'package:days_together/widgets/dashboard/bento_grid.dart';
+import 'package:days_together/widgets/dashboard/currently_card.dart';
 import 'package:days_together/widgets/dashboard/recent_activity_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -532,6 +533,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DetailedDaysCounter(relationshipProvider: rp, theme: theme),
+            const SizedBox(height: 16),
+            const CurrentlyCard(),
             const SizedBox(height: 16),
             InsightsBanner(
               timelineProvider: tp,

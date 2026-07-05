@@ -16,6 +16,8 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/providers/love_chat_provider.dart';
+import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/widgets/color_picker_dialog.dart';
@@ -35,18 +37,18 @@ class _NoteitScreenState extends State<NoteitScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
-  
+
   late PainterController _controller;
-  
+
   // Active Modes: 'select', 'pen', 'pencil', 'marker', 'eraser', 'shapes'
   String _activeMode = 'pen';
   bool _isPropertiesPanelExpanded = true;
   ObjectDrawable? _lastSelectedObj;
   String _activeShape = 'rectangle'; // 'rectangle', 'oval', 'line', 'arrow'
-  
+
   Color _brushColor = const Color(0xFFFF4D6D);
   double _strokeWidth = 4.0;
-  
+
   // Rich Text Configuration State
   double _fontSize = 20.0;
   bool _isBold = false;
@@ -76,14 +78,15 @@ class _NoteitScreenState extends State<NoteitScreen>
     'Caveat',
     'Amatic SC',
   ];
-  
+
   // Background configuration
   String _bgType = 'color'; // 'color', 'gradient', 'grid', 'dots', 'notebook'
   Color _bgColor = Colors.white;
-  
+
   bool _isSaving = false;
 
   final List<Color> _paletteColors = [
+    Colors.black,
     const Color(0xFFFF4D6D), // pink
     const Color(0xFFFF85A1), // light pink
     const Color(0xFFFFB3C1), // soft pink
@@ -91,14 +94,22 @@ class _NoteitScreenState extends State<NoteitScreen>
     const Color(0xFF9D4EDD), // purple
     const Color(0xFFD4AF37), // gold
     Colors.white,
-    Colors.black,
   ];
 
   int _currentTabIndex = 0;
 
+  // Inline text editing state
+  bool _isInlineEditing = false;
+  late TextEditingController _inlineTextController;
+  late FocusNode _inlineTextFocusNode;
+  CustomTextDrawable? _editingTextDrawable;
+  bool _isEditingExistingText = false;
+
   @override
   void initState() {
     super.initState();
+    _inlineTextController = TextEditingController();
+    _inlineTextFocusNode = FocusNode();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (mounted) {
@@ -110,7 +121,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     _initController();
     _loadDraft();
   }
-  
+
   void _initController() {
     _controller = PainterController(
       settings: PainterSettings(
@@ -119,9 +130,7 @@ class _NoteitScreenState extends State<NoteitScreen>
           color: Color(0xFFFF4D6D),
           strokeWidth: 4.0,
         ),
-        scale: const ScaleSettings(
-          enabled: false,
-        ),
+        scale: const ScaleSettings(enabled: false),
       ),
     );
     _controller.background = ColorBackgroundDrawable(color: _bgColor);
@@ -137,7 +146,10 @@ class _NoteitScreenState extends State<NoteitScreen>
 
   Future<void> _saveDraft() async {
     try {
-      final doc = CanvasMapping.toDocument(_controller.drawables, _controller.value.background);
+      final doc = CanvasMapping.toDocument(
+        _controller.drawables,
+        _controller.value.background,
+      );
       final jsonStr = jsonEncode(doc.toJson());
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('noteit_draft_canvas', jsonStr);
@@ -153,7 +165,7 @@ class _NoteitScreenState extends State<NoteitScreen>
       if (jsonStr != null && jsonStr.isNotEmpty) {
         final doc = CanvasDocument.fromJson(jsonDecode(jsonStr));
         final drawables = await CanvasMapping.toDrawables(doc);
-        
+
         setState(() {
           _controller.value = _controller.value.copyWith(
             background: CanvasMapping.toBackgroundDrawable(doc.background),
@@ -276,7 +288,9 @@ class _NoteitScreenState extends State<NoteitScreen>
         backgroundColor: bg,
         fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
         fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
-        decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
+        decoration: isUnderline
+            ? TextDecoration.underline
+            : TextDecoration.none,
       );
     } catch (_) {
       return TextStyle(
@@ -286,102 +300,154 @@ class _NoteitScreenState extends State<NoteitScreen>
         backgroundColor: bg,
         fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
         fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
-        decoration: isUnderline ? TextDecoration.underline : TextDecoration.none,
+        decoration: isUnderline
+            ? TextDecoration.underline
+            : TextDecoration.none,
       );
     }
   }
 
-  void _addText() async {
-    final wasActive = _activeMode == 'text';
+  void _startInlineEditing({CustomTextDrawable? existingDrawable}) {
+    final renderBox =
+        _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
+    final canvasWidth = renderBox?.size.width ?? 600.0;
+    final canvasHeight = renderBox?.size.height ?? 600.0;
+    final centerY = canvasHeight / 2;
+
     setState(() {
-      if (wasActive) {
-        _isPropertiesPanelExpanded = !_isPropertiesPanelExpanded;
+      _isInlineEditing = true;
+      _activeMode = 'text';
+      _isPropertiesPanelExpanded = true;
+      _updateSettings();
+
+      if (existingDrawable != null) {
+        _editingTextDrawable = existingDrawable;
+        _isEditingExistingText = true;
+        _inlineTextController.text = existingDrawable.text;
+
+        // Load the styles from the existing drawable
+        _fontSize = existingDrawable.style.fontSize ?? 20.0;
+        _brushColor = existingDrawable.style.color ?? const Color(0xFFFF4D6D);
+        _isBold = existingDrawable.style.fontWeight == FontWeight.bold;
+        _isItalic = existingDrawable.style.fontStyle == FontStyle.italic;
+        _isUnderline =
+            existingDrawable.style.decoration == TextDecoration.underline;
+        _textAlign = existingDrawable.textAlign;
+        _highlightColor =
+            existingDrawable.style.backgroundColor ?? Colors.transparent;
+        _activeFontFamily = existingDrawable.style.fontFamily ?? 'Spectral';
+
+        // Hide original on canvas
+        final hiddenDrawable = existingDrawable.copyWith(hidden: true);
+        _controller.replaceDrawable(existingDrawable, hiddenDrawable);
+        _editingTextDrawable = hiddenDrawable;
+
+        // Deselect so the handles disappear
+        _controller.deselectObjectDrawable();
       } else {
-        _activeMode = 'text';
-        _isPropertiesPanelExpanded = true;
-        _updateSettings();
+        _editingTextDrawable = null;
+        _isEditingExistingText = false;
+        _inlineTextController.clear();
+
+        // Create a temporary hidden text layer
+        final tempDrawable = CustomTextDrawable(
+          text: '',
+          position: Offset(canvasWidth / 2, centerY),
+          style: _getTextStyle(
+            fontSize: _fontSize,
+            color: _brushColor,
+            isBold: _isBold,
+            isItalic: _isItalic,
+            isUnderline: _isUnderline,
+            fontFamily: _activeFontFamily,
+            highlightColor: _highlightColor,
+          ),
+          textAlign: _textAlign,
+          hidden: true,
+        );
+        _controller.addDrawables([tempDrawable]);
+        _editingTextDrawable = tempDrawable;
       }
     });
 
-    if (wasActive && !_isPropertiesPanelExpanded) {
-      return;
-    }
-
-    final text = await _showTextInputDialog("");
-    if (text != null && text.trim().isNotEmpty) {
-      final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
-      final canvasWidth = renderBox?.size.width ?? 600.0;
-      final canvasHeight = renderBox?.size.height ?? 600.0;
-      final centerY = canvasHeight / 2;
-      
-      final tempDrawable = CustomTextDrawable(
-        text: text,
-        position: Offset(canvasWidth / 2, centerY),
-        style: _getTextStyle(
-          fontSize: _fontSize,
-          color: _brushColor,
-          isBold: _isBold,
-          isItalic: _isItalic,
-          isUnderline: _isUnderline,
-          fontFamily: _activeFontFamily,
-          highlightColor: _highlightColor,
-        ),
-        textAlign: _textAlign,
-      );
-      
-      final textWidth = tempDrawable.getSize().width * tempDrawable.scale;
-      double newX = canvasWidth / 2;
-      const double margin = 20.0;
-      
-      if (_textAlign == TextAlign.left) {
-        newX = (textWidth / 2) + margin;
-      } else if (_textAlign == TextAlign.right) {
-        newX = canvasWidth - (textWidth / 2) - margin;
-      }
-      
-      final textDrawable = tempDrawable.copyWith(
-        position: Offset(newX, centerY),
-      );
-      
-      _controller.addDrawables([textDrawable]);
-      _controller.selectObjectDrawable(textDrawable);
-    }
+    _inlineTextFocusNode.requestFocus();
   }
 
-  Future<String?> _showTextInputDialog(String initialText) {
-    final theme = context.read<ThemeProvider>().currentLoveTheme;
-    final textController = TextEditingController(text: initialText);
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: theme.backgroundColor,
-        title: Text(
-          initialText.isEmpty ? 'Add Text' : 'Edit Text',
-          style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          style: AppTypography.body(color: theme.textColor),
-          decoration: InputDecoration(
-            hintText: 'Type something...',
-            hintStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.5)),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.2))),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.accentColor)),
+  void _finishInlineEditing({bool cancel = false}) {
+    if (!_isInlineEditing) return;
+
+    final text = _inlineTextController.text;
+    final drawable = _editingTextDrawable;
+
+    setState(() {
+      _isInlineEditing = false;
+    });
+
+    if (cancel || text.trim().isEmpty) {
+      if (drawable != null) {
+        if (_isEditingExistingText) {
+          // Restore original
+          final restored = drawable.copyWith(hidden: false);
+          _controller.replaceDrawable(drawable, restored);
+          _controller.selectObjectDrawable(restored);
+        } else {
+          // Remove the temporary drawable
+          _controller.removeDrawable(drawable);
+        }
+      }
+    } else {
+      if (drawable != null) {
+        final renderBox =
+            _controller.painterKey.currentContext?.findRenderObject()
+                as RenderBox?;
+        final canvasWidth = renderBox?.size.width ?? 600.0;
+
+        final tempDrawable = CustomTextDrawable(
+          text: text,
+          position: drawable.position,
+          style: _getTextStyle(
+            fontSize: _fontSize,
+            color: _brushColor,
+            isBold: _isBold,
+            isItalic: _isItalic,
+            isUnderline: _isUnderline,
+            fontFamily: _activeFontFamily,
+            highlightColor: _highlightColor,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.6))),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, textController.text),
-            child: Text('Save', style: AppTypography.button(color: theme.accentColor)),
-          ),
-        ],
-      ),
-    );
+          textAlign: _textAlign,
+          hidden: false,
+        );
+
+        final textWidth = tempDrawable.getSize().width * tempDrawable.scale;
+        double newX = tempDrawable.position.dx;
+        const double margin = 20.0;
+
+        if (!_isEditingExistingText) {
+          newX = canvasWidth / 2;
+          if (_textAlign == TextAlign.left) {
+            newX = (textWidth / 2) + margin;
+          } else if (_textAlign == TextAlign.right) {
+            newX = canvasWidth - (textWidth / 2) - margin;
+          }
+        }
+
+        final finalDrawable = tempDrawable.copyWith(
+          position: Offset(newX, drawable.position.dy),
+        );
+
+        _controller.replaceDrawable(drawable, finalDrawable);
+        _controller.selectObjectDrawable(finalDrawable);
+      }
+    }
+
+    _editingTextDrawable = null;
+    _isEditingExistingText = false;
+    _inlineTextController.clear();
+    _inlineTextFocusNode.unfocus();
+  }
+
+  void _addText() {
+    _startInlineEditing();
   }
 
   Future<void> _importImage(ImageSource source) async {
@@ -404,16 +470,15 @@ class _NoteitScreenState extends State<NoteitScreen>
       if (picked != null) {
         final bytes = await File(picked.path).readAsBytes();
         final uiImg = await _decodeImageBytes(bytes);
-        
-        final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
+
+        final renderBox =
+            _controller.painterKey.currentContext?.findRenderObject()
+                as RenderBox?;
         final center = renderBox == null
             ? const Offset(300, 300)
             : Offset(renderBox.size.width / 2, renderBox.size.height / 2);
-            
-        final imageDrawable = ImageDrawable(
-          image: uiImg,
-          position: center,
-        );
+
+        final imageDrawable = ImageDrawable(image: uiImg, position: center);
         _controller.addDrawables([imageDrawable]);
       }
     } catch (e) {
@@ -436,16 +501,26 @@ class _NoteitScreenState extends State<NoteitScreen>
         backgroundColor: theme.backgroundColor,
         title: Text(
           'Clear Canvas?',
-          style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+          style: AppTypography.sectionHeader(
+            color: theme.textColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: Text(
           'Are you sure you want to clear all doodles, shapes, text, and reset the canvas background?',
-          style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.8)),
+          style: AppTypography.body(
+            color: theme.textColor.withValues(alpha: 0.8),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.6))),
+            child: Text(
+              'Cancel',
+              style: AppTypography.button(
+                color: theme.textColor.withValues(alpha: 0.6),
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -457,7 +532,10 @@ class _NoteitScreenState extends State<NoteitScreen>
                 _updateBackground();
               });
             },
-            child: Text('Clear All', style: AppTypography.button(color: Colors.redAccent)),
+            child: Text(
+              'Clear All',
+              style: AppTypography.button(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -477,19 +555,27 @@ class _NoteitScreenState extends State<NoteitScreen>
       _controller.addDrawables([copy]);
       _controller.selectObjectDrawable(copy);
     } else if (selected is RectangleDrawable) {
-      final copy = selected.copyWith(position: selected.position + const Offset(30, 30));
+      final copy = selected.copyWith(
+        position: selected.position + const Offset(30, 30),
+      );
       _controller.addDrawables([copy]);
       _controller.selectObjectDrawable(copy);
     } else if (selected is OvalDrawable) {
-      final copy = selected.copyWith(position: selected.position + const Offset(30, 30));
+      final copy = selected.copyWith(
+        position: selected.position + const Offset(30, 30),
+      );
       _controller.addDrawables([copy]);
       _controller.selectObjectDrawable(copy);
     } else if (selected is LineDrawable) {
-      final copy = selected.copyWith(position: selected.position + const Offset(30, 30));
+      final copy = selected.copyWith(
+        position: selected.position + const Offset(30, 30),
+      );
       _controller.addDrawables([copy]);
       _controller.selectObjectDrawable(copy);
     } else if (selected is ArrowDrawable) {
-      final copy = selected.copyWith(position: selected.position + const Offset(30, 30));
+      final copy = selected.copyWith(
+        position: selected.position + const Offset(30, 30),
+      );
       _controller.addDrawables([copy]);
       _controller.selectObjectDrawable(copy);
     }
@@ -515,11 +601,19 @@ class _NoteitScreenState extends State<NoteitScreen>
     }
   }
 
-  Future<void> _sendCanvas(NoteitProvider provider, LoveStoryTheme theme) async {
+  Future<void> _sendCanvas(
+    NoteitProvider provider,
+    LoveStoryTheme theme,
+  ) async {
+    final rp = context.read<RelationshipProvider>();
+    final chatProvider = context.read<LoveChatProvider>();
+
     if (_controller.drawables.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add some drawings, shapes, or notes to the canvas! 🎨'),
+          content: Text(
+            'Please add some drawings, shapes, or notes to the canvas! 🎨',
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -535,17 +629,33 @@ class _NoteitScreenState extends State<NoteitScreen>
       final image = await _controller.renderImage(const Size(1000, 1000));
       final pngData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (pngData == null) throw Exception('Failed to render PNG data');
-      
+
       final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/canvas_export_${DateTime.now().millisecondsSinceEpoch}.png');
+      final file = File(
+        '${directory.path}/canvas_export_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await file.writeAsBytes(pngData.buffer.asUint8List());
 
       // 2. Serialize objects to JSON CanvasDocument
-      final doc = CanvasMapping.toDocument(_controller.drawables, _controller.value.background);
+      final doc = CanvasMapping.toDocument(
+        _controller.drawables,
+        _controller.value.background,
+      );
       final jsonStr = jsonEncode(doc.toJson());
 
+
+
       // 3. Send via sync manager
-      await provider.sendCanvas(jsonStr, file.path);
+      final newItem = await provider.sendCanvas(jsonStr, file.path);
+
+      // 3b. Mirror to love chat if paired
+      try {
+        final yourName = rp.yourName ?? 'Me';
+        final scrapbookMessageContent = '[scrapbook]:${jsonEncode(newItem.toJson())}';
+        await chatProvider.sendMessage(scrapbookMessageContent, yourName);
+      } catch (chatError) {
+        debugPrint('Failed to mirror scrapbook to chat: $chatError');
+      }
 
       // 4. Reset & Clear draft
       _controller.clearDrawables();
@@ -553,7 +663,7 @@ class _NoteitScreenState extends State<NoteitScreen>
       await prefs.remove('noteit_draft_canvas');
 
       _tabController.animateTo(1); // Switch to history tab
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -583,15 +693,17 @@ class _NoteitScreenState extends State<NoteitScreen>
 
   @override
   void dispose() {
+    _inlineTextController.dispose();
+    _inlineTextFocusNode.dispose();
     _tabController.dispose();
     _controller.removeListener(_onControllerUpdated);
     _controller.dispose();
-    
+
     // Clear draft on exit
     SharedPreferences.getInstance().then((prefs) {
       prefs.remove('noteit_draft_canvas');
     });
-    
+
     super.dispose();
   }
 
@@ -605,7 +717,7 @@ class _NoteitScreenState extends State<NoteitScreen>
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          'Infinite Canvas Doodles',
+          'Scrapbook',
           style: AppTypography.cormorant(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -622,16 +734,23 @@ class _NoteitScreenState extends State<NoteitScreen>
             ? [
                 IconButton(
                   icon: Icon(Icons.undo_rounded, color: theme.textColor),
-                  onPressed: _controller.canUndo ? () => _controller.undo() : null,
+                  onPressed: _controller.canUndo
+                      ? () => _controller.undo()
+                      : null,
                   tooltip: 'Undo',
                 ),
                 IconButton(
                   icon: Icon(Icons.redo_rounded, color: theme.textColor),
-                  onPressed: _controller.canRedo ? () => _controller.redo() : null,
+                  onPressed: _controller.canRedo
+                      ? () => _controller.redo()
+                      : null,
                   tooltip: 'Redo',
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete_sweep_rounded, color: theme.textColor),
+                  icon: Icon(
+                    Icons.delete_sweep_rounded,
+                    color: theme.textColor,
+                  ),
                   onPressed: () => _clearCanvas(theme),
                   tooltip: 'Clear Canvas',
                 ),
@@ -660,7 +779,8 @@ class _NoteitScreenState extends State<NoteitScreen>
         child: SafeArea(
           child: TabBarView(
             controller: _tabController,
-            physics: const NeverScrollableScrollPhysics(), // Prevent conflict with panning
+            physics:
+                const NeverScrollableScrollPhysics(), // Prevent conflict with panning
             children: [
               _buildCanvasWorkspace(theme, provider),
               _buildHistoryLog(theme, provider),
@@ -679,20 +799,280 @@ class _NoteitScreenState extends State<NoteitScreen>
         _isPropertiesPanelExpanded = true;
       }
     }
-    
-    return Stack(
-      children: [
-        // The Infinite Canvas
-        Positioned.fill(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 120), // Leave space for properties & toolbar
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 1.0,
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        if (_isInlineEditing) return;
+        setState(() {
+          _isPropertiesPanelExpanded = false;
+          _controller.deselectObjectDrawable();
+        });
+      },
+      child: Stack(
+        children: [
+          // The Infinite Canvas
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                bottom: 120,
+              ), // Leave space for properties & toolbar
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: 1.0,
+                  child: Container(
+                    margin: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Stack(
+                        children: [
+                          RasterCanvas(controller: _controller),
+                          if (_isInlineEditing) ...[
+                            Positioned.fill(
+                              child: GestureDetector(
+                                onTap: () => _finishInlineEditing(),
+                                child: BackdropFilter(
+                                  filter: ui.ImageFilter.blur(
+                                    sigmaX: 3.0,
+                                    sigmaY: 3.0,
+                                  ),
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: TextField(
+                                  controller: _inlineTextController,
+                                  focusNode: _inlineTextFocusNode,
+                                  autofocus: true,
+                                  maxLines: null,
+                                  keyboardType: TextInputType.multiline,
+                                  textAlign: _textAlign,
+                                  cursorColor: _brushColor,
+                                  style: _getTextStyle(
+                                    fontSize: _fontSize,
+                                    color: _brushColor,
+                                    isBold: _isBold,
+                                    isItalic: _isItalic,
+                                    isUnderline: _isUnderline,
+                                    fontFamily: _activeFontFamily,
+                                    highlightColor: _highlightColor,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    hintText: '',
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 28,
+                                  color: Colors.greenAccent,
+                                ),
+                                onPressed: () => _finishInlineEditing(),
+                                tooltip: 'Save Text',
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.cancel_rounded,
+                                  size: 28,
+                                  color: Colors.redAccent,
+                                ),
+                                onPressed: () =>
+                                    _finishInlineEditing(cancel: true),
+                                tooltip: 'Cancel',
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Floating Selected Object toolbar
+          if (selectedObj != null)
+            Positioned(
+              top: 10,
+              left: 20,
+              right: 20,
+              child: GestureDetector(
+                onTap: () {}, // Absorb taps inside toolbar
                 child: Container(
-                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
+                    color: theme.backgroundColor.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.15),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          selectedObj.locked
+                              ? Icons.lock_rounded
+                              : Icons.lock_open_rounded,
+                          color: theme.textColor,
+                        ),
+                        onPressed: () {
+                          final updated = selectedObj.copyWith(
+                            locked: !selectedObj.locked,
+                          );
+                          _controller.replaceDrawable(selectedObj, updated);
+                          _controller.selectObjectDrawable(updated);
+                        },
+                        tooltip: selectedObj.locked
+                            ? 'Unlock Object'
+                            : 'Lock Object',
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.flip_to_back_rounded,
+                          color: theme.textColor,
+                        ),
+                        onPressed: () => _sendBackward(selectedObj),
+                        tooltip: 'Send Backward',
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.flip_to_front_rounded,
+                          color: theme.textColor,
+                        ),
+                        onPressed: () => _bringForward(selectedObj),
+                        tooltip: 'Bring Forward',
+                      ),
+                      if (selectedObj is TextDrawable)
+                        IconButton(
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            color: theme.textColor,
+                          ),
+                          onPressed: () {
+                            if (selectedObj is CustomTextDrawable) {
+                              _startInlineEditing(
+                                existingDrawable: selectedObj,
+                              );
+                            }
+                          },
+                          tooltip: 'Edit Text Content',
+                        ),
+                      IconButton(
+                        icon: Icon(Icons.copy_rounded, color: theme.textColor),
+                        onPressed: () => _duplicateSelected(selectedObj),
+                        tooltip: 'Duplicate',
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete_forever_rounded,
+                          color: Colors.redAccent,
+                        ),
+                        onPressed: () {
+                          _controller.removeDrawable(selectedObj);
+                          _controller.deselectObjectDrawable();
+                        },
+                        tooltip: 'Delete',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // Floating Send Button
+          Positioned(
+            bottom: 110,
+            right: 20,
+            child: GestureDetector(
+              onTap: () {}, // Absorb taps
+              child: FloatingActionButton.extended(
+                onPressed: _isSaving
+                    ? null
+                    : () => _sendCanvas(provider, theme),
+                backgroundColor: theme.accentColor,
+                elevation: 4,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded, color: Colors.white),
+                label: Text(
+                  'Send',
+                  style: AppTypography.body(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Floating Font Size Slider (Only visible when adding/editing text)
+          if (_isPropertiesPanelExpanded &&
+              (_activeMode == 'text' || selectedObj is TextDrawable))
+            Positioned(
+              left: 12,
+              top: 160,
+              bottom: 290,
+              child: GestureDetector(
+                onTap: () {}, // Absorb taps
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.backgroundColor.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.15),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.1),
@@ -700,146 +1080,114 @@ class _NoteitScreenState extends State<NoteitScreen>
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: RasterCanvas(
-                      controller: _controller,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.text_fields_rounded,
+                        color: theme.textColor,
+                        size: 16,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${(selectedObj is TextDrawable ? (selectedObj.style.fontSize ?? _fontSize) : _fontSize).round()}',
+                        style: AppTypography.body(
+                          color: theme.textColor,
+                          fontSize: 10,
+                        ).copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: RotatedBox(
+                          quarterTurns: 3,
+                          child: Slider(
+                            value: selectedObj is TextDrawable
+                                ? (selectedObj.style.fontSize ?? _fontSize)
+                                : _fontSize,
+                            min: 10.0,
+                            max: 80.0,
+                            activeColor: theme.accentColor,
+                            inactiveColor: theme.textColor.withValues(
+                              alpha: 0.1,
+                            ),
+                            onChanged: (val) {
+                              setState(() {
+                                _fontSize = val;
+                                if (selectedObj is TextDrawable) {
+                                  final updated = selectedObj.copyWith(
+                                    style: selectedObj.style.copyWith(
+                                      fontSize: val,
+                                    ),
+                                  );
+                                  _controller.replaceDrawable(
+                                    selectedObj,
+                                    updated,
+                                  );
+                                  _controller.selectObjectDrawable(updated);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-        ),
 
-        // Floating Selected Object toolbar
-        if (selectedObj != null)
+          // Bottom Configuration Sheets
           Positioned(
-            top: 10,
-            left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.backgroundColor.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () {}, // Absorb taps
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: Icon(selectedObj.locked ? Icons.lock_rounded : Icons.lock_open_rounded, color: theme.textColor),
-                    onPressed: () {
-                      final updated = selectedObj.copyWith(locked: !selectedObj.locked);
-                      _controller.replaceDrawable(selectedObj, updated);
-                      _controller.selectObjectDrawable(updated);
-                    },
-                    tooltip: selectedObj.locked ? 'Unlock Object' : 'Lock Object',
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.flip_to_back_rounded, color: theme.textColor),
-                    onPressed: () => _sendBackward(selectedObj),
-                    tooltip: 'Send Backward',
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.flip_to_front_rounded, color: theme.textColor),
-                    onPressed: () => _bringForward(selectedObj),
-                    tooltip: 'Bring Forward',
-                  ),
-                  if (selectedObj is TextDrawable)
-                    IconButton(
-                      icon: Icon(Icons.edit_rounded, color: theme.textColor),
-                      onPressed: () async {
-                        final text = await _showTextInputDialog(selectedObj.text);
-                        if (text != null && text.trim().isNotEmpty) {
-                          final updated = selectedObj.copyWith(text: text);
-                          _controller.replaceDrawable(selectedObj, updated);
-                          _controller.selectObjectDrawable(updated);
-                        }
-                      },
-                      tooltip: 'Edit Text Content',
-                    ),
-                  IconButton(
-                    icon: Icon(Icons.copy_rounded, color: theme.textColor),
-                    onPressed: () => _duplicateSelected(selectedObj),
-                    tooltip: 'Duplicate',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_forever_rounded, color: Colors.redAccent),
-                    onPressed: () {
-                      _controller.removeDrawable(selectedObj);
-                      _controller.deselectObjectDrawable();
-                    },
-                    tooltip: 'Delete',
-                  ),
+                  if (_isPropertiesPanelExpanded) ...[
+                    if (selectedObj != null)
+                      (selectedObj is TextDrawable
+                          ? _buildTextPropertiesPanel(theme, selectedObj)
+                          : _buildPropertiesPanel(theme))
+                    else if (_activeMode == 'text')
+                      _buildTextPropertiesPanel(theme, null)
+                    else if (_activeMode != 'select')
+                      _buildPropertiesPanel(theme),
+                  ],
+
+                  _buildBottomFloatingToolbar(theme),
                 ],
               ),
             ),
           ),
-
-        // Floating Send Button
-        Positioned(
-          bottom: 110,
-          right: 20,
-          child: FloatingActionButton.extended(
-            onPressed: _isSaving ? null : () => _sendCanvas(provider, theme),
-            backgroundColor: theme.accentColor,
-            elevation: 4,
-            icon: _isSaving 
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                : const Icon(Icons.send_rounded, color: Colors.white),
-            label: Text(
-              'Send',
-              style: AppTypography.body(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-
-        // Bottom Configuration Sheets
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_isPropertiesPanelExpanded) ...[
-                if (selectedObj != null)
-                  (selectedObj is TextDrawable
-                      ? _buildTextPropertiesPanel(theme, selectedObj)
-                      : _buildPropertiesPanel(theme))
-                else if (_activeMode == 'text')
-                  _buildTextPropertiesPanel(theme, null)
-                else if (_activeMode != 'select')
-                  _buildPropertiesPanel(theme),
-              ],
-
-              _buildBottomFloatingToolbar(theme),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildTextPropertiesPanel(LoveStoryTheme theme, TextDrawable? selectedText) {
-    final bool isBold = selectedText != null ? (selectedText.style.fontWeight == FontWeight.bold) : _isBold;
-    final bool isItalic = selectedText != null ? (selectedText.style.fontStyle == FontStyle.italic) : _isItalic;
-    final bool isUnderline = selectedText != null ? (selectedText.style.decoration == TextDecoration.underline) : _isUnderline;
-    final Color activeColor = selectedText != null ? (selectedText.style.color ?? _brushColor) : _brushColor;
-    final Color activeHighlight = selectedText != null ? (selectedText.style.backgroundColor ?? Colors.transparent) : _highlightColor;
-    final TextAlign activeAlign = (selectedText != null && selectedText is CustomTextDrawable)
+  Widget _buildTextPropertiesPanel(
+    LoveStoryTheme theme,
+    TextDrawable? selectedText,
+  ) {
+    final bool isBold = selectedText != null
+        ? (selectedText.style.fontWeight == FontWeight.bold)
+        : _isBold;
+    final bool isItalic = selectedText != null
+        ? (selectedText.style.fontStyle == FontStyle.italic)
+        : _isItalic;
+    final bool isUnderline = selectedText != null
+        ? (selectedText.style.decoration == TextDecoration.underline)
+        : _isUnderline;
+    final Color activeColor = selectedText != null
+        ? (selectedText.style.color ?? _brushColor)
+        : _brushColor;
+    final Color activeHighlight = selectedText != null
+        ? (selectedText.style.backgroundColor ?? Colors.transparent)
+        : _highlightColor;
+    final TextAlign activeAlign =
+        (selectedText != null && selectedText is CustomTextDrawable)
         ? selectedText.textAlign
         : _textAlign;
 
@@ -869,7 +1217,9 @@ class _NoteitScreenState extends State<NoteitScreen>
 
     String matchedFont = _activeFontFamily;
     if (selectedText != null && selectedText.style.fontFamily != null) {
-      final family = selectedText.style.fontFamily!.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
+      final family = selectedText.style.fontFamily!
+          .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+          .toLowerCase();
       for (final f in _fontFamilies) {
         final cleanF = f.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
         if (family.contains(cleanF)) {
@@ -899,21 +1249,29 @@ class _NoteitScreenState extends State<NoteitScreen>
               itemBuilder: (ctx, idx) {
                 final font = _fontFamilies[idx];
                 final isSelected = matchedFont == font;
-                
+
                 TextStyle fontStyle = const TextStyle();
                 try {
                   fontStyle = GoogleFonts.getFont(
                     font,
-                    color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.8),
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   );
                 } catch (_) {
                   fontStyle = TextStyle(
                     fontFamily: font,
-                    color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.8),
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   );
                 }
 
@@ -925,11 +1283,16 @@ class _NoteitScreenState extends State<NoteitScreen>
                     selectedColor: theme.accentColor.withValues(alpha: 0.15),
                     backgroundColor: Colors.transparent,
                     side: BorderSide(
-                      color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                      color: isSelected
+                          ? theme.accentColor
+                          : theme.textColor.withValues(alpha: 0.15),
                       width: isSelected ? 1.5 : 1.0,
                     ),
                     showCheckmark: false,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     onSelected: (selected) {
                       if (selected) {
                         setState(() {
@@ -939,9 +1302,15 @@ class _NoteitScreenState extends State<NoteitScreen>
                               style: _getTextStyle(
                                 fontSize: selectedText.style.fontSize ?? 20.0,
                                 color: selectedText.style.color ?? _brushColor,
-                                isBold: selectedText.style.fontWeight == FontWeight.bold,
-                                isItalic: selectedText.style.fontStyle == FontStyle.italic,
-                                isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                isBold:
+                                    selectedText.style.fontWeight ==
+                                    FontWeight.bold,
+                                isItalic:
+                                    selectedText.style.fontStyle ==
+                                    FontStyle.italic,
+                                isUnderline:
+                                    selectedText.style.decoration ==
+                                    TextDecoration.underline,
                                 fontFamily: font,
                                 highlightColor: activeHighlight,
                               ),
@@ -964,7 +1333,10 @@ class _NoteitScreenState extends State<NoteitScreen>
             children: [
               Text(
                 'Text:',
-                style: AppTypography.body(color: theme.textColor, fontSize: 12).copyWith(fontWeight: FontWeight.bold),
+                style: AppTypography.body(
+                  color: theme.textColor,
+                  fontSize: 12,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -990,16 +1362,26 @@ class _NoteitScreenState extends State<NoteitScreen>
                                 if (selectedText != null) {
                                   final updated = selectedText.copyWith(
                                     style: _getTextStyle(
-                                      fontSize: selectedText.style.fontSize ?? 20.0,
+                                      fontSize:
+                                          selectedText.style.fontSize ?? 20.0,
                                       color: pickedColor,
-                                      isBold: selectedText.style.fontWeight == FontWeight.bold,
-                                      isItalic: selectedText.style.fontStyle == FontStyle.italic,
-                                      isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                      isBold:
+                                          selectedText.style.fontWeight ==
+                                          FontWeight.bold,
+                                      isItalic:
+                                          selectedText.style.fontStyle ==
+                                          FontStyle.italic,
+                                      isUnderline:
+                                          selectedText.style.decoration ==
+                                          TextDecoration.underline,
                                       fontFamily: matchedFont,
                                       highlightColor: activeHighlight,
                                     ),
                                   );
-                                  _controller.replaceDrawable(selectedText, updated);
+                                  _controller.replaceDrawable(
+                                    selectedText,
+                                    updated,
+                                  );
                                   _controller.selectObjectDrawable(updated);
                                 }
                               });
@@ -1010,18 +1392,32 @@ class _NoteitScreenState extends State<NoteitScreen>
                             height: 28,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.2),
+                              border: Border.all(
+                                color: theme.textColor.withValues(alpha: 0.3),
+                                width: 1.2,
+                              ),
                               gradient: const SweepGradient(
-                                colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                                colors: [
+                                  Colors.red,
+                                  Colors.yellow,
+                                  Colors.green,
+                                  Colors.blue,
+                                  Colors.red,
+                                ],
                               ),
                             ),
-                            child: Icon(Icons.add_rounded, color: theme.textColor, size: 16),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: theme.textColor,
+                              size: 16,
+                            ),
                           ),
                         );
                       }
 
                       final color = _paletteColors[i];
-                      final isSelected = activeColor.toARGB32() == color.toARGB32();
+                      final isSelected =
+                          activeColor.toARGB32() == color.toARGB32();
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: GestureDetector(
@@ -1031,16 +1427,26 @@ class _NoteitScreenState extends State<NoteitScreen>
                               if (selectedText != null) {
                                 final updated = selectedText.copyWith(
                                   style: _getTextStyle(
-                                    fontSize: selectedText.style.fontSize ?? 20.0,
+                                    fontSize:
+                                        selectedText.style.fontSize ?? 20.0,
                                     color: color,
-                                    isBold: selectedText.style.fontWeight == FontWeight.bold,
-                                    isItalic: selectedText.style.fontStyle == FontStyle.italic,
-                                    isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                    isBold:
+                                        selectedText.style.fontWeight ==
+                                        FontWeight.bold,
+                                    isItalic:
+                                        selectedText.style.fontStyle ==
+                                        FontStyle.italic,
+                                    isUnderline:
+                                        selectedText.style.decoration ==
+                                        TextDecoration.underline,
                                     fontFamily: matchedFont,
                                     highlightColor: activeHighlight,
                                   ),
                                 );
-                                _controller.replaceDrawable(selectedText, updated);
+                                _controller.replaceDrawable(
+                                  selectedText,
+                                  updated,
+                                );
                                 _controller.selectObjectDrawable(updated);
                               }
                             });
@@ -1052,7 +1458,9 @@ class _NoteitScreenState extends State<NoteitScreen>
                               color: color,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSelected ? theme.textColor : Colors.transparent,
+                                color: isSelected
+                                    ? theme.textColor
+                                    : Colors.transparent,
                                 width: 1.8,
                               ),
                             ),
@@ -1072,7 +1480,10 @@ class _NoteitScreenState extends State<NoteitScreen>
             children: [
               Text(
                 'Highlight:',
-                style: AppTypography.body(color: theme.textColor, fontSize: 12).copyWith(fontWeight: FontWeight.bold),
+                style: AppTypography.body(
+                  color: theme.textColor,
+                  fontSize: 12,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1088,7 +1499,10 @@ class _NoteitScreenState extends State<NoteitScreen>
                             final pickedColor = await showDialog<Color>(
                               context: context,
                               builder: (ctx) => ColorPickerDialog(
-                                initialColor: activeHighlight == Colors.transparent ? Colors.yellow.withValues(alpha: 0.3) : activeHighlight,
+                                initialColor:
+                                    activeHighlight == Colors.transparent
+                                    ? Colors.yellow.withValues(alpha: 0.3)
+                                    : activeHighlight,
                                 theme: theme,
                               ),
                             );
@@ -1098,16 +1512,26 @@ class _NoteitScreenState extends State<NoteitScreen>
                                 if (selectedText != null) {
                                   final updated = selectedText.copyWith(
                                     style: _getTextStyle(
-                                      fontSize: selectedText.style.fontSize ?? 20.0,
+                                      fontSize:
+                                          selectedText.style.fontSize ?? 20.0,
                                       color: activeColor,
-                                      isBold: selectedText.style.fontWeight == FontWeight.bold,
-                                      isItalic: selectedText.style.fontStyle == FontStyle.italic,
-                                      isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                      isBold:
+                                          selectedText.style.fontWeight ==
+                                          FontWeight.bold,
+                                      isItalic:
+                                          selectedText.style.fontStyle ==
+                                          FontStyle.italic,
+                                      isUnderline:
+                                          selectedText.style.decoration ==
+                                          TextDecoration.underline,
                                       fontFamily: matchedFont,
                                       highlightColor: pickedColor,
                                     ),
                                   );
-                                  _controller.replaceDrawable(selectedText, updated);
+                                  _controller.replaceDrawable(
+                                    selectedText,
+                                    updated,
+                                  );
                                   _controller.selectObjectDrawable(updated);
                                 }
                               });
@@ -1118,18 +1542,32 @@ class _NoteitScreenState extends State<NoteitScreen>
                             height: 28,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.2),
+                              border: Border.all(
+                                color: theme.textColor.withValues(alpha: 0.3),
+                                width: 1.2,
+                              ),
                               gradient: const SweepGradient(
-                                colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                                colors: [
+                                  Colors.red,
+                                  Colors.yellow,
+                                  Colors.green,
+                                  Colors.blue,
+                                  Colors.red,
+                                ],
                               ),
                             ),
-                            child: Icon(Icons.add_rounded, color: theme.textColor, size: 16),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: theme.textColor,
+                              size: 16,
+                            ),
                           ),
                         );
                       }
 
                       final color = _highlightColors[i];
-                      final isSelected = activeHighlight.toARGB32() == color.toARGB32();
+                      final isSelected =
+                          activeHighlight.toARGB32() == color.toARGB32();
                       final isTransparent = color == Colors.transparent;
 
                       return Padding(
@@ -1141,16 +1579,26 @@ class _NoteitScreenState extends State<NoteitScreen>
                               if (selectedText != null) {
                                 final updated = selectedText.copyWith(
                                   style: _getTextStyle(
-                                    fontSize: selectedText.style.fontSize ?? 20.0,
+                                    fontSize:
+                                        selectedText.style.fontSize ?? 20.0,
                                     color: activeColor,
-                                    isBold: selectedText.style.fontWeight == FontWeight.bold,
-                                    isItalic: selectedText.style.fontStyle == FontStyle.italic,
-                                    isUnderline: selectedText.style.decoration == TextDecoration.underline,
+                                    isBold:
+                                        selectedText.style.fontWeight ==
+                                        FontWeight.bold,
+                                    isItalic:
+                                        selectedText.style.fontStyle ==
+                                        FontStyle.italic,
+                                    isUnderline:
+                                        selectedText.style.decoration ==
+                                        TextDecoration.underline,
                                     fontFamily: matchedFont,
                                     highlightColor: color,
                                   ),
                                 );
-                                _controller.replaceDrawable(selectedText, updated);
+                                _controller.replaceDrawable(
+                                  selectedText,
+                                  updated,
+                                );
                                 _controller.selectObjectDrawable(updated);
                               }
                             });
@@ -1159,15 +1607,25 @@ class _NoteitScreenState extends State<NoteitScreen>
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: isTransparent ? Colors.grey.withValues(alpha: 0.2) : color,
+                              color: isTransparent
+                                  ? Colors.grey.withValues(alpha: 0.2)
+                                  : color,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSelected ? theme.textColor : Colors.transparent,
+                                color: isSelected
+                                    ? theme.textColor
+                                    : Colors.transparent,
                                 width: 1.8,
                               ),
                             ),
                             child: isTransparent
-                                ? Icon(Icons.format_color_reset_rounded, size: 14, color: theme.textColor.withValues(alpha: 0.6))
+                                ? Icon(
+                                    Icons.format_color_reset_rounded,
+                                    size: 14,
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                  )
                                 : null,
                           ),
                         ),
@@ -1184,7 +1642,12 @@ class _NoteitScreenState extends State<NoteitScreen>
           Row(
             children: [
               IconButton(
-                icon: Icon(Icons.format_bold, color: isBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                icon: Icon(
+                  Icons.format_bold,
+                  color: isBold
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.6),
+                ),
                 onPressed: () {
                   setState(() {
                     _isBold = !_isBold;
@@ -1207,7 +1670,12 @@ class _NoteitScreenState extends State<NoteitScreen>
                 },
               ),
               IconButton(
-                icon: Icon(Icons.format_italic, color: isItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                icon: Icon(
+                  Icons.format_italic,
+                  color: isItalic
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.6),
+                ),
                 onPressed: () {
                   setState(() {
                     _isItalic = !_isItalic;
@@ -1230,7 +1698,12 @@ class _NoteitScreenState extends State<NoteitScreen>
                 },
               ),
               IconButton(
-                icon: Icon(Icons.format_underlined, color: isUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6)),
+                icon: Icon(
+                  Icons.format_underlined,
+                  color: isUnderline
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.6),
+                ),
                 onPressed: () {
                   setState(() {
                     _isUnderline = !_isUnderline;
@@ -1259,14 +1732,19 @@ class _NoteitScreenState extends State<NoteitScreen>
                   final nextAlign = getNextAlign(activeAlign);
                   setState(() {
                     _textAlign = nextAlign;
-                    if (selectedText != null && selectedText is CustomTextDrawable) {
-                      final renderBox = _controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
+                    if (selectedText != null &&
+                        selectedText is CustomTextDrawable) {
+                      final renderBox =
+                          _controller.painterKey.currentContext
+                                  ?.findRenderObject()
+                              as RenderBox?;
                       final canvasWidth = renderBox?.size.width ?? 600.0;
-                      final textWidth = selectedText.getSize().width * selectedText.scale;
-                      
+                      final textWidth =
+                          selectedText.getSize().width * selectedText.scale;
+
                       double newX = selectedText.position.dx;
                       const double margin = 20.0;
-                      
+
                       if (nextAlign == TextAlign.left) {
                         newX = (textWidth / 2) + margin;
                       } else if (nextAlign == TextAlign.center) {
@@ -1274,7 +1752,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                       } else if (nextAlign == TextAlign.right) {
                         newX = canvasWidth - (textWidth / 2) - margin;
                       }
-                      
+
                       final updated = selectedText.copyWith(
                         textAlign: nextAlign,
                         position: Offset(newX, selectedText.position.dy),
@@ -1334,7 +1812,10 @@ class _NoteitScreenState extends State<NoteitScreen>
                   style: AppTypography.body(color: theme.textColor),
                   underline: const SizedBox.shrink(),
                   items: const [
-                    DropdownMenuItem(value: 'rectangle', child: Text('Rectangle')),
+                    DropdownMenuItem(
+                      value: 'rectangle',
+                      child: Text('Rectangle'),
+                    ),
                     DropdownMenuItem(value: 'oval', child: Text('Oval')),
                     DropdownMenuItem(value: 'line', child: Text('Line')),
                     DropdownMenuItem(value: 'arrow', child: Text('Arrow')),
@@ -1351,7 +1832,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               ],
             ],
           ),
-          
+
           // Row with color palette picker
           if (_activeMode != 'eraser') ...[
             SizedBox(
@@ -1382,12 +1863,25 @@ class _NoteitScreenState extends State<NoteitScreen>
                         height: 32,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
                           gradient: const SweepGradient(
-                            colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                            colors: [
+                              Colors.red,
+                              Colors.yellow,
+                              Colors.green,
+                              Colors.blue,
+                              Colors.red,
+                            ],
                           ),
                         ),
-                        child: Icon(Icons.add_rounded, color: theme.textColor, size: 18),
+                        child: Icon(
+                          Icons.add_rounded,
+                          color: theme.textColor,
+                          size: 18,
+                        ),
                       ),
                     );
                   }
@@ -1410,7 +1904,9 @@ class _NoteitScreenState extends State<NoteitScreen>
                           color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? theme.textColor : Colors.transparent,
+                            color: isSelected
+                                ? theme.textColor
+                                : Colors.transparent,
                             width: 2.0,
                           ),
                         ),
@@ -1450,11 +1946,23 @@ class _NoteitScreenState extends State<NoteitScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               // Mode Selectors
-              _buildToolbarButton(Icons.near_me_rounded, 'select', 'Select Object'),
+              _buildToolbarButton(
+                Icons.near_me_rounded,
+                'select',
+                'Select Object',
+              ),
               _buildToolbarButton(Icons.edit_rounded, 'pen', 'Pen'),
               _buildToolbarButton(Icons.brush_rounded, 'pencil', 'Pencil'),
-              _buildToolbarButton(Icons.border_color_rounded, 'marker', 'Marker'),
-              _buildToolbarButton(Icons.cleaning_services_rounded, 'eraser', 'Eraser'),
+              _buildToolbarButton(
+                Icons.border_color_rounded,
+                'marker',
+                'Marker',
+              ),
+              _buildToolbarButton(
+                Icons.cleaning_services_rounded,
+                'eraser',
+                'Eraser',
+              ),
               _buildToolbarButton(Icons.category_rounded, 'shapes', 'Shapes'),
 
               Padding(
@@ -1527,7 +2035,9 @@ class _NoteitScreenState extends State<NoteitScreen>
           ),
           child: Icon(
             icon,
-            color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.7),
+            color: isSelected
+                ? Colors.white
+                : theme.textColor.withValues(alpha: 0.7),
             size: 18,
           ),
         ),
@@ -1544,34 +2054,76 @@ class _NoteitScreenState extends State<NoteitScreen>
             backgroundColor: theme.backgroundColor,
             title: Text(
               'Canvas Settings',
-              style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+              style: AppTypography.sectionHeader(
+                color: theme.textColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Background Template:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
+                Text(
+                  'Background Template:',
+                  style: AppTypography.body(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildBgOptionButton(setDialogState, 'color', 'Solid color', Colors.white),
-                    _buildBgOptionButton(setDialogState, 'grid', 'Grid Lines', Colors.white),
-                    _buildBgOptionButton(setDialogState, 'dots', 'Dot Grid', Colors.white),
-                    _buildBgOptionButton(setDialogState, 'notebook', 'Notebook', const Color(0xFFF9F9FB)),
-                    _buildBgOptionButton(setDialogState, 'gradient', 'Gradient', Colors.white),
+                    _buildBgOptionButton(
+                      setDialogState,
+                      'color',
+                      'Solid color',
+                      Colors.white,
+                    ),
+                    _buildBgOptionButton(
+                      setDialogState,
+                      'grid',
+                      'Grid Lines',
+                      Colors.white,
+                    ),
+                    _buildBgOptionButton(
+                      setDialogState,
+                      'dots',
+                      'Dot Grid',
+                      Colors.white,
+                    ),
+                    _buildBgOptionButton(
+                      setDialogState,
+                      'notebook',
+                      'Notebook',
+                      const Color(0xFFF9F9FB),
+                    ),
+                    _buildBgOptionButton(
+                      setDialogState,
+                      'gradient',
+                      'Gradient',
+                      Colors.white,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('Solid Color Picker:', style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold)),
+                Text(
+                  'Solid Color Picker:',
+                  style: AppTypography.body(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     ..._paletteColors.map((color) {
-                      final isSelectedColor = _bgType == 'color' && _bgColor.toARGB32() == color.toARGB32();
+                      final isSelectedColor =
+                          _bgType == 'color' &&
+                          _bgColor.toARGB32() == color.toARGB32();
                       return GestureDetector(
                         onTap: () {
                           setDialogState(() {
@@ -1591,7 +2143,9 @@ class _NoteitScreenState extends State<NoteitScreen>
                             color: color,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelectedColor ? theme.textColor : Colors.grey.withValues(alpha: 0.3),
+                              color: isSelectedColor
+                                  ? theme.textColor
+                                  : Colors.grey.withValues(alpha: 0.3),
                               width: isSelectedColor ? 2.5 : 1.0,
                             ),
                           ),
@@ -1624,12 +2178,25 @@ class _NoteitScreenState extends State<NoteitScreen>
                         height: 30,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: theme.textColor.withValues(alpha: 0.3), width: 1.5),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
                           gradient: const SweepGradient(
-                            colors: [Colors.red, Colors.yellow, Colors.green, Colors.blue, Colors.red],
+                            colors: [
+                              Colors.red,
+                              Colors.yellow,
+                              Colors.green,
+                              Colors.blue,
+                              Colors.red,
+                            ],
                           ),
                         ),
-                        child: Icon(Icons.add_rounded, color: theme.textColor, size: 16),
+                        child: Icon(
+                          Icons.add_rounded,
+                          color: theme.textColor,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ],
@@ -1639,16 +2206,24 @@ class _NoteitScreenState extends State<NoteitScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: Text('Done', style: AppTypography.button(color: theme.accentColor)),
+                child: Text(
+                  'Done',
+                  style: AppTypography.button(color: theme.accentColor),
+                ),
               ),
             ],
           );
-        }
+        },
       ),
     );
   }
 
-  Widget _buildBgOptionButton(StateSetter setDialogState, String type, String label, Color previewColor) {
+  Widget _buildBgOptionButton(
+    StateSetter setDialogState,
+    String type,
+    String label,
+    Color previewColor,
+  ) {
     final isSelected = _bgType == type;
     final theme = context.read<ThemeProvider>().currentLoveTheme;
 
@@ -1665,7 +2240,11 @@ class _NoteitScreenState extends State<NoteitScreen>
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? theme.accentColor : Colors.transparent,
         foregroundColor: isSelected ? Colors.white : theme.textColor,
-        side: BorderSide(color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.2)),
+        side: BorderSide(
+          color: isSelected
+              ? theme.accentColor
+              : theme.textColor.withValues(alpha: 0.2),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(label, style: const TextStyle(fontSize: 12)),
@@ -1749,7 +2328,9 @@ class _NoteitScreenState extends State<NoteitScreen>
           },
           child: Container(
             decoration: BoxDecoration(
-              color: item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
+              color:
+                  item.backgroundColor ??
+                  theme.textColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
             ),
@@ -1778,10 +2359,10 @@ class _NoteitScreenState extends State<NoteitScreen>
                       child: Text(
                         item.sender == 'you'
                             ? (item.syncStatus == SyncStatus.sending
-                                ? '📤 Sending'
-                                : item.syncStatus == SyncStatus.failed
-                                    ? '⚠️ Failed'
-                                    : '✅ Sent')
+                                  ? '📤 Sending'
+                                  : item.syncStatus == SyncStatus.failed
+                                  ? '⚠️ Failed'
+                                  : '✅ Sent')
                             : 'Received',
                         style: AppTypography.bodyLarge(
                           fontSize: 8,
@@ -1833,23 +2414,36 @@ class _NoteitScreenState extends State<NoteitScreen>
                 backgroundColor: theme.backgroundColor,
                 title: Text(
                   'Sync Failed',
-                  style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold),
+                  style: AppTypography.sectionHeader(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 content: Text(
                   'This canvas note couldn\'t be sent to your partner. Would you like to try sending it again?',
-                  style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.8)),
+                  style: AppTypography.body(
+                    color: theme.textColor.withValues(alpha: 0.8),
+                  ),
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.6))),
+                    child: Text(
+                      'Cancel',
+                      style: AppTypography.button(
+                        color: theme.textColor.withValues(alpha: 0.6),
+                      ),
+                    ),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.pop(ctx);
                       NoteitSyncManager.instance.retryTask(item.id);
                     },
-                    child: Text('Retry Now', style: AppTypography.button(color: theme.accentColor)),
+                    child: Text(
+                      'Retry Now',
+                      style: AppTypography.button(color: theme.accentColor),
+                    ),
                   ),
                 ],
               ),
@@ -1887,7 +2481,10 @@ class _NoteitScreenState extends State<NoteitScreen>
               decoration: BoxDecoration(
                 color: item.backgroundColor ?? Colors.white,
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: theme.textColor.withValues(alpha: 0.2), width: 2),
+                border: Border.all(
+                  color: theme.textColor.withValues(alpha: 0.2),
+                  width: 2,
+                ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(26),
@@ -1904,10 +2501,10 @@ class _NoteitScreenState extends State<NoteitScreen>
               child: Text(
                 item.sender == 'you'
                     ? (item.syncStatus == SyncStatus.sending
-                        ? 'Sending Canvas...'
-                        : item.syncStatus == SyncStatus.failed
-                            ? 'Failed to Send'
-                            : 'Sent by You')
+                          ? 'Sending Canvas...'
+                          : item.syncStatus == SyncStatus.failed
+                          ? 'Failed to Send'
+                          : 'Sent by You')
                     : 'Received from Partner',
                 style: AppTypography.bodyLarge(
                   color: Colors.white,

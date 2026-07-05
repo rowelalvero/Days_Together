@@ -68,7 +68,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
       if (isOnline)
         '⏰ $partnerName is active right now. Send a love touch! 💌'
       else
-        '💡 Tip: Check out Doodle Notes or Topic Cards for a late-night chat.',
+        '💡 Tip: Check out Scrapbook or Topic Cards for a late-night chat.',
     ];
   }
 

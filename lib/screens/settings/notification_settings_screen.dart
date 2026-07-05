@@ -200,8 +200,8 @@ class NotificationSettingsScreen extends StatelessWidget {
                             ),
                             const Divider(height: 1),
                             _buildSwitchTile(
-                              title: 'Doodle Notes',
-                              subtitle: 'New shared drawings and doodles',
+                              title: 'Scrapbook',
+                              subtitle: 'New shared drawings, text & photos',
                               value: prefs.doodleNotesEnabled,
                               onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('doodle_notes_enabled'),
                               theme: theme,

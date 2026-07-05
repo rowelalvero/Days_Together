@@ -114,9 +114,9 @@ class RelationshipProvider with ChangeNotifier {
   DateTime? _partnerDateIssued;
   String? _yourSignature;
   String? _partnerSignature;
-
   // Firebase Streams Subscriptions
   StreamSubscription? _userSub;
+  StreamSubscription? _partnerUserSub;
   StreamSubscription? _coupleSub;
   StreamSubscription? _licenseSub;
   StreamSubscription? _authSub;
@@ -129,6 +129,9 @@ class RelationshipProvider with ChangeNotifier {
   DateTime? _yourJoinDate;
   DateTime? _partnerJoinDate;
   RealtimeChannel? _presenceChannel;
+
+  String? _yourActivity;
+  String? _partnerActivity;
 
   DateTime? get startDate => _startDate;
   TimeOfDay? get startTime => _startTime;
@@ -172,6 +175,8 @@ class RelationshipProvider with ChangeNotifier {
   bool get isPartnerOnline => _isPartnerOnline;
   DateTime? get yourJoinDate => _yourJoinDate;
   DateTime? get partnerJoinDate => _partnerJoinDate;
+  String? get yourActivity => _yourActivity;
+  String? get partnerActivity => _partnerActivity;
 
   bool get isFirebaseAvailable {
     try {
@@ -302,6 +307,8 @@ class RelationshipProvider with ChangeNotifier {
         } catch (_) {}
 
         _userSub?.cancel();
+        _partnerUserSub?.cancel();
+        _partnerUserSub = null;
         _coupleSub?.cancel();
         _licenseSub?.cancel();
 
@@ -311,6 +318,8 @@ class RelationshipProvider with ChangeNotifier {
           _partnerId = null;
           _isPaired = false;
           _isPartnerOnline = false;
+          _yourActivity = null;
+          _partnerActivity = null;
           _yourJoinDate = null;
           _partnerJoinDate = null;
           _presenceChannel?.unsubscribe();
@@ -372,6 +381,7 @@ class RelationshipProvider with ChangeNotifier {
                 NotificationService().syncTokenToSupabase();
 
                 _yourName = userData['display_name'] as String? ?? prefs.getString('your_name');
+                _yourActivity = userData['current_activity'] as String?;
                 if (_yourName != null) {
                   await prefs.setString('your_name', _yourName!);
                   await prefs.setBool('onboarding_completed', true);
@@ -437,6 +447,20 @@ class RelationshipProvider with ChangeNotifier {
 
                 // Load and cache partner's join date if partnered
                 if (_partnerId != null) {
+                  // Listen to partner user record changes in real-time
+                  _partnerUserSub?.cancel();
+                  _partnerUserSub = Supabase.instance.client
+                      .from('users')
+                      .stream(primaryKey: ['id'])
+                      .eq('id', _partnerId!)
+                      .listen((pDataList) {
+                        if (pDataList.isNotEmpty) {
+                          final pData = pDataList.first;
+                          _partnerActivity = pData['current_activity'] as String?;
+                          notifyListeners();
+                        }
+                      });
+
                   Supabase.instance.client
                       .from('users')
                       .select() // Select all available columns instead of explicit 'created_at'
@@ -463,6 +487,9 @@ class RelationshipProvider with ChangeNotifier {
                 } else {
                   _partnerJoinDate = null;
                   await prefs.remove('partner_join_date');
+                  _partnerUserSub?.cancel();
+                  _partnerUserSub = null;
+                  _partnerActivity = null;
                 }
 
                 _initPresence(); // Initialize real-time presence channel
@@ -471,6 +498,9 @@ class RelationshipProvider with ChangeNotifier {
                   if (coupleIdChanged) {
                     _coupleSub?.cancel();
                     _licenseSub?.cancel();
+                    _partnerUserSub?.cancel();
+                    _partnerUserSub = null;
+                    _partnerActivity = null;
                     _syncLocalDetailsToCloud();
 
                     _coupleSub = Supabase.instance.client
@@ -881,6 +911,9 @@ class RelationshipProvider with ChangeNotifier {
                 } else {
                   _coupleSub?.cancel();
                   _licenseSub?.cancel();
+                  _partnerUserSub?.cancel();
+                  _partnerUserSub = null;
+                  _partnerActivity = null;
                 }
                 _isInitialized = true;
                 notifyListeners();
@@ -945,6 +978,21 @@ class RelationshipProvider with ChangeNotifier {
             } catch (_) {}
           }
         });
+  }
+
+  Future<void> updateCurrentActivity(String? activity) async {
+    _yourActivity = activity;
+    notifyListeners();
+    if (_userId != null) {
+      try {
+        await Supabase.instance.client
+            .from('users')
+            .update({'current_activity': activity})
+            .eq('id', _userId!);
+      } catch (e) {
+        debugPrint('Error updating current activity: $e');
+      }
+    }
   }
 
   Future<void> setYourName(String name) async {
@@ -2291,6 +2339,9 @@ class RelationshipProvider with ChangeNotifier {
     if (yourName != null) await prefs.setString('your_name', yourName);
 
     _userSub?.cancel();
+    _partnerUserSub?.cancel();
+    _partnerUserSub = null;
+    _partnerActivity = null;
     _coupleSub?.cancel();
     _licenseSub?.cancel();
     _presenceChannel?.unsubscribe();
@@ -2450,6 +2501,7 @@ class RelationshipProvider with ChangeNotifier {
   void dispose() {
     _authSub?.cancel();
     _userSub?.cancel();
+    _partnerUserSub?.cancel();
     _coupleSub?.cancel();
     _licenseSub?.cancel();
     if (_presenceChannel != null) {

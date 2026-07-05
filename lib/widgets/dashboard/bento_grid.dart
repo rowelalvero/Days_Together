@@ -30,10 +30,7 @@ import 'package:days_together/screens/together/love_chat_screen.dart';
 class BentoGrid extends StatelessWidget {
   final dynamic theme;
 
-  const BentoGrid({
-    super.key,
-    required this.theme,
-  });
+  const BentoGrid({super.key, required this.theme});
 
   @override
   Widget build(BuildContext context) {
@@ -85,15 +82,21 @@ class BentoGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'CALENDAR',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     Container(
@@ -119,7 +122,11 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Shared Calendar',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -139,7 +146,11 @@ class BentoGrid extends StatelessWidget {
                         '$count Events Scheduled',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -147,7 +158,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'View Calendar',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -193,15 +208,21 @@ class BentoGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'DAILY MOOD',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     Container(
@@ -227,7 +248,11 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Daily Mood',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -247,7 +272,11 @@ class BentoGrid extends StatelessWidget {
                         statusText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -255,7 +284,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'Share Mood',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -296,15 +329,21 @@ class BentoGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'EMOTIONAL MAP',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     Container(
@@ -333,7 +372,11 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Emotional Map',
-                      style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                      style: AppTypography.cardTitle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textColor,
+                      ),
                     ),
                     if (isPaired)
                       Row(
@@ -349,7 +392,11 @@ class BentoGrid extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             'You',
-                            style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
+                            style: AppTypography.caption(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textColor.withValues(alpha: 0.6),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Container(
@@ -363,7 +410,11 @@ class BentoGrid extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             'Partner',
-                            style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.6)),
+                            style: AppTypography.caption(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textColor.withValues(alpha: 0.6),
+                            ),
                           ),
                         ],
                       ),
@@ -387,7 +438,11 @@ class BentoGrid extends StatelessWidget {
                         '30-Day Trend Analysis',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -395,7 +450,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'View Mood Map',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -436,15 +495,21 @@ class BentoGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'SECRET VAULT',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     Container(
@@ -470,7 +535,11 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Secret Vault',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -490,7 +559,11 @@ class BentoGrid extends StatelessWidget {
                         isUnlocked ? 'Vault Unlocked' : 'Vault Secured',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -498,7 +571,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'Unlock Vault',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -545,15 +622,21 @@ class BentoGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'LOVE CHAT',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     Container(
@@ -579,7 +662,11 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Love Chat Space',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -599,7 +686,11 @@ class BentoGrid extends StatelessWidget {
                         footerText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -607,7 +698,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'Chat Now',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -644,28 +739,45 @@ class BentoGrid extends StatelessWidget {
     }
   }
 
-
-
-  Widget _buildCalendarContent(BuildContext context, CalendarProvider calendar) {
+  Widget _buildCalendarContent(
+    BuildContext context,
+    CalendarProvider calendar,
+  ) {
     final events = calendar.events.toList();
 
     // Sort to find the next upcoming event
     final now = DateTime.now();
     events.sort((a, b) => a.date.compareTo(b.date));
-    final upcoming = events.where((e) => e.date.isAfter(now) || (e.date.year == now.year && e.date.month == now.month && e.date.day == now.day)).toList();
+    final upcoming = events
+        .where(
+          (e) =>
+              e.date.isAfter(now) ||
+              (e.date.year == now.year &&
+                  e.date.month == now.month &&
+                  e.date.day == now.day),
+        )
+        .toList();
 
     if (upcoming.isEmpty) {
       return Text(
         'No upcoming dates or anniversaries. Plan a romantic day together! 📅',
-        style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
+        style: AppTypography.bodyMedium(
+          fontSize: 12,
+          color: theme.textColor.withValues(alpha: 0.7),
+          height: 1.4,
+        ),
       );
     }
 
     final event = upcoming.first;
     final formattedDate = DateFormat('MMM dd, yyyy').format(event.date);
-    
+
     // Calculate days remaining
-    final eventDateOnly = DateTime(event.date.year, event.date.month, event.date.day);
+    final eventDateOnly = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+    );
     final nowDateOnly = DateTime(now.year, now.month, now.day);
     final daysUntil = eventDateOnly.difference(nowDateOnly).inDays;
 
@@ -683,7 +795,11 @@ class BentoGrid extends StatelessWidget {
                 event.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.w700, color: theme.textColor),
+                style: AppTypography.sectionHeader(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: theme.textColor,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -708,7 +824,11 @@ class BentoGrid extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     'SOON',
-                    style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 0.5),
+                    style: AppTypography.bodyMono(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ).copyWith(letterSpacing: 0.5),
                   ),
                 ],
               ),
@@ -721,12 +841,18 @@ class BentoGrid extends StatelessWidget {
           children: [
             Text(
               formattedDate,
-              style: AppTypography.bodyMono(fontSize: 11, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+              style: AppTypography.bodyMono(
+                fontSize: 11,
+                color: theme.textColor.withValues(alpha: 0.35),
+                fontWeight: FontWeight.w500,
+              ),
             ),
             Text(
               daysText,
-              style: AppTypography.bodyMono(fontSize: 11.5, color: theme.accentColor).copyWith(
-                fontWeight: FontWeight.w700),
+              style: AppTypography.bodyMono(
+                fontSize: 11.5,
+                color: theme.accentColor,
+              ).copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -743,7 +869,11 @@ class BentoGrid extends StatelessWidget {
     return '🥰';
   }
 
-  Widget _buildMoodContent(BuildContext context, RelationshipProvider relationship, DailyMoodProvider dailyMood) {
+  Widget _buildMoodContent(
+    BuildContext context,
+    RelationshipProvider relationship,
+    DailyMoodProvider dailyMood,
+  ) {
     final isPaired = relationship.isPaired;
     final myToday = dailyMood.todayMood;
     final partnerToday = isPaired ? dailyMood.partnerTodayMood : null;
@@ -751,7 +881,12 @@ class BentoGrid extends StatelessWidget {
     final myScore = myToday != null ? '${myToday.moodScore}/10' : 'Pending';
     final myEmoji = myToday != null ? _getMoodEmoji(myToday.moodScore) : '🤔';
 
-    Widget buildMoodBox(String label, String emoji, String score, bool hasLogged) {
+    Widget buildMoodBox(
+      String label,
+      String emoji,
+      String score,
+      bool hasLogged,
+    ) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(
@@ -767,20 +902,32 @@ class BentoGrid extends StatelessWidget {
           children: [
             Text(
               label,
-              style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)),
+              style: AppTypography.cardCategory(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w800,
+                color: theme.textColor.withValues(alpha: 0.35),
+              ),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
                 Icon(
-                  hasLogged ? Icons.check_circle_rounded : Icons.pending_rounded,
-                  color: hasLogged ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
+                  hasLogged
+                      ? Icons.check_circle_rounded
+                      : Icons.pending_rounded,
+                  color: hasLogged
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.2),
                   size: 13,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   '$emoji $score',
-                  style: AppTypography.sectionHeader(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textColor),
+                  style: AppTypography.sectionHeader(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
               ],
             ),
@@ -793,23 +940,33 @@ class BentoGrid extends StatelessWidget {
       return buildMoodBox('YOU', myEmoji, myScore, myToday != null);
     }
 
-    final partnerScore = partnerToday != null ? '${partnerToday.moodScore}/10' : 'Pending';
-    final partnerEmoji = partnerToday != null ? _getMoodEmoji(partnerToday.moodScore) : '🤔';
+    final partnerScore = partnerToday != null
+        ? '${partnerToday.moodScore}/10'
+        : 'Pending';
+    final partnerEmoji = partnerToday != null
+        ? _getMoodEmoji(partnerToday.moodScore)
+        : '🤔';
 
     return Row(
       children: [
-        Expanded(
-          child: buildMoodBox('YOU', myEmoji, myScore, myToday != null),
-        ),
+        Expanded(child: buildMoodBox('YOU', myEmoji, myScore, myToday != null)),
         const SizedBox(width: 12),
         Expanded(
-          child: buildMoodBox('PARTNER', partnerEmoji, partnerScore, partnerToday != null),
+          child: buildMoodBox(
+            'PARTNER',
+            partnerEmoji,
+            partnerScore,
+            partnerToday != null,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildEmotionalMapContent(BuildContext context, DailyMoodProvider dailyMood) {
+  Widget _buildEmotionalMapContent(
+    BuildContext context,
+    DailyMoodProvider dailyMood,
+  ) {
     final recent = dailyMood.recentMoods;
     final partnerRecent = dailyMood.partnerRecentMoods;
 
@@ -821,13 +978,20 @@ class BentoGrid extends StatelessWidget {
         child: Text(
           'Log your mood for a few days to see your emotional map',
           textAlign: TextAlign.center,
-          style: AppTypography.caption(fontSize: 11, color: theme.textColor.withValues(alpha: 0.38)).copyWith(fontStyle: FontStyle.italic),
+          style: AppTypography.caption(
+            fontSize: 11,
+            color: theme.textColor.withValues(alpha: 0.38),
+          ).copyWith(fontStyle: FontStyle.italic),
         ),
       );
     }
 
     final now = DateTime.now();
-    final dates = List.generate(7, (i) => DateFormat('yyyy-MM-dd').format(now.subtract(Duration(days: 6 - i))));
+    final dates = List.generate(
+      7,
+      (i) =>
+          DateFormat('yyyy-MM-dd').format(now.subtract(Duration(days: 6 - i))),
+    );
 
     final userMoodsMap = {for (var m in recent) m.date: m.moodScore};
     final partnerMoodsMap = {for (var m in partnerRecent) m.date: m.moodScore};
@@ -841,7 +1005,9 @@ class BentoGrid extends StatelessWidget {
         userSpots.add(FlSpot(i.toDouble(), userMoodsMap[date]!.toDouble()));
       }
       if (partnerMoodsMap.containsKey(date)) {
-        partnerSpots.add(FlSpot(i.toDouble(), partnerMoodsMap[date]!.toDouble()));
+        partnerSpots.add(
+          FlSpot(i.toDouble(), partnerMoodsMap[date]!.toDouble()),
+        );
       }
     }
 
@@ -869,13 +1035,15 @@ class BentoGrid extends StatelessWidget {
                 isStrokeCapRound: true,
                 dotData: FlDotData(
                   show: true,
-                  checkToShowDot: (spot, barData) => spot.x == barData.spots.last.x,
-                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                    radius: 4,
-                    color: theme.accentColor,
-                    strokeWidth: 1.5,
-                    strokeColor: Colors.white,
-                  ),
+                  checkToShowDot: (spot, barData) =>
+                      spot.x == barData.spots.last.x,
+                  getDotPainter: (spot, percent, barData, index) =>
+                      FlDotCirclePainter(
+                        radius: 4,
+                        color: theme.accentColor,
+                        strokeWidth: 1.5,
+                        strokeColor: Colors.white,
+                      ),
                 ),
                 belowBarData: BarAreaData(
                   show: true,
@@ -899,13 +1067,15 @@ class BentoGrid extends StatelessWidget {
                 isStrokeCapRound: true,
                 dotData: FlDotData(
                   show: true,
-                  checkToShowDot: (spot, barData) => spot.x == barData.spots.last.x,
-                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                    radius: 4,
-                    color: theme.textColor.withValues(alpha: 0.2),
-                    strokeWidth: 1.5,
-                    strokeColor: Colors.white,
-                  ),
+                  checkToShowDot: (spot, barData) =>
+                      spot.x == barData.spots.last.x,
+                  getDotPainter: (spot, percent, barData, index) =>
+                      FlDotCirclePainter(
+                        radius: 4,
+                        color: theme.textColor.withValues(alpha: 0.2),
+                        strokeWidth: 1.5,
+                        strokeColor: Colors.white,
+                      ),
                 ),
                 belowBarData: BarAreaData(
                   show: true,
@@ -933,7 +1103,8 @@ class BentoGrid extends StatelessWidget {
 
         final hasQuestion = question != null;
         final answered = question != null && question.myAnswer != null;
-        final partnerAnswered = question != null && question.partnerAnswer != null;
+        final partnerAnswered =
+            question != null && question.partnerAnswer != null;
 
         String statusText = 'Waiting for answers';
         if (answered && partnerAnswered) {
@@ -944,7 +1115,9 @@ class BentoGrid extends StatelessWidget {
           statusText = 'Partner answered! Unlock now';
         }
 
-        final questionText = question != null ? '"${question.question}"' : 'Waiting for today\'s relationship prompt...';
+        final questionText = question != null
+            ? '"${question.question}"'
+            : 'Waiting for today\'s relationship prompt...';
 
         return InkWell(
           onTap: () => Navigator.push(
@@ -964,15 +1137,21 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     // "DAILY SYNC" Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'DAILY SYNC',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     // Circular Question Icon
@@ -1000,14 +1179,20 @@ class BentoGrid extends StatelessWidget {
                 // Title: Daily Sync Question
                 Text(
                   'Daily Sync Question',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 // Main center block: Question Box
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: theme.textColor.withValues(alpha: 0.05), // Adaptive transparent box
+                    color: theme.textColor.withValues(
+                      alpha: 0.05,
+                    ), // Adaptive transparent box
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -1017,7 +1202,17 @@ class BentoGrid extends StatelessWidget {
                         questionText,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: theme.textColor, height: 1.4).copyWith(fontStyle: hasQuestion ? FontStyle.italic : FontStyle.normal),
+                        style:
+                            AppTypography.sectionHeader(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textColor,
+                              height: 1.4,
+                            ).copyWith(
+                              fontStyle: hasQuestion
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
+                            ),
                       ),
                       const SizedBox(height: 12),
                       // Divider
@@ -1029,7 +1224,11 @@ class BentoGrid extends StatelessWidget {
                       // Sync status header
                       Text(
                         'SYNC STATUS:',
-                        style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                        style: AppTypography.captionMono(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                       const SizedBox(height: 8),
                       // Indicators row
@@ -1040,14 +1239,22 @@ class BentoGrid extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: answered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                              color: answered
+                                  ? theme.accentColor
+                                  : theme.textColor.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'You',
-                            style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: answered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
+                            style: AppTypography.caption(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: answered
+                                  ? theme.textColor
+                                  : theme.textColor.withValues(alpha: 0.4),
+                            ),
                           ),
                           const SizedBox(width: 20),
                           // Partner status
@@ -1055,14 +1262,22 @@ class BentoGrid extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: partnerAnswered ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                              color: partnerAnswered
+                                  ? theme.accentColor
+                                  : theme.textColor.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Partner',
-                            style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w600, color: partnerAnswered ? theme.textColor : theme.textColor.withValues(alpha: 0.4)),
+                            style: AppTypography.caption(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: partnerAnswered
+                                  ? theme.textColor
+                                  : theme.textColor.withValues(alpha: 0.4),
+                            ),
                           ),
                         ],
                       ),
@@ -1079,7 +1294,11 @@ class BentoGrid extends StatelessWidget {
                         statusText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1087,7 +1306,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'Sync Minds',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -1112,18 +1335,20 @@ class BentoGrid extends StatelessWidget {
     return Consumer<BucketListProvider>(
       builder: (context, bucketProvider, child) {
         final items = bucketProvider.items;
-        
+
         final completedItems = items.where((i) => i.isCompleted).toList();
         final uncompletedItems = items.where((i) => !i.isCompleted).toList();
-        
+
         final total = items.length;
         final completedCount = completedItems.length;
         final progress = total > 0 ? (completedCount / total) : 0.0;
-        
-        final closestToConquer = uncompletedItems.isNotEmpty 
-            ? uncompletedItems.first.title 
-            : (items.isNotEmpty ? 'All goals achieved! 🎉' : 'No goals added yet');
-            
+
+        final closestToConquer = uncompletedItems.isNotEmpty
+            ? uncompletedItems.first.title
+            : (items.isNotEmpty
+                  ? 'All goals achieved! 🎉'
+                  : 'No goals added yet');
+
         String completedText = 'No items yet';
         if (items.isNotEmpty) {
           if (completedItems.isNotEmpty) {
@@ -1157,15 +1382,21 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     // "ADVENTURES" Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'ADVENTURES',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     // Circular Compass Icon
@@ -1193,7 +1424,11 @@ class BentoGrid extends StatelessWidget {
                 // Title: Bucket List Goals
                 Text(
                   'Bucket List Goals',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 // Main center block: Progress Box
@@ -1204,79 +1439,105 @@ class BentoGrid extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: items.isEmpty
-                    ? Container(
-                        height: 100,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Your bucket list is empty. Start planning your next dream adventure together! ✈️',
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
-                        ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Progress labels
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'CONQUER PROGRESS',
-                                style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                              ),
-                              Text(
-                                '${(progress * 100).toInt()}% ($completedCount/$total)',
-                                style: AppTypography.bodyMono(fontSize: 11, fontWeight: FontWeight.w800, color: theme.accentColor),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          // Progress Bar
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(100),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 6,
-                              backgroundColor: theme.textColor.withValues(alpha: 0.05),
-                              valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                      ? Container(
+                          height: 100,
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Your bucket list is empty. Start planning your next dream adventure together! ✈️',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyMedium(
+                              fontSize: 12,
+                              color: theme.textColor.withValues(alpha: 0.7),
+                              height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          // Divider
-                          Container(
-                            height: 1,
-                            color: theme.textColor.withValues(alpha: 0.05),
-                          ),
-                          const SizedBox(height: 12),
-                          // Closest to conquer
-                          Text(
-                            'CLOSEST TO CONQUER:',
-                            style: AppTypography.captionMono(fontSize: 9, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: theme.accentColor,
-                                  shape: BoxShape.circle,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Progress labels
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'CONQUER PROGRESS',
+                                  style: AppTypography.captionMono(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.35,
+                                    ),
+                                  ).copyWith(letterSpacing: 0.5),
+                                ),
+                                Text(
+                                  '${(progress * 100).toInt()}% ($completedCount/$total)',
+                                  style: AppTypography.bodyMono(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: theme.accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            // Progress Bar
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 6,
+                                backgroundColor: theme.textColor.withValues(
+                                  alpha: 0.05,
+                                ),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.accentColor,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  closestToConquer,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textColor),
+                            ),
+                            const SizedBox(height: 12),
+                            // Divider
+                            Container(
+                              height: 1,
+                              color: theme.textColor.withValues(alpha: 0.05),
+                            ),
+                            const SizedBox(height: 12),
+                            // Closest to conquer
+                            Text(
+                              'CLOSEST TO CONQUER:',
+                              style: AppTypography.captionMono(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: theme.textColor.withValues(alpha: 0.35),
+                              ).copyWith(letterSpacing: 0.5),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: theme.accentColor,
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    closestToConquer,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.bodyMedium(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.textColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                 ),
                 const SizedBox(height: 14),
                 // Footer row
@@ -1288,8 +1549,10 @@ class BentoGrid extends StatelessWidget {
                         completedText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: theme.textColor.withValues(alpha: 0.35)).copyWith(
-                          fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: theme.textColor.withValues(alpha: 0.35),
+                        ).copyWith(fontWeight: FontWeight.w500),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1297,7 +1560,11 @@ class BentoGrid extends StatelessWidget {
                       children: [
                         Text(
                           'Chase Objectives',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -1323,14 +1590,12 @@ class BentoGrid extends StatelessWidget {
         final lockedCapsules = capsuleProvider.lockedCapsules;
         final hasCapsules = lockedCapsules.isNotEmpty;
 
-        final latestLockedMessage = hasCapsules 
-            ? lockedCapsules.first.message 
+        final latestLockedMessage = hasCapsules
+            ? lockedCapsules.first.message
             : 'No sealed capsules yet';
 
-        final openDate = hasCapsules 
-            ? lockedCapsules.first.openDate 
-            : null;
-        
+        final openDate = hasCapsules ? lockedCapsules.first.openDate : null;
+
         String countdownText = '--d --h --m';
         if (openDate != null) {
           final duration = openDate.difference(DateTime.now());
@@ -1364,15 +1629,21 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     // "FUTURE LETTERS" Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'FUTURE LETTERS',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     // Circular Hourglass icon
@@ -1400,7 +1671,11 @@ class BentoGrid extends StatelessWidget {
                 // Title: Time Capsules
                 Text(
                   'Time Capsules',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textColor),
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 // Main center block: Sealed Info Box
@@ -1411,76 +1686,103 @@ class BentoGrid extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: !hasCapsules
-                    ? Container(
-                        height: 100,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Write a letter to your future selves. Seal it today, and unlock a beautiful memory later! ✉️',
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
-                        ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  latestLockedMessage,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w700, color: theme.textColor),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // "SEALED" Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: theme.accentColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  'SEALED',
-                                  style: AppTypography.bodyMono(fontSize: 8, fontWeight: FontWeight.w800, color: theme.accentColor),
-                                ),
-                              ),
-                            ],
+                      ? Container(
+                          height: 100,
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Write a letter to your future selves. Seal it today, and unlock a beautiful memory later! ✉️',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyMedium(
+                              fontSize: 12,
+                              color: theme.textColor.withValues(alpha: 0.7),
+                              height: 1.4,
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          // Divider
-                          Container(
-                            height: 1,
-                            color: theme.textColor.withValues(alpha: 0.05),
-                          ),
-                          const SizedBox(height: 12),
-                          // Countdown row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.access_time_rounded,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    latestLockedMessage,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.sectionHeader(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.textColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // "SEALED" Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.accentColor.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'SEALED',
+                                    style: AppTypography.bodyMono(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                      color: theme.accentColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Divider
+                            Container(
+                              height: 1,
+                              color: theme.textColor.withValues(alpha: 0.05),
+                            ),
+                            const SizedBox(height: 12),
+                            // Countdown row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.access_time_rounded,
+                                      color: theme.accentColor,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'REMAINING:',
+                                      style: AppTypography.captionMono(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: theme.textColor.withValues(
+                                          alpha: 0.35,
+                                        ),
+                                      ).copyWith(letterSpacing: 0.5),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  countdownText,
+                                  style: AppTypography.bodyMono(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
                                     color: theme.accentColor,
-                                    size: 14,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'REMAINING:',
-                                    style: AppTypography.captionMono(fontSize: 10, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                countdownText,
-                                style: AppTypography.bodyMono(fontSize: 11.5, fontWeight: FontWeight.w800, color: theme.accentColor),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                 ),
                 const SizedBox(height: 14),
                 // Footer row
@@ -1489,13 +1791,21 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       '$sealedCount Sealed Lockboxes',
-                      style: AppTypography.button(fontSize: 10.5, color: theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                      style: AppTypography.button(
+                        fontSize: 10.5,
+                        color: theme.textColor.withValues(alpha: 0.35),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Row(
                       children: [
                         Text(
                           'Launch Capsule',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -1533,13 +1843,20 @@ class BentoGrid extends StatelessWidget {
             children: [
               Text(
                 isUnlocked ? 'Unlocked' : 'Locked',
-                style: AppTypography.bodyMedium(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textColor),
+                style: AppTypography.bodyMedium(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textColor,
+                ),
               ),
               Text(
-                isUnlocked 
-                    ? '$count items visible' 
+                isUnlocked
+                    ? '$count items visible'
                     : '🔒 Enter PIN to access secret letters & photos',
-                style: AppTypography.caption(fontSize: 10, color: theme.textColor.withValues(alpha: 0.54)),
+                style: AppTypography.caption(
+                  fontSize: 10,
+                  color: theme.textColor.withValues(alpha: 0.54),
+                ),
               ),
             ],
           ),
@@ -1554,7 +1871,11 @@ class BentoGrid extends StatelessWidget {
     if (messages.isEmpty) {
       return Text(
         'Send sweet notes and real-time love taps to your partner! 💓',
-        style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4),
+        style: AppTypography.bodyMedium(
+          fontSize: 12,
+          color: theme.textColor.withValues(alpha: 0.7),
+          height: 1.4,
+        ),
       );
     }
 
@@ -1571,13 +1892,21 @@ class BentoGrid extends StatelessWidget {
             children: [
               Text(
                 isMe ? 'You' : latest.senderName,
-                style: AppTypography.caption(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.54)),
+                style: AppTypography.caption(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textColor.withValues(alpha: 0.54),
+                ),
               ),
               Text(
                 latest.content,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor, fontWeight: FontWeight.w500),
+                style: AppTypography.bodyMedium(
+                  fontSize: 12,
+                  color: theme.textColor,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -1621,7 +1950,8 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
     final localNow = now.toLocal();
 
     // Check if same day
-    final isSameDay = localDateTime.year == localNow.year &&
+    final isSameDay =
+        localDateTime.year == localNow.year &&
         localDateTime.month == localNow.month &&
         localDateTime.day == localNow.day;
 
@@ -1640,7 +1970,8 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
 
     // Check if yesterday
     final yesterday = localNow.subtract(const Duration(days: 1));
-    final isYesterday = localDateTime.year == yesterday.year &&
+    final isYesterday =
+        localDateTime.year == yesterday.year &&
         localDateTime.month == yesterday.month &&
         localDateTime.day == yesterday.day;
 
@@ -1681,15 +2012,21 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: widget.theme.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'DOODLE NOTES',
-                        style: AppTypography.cardCategory(fontSize: 8.5, fontWeight: FontWeight.w800, color: widget.theme.accentColor).copyWith(
-                          letterSpacing: 0.5),
+                        'SCRAPBOOK',
+                        style: AppTypography.cardCategory(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          color: widget.theme.accentColor,
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ),
                     Container(
@@ -1698,7 +2035,9 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: widget.theme.accentColor.withValues(alpha: 0.3),
+                          color: widget.theme.accentColor.withValues(
+                            alpha: 0.3,
+                          ),
                           width: 1,
                         ),
                       ),
@@ -1714,8 +2053,12 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Doodles & Notes',
-                  style: AppTypography.cardTitle(fontSize: 18, fontWeight: FontWeight.w700, color: widget.theme.textColor),
+                  'Scrapbook',
+                  style: AppTypography.cardTitle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: widget.theme.textColor,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Container(
@@ -1735,7 +2078,11 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                         footerText,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(fontSize: 10, color: widget.theme.textColor.withValues(alpha: 0.35), fontWeight: FontWeight.w500),
+                        style: AppTypography.captionMono(
+                          fontSize: 10,
+                          color: widget.theme.textColor.withValues(alpha: 0.35),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1743,7 +2090,11 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                       children: [
                         Text(
                           'Draw & Write',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: widget.theme.accentColor),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: widget.theme.accentColor,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Icon(
@@ -1769,124 +2120,129 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
     if (notes.isEmpty) {
       return Text(
         'Draw a sketch, write a note, or share a photo to surprise your partner! 💌',
-        style: AppTypography.bodyMedium(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.7), height: 1.4),
+        style: AppTypography.bodyMedium(
+          fontSize: 12,
+          color: widget.theme.textColor.withValues(alpha: 0.7),
+          height: 1.4,
+        ),
       );
     }
 
     final latest = notes.first;
-    final senderName = latest.sender == 'you' ? 'You' : 'Partner';
 
     String previewText = '';
-    Widget previewImage = const SizedBox.shrink();
+    Widget canvasContent = const SizedBox.shrink();
 
     if (latest.type == NoteitType.text) {
       previewText = latest.content ?? '';
-      previewImage = Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: latest.backgroundColor ?? widget.theme.accentColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.chat_bubble_outline_rounded,
+      canvasContent = Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          latest.content ?? '',
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: AppTypography.lora(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontStyle: FontStyle.italic,
             color: Colors.white,
-            size: 16,
+            height: 1.4,
           ),
         ),
       );
     } else if (latest.type == NoteitType.drawing) {
       previewText = 'Doodle Drawing 🎨';
-      previewImage = Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: latest.backgroundColor ?? Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: widget.theme.textColor.withValues(alpha: 0.1),
-            width: 1,
+      Widget drawingWidget;
+      if (latest.imagePath != null && File(latest.imagePath!).existsSync()) {
+        drawingWidget = Image.file(
+          File(latest.imagePath!),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } else if (latest.imageUrl != null && latest.imageUrl!.isNotEmpty) {
+        drawingWidget = Image.network(
+          latest.imageUrl!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.broken_image, size: 24, color: Colors.grey),
+        );
+      } else {
+        drawingWidget = CustomPaint(
+          painter: ScaleDrawingPainter(
+            strokes: NoteitItem.deserializeStrokes(latest.content),
+            color: widget.theme.textColor,
+            strokeWidth: 2.5,
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: CustomPaint(
-            painter: ScaleDrawingPainter(
-              strokes: NoteitItem.deserializeStrokes(latest.content),
-              color: Colors.white,
-              strokeWidth: 2.0,
+        );
+      }
+      canvasContent = drawingWidget;
+    } else if (latest.type == NoteitType.photo) {
+      previewText = 'Shared Photo 📸';
+      canvasContent =
+          latest.imagePath != null && File(latest.imagePath!).existsSync()
+          ? Image.file(
+              File(latest.imagePath!),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            )
+          : latest.imageUrl != null && latest.imageUrl!.isNotEmpty
+          ? Image.network(
+              latest.imageUrl!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.broken_image, size: 24, color: Colors.grey),
+            )
+          : Center(
+              child: Icon(
+                Icons.photo_rounded,
+                color: widget.theme.textColor.withValues(alpha: 0.6),
+                size: 32,
+              ),
+            );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // The enlarged preview canvas container (Square Aspect Ratio)
+        AspectRatio(
+          aspectRatio: 1.0,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color:
+                  latest.backgroundColor ??
+                  widget.theme.accentColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.theme.textColor.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: canvasContent,
             ),
           ),
         ),
-      );
-    } else if (latest.type == NoteitType.photo) {
-      previewText = 'Shared Photo 📸';
-      previewImage = Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: widget.theme.textColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: widget.theme.textColor.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: latest.imagePath != null && File(latest.imagePath!).existsSync()
-              ? Image.file(
-                  File(latest.imagePath!),
-                  fit: BoxFit.cover,
-                )
-              : Icon(
-                  Icons.photo_rounded,
-                  color: widget.theme.textColor.withValues(alpha: 0.6),
-                  size: 16,
-                ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        previewImage,
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                previewText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.sectionHeader(fontSize: 13.5, fontWeight: FontWeight.w600, color: widget.theme.textColor.withValues(alpha: 0.95)),
-              ),
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  Text(
-                    senderName,
-                    style: AppTypography.caption(fontSize: 10.5, fontWeight: FontWeight.bold, color: widget.theme.accentColor),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 3,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: widget.theme.textColor.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatRelativeTime(latest.createdAt),
-                    style: AppTypography.captionMono(fontSize: 9, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ],
+        const SizedBox(height: 12),
+        // Description text below
+        Text(
+          latest.type == NoteitType.text ? 'Shared Text Note 📝' : previewText,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.sectionHeader(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: widget.theme.textColor.withValues(alpha: 0.95),
           ),
         ),
       ],

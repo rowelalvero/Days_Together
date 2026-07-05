@@ -158,8 +158,8 @@ class TogetherTab extends StatelessWidget {
                     context: context,
                     theme: theme,
                     emoji: '📱',
-                    title: 'Doodle Notes',
-                    subtitle: 'Doodle & send widget notes.',
+                    title: 'Scrapbook',
+                    subtitle: 'Doodle, write notes & pin photos.',
                     color: Colors.pink,
                     onTap: () => Navigator.push(
                       context,
