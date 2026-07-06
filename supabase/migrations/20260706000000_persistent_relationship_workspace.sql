@@ -239,6 +239,7 @@ DECLARE
   v_attempts integer;
   v_locked_until timestamp with time zone;
   v_user_couple_id uuid;
+  v_success boolean := false;
 BEGIN
   -- Lock user row to prevent race conditions
   SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
@@ -257,58 +258,52 @@ BEGIN
   END IF;
 
   -- Parse lookup key and secret
-  IF position('-' in p_recovery_code) = 0 THEN
-    GOTO failed_attempt;
+  IF position('-' in p_recovery_code) > 0 THEN
+    v_lookup_key := upper(trim(split_part(p_recovery_code, '-', 1)));
+    v_secret := substr(p_recovery_code, position('-' in p_recovery_code) + 1);
+    v_secret_clean := replace(v_secret, '-', '');
+
+    -- Query couples using index on lookup key and lock it
+    SELECT * INTO v_couple_row
+    FROM public.couples
+    WHERE recovery_lookup_key = v_lookup_key
+    FOR UPDATE;
+
+    IF v_couple_row.id IS NOT NULL THEN
+      -- Verify BCrypt hash
+      IF v_couple_row.recovery_code_hash = crypt(v_secret_clean, v_couple_row.recovery_code_hash) THEN
+        -- Validate ownership
+        IF v_couple_row.partner_a_id = auth.uid() OR v_couple_row.partner_b_id = auth.uid() THEN
+          v_success := true;
+        END IF;
+      END IF;
+    END IF;
   END IF;
 
-  v_lookup_key := upper(trim(split_part(p_recovery_code, '-', 1)));
-  v_secret := substr(p_recovery_code, position('-' in p_recovery_code) + 1);
-  v_secret_clean := replace(v_secret, '-', '');
+  IF v_success THEN
+    -- Success: Reset attempts, connect user, update workspace status
+    INSERT INTO public.failed_recovery_attempts (user_id, attempts, locked_until)
+    VALUES (auth.uid(), 0, NULL)
+    ON CONFLICT (user_id) DO UPDATE SET attempts = 0, locked_until = NULL;
 
-  -- Query couples using index on lookup key and lock it
-  SELECT * INTO v_couple_row
-  FROM public.couples
-  WHERE recovery_lookup_key = v_lookup_key
-  FOR UPDATE;
+    UPDATE public.users SET couple_id = v_couple_row.id WHERE id = auth.uid();
+    UPDATE public.couples SET status = 'active' WHERE id = v_couple_row.id;
 
-  IF v_couple_row.id IS NULL THEN
-    GOTO failed_attempt;
+    RETURN json_build_object(
+      'success', true,
+      'couple_id', v_couple_row.id
+    );
+  ELSE
+    -- Failed attempt: log failed attempt and raise exception
+    INSERT INTO public.failed_recovery_attempts (user_id, attempts, locked_until)
+    VALUES (auth.uid(), 1, NULL)
+    ON CONFLICT (user_id) DO UPDATE SET
+      attempts = failed_recovery_attempts.attempts + 1,
+      locked_until = CASE WHEN failed_recovery_attempts.attempts + 1 >= 5 THEN now() + interval '15 minutes' ELSE NULL END,
+      updated_at = now();
+      
+    RAISE EXCEPTION 'Invalid recovery code';
   END IF;
-
-  -- Verify BCrypt hash
-  IF v_couple_row.recovery_code_hash != crypt(v_secret_clean, v_couple_row.recovery_code_hash) THEN
-    GOTO failed_attempt;
-  END IF;
-
-  -- Validate ownership
-  IF v_couple_row.partner_a_id != auth.uid() AND v_couple_row.partner_b_id != auth.uid() THEN
-    GOTO failed_attempt;
-  END IF;
-
-  -- Success: Reset attempts, connect user, update workspace status
-  INSERT INTO public.failed_recovery_attempts (user_id, attempts, locked_until)
-  VALUES (auth.uid(), 0, NULL)
-  ON CONFLICT (user_id) DO UPDATE SET attempts = 0, locked_until = NULL;
-
-  UPDATE public.users SET couple_id = v_couple_row.id WHERE id = auth.uid();
-  UPDATE public.couples SET status = 'active' WHERE id = v_couple_row.id;
-
-  RETURN json_build_object(
-    'success', true,
-    'couple_id', v_couple_row.id
-  );
-
-<<failed_attempt>>
-BEGIN
-  INSERT INTO public.failed_recovery_attempts (user_id, attempts, locked_until)
-  VALUES (auth.uid(), 1, NULL)
-  ON CONFLICT (user_id) DO UPDATE SET
-    attempts = failed_recovery_attempts.attempts + 1,
-    locked_until = CASE WHEN failed_recovery_attempts.attempts + 1 >= 5 THEN now() + interval '15 minutes' ELSE NULL END,
-    updated_at = now();
-    
-  RAISE EXCEPTION 'Invalid recovery code';
-END;
 END;
 $$;
 
