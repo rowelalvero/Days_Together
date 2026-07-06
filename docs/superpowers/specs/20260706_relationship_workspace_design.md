@@ -50,42 +50,46 @@ CREATE TABLE public.failed_recovery_attempts (
 All RPC functions will run inside a single database transaction. If any check fails, a `RAISE EXCEPTION` is called to roll back all changes.
 
 ### A. `create_relationship_workspace()`
-1. Generates a new `couple_id` (UUID).
-2. Generates a short, unique 6-character uppercase `pairing_code`.
-3. Generates a 6-character random uppercase alphanumeric `recovery_lookup_key` (e.g. `ABC123`).
-4. Generates a secure, cryptographically random 18-character uppercase alphanumeric `recovery_secret` (e.g., `RVT7H9MKPQ82JXW5`).
-5. Hashes the recovery secret using Blowfish/BCrypt: `crypt(recovery_secret, gen_salt('bf', 10))` and stores it in `recovery_code_hash`.
-6. Inserts a row in `couples` with `status = 'waiting'`, `partner_a_id = auth.uid()`, `pairing_code`, `recovery_lookup_key`, and `recovery_code_hash`.
-7. Sets the calling user's `couple_id = new_id` in `users`.
-8. Returns the UUID, the pairing code, and the **plaintext combined recovery code** `[recovery_lookup_key]-[recovery_secret]` (e.g., `ABC123-RVT7H9MKPQ82JXW5`) which will only be displayed once in the UI.
+1. Verifies that the authenticated user (`auth.uid()`) is not already connected to a relationship (`users.couple_id` is NULL). Otherwise, throws `'User is already in a relationship'`.
+2. Generates a new `couple_id` (UUID).
+3. Generates a short, unique 6-character uppercase `pairing_code`.
+4. Generates a 6-character random uppercase alphanumeric `recovery_lookup_key` (e.g. `ABC123`).
+5. Generates a secure, cryptographically random 16-character uppercase alphanumeric `recovery_secret` formatted for readability: `RVT7-H9MK-PQ82-JXW5`.
+6. Hashes the recovery secret (with hyphens stripped: `RVT7H9MKPQ82JXW5`) using Blowfish/BCrypt: `crypt(stripped_secret, gen_salt('bf', 10))` and stores it in `recovery_code_hash`.
+7. Inserts a row in `couples` with `status = 'waiting'`, `partner_a_id = auth.uid()`, `pairing_code`, `recovery_lookup_key`, and `recovery_code_hash`.
+8. Sets the calling user's `couple_id = new_id` in `users`.
+9. Returns the UUID, the pairing code, and the **plaintext combined recovery code** `[recovery_lookup_key]-[recovery_secret]` (e.g., `ABC123-RVT7-H9MK-PQ82-JXW5`) which will only be displayed once in the UI.
 
 ### B. `join_relationship_with_code(p_pairing_code text)`
-1. Finds the `couples` row matching `p_pairing_code` (case-insensitive) where `status = 'waiting'` and `partner_b_id IS NULL`.
-2. If not found, throws an error `'Invalid pairing code'`.
-3. Verifies that the joiner is authenticated and is not `partner_a_id`.
-4. Updates the `couples` record:
+1. Verifies that the authenticated user (`auth.uid()`) is not already connected to a relationship (`users.couple_id` is NULL). Otherwise, throws `'User is already in a relationship'`.
+2. Finds and locks (using `FOR UPDATE`) the candidate `couples` row matching `p_pairing_code` (case-insensitive) where `status = 'waiting'` and `partner_b_id IS NULL`.
+3. If no row is locked/found, throws an error `'Invalid or expired pairing code'`.
+4. Verifies that the joiner is authenticated and is not the creator (`partner_a_id`).
+5. Updates the locked `couples` record:
    * Sets `partner_b_id = auth.uid()`
    * Sets `status = 'active'`
    * Sets `pairing_code = NULL` (invalidates pairing code immediately).
-5. Updates the joiner's profile in `users`: `couple_id = couples.id`.
-6. Returns the workspace UUID and the creator's ID.
+6. Updates the joiner's profile in `users`: `couple_id = couples.id`.
+7. Returns the workspace UUID and the creator's ID.
 
 ### C. `recover_relationship_with_code(p_recovery_code text)`
-1. Check rate limits:
+1. Verifies that the authenticated user (`auth.uid()`) is not already connected to a relationship (`users.couple_id` is NULL). Otherwise, throws `'User is already in a relationship'`.
+2. Check rate limits:
    * Check if the authenticated user (`auth.uid()`) is currently locked out in `failed_recovery_attempts`. If so, throw an error with the cooldown remaining.
-2. Parse Recovery Code:
+3. Parse Recovery Code:
    * Splits `p_recovery_code` on the first hyphen (`-`) into `v_lookup_key` and `v_secret`.
+   * Strips all hyphens from the secret portion: `v_secret_clean := replace(v_secret, '-', '')`.
    * If the input is invalid (no hyphen or empty components), increments failed attempts and throws `'Invalid recovery code'`.
-3. Search using index:
+4. Search using index:
    * Queries the `couples` table for the row matching `recovery_lookup_key = upper(trim(v_lookup_key))`.
    * If no row is found, increments failed attempts and throws `'Invalid recovery code'`.
-4. BCrypt Verification:
-   * Verifies the secret against the stored hash: `recovery_code_hash = crypt(v_secret, recovery_code_hash)`.
+5. BCrypt Verification:
+   * Verifies the clean secret against the stored hash: `recovery_code_hash = crypt(v_secret_clean, recovery_code_hash)`.
    * If it does not match, increments failed attempts and throws `'Invalid recovery code'`.
-5. Validate ownership:
+6. Validate ownership:
    * Verify that `auth.uid()` matches either `partner_a_id` or `partner_b_id` of the matched workspace.
    * If it does not match, increment failed attempts and throw an error `'Invalid recovery code'`.
-6. Successful recovery:
+7. Successful recovery:
    * Reset the rate limit stats.
    * Reconnect the user: set `users.couple_id = couples.id`.
    * Set `couples.status = 'active'`.
@@ -93,8 +97,8 @@ All RPC functions will run inside a single database transaction. If any check fa
 
 ### D. `regenerate_recovery_code()`
 1. Verifies the authenticated user is currently active in a relationship (`users.couple_id` is non-null).
-2. Generates a new `recovery_lookup_key` (6-char) and `recovery_secret` (18-char).
-3. Hashes the secret via BCrypt and updates `recovery_lookup_key` and `recovery_code_hash` on the active relationship.
+2. Generates a new `recovery_lookup_key` (6-char) and a new hyphen-grouped `recovery_secret` (16-char formatted as `XXXX-XXXX-XXXX-XXXX`).
+3. Hashes the stripped secret via BCrypt and updates `recovery_lookup_key` and `recovery_code_hash` on the active relationship.
 4. Returns the plaintext combined recovery code `[lookup_key]-[secret]` to display once in the UI.
 
 ### E. `disconnect_relationship_workspace()`
@@ -106,7 +110,15 @@ All RPC functions will run inside a single database transaction. If any check fa
 
 ---
 
-## 4. Flutter Provider & State Management Architecture
+## 4. Failure Recovery & Transactions
+Every RPC function executes within a single database transaction. 
+* If any error, ownership violation, or validation check fails, a `RAISE EXCEPTION` is triggered.
+* PostgreSQL automatically aborts the active transaction and performs a full rollback.
+* No partial states are written: the `users`, `couples`, and feature tables are guaranteed to remain completely unchanged if the transaction fails.
+
+---
+
+## 5. Flutter Provider & State Management Architecture
 
 ### Initialization Order
 1. Authenticate user.
@@ -128,7 +140,7 @@ This avoids duplicate listeners and memory leaks.
 
 ---
 
-## 5. UI Changes & Onboarding
+## 6. UI Changes & Onboarding
 
 ### Refactored `PairingSelectionScreen`
 Provides clear explanations for all three options:
@@ -138,7 +150,7 @@ Provides clear explanations for all three options:
 
 ### Onboarding / Regeneration Recovery Code Dialog
 When a recovery code is generated/regenerated:
-1. Shows the code clearly (e.g., `ABC123-RVT7H9MKPQ82JXW5`).
+1. Shows the code clearly (e.g., `ABC123-RVT7-H9MK-PQ82-JXW5`).
 2. Provides a **Copy** button.
 3. Displays a warning: *"⚠️ This code will never be shown again."*
 4. Includes a checkbox: **"I have saved my recovery code."**
@@ -147,7 +159,7 @@ When a recovery code is generated/regenerated:
 
 ---
 
-## 6. Implementation Roadmap & Dependency Order
+## 7. Implementation Roadmap & Dependency Order
 
 To ensure the refactor is incremental, reviewable, and keeps the project buildable, we will execute in the following sequence:
 
