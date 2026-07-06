@@ -229,7 +229,7 @@ CREATE OR REPLACE FUNCTION public.recover_relationship_with_code(p_recovery_code
 RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $
+AS $$
 DECLARE
   v_code_clean text;
   v_first_hyphen_pos integer;
@@ -310,7 +310,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid recovery code';
   END IF;
 END;
-$;
+$$;
 
 -- 11. Define regenerate_recovery_code RPC
 CREATE OR REPLACE FUNCTION public.regenerate_recovery_code()
