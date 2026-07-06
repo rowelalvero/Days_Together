@@ -9,7 +9,6 @@ import 'package:days_together/screens/studio_tab.dart';
 import 'package:days_together/screens/together_tab.dart';
 import 'package:days_together/widgets/add_item_dialog.dart';
 import 'package:days_together/widgets/timeline_item.dart';
-import 'package:days_together/widgets/shake_to_hug.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/storybook_view.dart';
 import 'package:days_together/widgets/ruler_picker_scrubber.dart';
@@ -213,8 +212,7 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) => _handleBackInvoked(didPop, result),
-      child: ShakeToHugWrapper(
-        child: Scaffold(
+      child: Scaffold(
           extendBody: true,
           body: Container(
             width: double.infinity,
@@ -305,7 +303,6 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
                 : 70.0 + _floatingBarMarginBottom + 16.0,
           ),
         ),
-      ),
     );
   }
 
