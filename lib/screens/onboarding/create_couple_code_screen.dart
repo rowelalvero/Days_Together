@@ -19,6 +19,8 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
   late String _code;
   late AnimationController _animController;
   bool _copied = false;
+  bool _copiedRecovery = false;
+  bool _savedRecoveryCode = false;
 
   @override
   void initState() {
@@ -41,6 +43,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
+    final provider = context.watch<RelationshipProvider>();
 
     return Scaffold(
       body: Container(
@@ -57,25 +60,25 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                   onPressed: () => Navigator.pop(context),
                   icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
                 Text(
                   'Your unique\nconnection code.',
                   style: AppTypography.cormorant(
-                    fontSize: 36,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   'Share this with your partner to invite them into your story.',
                   style: AppTypography.spectral(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: theme.textColor.withValues(alpha: 0.7),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 20),
                 // Code Display
                 ScaleTransition(
                   scale: CurvedAnimation(
@@ -84,10 +87,10 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                   ),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     decoration: BoxDecoration(
                       color: theme.textColor.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: theme.accentColor.withValues(alpha: 0.3),
                         width: 2,
@@ -95,7 +98,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       boxShadow: [
                         BoxShadow(
                           color: theme.accentColor.withValues(alpha: 0.1),
-                          blurRadius: 30,
+                          blurRadius: 20,
                           spreadRadius: 2,
                         ),
                       ],
@@ -105,16 +108,16 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                         Text(
                           _code,
                           style: AppTypography.body(
-                            fontSize: 48,
+                            fontSize: 36,
                             fontWeight: FontWeight.w900,
                             color: theme.textColor,
-                          ).copyWith(letterSpacing: 12),
+                          ).copyWith(letterSpacing: 10),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
                         Text(
                           'This code is your key to connect. Keep it safe.',
                           style: AppTypography.caption(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: theme.textColor.withValues(alpha: 0.5),
                           ).copyWith(fontStyle: FontStyle.italic),
                         ),
@@ -122,7 +125,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
@@ -154,22 +157,110 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+                // Recovery Code Section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your Recovery Code',
+                        style: AppTypography.body(
+                          color: theme.textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SelectableText(
+                        provider.recoveryCode ?? '—',
+                        style: AppTypography.body(
+                          color: theme.accentColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '⚠️ This code will never be shown again. Use it to recover your workspace if you disconnect.',
+                        style: AppTypography.caption(
+                          color: theme.textColor.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: provider.recoveryCode ?? ''));
+                            setState(() => _copiedRecovery = true);
+                            Future.delayed(const Duration(seconds: 2), () {
+                              if (mounted) setState(() => _copiedRecovery = false);
+                            });
+                          },
+                          icon: Icon(_copiedRecovery ? Icons.check_circle_outline : Icons.copy_all_rounded, size: 16),
+                          label: Text(_copiedRecovery ? 'Copied!' : 'Copy Recovery Code'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.textColor,
+                            side: BorderSide(color: theme.textColor.withValues(alpha: 0.15)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const Spacer(),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _savedRecoveryCode,
+                      onChanged: (val) => setState(() => _savedRecoveryCode = val ?? false),
+                      activeColor: theme.accentColor,
+                    ),
+                    Expanded(
+                      child: Text(
+                        'I have copied and saved my recovery code.',
+                        style: AppTypography.body(
+                          color: theme.textColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 60,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const GenesisScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _savedRecoveryCode
+                        ? () {
+                            // Wipe recovery code from memory for security
+                            provider.clearRecoveryCode();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const GenesisScreen(),
+                              ),
+                            );
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.accentColor,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: theme.accentColor.withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -184,7 +275,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
               ],
             ),
           ),

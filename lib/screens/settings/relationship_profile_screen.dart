@@ -50,6 +50,8 @@ class RelationshipProfileScreen extends StatelessWidget {
                         const SizedBox(height: 32),
                       ],
                       const SizedBox(height: 16),
+                      _buildRegenerateRecoveryCodeButton(context, rp, theme),
+                      const SizedBox(height: 16),
                       _buildDangerZoneDivider(theme),
                       const SizedBox(height: 20),
                       _buildUnlinkButton(context, rp, theme),
@@ -436,7 +438,299 @@ class RelationshipProfileScreen extends StatelessWidget {
 
 
 
-  Widget _buildDangerZoneDivider(dynamic theme) {
+    Widget _buildRegenerateRecoveryCodeButton(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+      ),
+      child: TextButton.icon(
+        onPressed: () => _showRegenerateRecoveryCodeDialog(context, rp, theme),
+        icon: Icon(Icons.security_rounded, color: theme.textColor, size: 20),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        label: Text(
+          'Regenerate Recovery Code',
+          style: AppTypography.body(
+            color: theme.textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRegenerateRecoveryCodeDialog(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: GlassContainer(
+          borderRadius: 28,
+          padding: const EdgeInsets.all(28),
+          opacity: theme.isDark ? 0.1 : 0.85,
+          gradient: theme.isDark
+              ? null
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.95),
+                    Colors.white.withValues(alpha: 0.85),
+                  ],
+                ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.accentColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.security_rounded,
+                  color: theme.accentColor,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Regenerate Recovery Code',
+                style: AppTypography.sectionHeader(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Regenerating your recovery code will permanently invalidate all previously issued recovery codes. You will only be shown the new code once.',
+                style: AppTypography.body(
+                  fontSize: 14,
+                  color: theme.textColor.withValues(alpha: 0.6),
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: AppTypography.body(
+                          color: theme.textColor.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context); // Close warning dialog
+                        
+                        // Show loading indicator
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(child: CircularProgressIndicator()),
+                        );
+                        
+                        try {
+                          await rp.regenerateRecoveryCode();
+                          if (context.mounted) {
+                            Navigator.pop(context); // Close loading indicator
+                            _showNewRecoveryCodeDialog(context, rp, theme);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            Navigator.pop(context); // Close loading indicator
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to regenerate: $e')),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.accentColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Regenerate',
+                        style: AppTypography.body(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNewRecoveryCodeDialog(
+    BuildContext context,
+    RelationshipProvider rp,
+    dynamic theme,
+  ) {
+    bool saved = false;
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Force them to save and check the box
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassContainer(
+            borderRadius: 28,
+            padding: const EdgeInsets.all(28),
+            opacity: theme.isDark ? 0.1 : 0.85,
+            gradient: theme.isDark
+                ? null
+                : LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.95),
+                      Colors.white.withValues(alpha: 0.85),
+                    ],
+                  ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    'Your New Recovery Code',
+                    style: AppTypography.sectionHeader(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+                  ),
+                  child: Center(
+                    child: SelectableText(
+                      rp.recoveryCode ?? '—',
+                      style: AppTypography.body(
+                        color: theme.accentColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    '⚠️ This code will never be shown again.',
+                    style: AppTypography.caption(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: rp.recoveryCode ?? ''));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Recovery code copied!')),
+                      );
+                    },
+                    icon: Icon(Icons.copy_rounded, color: theme.textColor, size: 16),
+                    label: Text(
+                      'Copy Code',
+                      style: AppTypography.body(color: theme.textColor, fontSize: 14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: saved,
+                      onChanged: (val) => setState(() => saved = val ?? false),
+                      activeColor: theme.accentColor,
+                    ),
+                    Expanded(
+                      child: Text(
+                        'I have saved my recovery code securely.',
+                        style: AppTypography.body(color: theme.textColor, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: saved
+                        ? () {
+                            rp.clearRecoveryCode();
+                            Navigator.pop(context);
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.accentColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Continue',
+                      style: AppTypography.button(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+Widget _buildDangerZoneDivider(dynamic theme) {
     return Row(
       children: [
         Expanded(

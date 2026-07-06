@@ -1,5 +1,6 @@
 import 'package:days_together/screens/onboarding/create_couple_code_screen.dart';
 import 'package:days_together/screens/onboarding/join_couple_code_screen.dart';
+import 'package:days_together/screens/onboarding/recover_relationship_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -46,11 +47,11 @@ class PairingSelectionScreen extends StatelessWidget {
                     color: theme.textColor.withValues(alpha: 0.7),
                   ),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
                 _PairingCard(
                   icon: Icons.favorite_rounded,
-                  title: "Start Our Story",
-                  subtitle: "Generate a connection code to invite your partner.",
+                  title: "Create Relationship",
+                  subtitle: "Start a new shared relationship workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () {
@@ -62,11 +63,11 @@ class PairingSelectionScreen extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 _PairingCard(
                   icon: Icons.link_rounded,
-                  title: "Join My Partner",
-                  subtitle: "Enter the connection code shared by your partner.",
+                  title: "Join with Pairing Code",
+                  subtitle: "Connect to your partner's newly created workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () {
@@ -74,6 +75,22 @@ class PairingSelectionScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) => const JoinCoupleCodeScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _PairingCard(
+                  icon: Icons.security_rounded,
+                  title: "Recover Existing Relationship",
+                  subtitle: "Reconnect to a workspace you previously belonged to.",
+                  accentColor: theme.accentColor,
+                  textColor: theme.textColor,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RecoverRelationshipScreen(),
                       ),
                     );
                   },
