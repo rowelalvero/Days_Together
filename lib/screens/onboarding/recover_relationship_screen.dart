@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -119,30 +120,75 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
                               fontSize: 12,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           TextFormField(
                             controller: _codeController,
+                            textCapitalization: TextCapitalization.characters,
                             style: AppTypography.body(
                               color: theme.textColor,
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
                             decoration: InputDecoration(
+                              filled: true,
+                              fillColor: theme.textColor.withValues(alpha: 0.04),
+                              prefixIcon: Icon(
+                                Icons.key_rounded,
+                                color: theme.textColor.withValues(alpha: 0.5),
+                                size: 20,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  Icons.paste_rounded,
+                                  color: theme.accentColor,
+                                  size: 20,
+                                ),
+                                tooltip: 'Paste recovery code',
+                                onPressed: () async {
+                                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                                  if (data?.text != null) {
+                                    _codeController.text = data!.text!.trim().toUpperCase();
+                                    setState(() {
+                                      _errorMessage = null;
+                                    });
+                                  }
+                                },
+                              ),
                               hintText: 'e.g. ABC123-RVT7-H9MK-PQ82-JXW5',
                               hintStyle: AppTypography.body(
                                 color: theme.textColor.withValues(alpha: 0.3),
                               ),
-                              enabledBorder: UnderlineInputBorder(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: theme.textColor.withValues(alpha: 0.2),
+                                  color: theme.textColor.withValues(alpha: 0.1),
                                 ),
                               ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: theme.accentColor),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(
+                                  color: theme.accentColor,
+                                  width: 2,
+                                ),
                               ),
-                              errorBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.redAccent),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: Colors.redAccent,
+                                ),
                               ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: Colors.redAccent,
+                                  width: 2,
+                                ),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
