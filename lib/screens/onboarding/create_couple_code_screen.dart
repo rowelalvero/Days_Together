@@ -44,6 +44,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
     final provider = context.watch<RelationshipProvider>();
+    final codeToDisplay = provider.coupleCode ?? _code;
 
     return Scaffold(
       body: Container(
@@ -105,14 +106,20 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                     ),
                     child: Column(
                       children: [
-                        Text(
-                          _code,
-                          style: AppTypography.body(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            color: theme.textColor,
-                          ).copyWith(letterSpacing: 10),
-                        ),
+                        if (codeToDisplay.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: CircularProgressIndicator(),
+                          )
+                        else
+                          Text(
+                            codeToDisplay,
+                            style: AppTypography.body(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w900,
+                              color: theme.textColor,
+                            ).copyWith(letterSpacing: 10),
+                          ),
                         const SizedBox(height: 10),
                         Text(
                           'This code is your key to connect. Keep it safe.',
@@ -132,13 +139,15 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       child: _buildButton(
                         label: _copied ? '✓ Copied' : 'Copy Code',
                         icon: Icons.copy_rounded,
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: _code));
-                          setState(() => _copied = true);
-                          Future.delayed(const Duration(seconds: 2), () {
-                            if (mounted) setState(() => _copied = false);
-                          });
-                        },
+                        onPressed: codeToDisplay.isEmpty
+                            ? () {}
+                            : () {
+                                Clipboard.setData(ClipboardData(text: codeToDisplay));
+                                setState(() => _copied = true);
+                                Future.delayed(const Duration(seconds: 2), () {
+                                  if (mounted) setState(() => _copied = false);
+                                });
+                              },
                         theme: theme,
                       ),
                     ),
@@ -147,11 +156,13 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       child: _buildButton(
                         label: 'Share',
                         icon: Icons.share_rounded,
-                        onPressed: () {
-                          Share.share(
-                            'Connect with me on Days Together! Enter my connection code: $_code to link our hearts 💕',
-                          );
-                        },
+                        onPressed: codeToDisplay.isEmpty
+                            ? () {}
+                            : () {
+                                Share.share(
+                                  'Connect with me on Days Together! Enter my connection code: $codeToDisplay to link our hearts 💕',
+                                );
+                              },
                         theme: theme,
                       ),
                     ),

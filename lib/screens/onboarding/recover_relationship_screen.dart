@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';

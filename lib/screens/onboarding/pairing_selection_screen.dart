@@ -4,6 +4,7 @@ import 'package:days_together/screens/onboarding/recover_relationship_screen.dar
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/providers/relationship_provider.dart';
 import 'package:provider/provider.dart';
 
 class PairingSelectionScreen extends StatelessWidget {
@@ -54,13 +55,36 @@ class PairingSelectionScreen extends StatelessWidget {
                   subtitle: "Start a new shared relationship workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CreateCoupleCodeScreen(),
+                  onTap: () async {
+                    // Show a beautiful loading dialog
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => const Center(
+                        child: CircularProgressIndicator(),
                       ),
                     );
+
+                    try {
+                      final provider = context.read<RelationshipProvider>();
+                      await provider.createRelationshipWorkspace();
+                      if (context.mounted) {
+                        Navigator.pop(context); // Close loading dialog
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CreateCoupleCodeScreen(),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        Navigator.pop(context); // Close loading dialog
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to create workspace: $e')),
+                        );
+                      }
+                    }
                   },
                 ),
                 const SizedBox(height: 16),
