@@ -1955,7 +1955,7 @@ class RelationshipProvider with ChangeNotifier {
         } catch (_) {}
       }
     }
-    await logout();
+    await logout(wipeAll: true);
   }
 
   Future<void> signUpWithEmail(String email, String password) async {
@@ -2012,7 +2012,10 @@ class RelationshipProvider with ChangeNotifier {
     );
   }
 
-  Future<void> logout() async {
+  Future<void> logout({bool wipeAll = false}) async {
+    _userId = null;
+    _coupleId = null;
+    _partnerId = null;
     _startDate = null;
     _startTime = null;
     _partnerName = null;
@@ -2049,21 +2052,25 @@ class RelationshipProvider with ChangeNotifier {
     _partnerSignature = null;
 
     final prefs = await SharedPreferences.getInstance();
-    final onboardingCompleted = prefs.getBool('onboarding_completed');
-    final startDate = prefs.getString('relationship_start_date');
-    final startHour = prefs.getInt('relationship_start_hour');
-    final startMinute = prefs.getInt('relationship_start_minute');
-    final yourAvatarPath = prefs.getString('your_avatar_path');
-    final yourName = prefs.getString('your_name');
+    if (wipeAll) {
+      await prefs.clear();
+    } else {
+      final onboardingCompleted = prefs.getBool('onboarding_completed');
+      final startDate = prefs.getString('relationship_start_date');
+      final startHour = prefs.getInt('relationship_start_hour');
+      final startMinute = prefs.getInt('relationship_start_minute');
+      final yourAvatarPath = prefs.getString('your_avatar_path');
+      final yourName = prefs.getString('your_name');
 
-    await prefs.clear();
+      await prefs.clear();
 
-    if (onboardingCompleted != null) await prefs.setBool('onboarding_completed', onboardingCompleted);
-    if (startDate != null) await prefs.setString('relationship_start_date', startDate);
-    if (startHour != null) await prefs.setInt('relationship_start_hour', startHour);
-    if (startMinute != null) await prefs.setInt('relationship_start_minute', startMinute);
-    if (yourAvatarPath != null) await prefs.setString('your_avatar_path', yourAvatarPath);
-    if (yourName != null) await prefs.setString('your_name', yourName);
+      if (onboardingCompleted != null) await prefs.setBool('onboarding_completed', onboardingCompleted);
+      if (startDate != null) await prefs.setString('relationship_start_date', startDate);
+      if (startHour != null) await prefs.setInt('relationship_start_hour', startHour);
+      if (startMinute != null) await prefs.setInt('relationship_start_minute', startMinute);
+      if (yourAvatarPath != null) await prefs.setString('your_avatar_path', yourAvatarPath);
+      if (yourName != null) await prefs.setString('your_name', yourName);
+    }
 
     _userSub?.cancel();
     _partnerUserSub?.cancel();
