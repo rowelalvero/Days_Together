@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
-import 'package:days_together/widgets/glass_container.dart';
 
 class RecoverRelationshipScreen extends StatefulWidget {
   const RecoverRelationshipScreen({super.key});
@@ -105,10 +104,23 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    GlassContainer(
-                      borderRadius: 24,
+                    Container(
                       padding: const EdgeInsets.all(24),
-                      opacity: theme.isDark ? 0.05 : 0.75,
+                      decoration: BoxDecoration(
+                        color: theme.cardColor.withValues(alpha: theme.isDark ? 0.6 : 0.85),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: theme.textColor.withValues(alpha: 0.1),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: theme.isDark ? 0.2 : 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
