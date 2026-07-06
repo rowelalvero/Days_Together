@@ -149,7 +149,7 @@ class DailyMoodProvider with ChangeNotifier {
 
       // 2. Fetch daily sync question
       final qRes = await Supabase.instance.client
-          .from('daily_sync_questions')
+          .from('daily_questions')
           .select()
           .eq('couple_id', _coupleId!)
           .eq('date', _todayString)

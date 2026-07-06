@@ -11,8 +11,6 @@ import 'package:days_together/services/notification_service.dart';
 class ShakeToHugWrapper extends StatefulWidget {
   final Widget child;
 
-  static final GlobalKey<ShakeToHugWrapperState> globalKey = GlobalKey<ShakeToHugWrapperState>();
-
   const ShakeToHugWrapper({super.key, required this.child});
 
   @override
@@ -20,6 +18,8 @@ class ShakeToHugWrapper extends StatefulWidget {
 }
 
 class ShakeToHugWrapperState extends State<ShakeToHugWrapper> with TickerProviderStateMixin {
+  static ShakeToHugWrapperState? activeState;
+
   StreamSubscription? _subscription;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
@@ -32,6 +32,7 @@ class ShakeToHugWrapperState extends State<ShakeToHugWrapper> with TickerProvide
   @override
   void initState() {
     super.initState();
+    activeState = this;
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -56,6 +57,9 @@ class ShakeToHugWrapperState extends State<ShakeToHugWrapper> with TickerProvide
 
   @override
   void dispose() {
+    if (activeState == this) {
+      activeState = null;
+    }
     _subscription?.cancel();
     _animController.dispose();
     _pulseController.dispose();

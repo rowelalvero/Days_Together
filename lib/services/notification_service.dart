@@ -177,7 +177,7 @@ class NotificationService {
 
     switch (feature) {
       case 'hug':
-        ShakeToHugWrapper.globalKey.currentState?.showReceivedHug();
+        ShakeToHugWrapperState.activeState?.showReceivedHug();
         break;
       case 'chat':
         state.push(MaterialPageRoute(builder: (_) => const LoveChatScreen()));
