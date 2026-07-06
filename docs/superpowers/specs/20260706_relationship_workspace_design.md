@@ -12,11 +12,17 @@ Supabase is the single source of truth for relationship membership. The database
 ### Schema Additions to `couples` table
 We will run a migration to add columns to the `couples` table for workspace lifecycle, partner tracking, pairing, and recovery:
 1. `status` (text, default `'waiting'`): Tracks the state of the workspace (`waiting`, `active`, `disconnected`, `archived`).
+   * **waiting**: Created by `partner_a_id`, waiting for a second partner to join. `partner_b_id` is NULL.
+   * **active**: Connected to at least one active partner (`users.couple_id` references this couple record).
+   * **disconnected**: Both partners have disconnected (`couple_id` is set to NULL on both user profiles).
+   * **archived**: Closed workspace, read-only or inactive.
 2. `partner_a_id` (uuid, references `users(id)` ON DELETE SET NULL, nullable): The partner who created the workspace.
 3. `partner_b_id` (uuid, references `users(id)` ON DELETE SET NULL, nullable): The partner who joined the workspace.
 4. `pairing_code` (character varying(6), unique, nullable): Temporary code used for pairing the second partner.
+   * **Pairing Code Lifecycle**: Valid only until a second partner successfully joins, after which it is immediately set to `NULL` to prevent duplicate joins or replay attacks. A new pairing code is generated only when a new partner invitation is initiated.
 5. `recovery_lookup_key` (text, unique, nullable): A unique indexed lookup key to quickly locate a candidate relationship without doing database-wide BCrypt operations.
 6. `recovery_code_hash` (text, nullable): BCrypt hash of the cryptographically random recovery secret.
+   * **Regeneration Invalidation**: Generating a new recovery code immediately overwrites `recovery_lookup_key` and `recovery_code_hash` in the database, permanently invalidating all previously issued recovery codes.
 7. `updated_at` (timestamp with time zone, default `now()`).
 
 We will create a unique index on `recovery_lookup_key` to ensure lookup speed:
@@ -33,8 +39,11 @@ We will migrate existing production data safely without data loss:
 2. Drop the `partner_id` column from the `users` table to eliminate duplicated state.
 3. Drop the `pairing_codes` table since pairing codes will reside directly on `couples`.
 
-### Security & Rate Limiting
-To protect against brute-force recovery attempts, we will introduce a table for tracking failed recovery attempts:
+### Security, Row Locking & Rate Limiting
+* To protect against concurrent modifications or duplicate relationships:
+  * **User locking**: Every RPC locks the caller's row in `public.users` (`SELECT ... FOR UPDATE`) before checking or modifying their `couple_id`.
+  * **Workspace locking**: Pairing and recovery lock the target row in `public.couples` (`SELECT ... FOR UPDATE`) to prevent race conditions (e.g. concurrent pairings or duplicate status updates).
+* To protect against brute-force recovery attempts, we will introduce a table for tracking failed recovery attempts:
 ```sql
 CREATE TABLE public.failed_recovery_attempts (
   user_id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
@@ -50,63 +59,78 @@ CREATE TABLE public.failed_recovery_attempts (
 All RPC functions will run inside a single database transaction. If any check fails, a `RAISE EXCEPTION` is called to roll back all changes.
 
 ### A. `create_relationship_workspace()`
-1. Verifies that the authenticated user (`auth.uid()`) is not already connected to a relationship (`users.couple_id` is NULL). Otherwise, throws `'User is already in a relationship'`.
-2. Generates a new `couple_id` (UUID).
-3. Generates a short, unique 6-character uppercase `pairing_code`.
-4. Generates a 6-character random uppercase alphanumeric `recovery_lookup_key` (e.g. `ABC123`).
+1. Locks the authenticated user's row:
+   ```sql
+   SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
+   ```
+2. Verifies `v_user_couple_id` is NULL. Otherwise, throws `'User is already in a relationship'`.
+3. Generates a new `couple_id` (UUID).
+4. Generates a short, unique 6-character uppercase `pairing_code` and a 6-character uppercase alphanumeric `recovery_lookup_key` within a loop:
+   * Retries on unique key conflicts.
 5. Generates a secure, cryptographically random 16-character uppercase alphanumeric `recovery_secret` formatted for readability: `RVT7-H9MK-PQ82-JXW5`.
 6. Hashes the recovery secret (with hyphens stripped: `RVT7H9MKPQ82JXW5`) using Blowfish/BCrypt: `crypt(stripped_secret, gen_salt('bf', 10))` and stores it in `recovery_code_hash`.
-7. Inserts a row in `couples` with `status = 'waiting'`, `partner_a_id = auth.uid()`, `pairing_code`, `recovery_lookup_key`, and `recovery_code_hash`.
-8. Sets the calling user's `couple_id = new_id` in `users`.
+7. Inserts a row in `couples` with `status = 'waiting'`, `partner_a_id = auth.uid()`, `pairing_code`, `recovery_lookup_key`, `recovery_code_hash`, and `updated_at = now()`.
+8. Updates the calling user's `couple_id = new_id` in `users`.
 9. Returns the UUID, the pairing code, and the **plaintext combined recovery code** `[recovery_lookup_key]-[recovery_secret]` (e.g., `ABC123-RVT7-H9MK-PQ82-JXW5`) which will only be displayed once in the UI.
 
 ### B. `join_relationship_with_code(p_pairing_code text)`
-1. Verifies that the authenticated user (`auth.uid()`) is not already connected to a relationship (`users.couple_id` is NULL). Otherwise, throws `'User is already in a relationship'`.
-2. Finds and locks (using `FOR UPDATE`) the candidate `couples` row matching `p_pairing_code` (case-insensitive) where `status = 'waiting'` and `partner_b_id IS NULL`.
-3. If no row is locked/found, throws an error `'Invalid or expired pairing code'`.
-4. Verifies that the joiner is authenticated and is not the creator (`partner_a_id`).
-5. Updates the locked `couples` record:
+1. Locks the authenticated user's row:
+   ```sql
+   SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
+   ```
+2. Verifies `v_user_couple_id` is NULL. Otherwise, throws `'User is already in a relationship'`.
+3. Finds and locks (using `FOR UPDATE`) the candidate `couples` row matching `p_pairing_code` (case-insensitive) where `status = 'waiting'` and `partner_b_id IS NULL`.
+4. If no row is locked/found, throws an error `'Invalid or expired pairing code'`.
+5. Verifies that the joiner is authenticated and is not the creator (`partner_a_id`).
+6. Updates the locked `couples` record:
    * Sets `partner_b_id = auth.uid()`
    * Sets `status = 'active'`
-   * Sets `pairing_code = NULL` (invalidates pairing code immediately).
-6. Updates the joiner's profile in `users`: `couple_id = couples.id`.
-7. Returns the workspace UUID and the creator's ID.
+   * Sets `pairing_code = NULL` (invalidates pairing code immediately)
+   * Sets `updated_at = now()`.
+7. Updates the joiner's profile in `users`: `couple_id = couples.id`.
+8. Returns the workspace UUID and the creator's ID.
 
 ### C. `recover_relationship_with_code(p_recovery_code text)`
-1. Verifies that the authenticated user (`auth.uid()`) is not already connected to a relationship (`users.couple_id` is NULL). Otherwise, throws `'User is already in a relationship'`.
-2. Check rate limits:
+1. Locks the authenticated user's row:
+   ```sql
+   SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
+   ```
+2. Verifies `v_user_couple_id` is NULL. Otherwise, throws `'User is already in a relationship'`.
+3. Check rate limits:
    * Check if the authenticated user (`auth.uid()`) is currently locked out in `failed_recovery_attempts`. If so, throw an error with the cooldown remaining.
-3. Parse Recovery Code:
+4. Parse Recovery Code:
    * Splits `p_recovery_code` on the first hyphen (`-`) into `v_lookup_key` and `v_secret`.
    * Strips all hyphens from the secret portion: `v_secret_clean := replace(v_secret, '-', '')`.
    * If the input is invalid (no hyphen or empty components), increments failed attempts and throws `'Invalid recovery code'`.
-4. Search using index:
-   * Queries the `couples` table for the row matching `recovery_lookup_key = upper(trim(v_lookup_key))`.
+5. Search using index and Lock:
+   * Queries the `couples` table for the row matching `recovery_lookup_key = upper(trim(v_lookup_key))` and locks it using `FOR UPDATE`.
    * If no row is found, increments failed attempts and throws `'Invalid recovery code'`.
-5. BCrypt Verification:
+6. BCrypt Verification:
    * Verifies the clean secret against the stored hash: `recovery_code_hash = crypt(v_secret_clean, recovery_code_hash)`.
    * If it does not match, increments failed attempts and throws `'Invalid recovery code'`.
-6. Validate ownership:
+7. Validate ownership:
    * Verify that `auth.uid()` matches either `partner_a_id` or `partner_b_id` of the matched workspace.
    * If it does not match, increment failed attempts and throw an error `'Invalid recovery code'`.
-7. Successful recovery:
+8. Successful recovery:
    * Reset the rate limit stats.
    * Reconnect the user: set `users.couple_id = couples.id`.
-   * Set `couples.status = 'active'`.
+   * Set `couples.status = 'active'` and `couples.updated_at = now()`.
    * Return the workspace UUID.
 
 ### D. `regenerate_recovery_code()`
 1. Verifies the authenticated user is currently active in a relationship (`users.couple_id` is non-null).
-2. Generates a new `recovery_lookup_key` (6-char) and a new hyphen-grouped `recovery_secret` (16-char formatted as `XXXX-XXXX-XXXX-XXXX`).
-3. Hashes the stripped secret via BCrypt and updates `recovery_lookup_key` and `recovery_code_hash` on the active relationship.
-4. Returns the plaintext combined recovery code `[lookup_key]-[secret]` to display once in the UI.
+2. Locks the caller's row in `users` and the corresponding row in `couples` using `FOR UPDATE`.
+3. Generates a new unique `recovery_lookup_key` (6-char) and a new hyphen-grouped `recovery_secret` (16-char formatted as `XXXX-XXXX-XXXX-XXXX`) inside a retry loop.
+4. Hashes the stripped secret via BCrypt and updates `recovery_lookup_key`, `recovery_code_hash` and `updated_at = now()` on the active relationship.
+5. Returns the plaintext combined recovery code `[lookup_key]-[secret]` to display once in the UI.
 
 ### E. `disconnect_relationship_workspace()`
-1. Finds the caller's active relationship in `couples`.
+1. Locks the caller's row in `users` and their active relationship in `couples` using `FOR UPDATE`.
 2. Sets the caller's `users.couple_id = NULL`.
 3. Checks if the other partner is also disconnected (i.e. the other partner's `users.couple_id IS NULL` in the `users` table).
-   * If both partners are disconnected, sets `couples.status = 'disconnected'`.
-   * If the other partner is still connected, `couples.status` remains `'active'`.
+   * If both partners are disconnected, sets `couples.status = 'disconnected'` and `couples.updated_at = now()`.
+   * If the other partner is still connected, `couples.status` remains `'active'` and updates `couples.updated_at = now()`.
+4. Returns success.
 
 ---
 
@@ -119,6 +143,11 @@ Every RPC function executes within a single database transaction.
 ---
 
 ## 5. Flutter Provider & State Management Architecture
+
+### Standardized Naming
+All methods, properties, and listeners will use `Supabase` nomenclature consistently. For example:
+* We will use `_initSupabaseSync()` instead of `_initFirebaseSync()`.
+* We will use `_supabaseSub` instead of `_coupleSub`.
 
 ### Initialization Order
 1. Authenticate user.
@@ -165,7 +194,7 @@ To ensure the refactor is incremental, reviewable, and keeps the project buildab
 
 | Phase | Files Affected | Description | Migration / Compatibility Concerns |
 |---|---|---|---|
-| **Phase 1: DB Migration** | `supabase/migrations/20260706000000_persistent_relationship_workspace.sql` | Expose status, partner IDs, lookup keys, hashes, and implement secure RPC functions. | Safe SQL block. Relies on `pgcrypto` to hash and verify codes. |
+| **Phase 1: DB Migration** | `supabase/migrations/20260706000000_persistent_relationship_workspace.sql` | Expose status, partner IDs, lookup keys, hashes, and implement secure RPC functions with retry loops and locking. | Safe SQL block. Relies on `pgcrypto` to hash and verify codes. |
 | **Phase 2: Services** | `lib/services/couple_service.dart` | Expose the new RPCs (`join_relationship_with_code`, `recover_relationship_with_code`, `disconnect_relationship_workspace`, `regenerate_recovery_code`). | Kept fully backward compatible. |
 | **Phase 3: Core Provider** | `lib/providers/relationship_provider.dart` | Refactor state variables, implement safe streams, handle recovery code memory, and load state only from Supabase profile. | Remove `partner_id` DB read, query `couples` table details instead. |
 | **Phase 4: Proxy Providers** | All 11 shared feature providers (Chat, Memories, etc.) | Update `updateRelationship` methods to handle dynamic transitions, cancel existing subscriptions before subscribing, and clear local caches. | Ensure no memory leaks when switching states. |
