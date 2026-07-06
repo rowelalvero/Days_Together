@@ -69,7 +69,8 @@
       SET 
         partner_a_id = v_partner_a,
         partner_b_id = v_partner_b,
-        status = CASE WHEN v_partner_b IS NOT NULL THEN 'active' ELSE 'waiting' END
+        status = CASE WHEN v_partner_b IS NOT NULL THEN 'active' ELSE 'waiting' END,
+        updated_at = now()
       WHERE id = r.couple_id;
     END LOOP;
   END;
@@ -113,27 +114,37 @@
     v_secret_formatted text;
     v_secret_clean text;
     v_user_couple_id uuid;
+    v_code_exists boolean;
+    v_lookup_exists boolean;
     chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     i integer;
   BEGIN
-    -- Check if user is already in a relationship
-    SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid();
+    -- Lock caller row to prevent race conditions
+    SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
     IF v_user_couple_id IS NOT NULL THEN
       RAISE EXCEPTION 'User is already in a relationship';
     END IF;
 
     v_couple_id := gen_random_uuid();
     
-    -- Generate 6-char pairing code
-    v_pairing_code := '';
-    FOR i IN 1..6 LOOP
-      v_pairing_code := v_pairing_code || substr(chars, floor(random() * 36)::integer + 1, 1);
-    END LOOP;
+    -- Retry loop to generate unique codes
+    LOOP
+      v_pairing_code := '';
+      FOR i IN 1..6 LOOP
+        v_pairing_code := v_pairing_code || substr(chars, floor(random() * 36)::integer + 1, 1);
+      END LOOP;
 
-    -- Generate 6-char lookup key
-    v_lookup_key := '';
-    FOR i IN 1..6 LOOP
-      v_lookup_key := v_lookup_key || substr(chars, floor(random() * 36)::integer + 1, 1);
+      v_lookup_key := '';
+      FOR i IN 1..6 LOOP
+        v_lookup_key := v_lookup_key || substr(chars, floor(random() * 36)::integer + 1, 1);
+      END LOOP;
+
+      SELECT EXISTS(SELECT 1 FROM public.couples WHERE pairing_code = v_pairing_code) INTO v_code_exists;
+      SELECT EXISTS(SELECT 1 FROM public.couples WHERE recovery_lookup_key = v_lookup_key) INTO v_lookup_exists;
+      
+      IF NOT v_code_exists AND NOT v_lookup_exists THEN
+        EXIT;
+      END IF;
     END LOOP;
 
     -- Generate 16-char secret key grouped with hyphens
@@ -148,14 +159,15 @@
                           substr(v_secret_clean, 13, 4);
 
     -- Insert couple row with Blowfish hash of the clean secret
-    INSERT INTO public.couples (id, status, partner_a_id, pairing_code, recovery_lookup_key, recovery_code_hash)
+    INSERT INTO public.couples (id, status, partner_a_id, pairing_code, recovery_lookup_key, recovery_code_hash, updated_at)
     VALUES (
       v_couple_id,
       'waiting',
       auth.uid(),
       v_pairing_code,
       v_lookup_key,
-      crypt(v_secret_clean, gen_salt('bf', 10))
+      crypt(v_secret_clean, gen_salt('bf', 10)),
+      now()
     );
 
     -- Update user couple_id
@@ -180,8 +192,8 @@
     v_couple_row public.couples%ROWTYPE;
     v_user_couple_id uuid;
   BEGIN
-    -- Check if user is already in a relationship
-    SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid();
+    -- Lock caller row to prevent concurrent joins
+    SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
     IF v_user_couple_id IS NOT NULL THEN
       RAISE EXCEPTION 'User is already in a relationship';
     END IF;
@@ -207,7 +219,8 @@
     SET 
       partner_b_id = auth.uid(),
       status = 'active',
-      pairing_code = NULL
+      pairing_code = NULL,
+      updated_at = now()
     WHERE id = v_couple_row.id;
 
     -- Update user record
@@ -239,8 +252,8 @@
     v_locked_until timestamp with time zone;
     v_user_couple_id uuid;
   BEGIN
-    -- Check if user is already connected
-    SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid();
+    -- Lock user row
+    SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
     IF v_user_couple_id IS NOT NULL THEN
       RAISE EXCEPTION 'User is already in a relationship';
     END IF;
@@ -265,10 +278,11 @@
     v_secret := v_secret || CASE WHEN position('-' in substr(p_recovery_code, position('-' in p_recovery_code) + 1)) > 0 THEN '-' || split_part(p_recovery_code, '-', 3) || '-' || split_part(p_recovery_code, '-', 4) || '-' || split_part(p_recovery_code, '-', 5) ELSE '' END;
     v_secret_clean := replace(v_secret, '-', '');
 
-    -- Query couples using index on lookup key
+    -- Query couples using index on lookup key and lock it
     SELECT * INTO v_couple_row
     FROM public.couples
-    WHERE recovery_lookup_key = v_lookup_key;
+    WHERE recovery_lookup_key = v_lookup_key
+    FOR UPDATE;
 
     IF v_couple_row.id IS NULL THEN
       GOTO failed_attempt;
@@ -290,7 +304,7 @@
     ON CONFLICT (user_id) DO UPDATE SET attempts = 0, locked_until = NULL;
 
     UPDATE public.users SET couple_id = v_couple_row.id WHERE id = auth.uid();
-    UPDATE public.couples SET status = 'active' WHERE id = v_couple_row.id;
+    UPDATE public.couples SET status = 'active', updated_at = now() WHERE id = v_couple_row.id;
 
     RETURN json_build_object(
       'success', true,
@@ -322,25 +336,34 @@
     v_lookup_key text;
     v_secret_clean text;
     v_secret_formatted text;
+    v_lookup_exists boolean;
     chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     i integer;
   BEGIN
-    SELECT couple_id INTO v_couple_id FROM public.users WHERE id = auth.uid();
+    -- Lock user row
+    SELECT couple_id INTO v_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
     IF v_couple_id IS NULL THEN
       RAISE EXCEPTION 'Not in a relationship';
     END IF;
 
-    -- Verify user is one of the partners in couples table
+    -- Lock couples row
     IF NOT EXISTS (
-      SELECT 1 FROM public.couples WHERE id = v_couple_id AND (partner_a_id = auth.uid() OR partner_b_id = auth.uid())
+      SELECT 1 FROM public.couples WHERE id = v_couple_id AND (partner_a_id = auth.uid() OR partner_b_id = auth.uid()) FOR UPDATE
     ) THEN
       RAISE EXCEPTION 'Unauthorized';
     END IF;
 
-    -- Generate lookup key
-    v_lookup_key := '';
-    FOR i IN 1..6 LOOP
-      v_lookup_key := v_lookup_key || substr(chars, floor(random() * 36)::integer + 1, 1);
+    -- Generate lookup key in retry loop
+    LOOP
+      v_lookup_key := '';
+      FOR i IN 1..6 LOOP
+        v_lookup_key := v_lookup_key || substr(chars, floor(random() * 36)::integer + 1, 1);
+      END LOOP;
+
+      SELECT EXISTS (SELECT 1 FROM public.couples WHERE recovery_lookup_key = v_lookup_key) INTO v_lookup_exists;
+      IF NOT v_lookup_exists THEN
+        EXIT;
+      END IF;
     END LOOP;
 
     -- Generate 16-char secret key
@@ -378,10 +401,14 @@
     v_couple_id uuid;
     v_other_connected boolean;
   BEGIN
-    SELECT couple_id INTO v_couple_id FROM public.users WHERE id = auth.uid();
+    -- Lock caller user row
+    SELECT couple_id INTO v_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
     IF v_couple_id IS NULL THEN
       RETURN json_build_object('success', false, 'error', 'Not in a relationship');
     END IF;
+
+    -- Lock couple row
+    PERFORM 1 FROM public.couples WHERE id = v_couple_id FOR UPDATE;
 
     -- Update user to null
     UPDATE public.users SET couple_id = NULL WHERE id = auth.uid();
@@ -393,7 +420,9 @@
     ) INTO v_other_connected;
 
     IF NOT v_other_connected THEN
-      UPDATE public.couples SET status = 'disconnected' WHERE id = v_couple_id;
+      UPDATE public.couples SET status = 'disconnected', updated_at = now() WHERE id = v_couple_id;
+    ELSE
+      UPDATE public.couples SET updated_at = now() WHERE id = v_couple_id;
     END IF;
 
     RETURN json_build_object('success', true);
@@ -498,7 +527,7 @@
 
 - [ ] **Step 1: Update fields, stream, and startup flow**
   Modify properties and methods in `lib/providers/relationship_provider.dart` to load profile, unsubscribe cleanly, and avoid SharedPreferences storage for relationship membership.
-  Specifically, inside `_initFirebaseSync()`, query the `users` table, and then query the `couples` table dynamically for `status`, `partner_a_id`, `partner_b_id`, and `pairing_code`.
+  Specifically, inside `_initSupabaseSync()`, query the `users` table, and then query the `couples` table dynamically for `status`, `partner_a_id`, `partner_b_id`, and `pairing_code`.
   We must define helper getters:
   ```dart
   String? get relationshipId => _coupleId;
@@ -507,10 +536,10 @@
   
   // Clean up existing streams and subscriptions before creating new ones
   void _cancelActiveSubscriptions() {
-    _coupleSub?.cancel();
+    _supabaseSub?.cancel();
     _licenseSub?.cancel();
     _partnerUserSub?.cancel();
-    _coupleSub = null;
+    _supabaseSub = null;
     _licenseSub = null;
     _partnerUserSub = null;
   }
@@ -559,7 +588,7 @@
       final result = await CoupleService.instance.recoverWithCode(code);
       _coupleId = result['couple_id'] as String;
       // Initialize Sync stream to fetch status & partner IDs
-      _initFirebaseSync();
+      _initSupabaseSync();
     } finally {
       _isJoining = false;
       notifyListeners();
