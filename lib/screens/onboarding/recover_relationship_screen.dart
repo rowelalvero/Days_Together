@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 
 class RecoverRelationshipScreen extends StatefulWidget {
   const RecoverRelationshipScreen({super.key});
@@ -40,8 +41,35 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
       final success = await provider.recoverRelationship(code);
       if (success) {
         if (mounted) {
-          // Navigating pops back to main since state transition redirects automatically
-          Navigator.pop(context);
+          // Show a beautiful loading dialog while we wait for the workspace data to sync
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+
+          // Wait for the provider sync/initialization to complete
+          while (!provider.isInitialized) {
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+
+          if (mounted) {
+            Navigator.pop(context); // Close the loading dialog
+
+            if (provider.yourName == null || provider.yourName!.trim().isEmpty) {
+              // New user account profile: Go to name and avatar creation screen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const AvatarCreationScreen()),
+                (route) => false,
+              );
+            } else {
+              // Existing user account profile: Pop back (home screen will display automatically)
+              Navigator.pop(context);
+            }
+          }
         }
       } else {
         setState(() {
