@@ -277,8 +277,8 @@ BEGIN
     IF v_couple_row.id IS NOT NULL THEN
       -- Verify BCrypt hash
       IF v_couple_row.recovery_code_hash = crypt(v_secret_clean, v_couple_row.recovery_code_hash) THEN
-        -- Validate ownership
-        IF v_couple_row.partner_a_id = auth.uid() OR v_couple_row.partner_b_id = auth.uid() THEN
+        -- Validate ownership: either they are already in the couple, or one of the slots is empty (which they can claim)
+        IF v_couple_row.partner_a_id = auth.uid() OR v_couple_row.partner_b_id = auth.uid() OR v_couple_row.partner_a_id IS NULL OR v_couple_row.partner_b_id IS NULL THEN
           v_success := true;
         END IF;
       END IF;
@@ -286,13 +286,21 @@ BEGIN
   END IF;
 
   IF v_success THEN
-    -- Success: Reset attempts, connect user, update workspace status
+    -- Assign caller to the correct partner slot in couples if not already set
+    IF v_couple_row.partner_a_id IS NULL AND (v_couple_row.partner_b_id IS NULL OR v_couple_row.partner_b_id != auth.uid()) THEN
+      UPDATE public.couples SET partner_a_id = auth.uid(), status = 'active' WHERE id = v_couple_row.id;
+    ELSIF v_couple_row.partner_b_id IS NULL AND (v_couple_row.partner_a_id IS NULL OR v_couple_row.partner_a_id != auth.uid()) THEN
+      UPDATE public.couples SET partner_b_id = auth.uid(), status = 'active' WHERE id = v_couple_row.id;
+    ELSE
+      UPDATE public.couples SET status = 'active' WHERE id = v_couple_row.id;
+    END IF;
+
+    -- Success: Reset attempts, connect user
     INSERT INTO public.failed_recovery_attempts (user_id, attempts, locked_until)
     VALUES (auth.uid(), 0, NULL)
     ON CONFLICT (user_id) DO UPDATE SET attempts = 0, locked_until = NULL;
 
     UPDATE public.users SET couple_id = v_couple_row.id WHERE id = auth.uid();
-    UPDATE public.couples SET status = 'active' WHERE id = v_couple_row.id;
 
     RETURN json_build_object(
       'success', true,
@@ -398,6 +406,13 @@ BEGIN
 
   -- Update user to null
   UPDATE public.users SET couple_id = NULL WHERE id = auth.uid();
+
+  -- Clear corresponding partner_id slot in couples table
+  UPDATE public.couples
+  SET 
+    partner_a_id = CASE WHEN partner_a_id = auth.uid() THEN NULL ELSE partner_a_id END,
+    partner_b_id = CASE WHEN partner_b_id = auth.uid() THEN NULL ELSE partner_b_id END
+  WHERE id = v_couple_id;
 
   -- Check if other partner is still connected
   SELECT EXISTS (
