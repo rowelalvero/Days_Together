@@ -229,8 +229,10 @@ CREATE OR REPLACE FUNCTION public.recover_relationship_with_code(p_recovery_code
 RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $$
+AS $
 DECLARE
+  v_code_clean text;
+  v_first_hyphen_pos integer;
   v_lookup_key text;
   v_secret text;
   v_secret_clean text;
@@ -257,11 +259,14 @@ BEGIN
     RAISE EXCEPTION 'Too many failed attempts. Try again after %', v_locked_until;
   END IF;
 
-  -- Parse lookup key and secret
-  IF position('-' in p_recovery_code) > 0 THEN
-    v_lookup_key := upper(trim(split_part(p_recovery_code, '-', 1)));
-    v_secret := substr(p_recovery_code, position('-' in p_recovery_code) + 1);
-    v_secret_clean := replace(v_secret, '-', '');
+  -- Clean and parse code (case-insensitive & whitespace tolerant)
+  v_code_clean := upper(trim(p_recovery_code));
+  v_first_hyphen_pos := position('-' in v_code_clean);
+
+  IF v_first_hyphen_pos > 1 THEN
+    v_lookup_key := substr(v_code_clean, 1, v_first_hyphen_pos - 1);
+    v_secret := substr(v_code_clean, v_first_hyphen_pos + 1);
+    v_secret_clean := replace(replace(v_secret, '-', ''), ' ', '');
 
     -- Query couples using index on lookup key and lock it
     SELECT * INTO v_couple_row
@@ -305,7 +310,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid recovery code';
   END IF;
 END;
-$$;
+$;
 
 -- 11. Define regenerate_recovery_code RPC
 CREATE OR REPLACE FUNCTION public.regenerate_recovery_code()
