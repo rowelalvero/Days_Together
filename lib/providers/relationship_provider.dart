@@ -153,7 +153,7 @@ class RelationshipProvider with ChangeNotifier {
   String? get partnerAvatarPath => _partnerAvatarPath;
   String? get coupleCode => _coupleCode;
   bool get isPaired => _isPaired;
-  bool get isOnboardingComplete => _yourName != null && _yourName!.isNotEmpty;
+  bool get isOnboardingComplete => _yourName != null && _yourName!.isNotEmpty && _coupleId != null;
   bool get isPremium => _isPremium;
   String get storyTitle => _storyTitle ?? 'Our Story';
   String? get yourGender => _yourGender;
@@ -1908,6 +1908,7 @@ class RelationshipProvider with ChangeNotifier {
       await prefs.remove('partner_name');
       await prefs.remove('partner_avatar_path');
       await prefs.remove('partner_join_date');
+      await prefs.setBool('onboarding_completed', false);
 
       if (isFirebaseAvailable && _userId != null) {
         try {
