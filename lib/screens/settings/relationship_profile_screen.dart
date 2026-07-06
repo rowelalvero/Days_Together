@@ -471,13 +471,13 @@ class RelationshipProfileScreen extends StatelessWidget {
   }
 
   void _showRegenerateRecoveryCodeDialog(
-    BuildContext context,
+    BuildContext profileContext,
     RelationshipProvider rp,
     dynamic theme,
   ) {
     showDialog(
-      context: context,
-      builder: (context) => Dialog(
+      context: profileContext,
+      builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
         child: GlassContainer(
           borderRadius: 28,
@@ -533,7 +533,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(dialogContext),
                       child: Text(
                         'Cancel',
                         style: AppTypography.body(
@@ -547,25 +547,25 @@ class RelationshipProfileScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        Navigator.pop(context); // Close warning dialog
+                        Navigator.pop(dialogContext); // Close warning dialog
                         
                         // Show loading indicator
                         showDialog(
-                          context: context,
+                          context: profileContext,
                           barrierDismissible: false,
-                          builder: (context) => const Center(child: CircularProgressIndicator()),
+                          builder: (loadingContext) => const Center(child: CircularProgressIndicator()),
                         );
                         
                         try {
                           await rp.regenerateRecoveryCode();
-                          if (context.mounted) {
-                            Navigator.pop(context); // Close loading indicator
-                            _showNewRecoveryCodeDialog(context, rp, theme);
+                          if (profileContext.mounted) {
+                            Navigator.pop(profileContext); // Close loading indicator
+                            _showNewRecoveryCodeDialog(profileContext, rp, theme);
                           }
                         } catch (e) {
-                          if (context.mounted) {
-                            Navigator.pop(context); // Close loading indicator
-                            ScaffoldMessenger.of(context).showSnackBar(
+                          if (profileContext.mounted) {
+                            Navigator.pop(profileContext); // Close loading indicator
+                            ScaffoldMessenger.of(profileContext).showSnackBar(
                               SnackBar(content: Text('Failed to regenerate: $e')),
                             );
                           }
@@ -972,14 +972,14 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   }
 
   void _showUnlinkConfirmation(
-    BuildContext context,
+    BuildContext profileContext,
     RelationshipProvider rp,
     dynamic theme,
   ) {
     final partnerJoined = rp.partnerId != null;
     showDialog(
-      context: context,
-      builder: (context) => Dialog(
+      context: profileContext,
+      builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
         child: GlassContainer(
           borderRadius: 28,
@@ -1037,7 +1037,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(dialogContext),
                       child: Text(
                         'Stay Connected',
                         style: AppTypography.body(
@@ -1051,10 +1051,10 @@ Widget _buildDangerZoneDivider(dynamic theme) {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
-                        Navigator.pop(context); // close dialog
+                        Navigator.pop(dialogContext); // close dialog
                         await rp.unlinkPartner();
-                        if (context.mounted) {
-                          Navigator.pop(context); // exit profile screen
+                        if (profileContext.mounted) {
+                          Navigator.pop(profileContext); // exit profile screen
                         }
                       },
                       style: ElevatedButton.styleFrom(
