@@ -1,54 +1,46 @@
--- Migration: Security Hardening - Search Path, Rate Limiting, and RLS Isolation
--- Created: 2026-07-07
+-- Migration: Database Integrity & Security Hardening Fixes
+-- Created: 2026-07-11
+--
+-- ROLLBACK STEPS:
+-- To revert these changes, run the following SQL statements:
+--
+-- 1. Revert user deletion trigger function to use OLD.partner_id:
+--    CREATE OR REPLACE FUNCTION public.handle_user_deletion_cleanup()
+--    RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+--    DECLARE v_partner_id uuid; v_couple_id uuid; BEGIN
+--    v_partner_id := OLD.partner_id; v_couple_id := OLD.couple_id;
+--    IF v_partner_id IS NOT NULL THEN
+--      UPDATE public.users SET partner_id = NULL, couple_id = NULL, partner_deleted_notice = TRUE WHERE id = v_partner_id;
+--    END IF;
+--    IF v_couple_id IS NOT NULL THEN
+--      IF NOT EXISTS (SELECT 1 FROM public.users WHERE couple_id = v_couple_id AND id != OLD.id) THEN
+--        DELETE FROM public.couples WHERE id = v_couple_id;
+--      END IF;
+--    END IF;
+--    RETURN OLD;
+--    END; $$;
+--
+-- 2. Revert users SELECT RLS policy back to JWT claims:
+--    DROP POLICY IF EXISTS "Enable select for self and partner" ON public.users;
+--    CREATE POLICY "Enable select for self and partner" ON public.users FOR SELECT TO authenticated
+--      USING (id = auth.uid() OR (couple_id IS NOT NULL AND couple_id = (NULLIF(current_setting('request.jwt.claims', true)::json->>'couple_id', '')::uuid)));
+--
+-- 3. Revert is_premium protection:
+--    DROP TRIGGER IF EXISTS trg_protect_premium_status ON public.couples;
+--    DROP FUNCTION IF EXISTS public.protect_premium_status();
+--
+-- 4. Revert foreign keys to ON DELETE CASCADE:
+--    ALTER TABLE public.love_notes DROP CONSTRAINT IF EXISTS love_notes_sender_id_fkey;
+--    ALTER TABLE public.love_notes ADD CONSTRAINT love_notes_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+--    ALTER TABLE public.moods DROP CONSTRAINT IF EXISTS moods_user_id_fkey;
+--    ALTER TABLE public.moods ADD CONSTRAINT moods_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+--
+-- 5. Revert security guards from RPCs by removing "IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Unauthorized'; END IF;" checks.
+--
 
--- 1. ADD PAIRING CODE RATE LIMITING
-CREATE TABLE IF NOT EXISTS public.failed_pairing_attempts (
-  user_id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
-  attempts integer DEFAULT 0 NOT NULL,
-  locked_until timestamp with time zone,
-  updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-ALTER TABLE public.failed_pairing_attempts ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Enable select/update for own pairing attempts" ON public.failed_pairing_attempts;
-CREATE POLICY "Enable select/update for own pairing attempts" ON public.failed_pairing_attempts
-  FOR ALL TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- 2. HARDEN SECURITY DEFINER FUNCTIONS (SET search_path)
--- This prevents search path hijacking attacks.
-
--- get_user_couple_id
-CREATE OR REPLACE FUNCTION public.get_user_couple_id(user_id uuid)
-RETURNS text
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT couple_id::text FROM public.users WHERE id = user_id;
-$$;
-
--- is_member_of_couple
-CREATE OR REPLACE FUNCTION public.is_member_of_couple(couple_id uuid)
-RETURNS boolean
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, auth
-AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users u
-    JOIN public.couples c ON c.id = u.couple_id
-    WHERE u.id = auth.uid()
-      AND u.couple_id = is_member_of_couple.couple_id
-      AND (c.partner_a_id = auth.uid() OR c.partner_b_id = auth.uid())
-      AND c.status != 'archived'
-  );
-END;
-$$;
-
--- handle_user_deletion_cleanup
+-- =====================================================================
+-- 1. REFACTOR USER DELETION TRIGGER FUNCTION (LOOKUP VIA COUPLES TABLE)
+-- =====================================================================
 CREATE OR REPLACE FUNCTION public.handle_user_deletion_cleanup()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -59,19 +51,26 @@ DECLARE
   v_partner_id uuid;
   v_couple_id uuid;
 BEGIN
-  v_partner_id := OLD.partner_id;
   v_couple_id := OLD.couple_id;
 
-  IF v_partner_id IS NOT NULL THEN
-    UPDATE public.users
-    SET
-      partner_id = NULL,
-      couple_id = NULL,
-      partner_deleted_notice = TRUE
-    WHERE id = v_partner_id;
-  END IF;
-
   IF v_couple_id IS NOT NULL THEN
+    -- Look up partner ID from couples table (partner_id column is dropped on users)
+    SELECT 
+      CASE WHEN partner_a_id = OLD.id THEN partner_b_id ELSE partner_a_id END
+    INTO v_partner_id
+    FROM public.couples
+    WHERE id = v_couple_id;
+
+    -- Clean up partner's couple reference and flag notification
+    IF v_partner_id IS NOT NULL THEN
+      UPDATE public.users
+      SET
+        couple_id = NULL,
+        partner_deleted_notice = TRUE
+      WHERE id = v_partner_id;
+    END IF;
+
+    -- Delete the couples row and cascade delete shared resources if no users remain in it
     IF NOT EXISTS (
       SELECT 1 FROM public.users
       WHERE couple_id = v_couple_id AND id != OLD.id
@@ -84,7 +83,82 @@ BEGIN
 END;
 $$;
 
--- delete_current_user
+
+-- =====================================================================
+-- 2. FIX USERS SELECT RLS POLICY (VALIDATE VIA COUPLES TABLE)
+-- =====================================================================
+DROP POLICY IF EXISTS "Enable select for self and partner" ON public.users;
+
+CREATE POLICY "Enable select for self and partner" ON public.users
+  FOR SELECT TO authenticated
+  USING (
+    id = auth.uid()
+    OR
+    (couple_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM public.couples c
+      WHERE c.id = public.users.couple_id
+        AND (c.partner_a_id = auth.uid() OR c.partner_b_id = auth.uid())
+    ))
+  );
+
+
+-- =====================================================================
+-- 3. SECURE SECURITY DEFINER FUNCTIONS (ENFORCE AUTHENTICATION)
+-- =====================================================================
+
+-- A. get_user_couple_id
+CREATE OR REPLACE FUNCTION public.get_user_couple_id(user_id uuid)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_couple_id uuid;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+  
+  -- Verify caller is querying their own ID or their partner's
+  IF auth.uid() = user_id OR EXISTS (
+    SELECT 1 FROM public.users u
+    JOIN public.couples c ON c.id = u.couple_id
+    WHERE u.id = user_id
+      AND (c.partner_a_id = auth.uid() OR c.partner_b_id = auth.uid())
+  ) THEN
+    SELECT couple_id INTO v_couple_id FROM public.users WHERE id = user_id;
+    RETURN v_couple_id::text;
+  ELSE
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+END;
+$$;
+
+-- B. is_member_of_couple
+CREATE OR REPLACE FUNCTION public.is_member_of_couple(couple_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1 FROM public.users u
+    JOIN public.couples c ON c.id = u.couple_id
+    WHERE u.id = auth.uid()
+      AND u.couple_id = is_member_of_couple.couple_id
+      AND (c.partner_a_id = auth.uid() OR c.partner_b_id = auth.uid())
+      AND c.status != 'archived'
+  );
+END;
+$$;
+
+-- C. delete_current_user
 CREATE OR REPLACE FUNCTION public.delete_current_user()
 RETURNS json
 LANGUAGE plpgsql
@@ -94,18 +168,18 @@ AS $$
 DECLARE
   v_user_id uuid;
 BEGIN
-  v_user_id := auth.uid();
-  IF v_user_id IS NULL THEN
-    RETURN json_build_object('success', false, 'error', 'Unauthorized');
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
   END IF;
 
+  v_user_id := auth.uid();
   DELETE FROM auth.users WHERE id = v_user_id;
 
   RETURN json_build_object('success', true);
 END;
 $$;
 
--- create_relationship_workspace
+-- D. create_relationship_workspace
 CREATE OR REPLACE FUNCTION public.create_relationship_workspace()
 RETURNS json
 LANGUAGE plpgsql
@@ -124,6 +198,10 @@ DECLARE
   chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   i integer;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
   SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
   IF v_user_couple_id IS NOT NULL THEN
     RAISE EXCEPTION 'User is already in a relationship';
@@ -181,7 +259,7 @@ BEGIN
 END;
 $$;
 
--- join_relationship_with_code (Updated with rate limiting)
+-- E. join_relationship_with_code
 CREATE OR REPLACE FUNCTION public.join_relationship_with_code(p_pairing_code text)
 RETURNS json
 LANGUAGE plpgsql
@@ -194,6 +272,10 @@ DECLARE
   v_attempts integer;
   v_locked_until timestamp with time zone;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
   -- 1. Check rate limiting
   SELECT attempts, locked_until INTO v_attempts, v_locked_until
   FROM public.failed_pairing_attempts
@@ -258,7 +340,7 @@ BEGIN
 END;
 $$;
 
--- recover_relationship_with_code
+-- F. recover_relationship_with_code
 CREATE OR REPLACE FUNCTION public.recover_relationship_with_code(p_recovery_code text)
 RETURNS json
 LANGUAGE plpgsql
@@ -278,6 +360,10 @@ DECLARE
   v_user_couple_id uuid;
   v_success boolean := false;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
   SELECT couple_id INTO v_user_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
   IF v_user_couple_id IS NOT NULL THEN
     RAISE EXCEPTION 'User is already in a relationship';
@@ -346,7 +432,7 @@ BEGIN
 END;
 $$;
 
--- regenerate_recovery_code
+-- G. regenerate_recovery_code
 CREATE OR REPLACE FUNCTION public.regenerate_recovery_code()
 RETURNS json
 LANGUAGE plpgsql
@@ -362,6 +448,10 @@ DECLARE
   chars text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   i integer;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
   SELECT couple_id INTO v_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
   IF v_couple_id IS NULL THEN
     RAISE EXCEPTION 'Not in a relationship';
@@ -408,7 +498,7 @@ BEGIN
 END;
 $$;
 
--- disconnect_relationship_workspace
+-- H. disconnect_relationship_workspace
 CREATE OR REPLACE FUNCTION public.disconnect_relationship_workspace()
 RETURNS json
 LANGUAGE plpgsql
@@ -419,6 +509,10 @@ DECLARE
   v_couple_id uuid;
   v_other_connected boolean;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
   SELECT couple_id INTO v_couple_id FROM public.users WHERE id = auth.uid() FOR UPDATE;
   IF v_couple_id IS NULL THEN
     RETURN json_build_object('success', false, 'error', 'Not in a relationship');
@@ -447,49 +541,52 @@ BEGIN
 END;
 $$;
 
--- handle_new_user_notification_preferences
-CREATE OR REPLACE FUNCTION public.handle_new_user_notification_preferences()
-RETURNS trigger
+
+-- =====================================================================
+-- 4. PROTECT PREMIUM STATUS FROM CLIENT-SIDE UPDATES
+-- =====================================================================
+CREATE OR REPLACE FUNCTION public.protect_premium_status()
+RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    INSERT INTO public.user_notification_preferences (user_id)
-    VALUES (new.id)
-    ON CONFLICT (user_id) DO NOTHING;
-    RETURN new;
+  -- Revert NEW.is_premium to OLD.is_premium if the caller is an authenticated client
+  IF NEW.is_premium IS DISTINCT FROM OLD.is_premium AND auth.role() = 'authenticated' THEN
+    NEW.is_premium := OLD.is_premium;
+  END IF;
+  RETURN NEW;
 END;
 $$;
 
--- 3. TIGHTEN RLS POLICIES
+DROP TRIGGER IF EXISTS trg_protect_premium_status ON public.couples;
+CREATE TRIGGER trg_protect_premium_status
+  BEFORE UPDATE ON public.couples
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_premium_status();
 
--- public.users: Restrict SELECT to self and partner only
--- Fixed to avoid infinite recursion by using auth.jwt() to check couple_id
-DROP POLICY IF EXISTS "Enable select for authenticated users" ON public.users;
-DROP POLICY IF EXISTS "Enable select for self and partner" ON public.users;
-CREATE POLICY "Enable select for self and partner" ON public.users
-  FOR SELECT TO authenticated
-  USING (
-    id = auth.uid()
-    OR
-    (couple_id IS NOT NULL AND couple_id = (NULLIF(current_setting('request.jwt.claims', true)::json->>'couple_id', '')::uuid))
-  );
 
--- public.couples: Restrict SELECT/UPDATE to members
-DROP POLICY IF EXISTS "Enable select for couple members" ON public.couples;
-DROP POLICY IF EXISTS "Enable select for members" ON public.couples;
-CREATE POLICY "Enable select for members" ON public.couples
-  FOR SELECT TO authenticated
-  USING (partner_a_id = auth.uid() OR partner_b_id = auth.uid());
+-- =====================================================================
+-- 5. PRESERVE SHARED HISTORY (CHANGE FOREIGN KEYS TO ON DELETE SET NULL)
+-- =====================================================================
 
-DROP POLICY IF EXISTS "Enable update for couple members" ON public.couples;
-DROP POLICY IF EXISTS "Enable update for members" ON public.couples;
-CREATE POLICY "Enable update for members" ON public.couples
-  FOR UPDATE TO authenticated
-  USING (partner_a_id = auth.uid() OR partner_b_id = auth.uid())
-  WITH CHECK (partner_a_id = auth.uid() OR partner_b_id = auth.uid());
+-- love_notes table constraint
+ALTER TABLE public.love_notes
+  DROP CONSTRAINT IF EXISTS love_notes_sender_id_fkey;
 
--- Ensure other tables have strictly scoped policies
--- All feature tables (love_notes, timeline_items, etc.) use is_member_of_couple(couple_id).
--- Since we hardened is_member_of_couple above, those tables are now more secure.
+ALTER TABLE public.love_notes
+  ADD CONSTRAINT love_notes_sender_id_fkey
+  FOREIGN KEY (sender_id)
+  REFERENCES auth.users(id)
+  ON DELETE SET NULL;
+
+-- moods table constraint
+ALTER TABLE public.moods
+  DROP CONSTRAINT IF EXISTS moods_user_id_fkey;
+
+ALTER TABLE public.moods
+  ADD CONSTRAINT moods_user_id_fkey
+  FOREIGN KEY (user_id)
+  REFERENCES auth.users(id)
+  ON DELETE SET NULL;

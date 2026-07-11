@@ -8,16 +8,14 @@ import 'package:days_together/models/bucket_list_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class BucketListProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class BucketListProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'bucket_list_items';
   List<BucketListItem> _items = [];
   bool _isLoading = true;
-  bool _disposed = false;
-
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
   final Set<String> _localMutations = {};
 
   List<BucketListItem> get items => List.unmodifiable(_items);
@@ -26,46 +24,31 @@ class BucketListProvider with ChangeNotifier {
   int get completedItems => _items.where((i) => i.isCompleted).length;
   double get progress => totalItems == 0 ? 0 : completedItems / totalItems;
 
-  BucketListProvider() {
+  @override
+  String get tableName => 'bucket_list';
+
+  BucketListProvider() : super() {
     _loadItems();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _items = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('bucket_list')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         return BucketListItem(
           id: data['id'] as String,
@@ -87,106 +70,99 @@ class BucketListProvider with ChangeNotifier {
 
       _items = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('BucketListProvider._fetchInitialData error: $e');
+      debugPrint('BucketListProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    final incoming = dataList.map((data) {
+      return BucketListItem(
+        id: data['id'] as String,
+        title: data['title'] ?? '',
+        isCompleted: data['is_completed'] ?? false,
+        completedAt: data['completed_at'] != null ? DateTime.parse(data['completed_at'] as String) : null,
+        order: data['order_index'] ?? 0,
+        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+        scheduledAt: data['scheduled_at'] != null ? DateTime.parse(data['scheduled_at'] as String) : null,
+      );
+    }).toList();
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'bucket_list',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-        final incoming = dataList.map((data) {
-          return BucketListItem(
-            id: data['id'] as String,
-            title: data['title'] ?? '',
-            isCompleted: data['is_completed'] ?? false,
-            completedAt: data['completed_at'] != null ? DateTime.parse(data['completed_at'] as String) : null,
-            order: data['order_index'] ?? 0,
-            createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-            scheduledAt: data['scheduled_at'] != null ? DateTime.parse(data['scheduled_at'] as String) : null,
-          );
-        }).toList();
+    incoming.sort((a, b) => a.order.compareTo(b.order));
 
-        incoming.sort((a, b) => a.order.compareTo(b.order));
-
-        if (!_isLoading) {
-          // Detect additions
-          final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
-          for (var item in added) {
-            if (_localMutations.contains(item.id)) {
-              _localMutations.remove(item.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: "Partner's bucket list item added",
-              description: 'Added: "${item.title}"',
-              icon: '🪣',
-              referenceId: item.id,
-              route: 'bucket_list',
-            );
-          }
-
-          // Detect completions
-          final completed = incoming.where((inc) => inc.isCompleted && !_items.any((old) => old.id == inc.id && old.isCompleted)).toList();
-          for (var item in completed) {
-            final existedAndNotCompleted = _items.any((old) => old.id == item.id && !old.isCompleted);
-            if (existedAndNotCompleted) {
-              if (_localMutations.contains(item.id)) {
-                _localMutations.remove(item.id);
-                continue;
-              }
-              RecentActivityService.instance.logActivity(
-                activityType: 'completed',
-                title: "Partner's bucket list item completed",
-                description: 'We did: "${item.title}" 🎉',
-                icon: '🎉',
-                referenceId: item.id,
-                route: 'bucket_list',
-              );
-            }
-          }
-
-          // Detect deletions
-          final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
-          for (var item in deleted) {
-            if (_localMutations.contains(item.id)) {
-              _localMutations.remove(item.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'deleted',
-              title: "Partner's bucket list item deleted",
-              description: 'Deleted: "${item.title}"',
-              icon: '🗑️',
-              referenceId: item.id,
-              route: 'bucket_list',
-            );
-          }
+    if (!_isLoading) {
+      // Detect additions
+      final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
+      for (var item in added) {
+        if (_localMutations.contains(item.id)) {
+          _localMutations.remove(item.id);
+          continue;
         }
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: "Partner's bucket list item added",
+          description: 'Added: "${item.title}"',
+          icon: '🪣',
+          referenceId: item.id,
+          route: 'bucket_list',
+        );
+      }
 
-        _items = incoming;
-        _isLoading = false;
-        if (!_disposed) notifyListeners();
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('BucketListProvider: Supabase sync error: $err');
-        _loadItems();
-      },
-    );
+      // Detect completions
+      final completed = incoming.where((inc) => inc.isCompleted && !_items.any((old) => old.id == inc.id && old.isCompleted)).toList();
+      for (var item in completed) {
+        final existedAndNotCompleted = _items.any((old) => old.id == item.id && !old.isCompleted);
+        if (existedAndNotCompleted) {
+          if (_localMutations.contains(item.id)) {
+            _localMutations.remove(item.id);
+            continue;
+          }
+          RecentActivityService.instance.logActivity(
+            activityType: 'completed',
+            title: "Partner's bucket list item completed",
+            description: 'We did: "${item.title}" 🎉',
+            icon: '🎉',
+            referenceId: item.id,
+            route: 'bucket_list',
+          );
+        }
+      }
+
+      // Detect deletions
+      final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      for (var item in deleted) {
+        if (_localMutations.contains(item.id)) {
+          _localMutations.remove(item.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'deleted',
+          title: "Partner's bucket list item deleted",
+          description: 'Deleted: "${item.title}"',
+          icon: '🗑️',
+          referenceId: item.id,
+          route: 'bucket_list',
+        );
+      }
+    }
+
+    _items = incoming;
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+    _persistLocalOnly();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('BucketListProvider: Supabase sync error: $error');
+    _loadItems();
   }
 
   Future<void> _loadItems() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
@@ -203,7 +179,7 @@ class BucketListProvider with ChangeNotifier {
       debugPrint('BucketListProvider._loadItems failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -215,13 +191,13 @@ class BucketListProvider with ChangeNotifier {
     );
     _localMutations.add(item.id);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('bucket_list')
             .upsert({
           'id': item.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'title': item.title,
           'is_completed': item.isCompleted,
           'completed_at': item.completedAt?.toIso8601String(),
@@ -257,7 +233,7 @@ class BucketListProvider with ChangeNotifier {
 
   Future<void> updateItem(String id, {String? title, DateTime? scheduledAt, bool clearDate = false}) async {
     _localMutations.add(id);
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         final updates = <String, dynamic>{};
         if (title != null) updates['title'] = title;
@@ -309,40 +285,38 @@ class BucketListProvider with ChangeNotifier {
 
   Future<void> toggleItem(String id) async {
     _localMutations.add(id);
-    final index = _items.indexWhere((i) => i.id == id);
-    if (index == -1) return;
-    final item = _items[index];
-    final nextCompleted = !item.isCompleted;
-    final nextCompletedAt = nextCompleted ? DateTime.now() : null;
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      final item = _items[index];
+      final newCompleted = !item.isCompleted;
+      final newCompletedAt = newCompleted ? DateTime.now() : null;
 
-    if (_coupleId != null) {
-      try {
-        await Supabase.instance.client
-            .from('bucket_list')
-            .update({
-          'is_completed': nextCompleted,
-          'completed_at': nextCompletedAt?.toIso8601String(),
-        }).eq('id', id);
-        if (nextCompleted) {
-          NotificationService().sendPartnerNotification(
-            title: 'Bucket List Completed!',
-            body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
-            feature: 'bucket_list',
-            itemId: id,
-          );
-        }
-      } catch (e) {
-        debugPrint('BucketListProvider.toggleItem Supabase error: $e');
-        _items[index] = item.copyWith(
-          isCompleted: nextCompleted,
-          completedAt: nextCompletedAt,
-        );
-        await _persist();
-      }
       _items[index] = item.copyWith(
-        isCompleted: nextCompleted,
-        completedAt: nextCompletedAt,
+        isCompleted: newCompleted,
+        completedAt: newCompletedAt,
       );
+      notifyListeners();
+
+      if (coupleId != null) {
+        try {
+          await Supabase.instance.client
+              .from('bucket_list')
+              .update({
+            'is_completed': newCompleted,
+            'completed_at': newCompletedAt?.toIso8601String(),
+          }).eq('id', id);
+          if (newCompleted) {
+            NotificationService().sendPartnerNotification(
+              title: 'Bucket List Completed!',
+              body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
+              feature: 'bucket_list',
+              itemId: id,
+            );
+          }
+        } catch (e) {
+          debugPrint('BucketListProvider.toggleItem Supabase error: $e');
+        }
+      }
       await _persist();
     }
 
@@ -357,13 +331,34 @@ class BucketListProvider with ChangeNotifier {
     );
   }
 
+  Future<void> updateItemTitle(String id, String newTitle) async {
+    _localMutations.add(id);
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      _items[index] = _items[index].copyWith(title: newTitle);
+      notifyListeners();
+
+      if (coupleId != null) {
+        try {
+          await Supabase.instance.client
+              .from('bucket_list')
+              .update({'title': newTitle})
+              .eq('id', id);
+        } catch (e) {
+          debugPrint('BucketListProvider.updateItemTitle Supabase error: $e');
+        }
+      }
+      await _persist();
+    }
+  }
+
   Future<void> deleteItem(String id) async {
     _localMutations.add(id);
     final index = _items.indexWhere((i) => i.id == id);
     if (index == -1) return;
     final itemToDelete = _items[index];
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('bucket_list')
@@ -419,7 +414,7 @@ class BucketListProvider with ChangeNotifier {
     final item = _items.removeAt(oldIndex);
     _items.insert(newIndex, item);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         for (var i = 0; i < _items.length; i++) {
           await Supabase.instance.client
@@ -444,7 +439,7 @@ class BucketListProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -457,10 +452,4 @@ class BucketListProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

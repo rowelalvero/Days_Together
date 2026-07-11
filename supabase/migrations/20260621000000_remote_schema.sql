@@ -439,7 +439,7 @@ ALTER TABLE ONLY "public"."love_notes"
 
 
 ALTER TABLE ONLY "public"."love_notes"
-    ADD CONSTRAINT "love_notes_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "love_notes_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 

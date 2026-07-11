@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:days_together/main.dart';
+import 'package:days_together/navigator_key.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/studio/time_capsule_screen.dart';

@@ -18,7 +18,9 @@ import 'package:days_together/screens/settings/notification_settings_screen.dart
 import 'package:days_together/screens/wrapped/wrapped_service.dart';
 import 'package:days_together/screens/wrapped/wrapped_screen.dart';
 import 'package:days_together/screens/wrapped/wrapped_archive_screen.dart';
-import 'package:days_together/main.dart';
+import 'package:days_together/navigator_key.dart';
+
+import '../main.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -102,7 +104,7 @@ class SettingsTab extends StatelessWidget {
               await rp.logout();
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const AppHome()),
+                  MaterialPageRoute(builder: (_) => AppHome()),
                   (route) => false,
                 );
               }

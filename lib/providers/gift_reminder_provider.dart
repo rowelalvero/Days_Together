@@ -8,16 +8,14 @@ import 'package:days_together/models/gift_reminder_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class GiftReminderProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class GiftReminderProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'gift_reminders';
   List<GiftReminder> _reminders = [];
   bool _isLoading = true;
-  bool _disposed = false;
-
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
   final Set<String> _localMutations = {};
 
   List<GiftReminder> get reminders => List.unmodifiable(_reminders);
@@ -28,46 +26,31 @@ class GiftReminderProvider with ChangeNotifier {
   }
   bool get isLoading => _isLoading;
 
-  GiftReminderProvider() {
+  @override
+  String get tableName => 'gift_reminders';
+
+  GiftReminderProvider() : super() {
     _loadReminders();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _reminders = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('gift_reminders')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         return GiftReminder(
           id: data['id'] as String,
@@ -80,104 +63,97 @@ class GiftReminderProvider with ChangeNotifier {
 
       _reminders = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('GiftReminderProvider._fetchInitialData error: $e');
+      debugPrint('GiftReminderProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    final incoming = dataList.map((data) {
+      return GiftReminder(
+        id: data['id'] as String,
+        title: data['title'] ?? '',
+        date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
+        reminderDaysBefore: List<int>.from(data['reminder_days_before'] ?? [30, 14, 7]),
+        isEnabled: data['is_enabled'] ?? true,
+        isRecurringYearly: data['is_recurring_yearly'] ?? true,
+        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+      );
+    }).toList();
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'gift_reminders',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-        final incoming = dataList.map((data) {
-          return GiftReminder(
-            id: data['id'] as String,
-            title: data['title'] ?? '',
-            date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-            reminderDaysBefore: List<int>.from(data['reminder_days_before'] ?? [30, 14, 7]),
-            isEnabled: data['is_enabled'] ?? true,
-            isRecurringYearly: data['is_recurring_yearly'] ?? true,
-            createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-          );
-        }).toList();
-
-        if (!_isLoading) {
-          // Detect additions by partner
-          final added = incoming.where((inc) => !_reminders.any((old) => old.id == inc.id)).toList();
-          for (var reminder in added) {
-            if (_localMutations.contains(reminder.id)) {
-              _localMutations.remove(reminder.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: "Partner's gift reminder added",
-              description: 'Added reminder: "${reminder.title}"',
-              icon: '🎁',
-              referenceId: reminder.id,
-              route: 'gifts',
-            );
-          }
-
-          // Detect completions by partner (isEnabled toggled to false by partner)
-          final completed = incoming.where((inc) => !inc.isEnabled && !_reminders.any((old) => old.id == inc.id && !old.isEnabled)).toList();
-          for (var reminder in completed) {
-            final existedAndWasEnabled = _reminders.any((old) => old.id == reminder.id && old.isEnabled);
-            if (existedAndWasEnabled) {
-              if (_localMutations.contains(reminder.id)) {
-                _localMutations.remove(reminder.id);
-                continue;
-              }
-              RecentActivityService.instance.logActivity(
-                activityType: 'completed',
-                title: "Partner's gift reminder completed",
-                description: 'Completed: "${reminder.title}"',
-                icon: '🎁',
-                referenceId: reminder.id,
-                route: 'gifts',
-              );
-            }
-          }
-
-          // Detect deletions by partner
-          final deleted = _reminders.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
-          for (var reminder in deleted) {
-            if (_localMutations.contains(reminder.id)) {
-              _localMutations.remove(reminder.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'deleted',
-              title: "Partner's gift reminder deleted",
-              description: 'Deleted reminder: "${reminder.title}"',
-              icon: '🗑️',
-              referenceId: reminder.id,
-              route: 'gifts',
-            );
-          }
+    if (!_isLoading) {
+      // Detect additions by partner
+      final added = incoming.where((inc) => !_reminders.any((old) => old.id == inc.id)).toList();
+      for (var reminder in added) {
+        if (_localMutations.contains(reminder.id)) {
+          _localMutations.remove(reminder.id);
+          continue;
         }
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: "Partner's gift reminder added",
+          description: 'Added reminder: "${reminder.title}"',
+          icon: '🎁',
+          referenceId: reminder.id,
+          route: 'gifts',
+        );
+      }
 
-        _reminders = incoming;
-        _isLoading = false;
-        if (!_disposed) notifyListeners();
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('GiftReminderProvider: Supabase sync error: $err');
-        _loadReminders();
-      },
-    );
+      // Detect completions by partner (isEnabled toggled to false by partner)
+      final completed = incoming.where((inc) => !inc.isEnabled && !_reminders.any((old) => old.id == inc.id && !old.isEnabled)).toList();
+      for (var reminder in completed) {
+        final existedAndWasEnabled = _reminders.any((old) => old.id == reminder.id && old.isEnabled);
+        if (existedAndWasEnabled) {
+          if (_localMutations.contains(reminder.id)) {
+            _localMutations.remove(reminder.id);
+            continue;
+          }
+          RecentActivityService.instance.logActivity(
+            activityType: 'completed',
+            title: "Partner's gift reminder completed",
+            description: 'Completed: "${reminder.title}"',
+            icon: '🎁',
+            referenceId: reminder.id,
+            route: 'gifts',
+          );
+        }
+      }
+
+      // Detect deletions by partner
+      final deleted = _reminders.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      for (var reminder in deleted) {
+        if (_localMutations.contains(reminder.id)) {
+          _localMutations.remove(reminder.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'deleted',
+          title: "Partner's gift reminder deleted",
+          description: 'Deleted reminder: "${reminder.title}"',
+          icon: '🗑️',
+          referenceId: reminder.id,
+          route: 'gifts',
+        );
+      }
+    }
+
+    _reminders = incoming;
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+    _persistLocalOnly();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('GiftReminderProvider: Supabase sync error: $error');
+    _loadReminders();
   }
 
   Future<void> _loadReminders() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
@@ -193,7 +169,7 @@ class GiftReminderProvider with ChangeNotifier {
       debugPrint('GiftReminderProvider._loadReminders failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -201,13 +177,13 @@ class GiftReminderProvider with ChangeNotifier {
     final reminder = GiftReminder(title: title, date: date);
     _localMutations.add(reminder.id);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('gift_reminders')
             .upsert({
           'id': reminder.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'title': title,
           'date': date.toIso8601String(),
           'reminder_days_before': reminder.reminderDaysBefore,
@@ -246,7 +222,7 @@ class GiftReminderProvider with ChangeNotifier {
     final index = _reminders.indexWhere((r) => r.id == id);
     if (index == -1) return;
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         final updates = <String, dynamic>{};
         if (title != null) updates['title'] = title;
@@ -285,7 +261,7 @@ class GiftReminderProvider with ChangeNotifier {
     if (index == -1) return;
     final nextEnabled = !_reminders[index].isEnabled;
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('gift_reminders')
@@ -316,7 +292,7 @@ class GiftReminderProvider with ChangeNotifier {
 
   Future<void> deleteReminder(String id) async {
     _localMutations.add(id);
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('gift_reminders')
@@ -341,7 +317,7 @@ class GiftReminderProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -354,10 +330,4 @@ class GiftReminderProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

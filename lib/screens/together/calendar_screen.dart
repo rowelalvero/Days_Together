@@ -288,7 +288,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 _buildHeader(context),
                 _buildCalendar(theme, calendarProvider),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Expanded(
                   child: _buildEventList(theme, calendarProvider),
                 ),
@@ -308,7 +308,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildHeader(BuildContext context) {
     final theme = context.watch<ThemeProvider>().currentLoveTheme;
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -357,7 +357,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: theme.textColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(30),
@@ -378,7 +378,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
             ),
-            itemCount: 42, // 6 weeks
+            itemCount: ((firstDayOfWeek + daysInMonth) / 7).ceil() * 7,
             itemBuilder: (context, index) {
               final dayNum = index - firstDayOfWeek + 1;
               if (dayNum < 1 || dayNum > daysInMonth) return const SizedBox.shrink();
@@ -475,7 +475,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             DateFormat('MMMM dd, yyyy').format(_selectedDay),
             style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           if (!hasAny)
             Expanded(
               child: Center(

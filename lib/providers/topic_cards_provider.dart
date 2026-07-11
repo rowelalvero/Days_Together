@@ -9,8 +9,11 @@ import 'package:days_together/models/topic_card_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class TopicCardsProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class TopicCardsProvider extends SupabaseLifecycleProvider {
   static const String _customCardsKey = 'topic_cards_custom';
   static const String _likedCardIdsKey = 'topic_cards_liked_ids';
   static const String _pendingLikesKey = 'topic_cards_pending_likes';
@@ -19,21 +22,19 @@ class TopicCardsProvider with ChangeNotifier {
   List<TopicCard> _customCards = [];
   Set<String> _likedCardIds = {};
   Set<String> _partnerLikedCardIds = {};
-  final Set<String> _localMutations = {};
   Map<String, bool> _pendingLikes = {};
-
-  String _activeCategory = 'All';
-  int _currentIndex = 0;
-  List<TopicCard> _activeDeck = [];
   bool _isLoading = true;
-  bool _disposed = false;
-
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncCardsSub;
-  StreamSubscription? _syncLikesSub;
   bool _isSyncingLikes = false;
 
+  StreamSubscription? _syncCardsSub;
+  StreamSubscription? _syncLikesSub;
+  final Set<String> _localMutations = {};
+
+  int _currentIndex = 0;
+  String _activeCategory = 'All';
+  List<TopicCard> _activeDeck = [];
+
+  List<TopicCard> get customCards => List.unmodifiable(_customCards);
   List<TopicCard> get allCards {
     final List<TopicCard> combined = [];
     for (final card in _defaultCards) {
@@ -45,39 +46,21 @@ class TopicCardsProvider with ChangeNotifier {
     return combined;
   }
 
-  List<TopicCard> get activeDeck => _activeDeck;
+  List<TopicCard> get activeDeck => List.unmodifiable(_activeDeck);
   String get activeCategory => _activeCategory;
   int get currentIndex => _currentIndex;
   bool get isLoading => _isLoading;
 
-  TopicCardsProvider() {
+  @override
+  String get tableName => 'topic_cards';
+
+  TopicCardsProvider() : super() {
     _initializeDefaultCards();
     _loadData();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = (_syncCardsSub == null || _syncLikesSub == null) && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncCardsSub?.cancel();
-      _syncCardsSub = null;
-      _syncLikesSub?.cancel();
-      _syncLikesSub = null;
-
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _customCards = [];
     _likedCardIds = {};
     _partnerLikedCardIds = {};
@@ -90,17 +73,18 @@ class TopicCardsProvider with ChangeNotifier {
     } catch (_) {}
     _currentIndex = 0;
     _updateActiveDeck();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       // 1. Fetch custom cards
       final List<dynamic> cardsRes = await Supabase.instance.client
           .from('topic_cards')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsedCards = cardsRes.map((data) {
         return TopicCard(
           id: data['id'] as String,
@@ -117,7 +101,7 @@ class TopicCardsProvider with ChangeNotifier {
       final List<dynamic> likesRes = await Supabase.instance.client
           .from('topic_card_likes')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final Set<String> myLikes = {};
       final Set<String> partnerLikes = {};
       for (final data in likesRes) {
@@ -125,7 +109,7 @@ class TopicCardsProvider with ChangeNotifier {
         final likedByUserId = data['user_id'] as String? ?? '';
         final isLikedVal = data['is_liked'] as bool? ?? false;
         if (isLikedVal) {
-          if (likedByUserId == _userId) {
+          if (likedByUserId == userId) {
             myLikes.add(cardId);
           } else {
             partnerLikes.add(cardId);
@@ -138,22 +122,24 @@ class TopicCardsProvider with ChangeNotifier {
 
       _currentIndex = 0;
       _updateActiveDeck();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('TopicCardsProvider._fetchInitialData error: $e');
+      debugPrint('TopicCardsProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null || _userId == null) return;
+  @override
+  void initRealtime() {
+    if (coupleId == null || userId == null) return;
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
 
     // Stream 1: Sync Custom Cards
-    _syncCardsSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'topic_cards',
-      coupleId: _coupleId!,
-      onData: (dataList) {
+    _syncCardsSub?.cancel();
+    _syncCardsSub = RealtimeSubscriptionManager.instance
+        .getStream(tableName: 'topic_cards', coupleId: coupleId!)
+        .listen(
+      (dataList) {
         final List<TopicCard> newCustoms = [];
 
         for (final data in dataList) {
@@ -201,19 +187,18 @@ class TopicCardsProvider with ChangeNotifier {
     );
 
     // Stream 2: Sync Liked Card IDs
-    _syncLikesSub = Supabase.instance.client
-        .from('topic_card_likes')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
+    _syncLikesSub?.cancel();
+    _syncLikesSub = RealtimeSubscriptionManager.instance
+        .getStream(tableName: 'topic_card_likes', coupleId: coupleId!)
         .listen((dataList) {
       final Set<String> newLikes = {};
       final Set<String> newPartnerLikes = {};
 
       for (final data in dataList) {
         final cardId = data['card_id'] as String;
-        final userId = data['user_id'] as String;
+        final likedByUserId = data['user_id'] as String;
 
-        if (userId == _userId) {
+        if (likedByUserId == userId) {
           newLikes.add(cardId);
         } else {
           newPartnerLikes.add(cardId);
@@ -258,6 +243,20 @@ class TopicCardsProvider with ChangeNotifier {
     // Run initial sync of offline/pending likes
     _syncPendingLikes();
   }
+
+  @override
+  void disposeRealtime() {
+    _syncCardsSub?.cancel();
+    _syncLikesSub?.cancel();
+    _syncCardsSub = null;
+    _syncLikesSub = null;
+  }
+
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {}
+
+  @override
+  void onRealtimeError(Object error) {}
 
   void _initializeDefaultCards() {
     final defaultQuestions = [
@@ -322,7 +321,7 @@ class TopicCardsProvider with ChangeNotifier {
 
   Future<void> _loadData() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
 
@@ -368,7 +367,7 @@ class TopicCardsProvider with ChangeNotifier {
     if (_currentIndex >= _activeDeck.length) {
       _currentIndex = 0;
     }
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> setCategory(String category) async {
@@ -380,26 +379,26 @@ class TopicCardsProvider with ChangeNotifier {
   void nextCard() {
     if (_activeDeck.isEmpty) return;
     _currentIndex = (_currentIndex + 1) % _activeDeck.length;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   void previousCard() {
     if (_activeDeck.isEmpty) return;
     _currentIndex = (_currentIndex - 1 + _activeDeck.length) % _activeDeck.length;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   void setCurrentIndex(int index) {
     if (_activeDeck.isEmpty) return;
     _currentIndex = index.clamp(0, _activeDeck.length - 1);
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> shuffleDeck() async {
     if (_activeDeck.isEmpty) return;
     _activeDeck.shuffle();
     _currentIndex = 0;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> addCustomCard(String question, String category) async {
@@ -412,13 +411,13 @@ class TopicCardsProvider with ChangeNotifier {
     );
     _localMutations.add(newCard.id);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('topic_cards')
             .upsert({
           'id': newCard.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'category': category,
           'question': question,
           'is_custom': true,
@@ -453,7 +452,7 @@ class TopicCardsProvider with ChangeNotifier {
   }
 
   Future<void> deleteCard(String id) async {
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('topic_cards')
@@ -464,8 +463,8 @@ class TopicCardsProvider with ChangeNotifier {
         await Supabase.instance.client
             .from('topic_card_likes')
             .delete()
-            .eq('couple_id', _coupleId!)
-            .eq('user_id', _userId!)
+            .eq('couple_id', coupleId!)
+            .eq('user_id', userId!)
             .eq('card_id', id);
       } catch (e) {
         debugPrint('TopicCardsProvider.deleteCard Supabase error: $e');
@@ -494,7 +493,7 @@ class TopicCardsProvider with ChangeNotifier {
     // 1. Optimistic UI update
     if (nextLiked) {
       _likedCardIds.add(id);
-      if (_coupleId != null) {
+      if (coupleId != null) {
         NotificationService().sendPartnerNotification(
           title: 'Topic Card Favorited 💖',
           body: 'Your partner favorited a topic card!',
@@ -530,7 +529,7 @@ class TopicCardsProvider with ChangeNotifier {
 
   Future<void> _syncPendingLikes() async {
     if (_isSyncingLikes) return;
-    if (_coupleId == null || _userId == null) return;
+    if (coupleId == null || userId == null) return;
     if (_pendingLikes.isEmpty) return;
 
     _isSyncingLikes = true;
@@ -545,8 +544,8 @@ class TopicCardsProvider with ChangeNotifier {
           if (targetLiked) {
             // Idempotent upsert
             await Supabase.instance.client.from('topic_card_likes').upsert({
-              'couple_id': _coupleId,
-              'user_id': _userId,
+              'couple_id': coupleId,
+              'user_id': userId,
               'card_id': cardId,
             });
           } else {
@@ -554,8 +553,8 @@ class TopicCardsProvider with ChangeNotifier {
             await Supabase.instance.client
                 .from('topic_card_likes')
                 .delete()
-                .eq('couple_id', _coupleId!)
-                .eq('user_id', _userId!)
+                .eq('couple_id', coupleId!)
+                .eq('user_id', userId!)
                 .eq('card_id', cardId);
           }
           completedIds.add(cardId);
@@ -608,11 +607,4 @@ class TopicCardsProvider with ChangeNotifier {
     await _savePendingLikes();
   }
 
-  @override
-  void dispose() {
-    _syncCardsSub?.cancel();
-    _syncLikesSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

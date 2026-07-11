@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +7,7 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
+import 'package:days_together/widgets/safe_loading_dialog.dart';
 
 class RecoverRelationshipScreen extends StatefulWidget {
   const RecoverRelationshipScreen({super.key});
@@ -26,6 +28,18 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
     super.dispose();
   }
 
+  /// Waits for [provider.isInitialized] to become true, with a bounded timeout.
+  Future<bool> _waitForInitialization(RelationshipProvider provider) async {
+    const maxWait = Duration(seconds: 20);
+    const pollInterval = Duration(milliseconds: 100);
+    final deadline = DateTime.now().add(maxWait);
+
+    while (!provider.isInitialized && DateTime.now().isBefore(deadline)) {
+      await Future.delayed(pollInterval);
+    }
+    return provider.isInitialized;
+  }
+
   Future<void> _handleRecover() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -41,32 +55,26 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
       final success = await provider.recoverRelationship(code);
       if (success) {
         if (mounted) {
-          // Show a beautiful loading dialog while we wait for the workspace data to sync
-          showDialog(
+          // Wait for workspace sync with a safe, bounded timeout
+          final initialized = await SafeLoadingDialog.run<bool>(
             context: context,
-            barrierDismissible: false,
-            builder: (context) => const Center(
-              child: CircularProgressIndicator(),
-            ),
+            future: () async {
+              final ready = await _waitForInitialization(provider);
+              return ready;
+            },
+            timeoutSeconds: 25,
+            loadingMessage: 'Restoring your workspace...',
+            timeoutMessage: 'Workspace sync timed out. Please restart the app to complete recovery.',
           );
 
-          // Wait for the provider sync/initialization to complete
-          while (!provider.isInitialized) {
-            await Future.delayed(const Duration(milliseconds: 100));
-          }
-
-          if (mounted) {
-            Navigator.pop(context); // Close the loading dialog
-
+          if (mounted && (initialized == true)) {
             if (provider.yourName == null || provider.yourName!.trim().isEmpty) {
-              // New user account profile: Go to name and avatar creation screen
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => const AvatarCreationScreen()),
                 (route) => false,
               );
             } else {
-              // Existing user account profile: Pop back (home screen will display automatically)
               Navigator.pop(context);
             }
           }

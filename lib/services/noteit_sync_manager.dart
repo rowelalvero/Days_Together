@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class NoteitSyncTask {
   final String id;
@@ -69,7 +70,7 @@ class NoteitSyncManager {
   List<NoteitSyncTask> _queue = [];
   bool _isSyncing = false;
   Timer? _backoffTimer;
-  Timer? _connectivityTimer;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
   bool get hasPendingItems => _queue.isNotEmpty;
   List<NoteitSyncTask> get queue => List.unmodifiable(_queue);
@@ -127,21 +128,19 @@ class NoteitSyncManager {
   }
 
   void _startConnectivityCheck() {
-    _connectivityTimer?.cancel();
-    _connectivityTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
-      if (hasPendingItems && !_isSyncing) {
-        final isOnline = await checkConnection();
-        if (isOnline) {
-          triggerSync();
-        }
+    _connectivitySub?.cancel();
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) async {
+      final isOnline = results.any((r) => r != ConnectivityResult.none);
+      if (isOnline && hasPendingItems && !_isSyncing) {
+        triggerSync();
       }
     });
   }
 
   Future<bool> checkConnection() async {
     try {
-      final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 5));
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) => r != ConnectivityResult.none);
     } catch (_) {
       return false;
     }
@@ -184,6 +183,19 @@ class NoteitSyncManager {
         final success = await _executeTask(task, coupleId, userId);
 
         if (success) {
+          // Clean up local persistent file if any to prevent storage leaks
+          if (task.imagePath != null) {
+            try {
+              final file = File(task.imagePath!);
+              if (await file.exists()) {
+                await file.delete();
+                debugPrint('NoteitSyncManager: Cleaned up local draft file: ${task.imagePath}');
+              }
+            } catch (e) {
+              debugPrint('NoteitSyncManager: Failed to delete local draft file: $e');
+            }
+          }
+
           _queue.removeAt(i);
           i--; // Adjust index after removal
           await _saveQueue();
@@ -195,12 +207,20 @@ class NoteitSyncManager {
             _queue[i].status = 'failed';
             await _saveQueue();
             _provider?.updateItemSyncStatus(task.id, SyncStatus.failed);
+            // Do NOT break the loop here! Let other tasks continue
           } else {
             task.status = 'pending';
             _queue[i].status = 'pending';
             await _saveQueue();
-            _scheduleBackoff(task);
-            break; // Stop and wait for backoff
+            _provider?.updateItemSyncStatus(task.id, SyncStatus.failed);
+
+            // Check if failure was due to network loss
+            final onlineAfterFail = await checkConnection();
+            if (!onlineAfterFail) {
+              _scheduleBackoff(task);
+              break; // Stop loop and wait for backoff since we lost network
+            }
+            // If still online, we do NOT break! We let subsequent tasks run.
           }
         }
       }
@@ -315,6 +335,6 @@ class NoteitSyncManager {
 
   void cancel() {
     _backoffTimer?.cancel();
-    _connectivityTimer?.cancel();
+    _connectivitySub?.cancel();
   }
 }

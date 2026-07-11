@@ -8,6 +8,7 @@ import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/app_avatar.dart';
+import 'package:days_together/widgets/safe_loading_dialog.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
@@ -548,27 +549,19 @@ class RelationshipProfileScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(dialogContext); // Close warning dialog
-                        
-                        // Show loading indicator
-                        showDialog(
+
+                        final success = await SafeLoadingDialog.run<bool>(
                           context: profileContext,
-                          barrierDismissible: false,
-                          builder: (loadingContext) => const Center(child: CircularProgressIndicator()),
+                          future: () async {
+                            await rp.regenerateRecoveryCode();
+                            return true;
+                          },
+                          timeoutSeconds: 15,
+                          loadingMessage: 'Regenerating code...',
                         );
-                        
-                        try {
-                          await rp.regenerateRecoveryCode();
-                          if (profileContext.mounted) {
-                            Navigator.pop(profileContext); // Close loading indicator
-                            _showNewRecoveryCodeDialog(profileContext, rp, theme);
-                          }
-                        } catch (e) {
-                          if (profileContext.mounted) {
-                            Navigator.pop(profileContext); // Close loading indicator
-                            ScaffoldMessenger.of(profileContext).showSnackBar(
-                              SnackBar(content: Text('Failed to regenerate: $e')),
-                            );
-                          }
+
+                        if (success == true && profileContext.mounted) {
+                          _showNewRecoveryCodeDialog(profileContext, rp, theme);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -917,34 +910,19 @@ Widget _buildDangerZoneDivider(dynamic theme) {
                         onPressed: () async {
                           Navigator.pop(dialogContext); // Close confirmation dialog
 
-                          // Show loading spinner dialog
-                          showDialog(
+                          final success = await SafeLoadingDialog.run<bool>(
                             context: context,
-                            barrierDismissible: false,
-                            builder: (_) => const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.redAccent,
-                              ),
-                            ),
+                            future: () async {
+                              await rp.deleteAccount();
+                              return true;
+                            },
+                            timeoutSeconds: 20,
+                            loadingMessage: 'Deleting account...',
+                            indicatorColor: Colors.redAccent,
                           );
 
-                          try {
-                            await rp.deleteAccount();
-                            if (context.mounted) {
-                              Navigator.pop(context); // Dismiss loading spinner
-                              Navigator.of(
-                                context,
-                              ).popUntil((route) => route.isFirst);
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              Navigator.pop(context); // Dismiss loading
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Failed to delete account: $e'),
-                                ),
-                              );
-                            }
+                          if (success == true && context.mounted) {
+                            Navigator.of(context).popUntil((route) => route.isFirst);
                           }
                         },
                         style: ElevatedButton.styleFrom(

@@ -3,27 +3,31 @@ import 'package:days_together/providers/relationship_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class NotificationPreferencesProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class NotificationPreferencesProvider extends RelationshipLifecycleProvider {
   NotificationPreferences? _preferences;
   bool _isLoading = false;
-  bool _disposed = false;
 
   NotificationPreferences? get preferences => _preferences;
   bool get isLoading => _isLoading;
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final userId = relationship.userId;
+  @override
+  Future<void> purgeCache() async {
+    _preferences = null;
+    if (!isDisposed) notifyListeners();
+  }
+
+  @override
+  Future<void> syncInitialData() async {
     if (userId != null) {
-      _loadPreferences(userId);
-    } else {
-      _preferences = null;
-      if (!_disposed) notifyListeners();
+      await _loadPreferences(userId!);
     }
   }
 
   Future<void> _loadPreferences(String userId) async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
 
     try {
       final client = Supabase.instance.client;
@@ -53,7 +57,7 @@ class NotificationPreferencesProvider with ChangeNotifier {
       debugPrint('NotificationPreferencesProvider: Error loading preferences: $e');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -84,11 +88,5 @@ class NotificationPreferencesProvider with ChangeNotifier {
     if (currentValue is bool) {
       await updatePreference(key, !currentValue);
     }
-  }
-
-  @override
-  void dispose() {
-    _disposed = true;
-    super.dispose();
   }
 }

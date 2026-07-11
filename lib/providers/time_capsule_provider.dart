@@ -8,16 +8,14 @@ import 'package:days_together/models/time_capsule_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class TimeCapsuleProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class TimeCapsuleProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'time_capsules';
   List<TimeCapsule> _capsules = [];
   bool _isLoading = true;
-  bool _disposed = false;
-
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
   final Set<String> _localMutations = {};
 
   List<TimeCapsule> get capsules => List.unmodifiable(_capsules);
@@ -29,46 +27,31 @@ class TimeCapsuleProvider with ChangeNotifier {
       _capsules.where((c) => c.isOpened).toList();
   bool get isLoading => _isLoading;
 
-  TimeCapsuleProvider() {
+  @override
+  String get tableName => 'time_capsules';
+
+  TimeCapsuleProvider() : super() {
     _loadCapsules();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _capsules = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('time_capsules')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         return TimeCapsule(
           id: data['id'] as String,
@@ -86,84 +69,77 @@ class TimeCapsuleProvider with ChangeNotifier {
 
       _capsules = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('TimeCapsuleProvider._fetchInitialData error: $e');
+      debugPrint('TimeCapsuleProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    final incoming = dataList.map((data) {
+      return TimeCapsule(
+        id: data['id'] as String,
+        message: data['message'] ?? '',
+        openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String) : DateTime.now(),
+        isOpened: data['is_opened'] ?? false,
+        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+      );
+    }).toList();
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'time_capsules',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-        final incoming = dataList.map((data) {
-          return TimeCapsule(
-            id: data['id'] as String,
-            message: data['message'] ?? '',
-            openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String) : DateTime.now(),
-            isOpened: data['is_opened'] ?? false,
-            createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-          );
-        }).toList();
+    incoming.sort((a, b) => a.openDate.compareTo(b.openDate));
 
-        incoming.sort((a, b) => a.openDate.compareTo(b.openDate));
-
-        if (!_isLoading) {
-          // Detect additions by partner
-          final added = incoming.where((inc) => !_capsules.any((old) => old.id == inc.id)).toList();
-          for (var capsule in added) {
-            if (_localMutations.contains(capsule.id)) {
-              _localMutations.remove(capsule.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: "Partner's time capsule created ⏳",
-              description: 'Locked a new time capsule to be opened later',
-              icon: '⏳',
-              referenceId: capsule.id,
-              route: 'time_capsule',
-            );
-          }
-
-          // Detect openings by partner
-          final opened = incoming.where((inc) => inc.isOpened && !_capsules.any((old) => old.id == inc.id && old.isOpened)).toList();
-          for (var capsule in opened) {
-            if (_localMutations.contains(capsule.id)) {
-              _localMutations.remove(capsule.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'completed',
-              title: "Partner's time capsule opened 🔓",
-              description: 'Opened a locked time capsule',
-              icon: '🔓',
-              referenceId: capsule.id,
-              route: 'time_capsule',
-            );
-          }
+    if (!_isLoading) {
+      // Detect additions by partner
+      final added = incoming.where((inc) => !_capsules.any((old) => old.id == inc.id)).toList();
+      for (var capsule in added) {
+        if (_localMutations.contains(capsule.id)) {
+          _localMutations.remove(capsule.id);
+          continue;
         }
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: "Partner's time capsule created ⏳",
+          description: 'Locked a new time capsule to be opened later',
+          icon: '⏳',
+          referenceId: capsule.id,
+          route: 'time_capsule',
+        );
+      }
 
-        _capsules = incoming;
-        _isLoading = false;
-        if (!_disposed) notifyListeners();
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('TimeCapsuleProvider: Supabase sync error: $err');
-        _loadCapsules();
-      },
-    );
+      // Detect openings by partner
+      final opened = incoming.where((inc) => inc.isOpened && !_capsules.any((old) => old.id == inc.id && old.isOpened)).toList();
+      for (var capsule in opened) {
+        if (_localMutations.contains(capsule.id)) {
+          _localMutations.remove(capsule.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'completed',
+          title: "Partner's time capsule opened 🔓",
+          description: 'Opened a locked time capsule',
+          icon: '🔓',
+          referenceId: capsule.id,
+          route: 'time_capsule',
+        );
+      }
+    }
+
+    _capsules = incoming;
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+    _persistLocalOnly();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('TimeCapsuleProvider: Supabase sync error: $error');
+    _loadCapsules();
   }
 
   Future<void> _loadCapsules() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
@@ -180,7 +156,7 @@ class TimeCapsuleProvider with ChangeNotifier {
       debugPrint('TimeCapsuleProvider._loadCapsules failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -188,13 +164,13 @@ class TimeCapsuleProvider with ChangeNotifier {
     final capsule = TimeCapsule(message: message, openDate: openDate);
     _localMutations.add(capsule.id);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('time_capsules')
             .upsert({
           'id': capsule.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'message': message,
           'open_date': openDate.toIso8601String(),
           'is_opened': capsule.isOpened,
@@ -238,7 +214,7 @@ class TimeCapsuleProvider with ChangeNotifier {
     final capsule = _capsules[index];
     if (!capsule.canOpen) return;
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('time_capsules')
@@ -274,7 +250,7 @@ class TimeCapsuleProvider with ChangeNotifier {
   }
 
   Future<void> deleteCapsule(String id) async {
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('time_capsules')
@@ -296,7 +272,7 @@ class TimeCapsuleProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -309,10 +285,4 @@ class TimeCapsuleProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

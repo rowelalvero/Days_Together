@@ -699,11 +699,6 @@ class _NoteitScreenState extends State<NoteitScreen>
     _controller.removeListener(_onControllerUpdated);
     _controller.dispose();
 
-    // Clear draft on exit
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.remove('noteit_draft_canvas');
-    });
-
     super.dispose();
   }
 

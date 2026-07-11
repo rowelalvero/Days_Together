@@ -13,15 +13,21 @@ import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class TimelineProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class TimelineProvider extends SupabaseLifecycleProvider {
   final TimelineRepository _repository = TimelineRepository();
   final ImagePicker _picker = ImagePicker();
   List<TimelineItemData> _timelineItems = [];
   bool _isLoading = true;
-  bool _disposed = false;
   bool _isAscending = true;
   int _currentScrubIndex = 0;
+
+  // Track locally deleted items to prevent them from re-appearing from the Supabase stream
+  final Set<String> _locallyDeletedIds = {};
+  final Set<String> _localMutations = {};
 
   bool get isAscending => _isAscending;
   int get currentScrubIndex => _currentScrubIndex;
@@ -32,7 +38,7 @@ class TimelineProvider with ChangeNotifier {
     } else {
       _currentScrubIndex = index.clamp(0, _timelineItems.length - 1);
     }
-    if (notify && !_disposed) {
+    if (notify && !isDisposed) {
       notifyListeners();
     }
   }
@@ -43,23 +49,18 @@ class TimelineProvider with ChangeNotifier {
     } else {
       _currentScrubIndex = _currentScrubIndex.clamp(0, _timelineItems.length - 1);
     }
-    if (notify && !_disposed) {
+    if (notify && !isDisposed) {
       notifyListeners();
     }
   }
 
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
-
-  // Track locally deleted items to prevent them from re-appearing from the Supabase stream
-  final Set<String> _locallyDeletedIds = {};
-  final Set<String> _localMutations = {};
-
   List<TimelineItemData> get timelineItems => List.unmodifiable(_timelineItems);
   bool get isLoading => _isLoading;
 
-  TimelineProvider() {
+  @override
+  String get tableName => 'timeline_items';
+
+  TimelineProvider() : super() {
     _loadSortOrder().then((_) => _loadTimeline());
   }
 
@@ -96,43 +97,23 @@ class TimelineProvider with ChangeNotifier {
     await _persistLocalOnly();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null &&
-          _userId != null &&
-          relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _timelineItems = [];
     try {
       await _repository.saveTimelineItems([]);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('timeline_items')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         final rawComments = data['comments'];
         List<CommentData> parsedComments = [];
@@ -181,155 +162,141 @@ class TimelineProvider with ChangeNotifier {
 
       _timelineItems = parsed;
       await _repository.saveTimelineItems(_timelineItems);
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('TimelineProvider._fetchInitialData error: $e');
+      debugPrint('TimelineProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    // Filter out locally deleted items to handle stream filter/delete timing issues
+    final activeDataList = dataList.where((data) {
+      final id = data['id'] as String;
+      return !_locallyDeletedIds.contains(id);
+    }).toList();
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'timeline_items',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-            // Filter out locally deleted items to handle stream filter/delete timing issues
-            final activeDataList = dataList.where((data) {
-              final id = data['id'] as String;
-              return !_locallyDeletedIds.contains(id);
-            }).toList();
-
-            final incoming = activeDataList.map((data) {
-              final rawComments = data['comments'];
-              List<CommentData> parsedComments = [];
-              if (rawComments != null) {
-                if (rawComments is List) {
-                  parsedComments = rawComments
-                      .map(
-                        (c) => CommentData.fromJson(c as Map<String, dynamic>),
-                      )
-                      .toList();
-                } else if (rawComments is String) {
-                  try {
-                    final decoded = jsonDecode(rawComments);
-                    if (decoded is List) {
-                      parsedComments = decoded
-                          .map(
-                            (c) =>
-                                CommentData.fromJson(c as Map<String, dynamic>),
-                          )
-                          .toList();
-                    }
-                  } catch (_) {}
-                }
-              }
-              return TimelineItemData(
-                id: data['id'] as String,
-                title: data['title'] ?? '',
-                description: data['description'] ?? '',
-                location: data['location'] as String?,
-                imagePath: data['image_path'] as String?,
-                networkImageUrl: data['network_image_url'] as String?,
-                date: data['date'] != null
-                    ? DateTime.parse(data['date'] as String).toLocal()
-                    : DateTime.now(),
-                isImageCard: data['is_image_card'] ?? false,
-                position: data['position'] ?? 0,
-                mood: data['mood'] ?? '😍',
-                photoUrls: List<String>.from(data['photo_urls'] ?? []),
-                isPinned: data['is_pinned'] ?? false,
-                comments: parsedComments,
-              );
-            }).toList();
-
-            incoming.sort((a, b) => _isAscending
-                ? a.date.compareTo(b.date)
-                : b.date.compareTo(a.date));
-
-            if (!_isLoading) {
-              // Detect additions by partner
-              final added = incoming.where((inc) => !_timelineItems.any((old) => old.id == inc.id)).toList();
-              for (var item in added) {
-                if (_localMutations.contains(item.id)) {
-                  _localMutations.remove(item.id);
-                  continue;
-                }
-                RecentActivityService.instance.logActivity(
-                  activityType: 'created',
-                  title: 'Partner added a memory 📸',
-                  description: 'Added: "${item.title}"',
-                  icon: '📸',
-                  referenceId: item.id,
-                  route: 'timeline',
-                );
-              }
-
-              // Detect edits/updates by partner
-              for (var inc in incoming) {
-                final matchIndex = _timelineItems.indexWhere((old) => old.id == inc.id);
-                if (matchIndex != -1) {
-                  final match = _timelineItems[matchIndex];
-                  if (match.title != inc.title ||
-                      match.description != inc.description ||
-                      match.date != inc.date ||
-                      match.networkImageUrl != inc.networkImageUrl) {
-                    if (_localMutations.contains(inc.id)) {
-                      _localMutations.remove(inc.id);
-                      continue;
-                    }
-                    RecentActivityService.instance.logActivity(
-                      activityType: 'updated',
-                      title: 'Partner updated a memory ✏️',
-                      description: 'Updated: "${inc.title}"',
-                      icon: '✏️',
-                      referenceId: inc.id,
-                      route: 'timeline',
-                    );
-                  }
-                }
-              }
-
-              // Detect deletions by partner
-              final deleted = _timelineItems.where((old) => !incoming.any((inc) => inc.id == old.id) && !_locallyDeletedIds.contains(old.id)).toList();
-              for (var item in deleted) {
-                if (_localMutations.contains(item.id)) {
-                  _localMutations.remove(item.id);
-                  continue;
-                }
-                RecentActivityService.instance.logActivity(
-                  activityType: 'deleted',
-                  title: 'Partner deleted a memory 🗑️',
-                  description: 'Deleted: "${item.title}"',
-                  icon: '🗑️',
-                  referenceId: item.id,
-                  route: 'timeline',
-                );
-              }
+    final incoming = activeDataList.map((data) {
+      final rawComments = data['comments'];
+      List<CommentData> parsedComments = [];
+      if (rawComments != null) {
+        if (rawComments is List) {
+          parsedComments = rawComments
+              .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+              .toList();
+        } else if (rawComments is String) {
+          try {
+            final decoded = jsonDecode(rawComments);
+            if (decoded is List) {
+              parsedComments = decoded
+                  .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+                  .toList();
             }
+          } catch (_) {}
+        }
+      }
+      return TimelineItemData(
+        id: data['id'] as String,
+        title: data['title'] ?? '',
+        description: data['description'] ?? '',
+        location: data['location'] as String?,
+        imagePath: data['image_path'] as String?,
+        networkImageUrl: data['network_image_url'] as String?,
+        date: data['date'] != null ? DateTime.parse(data['date'] as String).toLocal() : DateTime.now(),
+        isImageCard: data['is_image_card'] ?? false,
+        position: data['position'] ?? 0,
+        mood: data['mood'] ?? '😍',
+        photoUrls: List<String>.from(data['photo_urls'] ?? []),
+        isPinned: data['is_pinned'] ?? false,
+        comments: parsedComments,
+      );
+    }).toList();
 
-            _timelineItems = incoming;
-            for (var i = 0; i < _timelineItems.length; i++) {
-              _timelineItems[i].position = i;
+    incoming.sort((a, b) => _isAscending
+        ? a.date.compareTo(b.date)
+        : b.date.compareTo(a.date));
+
+    if (!_isLoading) {
+      // Detect additions by partner
+      final added = incoming.where((inc) => !_timelineItems.any((old) => old.id == inc.id)).toList();
+      for (var item in added) {
+        if (_localMutations.contains(item.id)) {
+          _localMutations.remove(item.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: 'Partner added a memory 📸',
+          description: 'Added: "${item.title}"',
+          icon: '📸',
+          referenceId: item.id,
+          route: 'timeline',
+        );
+      }
+
+      // Detect edits/updates by partner
+      for (var inc in incoming) {
+        final matchIndex = _timelineItems.indexWhere((old) => old.id == inc.id);
+        if (matchIndex != -1) {
+          final match = _timelineItems[matchIndex];
+          if (match.title != inc.title ||
+              match.description != inc.description ||
+              match.date != inc.date ||
+              match.networkImageUrl != inc.networkImageUrl) {
+            if (_localMutations.contains(inc.id)) {
+              _localMutations.remove(inc.id);
+              continue;
             }
-            _clampCurrentScrubIndex();
-            _isLoading = false;
-            if (!_disposed) notifyListeners();
+            RecentActivityService.instance.logActivity(
+              activityType: 'updated',
+              title: 'Partner updated a memory ✏️',
+              description: 'Updated: "${inc.title}"',
+              icon: '✏️',
+              referenceId: inc.id,
+              route: 'timeline',
+            );
+          }
+        }
+      }
 
-            _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('TimelineProvider: Supabase sync error: $err');
-        _loadTimeline();
-      },
-    );
+      // Detect deletions by partner
+      final deleted = _timelineItems.where((old) => !incoming.any((inc) => inc.id == old.id) && !_locallyDeletedIds.contains(old.id)).toList();
+      for (var item in deleted) {
+        if (_localMutations.contains(item.id)) {
+          _localMutations.remove(item.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'deleted',
+          title: 'Partner deleted a memory 🗑️',
+          description: 'Deleted: "${item.title}"',
+          icon: '🗑️',
+          referenceId: item.id,
+          route: 'timeline',
+        );
+      }
+    }
+
+    _timelineItems = incoming;
+    for (var i = 0; i < _timelineItems.length; i++) {
+      _timelineItems[i].position = i;
+    }
+    _clampCurrentScrubIndex();
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+
+    _persistLocalOnly();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('TimelineProvider: Supabase sync error: $error');
+    _loadTimeline();
   }
 
   Future<void> _loadTimeline() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
 
     try {
       _timelineItems = await _repository.loadTimelineItems();
@@ -345,19 +312,19 @@ class TimelineProvider with ChangeNotifier {
       _timelineItems = [];
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
   Future<void> addTimelineItem(TimelineItemData item) async {
     _localMutations.add(item.id);
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         String? downloadUrl;
         if (item.imagePath != null) {
           final file = File(item.imagePath!);
           if (await file.exists()) {
-            final storagePath = 'couples/$_coupleId/timeline/${item.id}.jpg';
+            final storagePath = 'couples/$coupleId/timeline/${item.id}.jpg';
             await Supabase.instance.client.storage
                 .from('timeline')
                 .upload(
@@ -380,7 +347,7 @@ class TimelineProvider with ChangeNotifier {
 
         final Map<String, dynamic> dbData = {
           'id': item.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'title': item.title,
           'description': item.description,
           'location': item.location,
@@ -472,7 +439,7 @@ class TimelineProvider with ChangeNotifier {
       return;
     }
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         String? downloadUrl = updatedItem.networkImageUrl;
         if (updatedItem.imagePath != null &&
@@ -480,7 +447,7 @@ class TimelineProvider with ChangeNotifier {
           final file = File(updatedItem.imagePath!);
           if (await file.exists()) {
             final storagePath =
-                'couples/$_coupleId/timeline/${updatedItem.id}.jpg';
+                'couples/$coupleId/timeline/${updatedItem.id}.jpg';
             await Supabase.instance.client.storage
                 .from('timeline')
                 .upload(
@@ -509,7 +476,7 @@ class TimelineProvider with ChangeNotifier {
 
         final Map<String, dynamic> dbData = {
           'id': updatedItem.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'title': updatedItem.title,
           'description': updatedItem.description,
           'location': updatedItem.location,
@@ -605,7 +572,7 @@ class TimelineProvider with ChangeNotifier {
     notifyListeners();
     await _persist();
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('timeline_items')
@@ -613,7 +580,7 @@ class TimelineProvider with ChangeNotifier {
             .eq('id', id);
 
         try {
-          final storagePath = 'couples/$_coupleId/timeline/$id.jpg';
+          final storagePath = 'couples/$coupleId/timeline/$id.jpg';
           await Supabase.instance.client.storage.from('timeline').remove([
             storagePath,
           ]);
@@ -652,7 +619,7 @@ class TimelineProvider with ChangeNotifier {
     final item = _timelineItems.removeAt(oldIndex);
     _timelineItems.insert(newIndex, item);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         for (var i = 0; i < _timelineItems.length; i++) {
           await Supabase.instance.client
@@ -706,7 +673,7 @@ class TimelineProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -739,7 +706,7 @@ class TimelineProvider with ChangeNotifier {
     );
     await updateTimelineItem(itemId, updatedItem);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await NotificationService().sendPartnerNotification(
           title: 'New Comment on Memory 💬',
@@ -784,10 +751,4 @@ class TimelineProvider with ChangeNotifier {
     await updateTimelineItem(itemId, updatedItem);
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

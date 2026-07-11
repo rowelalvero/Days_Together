@@ -88,6 +88,53 @@ class NoteitItem {
     );
   }
 
+  factory NoteitItem.fromSupabase(Map<String, dynamic> data, String currentUserId) {
+    // 1. Parse Type (Enum) - Handle String comparison
+    final typeStr = (data['type'] ?? 'text').toString();
+    final type = NoteitType.values.firstWhere(
+      (t) => t.name == typeStr,
+      orElse: () => NoteitType.text,
+    );
+
+    // 2. Parse Sender
+    final senderId = (data['sender_id'] ?? '').toString();
+    final sender = (senderId == currentUserId) ? 'you' : 'partner';
+
+    // 3. Parse Color - Handle both int and String
+    Color? bgColor;
+    final colorData = data['background_color'];
+    if (colorData != null) {
+      if (colorData is int) {
+        bgColor = Color(colorData);
+      } else if (colorData is String) {
+        final parsedInt = int.tryParse(colorData);
+        if (parsedInt != null) bgColor = Color(parsedInt);
+      }
+    }
+
+    // 4. Parse Date - Handle potential non-string or null
+    DateTime createdAt;
+    try {
+      final dateStr = data['created_at'];
+      createdAt = (dateStr != null) 
+          ? DateTime.parse(dateStr.toString()).toLocal() 
+          : DateTime.now();
+    } catch (_) {
+      createdAt = DateTime.now();
+    }
+
+    return NoteitItem(
+      id: (data['id'] ?? '').toString(),
+      type: type,
+      content: data['content']?.toString(),
+      imageUrl: data['image_url']?.toString(),
+      sender: sender,
+      createdAt: createdAt,
+      backgroundColor: bgColor,
+      syncStatus: SyncStatus.synced,
+    );
+  }
+
   static List<List<Offset>> deserializeStrokes(String? data) {
     if (data == null || data.isEmpty) return [];
     try {

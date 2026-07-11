@@ -8,61 +8,44 @@ import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class CalendarProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class CalendarProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'calendar_events';
   List<CalendarEvent> _events = [];
   bool _isLoading = true;
-  bool _disposed = false;
-
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
   final Set<String> _localMutations = {};
 
   List<CalendarEvent> get events => List.unmodifiable(_events);
   bool get isLoading => _isLoading;
 
-  CalendarProvider() {
+  @override
+  String get tableName => 'calendar_events';
+
+  CalendarProvider() : super() {
     _loadEvents();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _events = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('calendar_events')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         final hour = data['hour'] as int?;
         final minute = data['minute'] as int?;
@@ -88,111 +71,104 @@ class CalendarProvider with ChangeNotifier {
 
       _events = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('CalendarProvider._fetchInitialData error: $e');
+      debugPrint('CalendarProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    final incoming = dataList.map((data) {
+      final hour = data['hour'] as int?;
+      final minute = data['minute'] as int?;
+      final typeIndex = data['type'] as int? ?? 4;
+      final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
+          ? CalendarEventType.values[typeIndex]
+          : CalendarEventType.other;
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'calendar_events',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-        final incoming = dataList.map((data) {
-          final hour = data['hour'] as int?;
-          final minute = data['minute'] as int?;
-          final typeIndex = data['type'] as int? ?? 4;
-          final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
-              ? CalendarEventType.values[typeIndex]
-              : CalendarEventType.other;
+      return CalendarEvent(
+        id: data['id'] as String,
+        title: data['title'] ?? '',
+        description: data['description'] as String?,
+        date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
+        time: hour != null && minute != null ? TimeOfDay(hour: hour, minute: minute) : null,
+        type: type,
+        isRecurringYearly: data['is_recurring_yearly'] ?? false,
+      );
+    }).toList();
 
-          return CalendarEvent(
-            id: data['id'] as String,
-            title: data['title'] ?? '',
-            description: data['description'] as String?,
-            date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-            time: hour != null && minute != null ? TimeOfDay(hour: hour, minute: minute) : null,
-            type: type,
-            isRecurringYearly: data['is_recurring_yearly'] ?? false,
-          );
-        }).toList();
-
-        if (!_isLoading) {
-          // Detect additions by partner
-          final added = incoming.where((inc) => !_events.any((old) => old.id == inc.id)).toList();
-          for (var event in added) {
-            if (_localMutations.contains(event.id)) {
-              _localMutations.remove(event.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: "Partner's calendar event created",
-              description: 'Created: "${event.title}"',
-              icon: '📅',
-              referenceId: event.id,
-              route: 'calendar',
-            );
-          }
-
-          // Detect edits by partner
-          final updated = incoming.where((inc) {
-            final match = _events.firstWhere((old) => old.id == inc.id, orElse: () => CalendarEvent(id: '', title: '', date: DateTime.now(), type: CalendarEventType.other));
-            return match.id.isNotEmpty && (match.title != inc.title || match.description != inc.description || match.date != inc.date);
-          }).toList();
-          for (var event in updated) {
-            if (_localMutations.contains(event.id)) {
-              _localMutations.remove(event.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'updated',
-              title: "Partner's calendar event updated",
-              description: 'Updated: "${event.title}"',
-              icon: '✏️',
-              referenceId: event.id,
-              route: 'calendar',
-            );
-          }
-
-          // Detect deletions by partner
-          final deleted = _events.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
-          for (var event in deleted) {
-            if (_localMutations.contains(event.id)) {
-              _localMutations.remove(event.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'deleted',
-              title: "Partner's calendar event deleted",
-              description: 'Deleted: "${event.title}"',
-              icon: '🗑️',
-              referenceId: event.id,
-              route: 'calendar',
-            );
-          }
+    if (!_isLoading) {
+      // Detect additions by partner
+      final added = incoming.where((inc) => !_events.any((old) => old.id == inc.id)).toList();
+      for (var event in added) {
+        if (_localMutations.contains(event.id)) {
+          _localMutations.remove(event.id);
+          continue;
         }
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: "Partner's calendar event created",
+          description: 'Created: "${event.title}"',
+          icon: '📅',
+          referenceId: event.id,
+          route: 'calendar',
+        );
+      }
 
-        _events = incoming;
-        _isLoading = false;
-        if (!_disposed) notifyListeners();
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('CalendarProvider: Supabase sync error: $err');
-        _loadEvents();
-      },
-    );
+      // Detect edits by partner
+      final updated = incoming.where((inc) {
+        final match = _events.firstWhere((old) => old.id == inc.id, orElse: () => CalendarEvent(id: '', title: '', date: DateTime.now(), type: CalendarEventType.other));
+        return match.id.isNotEmpty && (match.title != inc.title || match.description != inc.description || match.date != inc.date);
+      }).toList();
+      for (var event in updated) {
+        if (_localMutations.contains(event.id)) {
+          _localMutations.remove(event.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'updated',
+          title: "Partner's calendar event updated",
+          description: 'Updated: "${event.title}"',
+          icon: '✏️',
+          referenceId: event.id,
+          route: 'calendar',
+        );
+      }
+
+      // Detect deletions by partner
+      final deleted = _events.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      for (var event in deleted) {
+        if (_localMutations.contains(event.id)) {
+          _localMutations.remove(event.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'deleted',
+          title: "Partner's calendar event deleted",
+          description: 'Deleted: "${event.title}"',
+          icon: '🗑️',
+          referenceId: event.id,
+          route: 'calendar',
+        );
+      }
+    }
+
+    _events = incoming;
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+    _persistLocalOnly();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('CalendarProvider: Supabase sync error: $error');
+    _loadEvents();
   }
 
   Future<void> _loadEvents() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
@@ -208,19 +184,19 @@ class CalendarProvider with ChangeNotifier {
       debugPrint('CalendarProvider._loadEvents failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
   Future<void> addEvent(CalendarEvent event) async {
     _localMutations.add(event.id);
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('calendar_events')
             .upsert({
           'id': event.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'title': event.title,
           'description': event.description,
           'date': event.date.toIso8601String(),
@@ -257,7 +233,7 @@ class CalendarProvider with ChangeNotifier {
 
   Future<void> updateEvent(CalendarEvent updatedEvent) async {
     _localMutations.add(updatedEvent.id);
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('calendar_events')
@@ -304,7 +280,7 @@ class CalendarProvider with ChangeNotifier {
   Future<void> deleteEvent(String id) async {
     _localMutations.add(id);
     final eventToDelete = _events.firstWhere((e) => e.id == id, orElse: () => CalendarEvent(id: id, title: 'Event', date: DateTime.now(), type: CalendarEventType.date));
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('calendar_events')
@@ -349,7 +325,7 @@ class CalendarProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -362,10 +338,4 @@ class CalendarProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

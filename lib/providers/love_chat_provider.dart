@@ -7,65 +7,48 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class LoveChatProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class LoveChatProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'love_chat_messages';
 
   List<LoveChatMessage> _messages = [];
   bool _isLoading = true;
-  bool _disposed = false;
 
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
-
-  List<LoveChatMessage> get messages => _coupleId == null ? const [] : List.unmodifiable(_messages);
+  List<LoveChatMessage> get messages => coupleId == null ? const [] : List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
 
-  LoveChatProvider() {
+  @override
+  String get tableName => 'love_notes';
+
+  LoveChatProvider() : super() {
     _loadMessages();
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null && _userId != null && relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _messages = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    _prepopulateWelcome();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('love_notes')
           .select()
-          .eq('couple_id', _coupleId!)
+          .eq('couple_id', coupleId!)
           .eq('type', 'chat');
       final parsed = res.map((data) {
         final senderId = data['sender_id'] as String? ?? '';
-        final senderType = (senderId == _userId) ? 'you' : 'partner';
+        final senderType = (senderId == userId) ? 'you' : 'partner';
         return LoveChatMessage(
           id: data['id'] as String,
           senderId: senderType,
@@ -81,66 +64,61 @@ class LoveChatProvider with ChangeNotifier {
 
       _messages = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('LoveChatProvider._fetchInitialData error: $e');
+      debugPrint('LoveChatProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null || _userId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    _messages = dataList
+        .where((data) => data['type'] == 'chat')
+        .map((data) {
+      final senderId = data['sender_id'] as String? ?? '';
+      final senderType = (senderId == userId) ? 'you' : 'partner';
+      return LoveChatMessage(
+        id: data['id'] as String,
+        senderId: senderType,
+        senderName: (senderType == 'you') ? 'Me' : 'Partner',
+        content: data['content'] as String? ?? '',
+        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String).toLocal() : DateTime.now(),
+        isPinned: false,
+      );
+    }).toList();
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'love_notes',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-      _messages = dataList
-          .where((data) => data['type'] == 'chat')
-          .map((data) {
-        final senderId = data['sender_id'] as String? ?? '';
-        final senderType = (senderId == _userId) ? 'you' : 'partner';
-        return LoveChatMessage(
-          id: data['id'] as String,
-          senderId: senderType,
-          senderName: (senderType == 'you') ? 'Me' : 'Partner',
-          content: data['content'] as String? ?? '',
-          createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String).toLocal() : DateTime.now(),
-          isPinned: false,
-        );
-      }).toList();
+    _messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+    _persistLocalOnly();
+  }
 
-      _messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      _isLoading = false;
-      if (!_disposed) notifyListeners();
-      _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('LoveChatProvider: Supabase stream error: $err');
-        _loadMessages();
-      },
-    );
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('LoveChatProvider: Supabase sync error: $error');
+    _loadMessages();
   }
 
   Future<void> _loadMessages() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        _messages = jsonList.map((j) => LoveChatMessage.fromJson(j)).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _messages = jsonList
+            .map((json) => LoveChatMessage.fromJson(json))
+            .toList();
       } else {
+        _messages = [];
         _prepopulateWelcome();
       }
     } catch (e, st) {
       debugPrint('LoveChatProvider._loadMessages failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -167,14 +145,14 @@ class LoveChatProvider with ChangeNotifier {
     notifyListeners();
     await _persist();
 
-    if (_coupleId != null && _userId != null) {
+    if (coupleId != null && userId != null) {
       try {
         await Supabase.instance.client.from('love_notes').upsert({
           'id': newMessage.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'type': 'chat',
           'content': content,
-          'sender_id': _userId,
+          'sender_id': userId,
           'created_at': DateTime.now().toUtc().toIso8601String(),
         });
 
@@ -183,7 +161,7 @@ class LoveChatProvider with ChangeNotifier {
           await Supabase.instance.client.functions.invoke(
             'send-push-notification',
             body: {
-              'sender_id': _userId,
+              'sender_id': userId,
               'title': 'New Love Note 💖',
               'body': content.length > 50 ? '${content.substring(0, 47)}...' : content,
             },
@@ -202,7 +180,7 @@ class LoveChatProvider with ChangeNotifier {
     notifyListeners();
     await _persist();
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client.from('love_notes').delete().eq('id', messageId);
       } catch (e) {
@@ -232,11 +210,11 @@ class LoveChatProvider with ChangeNotifier {
     notifyListeners();
     await _persist();
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client.from('love_notes').upsert({
           'id': reply.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'type': 'chat',
           'content': replyContent,
           'sender_id': 'partner_sim',
@@ -250,7 +228,7 @@ class LoveChatProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -263,10 +241,4 @@ class LoveChatProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }

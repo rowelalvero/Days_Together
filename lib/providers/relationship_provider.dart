@@ -12,6 +12,7 @@ import 'package:days_together/services/auth_service.dart';
 import 'package:days_together/services/couple_service.dart';
 import 'package:days_together/services/profile_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
 const Object _unset = Object();
 
@@ -44,6 +45,15 @@ class RelationshipProvider with ChangeNotifier {
 
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
+
+  /// Safety valve: allows LoadingScreen to unblock the user after a timeout.
+  /// The auth listener will correct state once connectivity returns.
+  void forceInitialized() {
+    if (!_isInitialized) {
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
 
   /// Returns `true` when [url] looks like a valid, loadable HTTP(S) URL.
   static bool _isValidAvatarUrl(String? url) {
@@ -200,6 +210,7 @@ class RelationshipProvider with ChangeNotifier {
   }
 
   RelationshipProvider() {
+    RelationshipLifecycleManager.instance.setRelationshipProvider(this);
     _loadLocalData().then((_) {
       if (isFirebaseAvailable) {
         _initSupabaseSync();
@@ -1755,6 +1766,8 @@ class RelationshipProvider with ChangeNotifier {
         await prefs.setString('partner_id', _partnerId!);
         await prefs.setBool('is_paired', true);
 
+        await RelationshipLifecycleManager.instance.handlePair(_coupleId!, _userId!);
+
         try {
           await NotificationService().sendPartnerNotification(
             title: 'Connected! 💞',
@@ -1858,6 +1871,7 @@ class RelationshipProvider with ChangeNotifier {
         
         // Triggers active sync streams
         _initSupabaseSync();
+        await RelationshipLifecycleManager.instance.handleRepair(_coupleId!, _userId!);
         return true;
       }
       return false;
@@ -1899,6 +1913,7 @@ class RelationshipProvider with ChangeNotifier {
       _partnerJoinDate = null;
       _isPartnerOnline = false;
       _cancelActiveSubscriptions();
+      await RelationshipLifecycleManager.instance.handleDisconnect();
       _presenceChannel?.unsubscribe();
       _presenceChannel = null;
 
@@ -2072,6 +2087,8 @@ class RelationshipProvider with ChangeNotifier {
       if (yourAvatarPath != null) await prefs.setString('your_avatar_path', yourAvatarPath);
       if (yourName != null) await prefs.setString('your_name', yourName);
     }
+
+    await RelationshipLifecycleManager.instance.handleLogout();
 
     _userSub?.cancel();
     _partnerUserSub?.cancel();

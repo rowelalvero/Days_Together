@@ -14,8 +14,11 @@ import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserver {
   static const String _storageKey = 'vault_items';
   static const String _pinKey = 'vault_pin';
   static const String _hasPinKey = 'vault_has_pin';
@@ -30,11 +33,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   bool _hasPin = false;
   int _wrongAttempts = 0;
   bool _isLoading = true;
-  bool _disposed = false;
 
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
   final Set<String> _localMutations = {};
 
   List<VaultItem> get items => _isUnlocked ? List.unmodifiable(_items) : [];
@@ -48,7 +47,10 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   bool get isDecoyMode => _wrongAttempts >= 3;
   bool get isLoading => _isLoading;
 
-  VaultProvider() {
+  @override
+  String get tableName => 'vault_items';
+
+  VaultProvider() : super() {
     _loadState();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -60,44 +62,24 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null &&
-          _userId != null &&
-          relationship.isFirebaseAvailable) {
-        _initSupabaseSync();
-        _fetchInitialData();
-      } else {
-        _clearLocalCache();
-      }
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _items = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('vault_items')
           .select()
-          .eq('couple_id', _coupleId!);
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         final typeIndex = data['type'] as int? ?? 0;
         final type =
@@ -120,92 +102,85 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
 
       _items = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('VaultProvider._fetchInitialData error: $e');
+      debugPrint('VaultProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    final incoming = dataList.map((data) {
+      final typeIndex = data['type'] as int? ?? 0;
+      final type =
+          (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+          ? VaultItemType.values[typeIndex]
+          : VaultItemType.photo;
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'vault_items',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-        final incoming = dataList.map((data) {
-          final typeIndex = data['type'] as int? ?? 0;
-          final type =
-              (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
-              ? VaultItemType.values[typeIndex]
-              : VaultItemType.photo;
+      return VaultItem(
+        id: data['id'] as String,
+        type: type,
+        content: data['content'] as String?,
+        imageUrl: data['image_url'] as String?,
+        createdAt: data['created_at'] != null
+            ? DateTime.parse(data['created_at'] as String)
+            : DateTime.now(),
+      );
+    }).toList();
 
-          return VaultItem(
-            id: data['id'] as String,
-            type: type,
-            content: data['content'] as String?,
-            imageUrl: data['image_url'] as String?,
-            createdAt: data['created_at'] != null
-                ? DateTime.parse(data['created_at'] as String)
-                : DateTime.now(),
-          );
-        }).toList();
+    incoming.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-        incoming.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-        if (!_isLoading) {
-          // Detect additions by partner
-          final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
-          for (var item in added) {
-            if (_localMutations.contains(item.id)) {
-              _localMutations.remove(item.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: "Partner added vault item 🔒",
-              description: 'Added a new secure item to the Vault',
-              icon: '🔒',
-              referenceId: item.id,
-              route: 'vault',
-            );
-          }
-
-          // Detect deletions by partner
-          final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
-          for (var item in deleted) {
-            if (_localMutations.contains(item.id)) {
-              _localMutations.remove(item.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'deleted',
-              title: "Partner removed vault item 🔒",
-              description: 'Removed a secure item from the Vault',
-              icon: '🔒',
-              referenceId: item.id,
-              route: 'vault',
-            );
-          }
+    if (!_isLoading) {
+      // Detect additions by partner
+      final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
+      for (var item in added) {
+        if (_localMutations.contains(item.id)) {
+          _localMutations.remove(item.id);
+          continue;
         }
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: "Partner added vault item 🔒",
+          description: 'Added a new secure item to the Vault',
+          icon: '🔒',
+          referenceId: item.id,
+          route: 'vault',
+        );
+      }
 
-        _items = incoming;
-        _isLoading = false;
-        if (!_disposed) notifyListeners();
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('VaultProvider: Supabase sync error: $err');
-        _loadItems();
-      },
-    );
+      // Detect deletions by partner
+      final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      for (var item in deleted) {
+        if (_localMutations.contains(item.id)) {
+          _localMutations.remove(item.id);
+          continue;
+        }
+        RecentActivityService.instance.logActivity(
+          activityType: 'deleted',
+          title: "Partner removed vault item 🔒",
+          description: 'Removed a secure item from the Vault',
+          icon: '🔒',
+          referenceId: item.id,
+          route: 'vault',
+        );
+      }
+    }
+
+    _items = incoming;
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
+    _persistLocalOnly();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('VaultProvider: Supabase sync error: $error');
+    _loadItems();
   }
 
   Future<void> _loadState() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       _hasPin = prefs.getBool(_hasPinKey) ?? false;
@@ -257,7 +232,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       debugPrint('VaultProvider._loadState failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -272,7 +247,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
     await prefs.setBool(_hasPinKey, true);
     _hasPin = true;
     _isUnlocked = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<bool> verifyPin(String pin) async {
@@ -290,7 +265,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       _wrongAttempts = 0;
       await prefs.setInt(_wrongAttemptsKey, 0);
       await prefs.remove(_decoyActivatedAtKey);
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
       return true;
     } else {
       _wrongAttempts++;
@@ -298,7 +273,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       if (_wrongAttempts >= 3) {
         await prefs.setString(_decoyActivatedAtKey, DateTime.now().toIso8601String());
       }
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
       return false;
     }
   }
@@ -309,7 +284,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_wrongAttemptsKey, 0);
     await prefs.remove(_decoyActivatedAtKey);
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> resetDecoy() async {
@@ -317,7 +292,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_wrongAttemptsKey, 0);
     await prefs.remove(_decoyActivatedAtKey);
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _loadItems() async {
@@ -363,10 +338,10 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
         imagePath: newPath,
       );
 
-      if (_coupleId != null) {
+      if (coupleId != null) {
         try {
           final file = File(picked.path);
-          final storagePath = 'couples/$_coupleId/vault_photos/$photoId.jpg';
+          final storagePath = 'couples/$coupleId/vault_photos/$photoId.jpg';
           await Supabase.instance.client.storage
               .from('vault-photos')
               .upload(
@@ -380,7 +355,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
 
           await Supabase.instance.client.from('vault_items').upsert({
             'id': photoId,
-            'couple_id': _coupleId,
+            'couple_id': coupleId,
             'type': VaultItemType.photo.index,
             'image_url': imageUrl,
             'created_at': DateTime.now().toIso8601String(),
@@ -419,11 +394,11 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
     final item = VaultItem(type: VaultItemType.letter, content: content);
     _localMutations.add(item.id);
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client.from('vault_items').upsert({
           'id': item.id,
-          'couple_id': _coupleId,
+          'couple_id': coupleId,
           'type': VaultItemType.letter.index,
           'content': content,
           'created_at': DateTime.now().toIso8601String(),
@@ -469,7 +444,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
       }
     }
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client
             .from('vault_items')
@@ -478,7 +453,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
 
         if (item.type == VaultItemType.photo) {
           try {
-            final storagePath = 'couples/$_coupleId/vault_photos/$id.jpg';
+            final storagePath = 'couples/$coupleId/vault_photos/$id.jpg';
             await Supabase.instance.client.storage.from('vault-photos').remove([
               storagePath,
             ]);
@@ -506,7 +481,7 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -522,8 +497,6 @@ class VaultProvider with ChangeNotifier, WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _syncSub?.cancel();
-    _disposed = true;
     super.dispose();
   }
 }

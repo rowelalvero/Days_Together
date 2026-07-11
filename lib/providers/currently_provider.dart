@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -7,7 +7,7 @@ enum LoveTapState {
   idle,
   sent,
   received,
-  mutual,
+  mutual;
 }
 
 class LoveTapHistory {
@@ -24,7 +24,9 @@ class LoveTapHistory {
   });
 }
 
-class CurrentlyProvider with ChangeNotifier {
+
+
+class CurrentlyProvider extends SupabaseLifecycleProvider {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -34,110 +36,101 @@ class CurrentlyProvider with ChangeNotifier {
   LoveTapHistory _history = const LoveTapHistory();
   LoveTapHistory get history => _history;
 
-  String? _coupleId;
-  String? _userId;
   String? _partnerId;
-  StreamSubscription? _tapSub;
 
-  CurrentlyProvider();
+  @override
+  String get tableName => 'love_taps';
 
+  @override
+  List<String> get primaryKey => const ['couple_id', 'date'];
+
+  CurrentlyProvider() : super();
+
+  @override
   void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _tapSub == null && relationship.coupleId != null && relationship.userId != null;
+    _partnerId = relationship.partnerId;
+    super.updateRelationship(relationship);
+  }
 
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-      _partnerId = relationship.partnerId;
+  @override
+  Future<void> purgeCache() async {
+    _state = LoveTapState.idle;
+    _history = const LoveTapHistory();
+    if (!isDisposed) notifyListeners();
+  }
 
-      _tapSub?.cancel();
-      _tapSub = null;
-
-      if (_coupleId != null && _userId != null) {
-        _initSupabaseSync();
-        _loadHistory();
-      } else {
-        _state = LoveTapState.idle;
-        _history = const LoveTapHistory();
-        notifyListeners();
-      }
-    }
+  @override
+  Future<void> syncInitialData() async {
+    await _loadHistory();
   }
 
   // Deterministically decide if current user is Partner 1
   bool get _isPartner1 {
-    if (_userId == null || _partnerId == null) return true;
-    return _userId!.compareTo(_partnerId!) < 0;
+    if (userId == null || _partnerId == null) return true;
+    return userId!.compareTo(_partnerId!) < 0;
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null) return;
-    _isLoading = true;
-
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    _isLoading = false;
     final todayStr = _getLocalDateString(DateTime.now());
 
-    _tapSub = Supabase.instance.client
-        .from('love_taps')
-        .stream(primaryKey: ['id'])
-        .eq('couple_id', _coupleId!)
-        .listen(
-          (dataList) {
-            _isLoading = false;
-            // Find today's row
-            Map<String, dynamic>? todayRow;
-            for (final row in dataList) {
-              if (row['date'] == todayStr) {
-                todayRow = row;
-                break;
-              }
-            }
+    // Find today's row
+    Map<String, dynamic>? todayRow;
+    for (final row in dataList) {
+      if (row['date'] == todayStr) {
+        todayRow = row;
+        break;
+      }
+    }
 
-            if (todayRow == null) {
-              _state = LoveTapState.idle;
-            } else {
-              final p1Tapped = todayRow['partner1_tapped'] as bool? ?? false;
-              final p2Tapped = todayRow['partner2_tapped'] as bool? ?? false;
+    if (todayRow == null) {
+      _state = LoveTapState.idle;
+    } else {
+      final p1Tapped = todayRow['partner1_tapped'] as bool? ?? false;
+      final p2Tapped = todayRow['partner2_tapped'] as bool? ?? false;
 
-              if (p1Tapped && p2Tapped) {
-                _state = LoveTapState.mutual;
-              } else if (_isPartner1) {
-                if (p1Tapped) {
-                  _state = LoveTapState.sent;
-                } else if (p2Tapped) {
-                  _state = LoveTapState.received;
-                } else {
-                  _state = LoveTapState.idle;
-                }
-              } else {
-                if (p2Tapped) {
-                  _state = LoveTapState.sent;
-                } else if (p1Tapped) {
-                  _state = LoveTapState.received;
-                } else {
-                  _state = LoveTapState.idle;
-                }
-              }
-            }
-            notifyListeners();
+      if (p1Tapped && p2Tapped) {
+        _state = LoveTapState.mutual;
+      } else if (_isPartner1) {
+        if (p1Tapped) {
+          _state = LoveTapState.sent;
+        } else if (p2Tapped) {
+          _state = LoveTapState.received;
+        } else {
+          _state = LoveTapState.idle;
+        }
+      } else {
+        if (p2Tapped) {
+          _state = LoveTapState.sent;
+        } else if (p1Tapped) {
+          _state = LoveTapState.received;
+        } else {
+          _state = LoveTapState.idle;
+        }
+      }
+    }
+    if (!isDisposed) notifyListeners();
 
-            // Refresh history whenever updates occur (to keep streaks up to date)
-            _loadHistory();
-          },
-          onError: (err) {
-            debugPrint('CurrentlyProvider realtime stream error: $err');
-            _isLoading = false;
-          },
-        );
+    // Refresh history whenever updates occur (to keep streaks up to date)
+    _loadHistory();
+  }
+
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('CurrentlyProvider realtime stream error: $error');
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _loadHistory() async {
-    if (_coupleId == null) return;
+    if (coupleId == null) return;
 
     try {
       final List<dynamic> rows = await Supabase.instance.client
           .from('love_taps')
           .select()
-          .eq('couple_id', _coupleId!)
+          .eq('couple_id', coupleId!)
           .order('date', ascending: false);
 
       if (rows.isEmpty) {
@@ -230,7 +223,7 @@ class CurrentlyProvider with ChangeNotifier {
   }
 
   Future<void> sendLoveTap() async {
-    if (_coupleId == null || _userId == null) return;
+    if (coupleId == null || userId == null) return;
 
     final todayStr = _getLocalDateString(DateTime.now());
     final isP1 = _isPartner1;
@@ -253,7 +246,7 @@ class CurrentlyProvider with ChangeNotifier {
 
     try {
       await Supabase.instance.client.from('love_taps').upsert({
-        'couple_id': _coupleId!,
+        'couple_id': coupleId!,
         'date': todayStr,
         ...updateData,
         'updated_at': nowIso,
@@ -270,9 +263,4 @@ class CurrentlyProvider with ChangeNotifier {
     return '$year-$month-$day';
   }
 
-  @override
-  void dispose() {
-    _tapSub?.cancel();
-    super.dispose();
-  }
 }

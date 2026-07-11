@@ -12,22 +12,18 @@ import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/realtime_subscription_manager.dart';
 
-class NoteitProvider with ChangeNotifier {
+import 'package:days_together/services/relationship_lifecycle_manager.dart';
+
+class NoteitProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'love_notes_items';
 
   List<NoteitItem> _notes = [];
   bool _isLoading = true;
-  bool _disposed = false;
 
-  String? _coupleId;
-  String? _userId;
-  StreamSubscription? _syncSub;
-
-  List<NoteitItem> get notes => _coupleId == null ? const [] : List.unmodifiable(_notes);
+  List<NoteitItem> get notes => coupleId == null ? const [] : List.unmodifiable(_notes);
   bool get isLoading => _isLoading;
-  String? get coupleId => _coupleId;
-  String? get userId => _userId;
 
   NoteitItem? get latestReceived {
     try {
@@ -45,194 +41,142 @@ class NoteitProvider with ChangeNotifier {
     }
   }
 
-  NoteitProvider() {
+  @override
+  String get tableName => 'love_notes';
+
+  NoteitProvider() : super() {
     _loadNotes();
   }
 
+  @override
   void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
-    final bool shouldSubscribe = _syncSub == null && relationship.coupleId != null && relationship.userId != null && relationship.isFirebaseAvailable;
-
-    if (credentialsChanged || shouldSubscribe) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
-
-      _syncSub?.cancel();
-      _syncSub = null;
-
-      if (_coupleId != null && _userId != null) {
-        NoteitSyncManager.instance.initialize(this);
-        if (relationship.isFirebaseAvailable) {
-          _initSupabaseSync();
-          _fetchInitialData();
-        } else {
-          _loadNotes();
-        }
-      } else {
-        _clearLocalCache();
-      }
+    if (relationship.coupleId != null && relationship.userId != null) {
+      NoteitSyncManager.instance.initialize(this);
     }
+    super.updateRelationship(relationship);
   }
 
-  Future<void> _clearLocalCache() async {
+  @override
+  Future<void> purgeCache() async {
     _notes = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
     } catch (_) {}
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
-  Future<void> _fetchInitialData() async {
-    if (_coupleId == null) return;
+  @override
+  Future<void> syncInitialData() async {
+    if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from('love_notes')
           .select()
-          .eq('couple_id', _coupleId!);
-      final parsed = res.map((data) {
-        final typeIndex = data['type'] as int? ?? 0;
-        final type =
-            (typeIndex >= 0 && typeIndex < NoteitType.values.length)
-                ? NoteitType.values[typeIndex]
-                : NoteitType.drawing;
+          .eq('couple_id', coupleId!);
+      final parsed = res.map((data) => NoteitItem.fromSupabase(data, userId!)).toList();
 
-        final senderId = data['sender_id'] as String?;
-        final senderType = senderId == _userId ? 'me' : 'partner';
+      final localUnsynced = _notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
+      final Map<String, NoteitItem> mergedMap = {};
+      for (var note in parsed) {
+        mergedMap[note.id] = note;
+      }
+      for (var note in localUnsynced) {
+        if (!mergedMap.containsKey(note.id)) {
+          mergedMap[note.id] = note;
+        }
+      }
 
-        return NoteitItem(
-          id: data['id'] as String,
-          type: type,
-          content: data['content'] as String?,
-          imagePath: data['image_path'] as String?,
-          imageUrl: data['network_image_url'] as String?,
-          sender: senderType,
-          createdAt: data['created_at'] != null
-              ? DateTime.parse(data['created_at'] as String).toLocal()
-              : DateTime.now(),
-        );
-      }).toList()
+      _notes = mergedMap.values.toList()
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-      _notes = parsed;
       await _persistLocalOnly();
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     } catch (e) {
-      debugPrint('NoteitProvider._fetchInitialData error: $e');
+      debugPrint('NoteitProvider.syncInitialData error: $e');
     }
   }
 
-  void _initSupabaseSync() {
-    if (_coupleId == null || _userId == null) return;
-    _isLoading = true;
-    if (!_disposed) notifyListeners();
+  @override
+  void onRealtimeData(List<Map<String, dynamic>> dataList) {
+    // Identify local unsynced love notes to preserve optimistic states
+    final localUnsynced = _notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
 
-    _syncSub = SupabaseSyncService.instance.subscribeToCoupleData(
-      tableName: 'love_notes',
-      coupleId: _coupleId!,
-      onData: (dataList) {
-        // Identify local unsynced love notes to preserve optimistic states
-        final localUnsynced = _notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
+    final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
+    final serverNotes = filteredList.map((data) => NoteitItem.fromSupabase(data, userId!)).toList();
 
-        final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
-        final serverNotes = filteredList.map((data) {
-          final typeStr = data['type'] as String? ?? 'text';
-          final type = NoteitType.values.firstWhere(
-            (t) => t.name == typeStr,
-            orElse: () => NoteitType.text,
-          );
-          final senderId = data['sender_id'] as String? ?? '';
-          final sender = (senderId == _userId) ? 'you' : 'partner';
+    // Merge local optimistic unsynced notes with incoming server notes
+    final Map<String, NoteitItem> mergedMap = {};
+    for (var note in serverNotes) {
+      mergedMap[note.id] = note;
+    }
+    for (var note in localUnsynced) {
+      if (!mergedMap.containsKey(note.id)) {
+        mergedMap[note.id] = note;
+      }
+    }
 
-          return NoteitItem(
-            id: data['id'] as String,
-            type: type,
-            content: data['content'] as String?,
-            imageUrl: data['image_url'] as String?,
-            sender: sender,
-            createdAt: data['created_at'] != null
-                ? DateTime.parse(data['created_at'] as String)
-                : DateTime.now(),
-            backgroundColor: data['background_color'] != null
-                ? Color(data['background_color'] as int)
-                : null,
-            syncStatus: SyncStatus.synced,
-          );
-        }).toList();
+    if (!_isLoading) {
+      // Detect additions by partner
+      final added = serverNotes.where((srv) => srv.sender == 'partner' && !_notes.any((old) => old.id == srv.id)).toList();
+      for (var note in added) {
+        String title = 'Partner sent a love note 💌';
+        String desc = 'Shared a new text love note';
+        String icon = '✍️';
+        String route = 'love_notes';
 
-        // Merge local optimistic unsynced notes with incoming server notes
-        final Map<String, NoteitItem> mergedMap = {};
-        for (var note in serverNotes) {
-          mergedMap[note.id] = note;
-        }
-        for (var note in localUnsynced) {
-          if (!mergedMap.containsKey(note.id)) {
-            mergedMap[note.id] = note;
-          }
+        if (note.type == NoteitType.drawing) {
+          title = 'Partner created a doodle 🎨';
+          desc = 'Drew and shared a new doodle';
+          icon = '🎨';
+          route = 'doodle_notes';
+        } else if (note.type == NoteitType.photo) {
+          title = 'Partner shared photo note 📸';
+          desc = 'Shared a new photo note';
+          icon = '📷';
+          route = 'love_notes';
         }
 
-        if (!_isLoading) {
-          // Detect additions by partner
-          final added = serverNotes.where((srv) => srv.sender == 'partner' && !_notes.any((old) => old.id == srv.id)).toList();
-          for (var note in added) {
-            String title = 'Partner sent a love note 💌';
-            String desc = 'Shared a new text love note';
-            String icon = '✍️';
-            String route = 'love_notes';
+        RecentActivityService.instance.logActivity(
+          activityType: 'created',
+          title: title,
+          description: desc,
+          icon: icon,
+          referenceId: note.id,
+          route: route,
+        );
+      }
 
-            if (note.type == NoteitType.drawing) {
-              title = 'Partner created a doodle 🎨';
-              desc = 'Drew and shared a new doodle';
-              icon = '🎨';
-              route = 'doodle_notes';
-            } else if (note.type == NoteitType.photo) {
-              title = 'Partner shared photo note 📸';
-              desc = 'Shared a new photo note';
-              icon = '📷';
-              route = 'love_notes';
-            }
+      // Detect deletions by partner
+      final deleted = _notes.where((old) => old.sender == 'partner' && !serverNotes.any((srv) => srv.id == old.id)).toList();
+      for (var note in deleted) {
+        RecentActivityService.instance.logActivity(
+          activityType: 'deleted',
+          title: note.type == NoteitType.drawing ? "Partner's doodle deleted 🗑️" : "Partner's love note deleted 🗑️",
+          description: note.type == NoteitType.drawing ? 'Partner deleted a doodle' : 'Partner deleted a love note',
+          icon: '🗑️',
+          referenceId: note.id,
+          route: note.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+        );
+      }
+    }
 
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: title,
-              description: desc,
-              icon: icon,
-              referenceId: note.id,
-              route: route,
-            );
-          }
+    _notes = mergedMap.values.toList();
+    _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _isLoading = false;
+    if (!isDisposed) notifyListeners();
 
-          // Detect deletions by partner
-          final deleted = _notes.where((old) => old.sender == 'partner' && !serverNotes.any((srv) => srv.id == old.id)).toList();
-          for (var note in deleted) {
-            RecentActivityService.instance.logActivity(
-              activityType: 'deleted',
-              title: note.type == NoteitType.drawing ? "Partner's doodle deleted 🗑️" : "Partner's love note deleted 🗑️",
-              description: note.type == NoteitType.drawing ? 'Partner deleted a doodle' : 'Partner deleted a love note',
-              icon: '🗑️',
-              referenceId: note.id,
-              route: note.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
-            );
-          }
-        }
+    _persistLocalOnly();
+  }
 
-        _notes = mergedMap.values.toList();
-        _notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        _isLoading = false;
-        if (!_disposed) notifyListeners();
-
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('NoteitProvider: Supabase sync error: $err');
-        _loadNotes();
-      },
-    );
+  @override
+  void onRealtimeError(Object error) {
+    debugPrint('NoteitProvider: Supabase sync error: $error');
+    _loadNotes();
   }
 
   Future<void> _loadNotes() async {
     _isLoading = true;
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
@@ -247,7 +191,7 @@ class NoteitProvider with ChangeNotifier {
       debugPrint('NoteitProvider._loadNotes failed: $e\n$st');
     } finally {
       _isLoading = false;
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
     }
   }
 
@@ -278,7 +222,7 @@ class NoteitProvider with ChangeNotifier {
     final idx = _notes.indexWhere((n) => n.id == id);
     if (idx != -1) {
       _notes[idx] = _notes[idx].copyWith(syncStatus: status);
-      if (!_disposed) notifyListeners();
+      if (!isDisposed) notifyListeners();
       _persistLocalOnly();
     }
   }
@@ -295,7 +239,7 @@ class NoteitProvider with ChangeNotifier {
     _notes.insert(0, newItem);
     await _persist();
 
-    if (_coupleId != null && _userId != null) {
+    if (coupleId != null && userId != null) {
       await NoteitSyncManager.instance.enqueue(
         NoteitSyncTask(
           id: newItem.id,
@@ -331,7 +275,7 @@ class NoteitProvider with ChangeNotifier {
     _notes.insert(0, newItem);
     await _persist();
 
-    if (_coupleId != null && _userId != null) {
+    if (coupleId != null && userId != null) {
       await NoteitSyncManager.instance.enqueue(
         NoteitSyncTask(
           id: newItem.id,
@@ -374,7 +318,7 @@ class NoteitProvider with ChangeNotifier {
       _notes.insert(0, newItem);
       await _persist();
 
-      if (_coupleId != null && _userId != null) {
+      if (coupleId != null && userId != null) {
         await NoteitSyncManager.instance.enqueue(
           NoteitSyncTask(
             id: noteId,
@@ -426,7 +370,7 @@ class NoteitProvider with ChangeNotifier {
     _notes.insert(0, newItem);
     await _persist();
 
-    if (_coupleId != null && _userId != null) {
+    if (coupleId != null && userId != null) {
       await NoteitSyncManager.instance.enqueue(
         NoteitSyncTask(
           id: noteId,
@@ -465,13 +409,13 @@ class NoteitProvider with ChangeNotifier {
       }
     }
 
-    if (_coupleId != null) {
+    if (coupleId != null) {
       try {
         await Supabase.instance.client.from('love_notes').delete().eq('id', id);
 
         if (noteToDelete.type == NoteitType.photo) {
           try {
-            final storagePath = 'couples/$_coupleId/love_notes/$id.jpg';
+            final storagePath = 'couples/$coupleId/love_notes/$id.jpg';
             await Supabase.instance.client.storage.from('love-notes').remove([
               storagePath,
             ]);
@@ -525,7 +469,7 @@ class NoteitProvider with ChangeNotifier {
 
   Future<void> _persist() async {
     await _persistLocalOnly();
-    if (!_disposed) notifyListeners();
+    if (!isDisposed) notifyListeners();
   }
 
   Future<void> _persistLocalOnly() async {
@@ -538,10 +482,4 @@ class NoteitProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    _syncSub?.cancel();
-    _disposed = true;
-    super.dispose();
-  }
 }
