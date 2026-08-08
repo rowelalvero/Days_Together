@@ -120,20 +120,30 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
     );
 
     if (pickedFile != null) {
-      if (isYou) {
-        await rp.setAvatars(yourPath: pickedFile.path);
-      } else {
-        await rp.setAvatars(partnerPath: pickedFile.path);
-      }
+      try {
+        if (isYou) {
+          await rp.setAvatars(yourPath: pickedFile.path);
+        } else {
+          await rp.setAvatars(partnerPath: pickedFile.path);
+        }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Avatar updated successfully!'),
-
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Avatar updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update avatar: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -1581,14 +1591,24 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
+        final theme = context.read<ThemeProvider>().currentLoveTheme;
+        final isDark = theme.isDark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: context.read<ThemeProvider>().currentLoveTheme.accentColor,
-              onPrimary: Colors.white,
-              surface: const Color(0xFF1B072B),
-              onSurface: Colors.white,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: theme.accentColor,
+                    onPrimary: Colors.white,
+                    surface: theme.secondaryColor,
+                    onSurface: theme.textColor,
+                  )
+                : ColorScheme.light(
+                    primary: theme.accentColor,
+                    onPrimary: Colors.white,
+                    surface: theme.primaryColor,
+                    onSurface: theme.textColor,
+                  ),
+            dialogTheme: DialogThemeData(backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor),
           ),
           child: child!,
         );

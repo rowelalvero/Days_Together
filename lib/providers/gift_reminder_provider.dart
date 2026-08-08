@@ -3,12 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/gift_reminder_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -24,6 +21,7 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
       ..sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
     return sorted;
   }
+
   bool get isLoading => _isLoading;
 
   @override
@@ -75,17 +73,25 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
       return GiftReminder(
         id: data['id'] as String,
         title: data['title'] ?? '',
-        date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-        reminderDaysBefore: List<int>.from(data['reminder_days_before'] ?? [30, 14, 7]),
+        date: data['date'] != null
+            ? DateTime.parse(data['date'] as String)
+            : DateTime.now(),
+        reminderDaysBefore: List<int>.from(
+          data['reminder_days_before'] ?? [30, 14, 7],
+        ),
         isEnabled: data['is_enabled'] ?? true,
         isRecurringYearly: data['is_recurring_yearly'] ?? true,
-        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+        createdAt: data['created_at'] != null
+            ? DateTime.parse(data['created_at'] as String)
+            : DateTime.now(),
       );
     }).toList();
 
     if (!_isLoading) {
       // Detect additions by partner
-      final added = incoming.where((inc) => !_reminders.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !_reminders.any((old) => old.id == inc.id))
+          .toList();
       for (var reminder in added) {
         if (_localMutations.contains(reminder.id)) {
           _localMutations.remove(reminder.id);
@@ -102,9 +108,17 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect completions by partner (isEnabled toggled to false by partner)
-      final completed = incoming.where((inc) => !inc.isEnabled && !_reminders.any((old) => old.id == inc.id && !old.isEnabled)).toList();
+      final completed = incoming
+          .where(
+            (inc) =>
+                !inc.isEnabled &&
+                !_reminders.any((old) => old.id == inc.id && !old.isEnabled),
+          )
+          .toList();
       for (var reminder in completed) {
-        final existedAndWasEnabled = _reminders.any((old) => old.id == reminder.id && old.isEnabled);
+        final existedAndWasEnabled = _reminders.any(
+          (old) => old.id == reminder.id && old.isEnabled,
+        );
         if (existedAndWasEnabled) {
           if (_localMutations.contains(reminder.id)) {
             _localMutations.remove(reminder.id);
@@ -122,7 +136,9 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect deletions by partner
-      final deleted = _reminders.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = _reminders
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (var reminder in deleted) {
         if (_localMutations.contains(reminder.id)) {
           _localMutations.remove(reminder.id);
@@ -179,9 +195,7 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('gift_reminders')
-            .upsert({
+        await Supabase.instance.client.from('gift_reminders').upsert({
           'id': reminder.id,
           'couple_id': coupleId,
           'title': title,
@@ -217,7 +231,11 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
     );
   }
 
-  Future<void> updateReminder(String id, {String? title, DateTime? date}) async {
+  Future<void> updateReminder(
+    String id, {
+    String? title,
+    DateTime? date,
+  }) async {
     _localMutations.add(id);
     final index = _reminders.indexWhere((r) => r.id == id);
     if (index == -1) return;
@@ -234,7 +252,8 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
             .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Gift Reminder Updated 🎁',
-          body: 'Your partner updated the gift reminder: "${title ?? 'Reminder'}"',
+          body:
+              'Your partner updated the gift reminder: "${title ?? 'Reminder'}"',
           feature: 'gifts',
           itemId: id,
         );
@@ -247,10 +266,7 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
         await _persist();
       }
     } else {
-      _reminders[index] = _reminders[index].copyWith(
-        title: title,
-        date: date,
-      );
+      _reminders[index] = _reminders[index].copyWith(title: title, date: date);
       await _persist();
     }
   }
@@ -329,5 +345,4 @@ class GiftReminderProvider extends SupabaseLifecycleProvider {
       debugPrint('GiftReminderProvider._persistLocalOnly failed: $e\n$st');
     }
   }
-
 }

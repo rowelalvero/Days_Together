@@ -214,13 +214,9 @@ class NoteitSyncManager {
             await _saveQueue();
             _provider?.updateItemSyncStatus(task.id, SyncStatus.failed);
 
-            // Check if failure was due to network loss
-            final onlineAfterFail = await checkConnection();
-            if (!onlineAfterFail) {
-              _scheduleBackoff(task);
-              break; // Stop loop and wait for backoff since we lost network
-            }
-            // If still online, we do NOT break! We let subsequent tasks run.
+            // Schedule backoff and stop queue processing to preserve chronological FIFO ordering (Audit 5.2)
+            _scheduleBackoff(task);
+            break;
           }
         }
       }

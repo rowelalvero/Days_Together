@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/daily_mood_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
@@ -145,7 +144,12 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
         final questionText = qRes['question'] as String? ?? '';
         final answers = Map<String, dynamic>.from(qRes['answers'] ?? {});
         final myAnswer = answers[userId];
-        final partnerKey = _partnerId ?? answers.keys.firstWhere((k) => k != userId, orElse: () => 'partner_simulator');
+        final partnerKey =
+            _partnerId ??
+            answers.keys.firstWhere(
+              (k) => k != userId,
+              orElse: () => 'partner_simulator',
+            );
         final partnerAnswer = answers[partnerKey];
 
         _todayQuestion = DailySyncQuestion(
@@ -167,110 +171,144 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
   @override
   void initRealtime() {
     if (coupleId == null || userId == null) return;
+    if (_moodsSub != null && _questionSub != null) return;
     _isLoading = true;
     if (!isDisposed) notifyListeners();
+
+    // Backup safety timeout to prevent infinite spinner
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_isLoading && !isDisposed) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
 
     _moodsSub?.cancel();
     _moodsSub = RealtimeSubscriptionManager.instance
         .getStream(tableName: 'moods', coupleId: coupleId!)
         .listen(
-      (dataList) {
-        final allMoods = dataList.map((data) {
-          return DailyMood(
-            id: data['id'] as String,
-            userId: data['user_id'] as String?,
-            date: data['date'] ?? '',
-            moodScore: data['mood_score'] ?? 5,
-            note: data['note'] as String?,
-            createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-          );
-        }).toList();
-
-        final incomingPartnerMoods = allMoods.where((m) => m.userId != userId).toList();
-
-        if (!_isLoading) {
-          for (var mood in incomingPartnerMoods) {
-            final match = _partnerMoods.firstWhere((old) => old.id == mood.id, orElse: () => DailyMood(id: '', date: '', moodScore: 5));
-            if (match.id.isEmpty) {
-              RecentActivityService.instance.logActivity(
-                activityType: 'created',
-                title: 'Partner logged a mood ${_getMoodEmoji(mood.moodScore)}',
-                description: mood.note != null && mood.note!.isNotEmpty
-                    ? 'Feeling: "${mood.note}"'
-                    : 'Feeling changed',
-                icon: _getMoodEmoji(mood.moodScore),
-                referenceId: mood.id,
-                route: 'mood',
+          (dataList) {
+            final allMoods = dataList.map((data) {
+              return DailyMood(
+                id: data['id'] as String,
+                userId: data['user_id'] as String?,
+                date: data['date'] ?? '',
+                moodScore: data['mood_score'] ?? 5,
+                note: data['note'] as String?,
+                createdAt: data['created_at'] != null
+                    ? DateTime.parse(data['created_at'] as String)
+                    : DateTime.now(),
               );
-            } else if (match.moodScore != mood.moodScore || match.note != mood.note) {
-              RecentActivityService.instance.logActivity(
-                activityType: 'updated',
-                title: 'Partner updated their mood ${_getMoodEmoji(mood.moodScore)}',
-                description: mood.note != null && mood.note!.isNotEmpty
-                    ? 'Feeling: "${mood.note}"'
-                    : 'Feeling changed',
-                icon: _getMoodEmoji(mood.moodScore),
-                referenceId: mood.id,
-                route: 'mood',
-              );
+            }).toList();
+
+            final incomingPartnerMoods = allMoods
+                .where((m) => m.userId != userId)
+                .toList();
+
+            if (!_isLoading) {
+              for (var mood in incomingPartnerMoods) {
+                final match = _partnerMoods.firstWhere(
+                  (old) => old.id == mood.id,
+                  orElse: () => DailyMood(id: '', date: '', moodScore: 5),
+                );
+                if (match.id.isEmpty) {
+                  RecentActivityService.instance.logActivity(
+                    activityType: 'created',
+                    title:
+                        'Partner logged a mood ${_getMoodEmoji(mood.moodScore)}',
+                    description: mood.note != null && mood.note!.isNotEmpty
+                        ? 'Feeling: "${mood.note}"'
+                        : 'Feeling changed',
+                    icon: _getMoodEmoji(mood.moodScore),
+                    referenceId: mood.id,
+                    route: 'mood',
+                  );
+                } else if (match.moodScore != mood.moodScore ||
+                    match.note != mood.note) {
+                  RecentActivityService.instance.logActivity(
+                    activityType: 'updated',
+                    title:
+                        'Partner updated their mood ${_getMoodEmoji(mood.moodScore)}',
+                    description: mood.note != null && mood.note!.isNotEmpty
+                        ? 'Feeling: "${mood.note}"'
+                        : 'Feeling changed',
+                    icon: _getMoodEmoji(mood.moodScore),
+                    referenceId: mood.id,
+                    route: 'mood',
+                  );
+                }
+              }
             }
-          }
-        }
 
-        _moods = allMoods.where((m) => m.userId == userId).toList();
-        _partnerMoods = incomingPartnerMoods;
+            _moods = allMoods.where((m) => m.userId == userId).toList();
+            _partnerMoods = incomingPartnerMoods;
 
-        _isLoading = false;
-        if (!isDisposed) notifyListeners();
-        _persistLocalMoodsOnly();
-      },
-      onError: (err) {
-        debugPrint('DailyMoodProvider: moods Supabase error: $err');
-        _loadLocalMoods();
-        _loadLocalPartnerMoods();
-      },
-    );
+            _isLoading = false;
+            if (!isDisposed) notifyListeners();
+            _persistLocalMoodsOnly();
+          },
+          onError: (err) {
+            debugPrint('DailyMoodProvider: moods Supabase error: $err');
+            _loadLocalMoods();
+            _loadLocalPartnerMoods();
+          },
+        );
 
     _questionSub?.cancel();
     _questionSub = RealtimeSubscriptionManager.instance
-        .getStream(tableName: 'daily_questions', coupleId: coupleId!, primaryKey: ['date', 'couple_id'])
-        .listen((dataList) {
-      final todayData = dataList.where((d) => d['date'] == _todayString);
-      if (todayData.isNotEmpty) {
-        final data = todayData.first;
-        final questionText = data['question'] as String? ?? '';
-        final answers = Map<String, dynamic>.from(data['answers'] ?? {});
-        
-        final myAnswer = answers[userId];
-        final partnerKey = _partnerId ?? answers.keys.firstWhere((k) => k != userId, orElse: () => 'partner_simulator');
-        final partnerAnswer = answers[partnerKey];
+        .getStream(
+          tableName: 'daily_questions',
+          coupleId: coupleId!,
+          primaryKey: ['date', 'couple_id'],
+        )
+        .listen(
+          (dataList) {
+            final todayData = dataList.where((d) => d['date'] == _todayString);
+            if (todayData.isNotEmpty) {
+              final data = todayData.first;
+              final questionText = data['question'] as String? ?? '';
+              final answers = Map<String, dynamic>.from(data['answers'] ?? {});
 
-        if (!_isLoading && partnerAnswer != null && (_todayQuestion == null || _todayQuestion!.partnerAnswer == null)) {
-          RecentActivityService.instance.logActivity(
-            activityType: 'completed',
-            title: "Partner answered today's question ❓",
-            description: 'Answered: "$questionText"',
-            icon: '❓',
-            referenceId: _todayString,
-            route: 'mood',
-          );
-        }
+              final myAnswer = answers[userId];
+              final partnerKey =
+                  _partnerId ??
+                  answers.keys.firstWhere(
+                    (k) => k != userId,
+                    orElse: () => 'partner_simulator',
+                  );
+              final partnerAnswer = answers[partnerKey];
 
-        _todayQuestion = DailySyncQuestion(
-          question: questionText,
-          myAnswer: myAnswer as String?,
-          partnerAnswer: partnerAnswer as String?,
-          date: _todayString,
+              if (!_isLoading &&
+                  partnerAnswer != null &&
+                  (_todayQuestion == null ||
+                      _todayQuestion!.partnerAnswer == null)) {
+                RecentActivityService.instance.logActivity(
+                  activityType: 'completed',
+                  title: "Partner answered today's question ❓",
+                  description: 'Answered: "$questionText"',
+                  icon: '❓',
+                  referenceId: _todayString,
+                  route: 'mood',
+                );
+              }
+
+              _todayQuestion = DailySyncQuestion(
+                question: questionText,
+                myAnswer: myAnswer as String?,
+                partnerAnswer: partnerAnswer as String?,
+                date: _todayString,
+              );
+            } else {
+              _todayQuestion = _generateTodayQuestion();
+            }
+            if (!isDisposed) notifyListeners();
+            _persistLocalQuestionOnly();
+          },
+          onError: (err) {
+            debugPrint('DailyMoodProvider: question Supabase error: $err');
+            _loadLocalQuestion();
+          },
         );
-      } else {
-        _todayQuestion = _generateTodayQuestion();
-      }
-      if (!isDisposed) notifyListeners();
-      _persistLocalQuestionOnly();
-    }, onError: (err) {
-      debugPrint('DailyMoodProvider: question Supabase error: $err');
-      _loadLocalQuestion();
-    });
   }
 
   @override
@@ -279,6 +317,7 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
     _questionSub?.cancel();
     _moodsSub = null;
     _questionSub = null;
+    super.disposeRealtime();
   }
 
   @override
@@ -348,7 +387,9 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
   }
 
   DailySyncQuestion _generateTodayQuestion() {
-    final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
+    final dayOfYear = DateTime.now()
+        .difference(DateTime(DateTime.now().year))
+        .inDays;
     final questionIndex = dayOfYear % _defaultQuestions.length;
     return DailySyncQuestion(
       question: _defaultQuestions[questionIndex],
@@ -357,14 +398,17 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
   }
 
   Future<void> logMood(int score, {String? note}) async {
-    final nextMood = DailyMood(userId: userId, date: _todayString, moodScore: score, note: note);
+    final nextMood = DailyMood(
+      userId: userId,
+      date: _todayString,
+      moodScore: score,
+      note: note,
+    );
 
     if (coupleId != null && userId != null) {
       try {
         final moodId = '${userId}_$_todayString';
-        await Supabase.instance.client
-            .from('moods')
-            .upsert({
+        await Supabase.instance.client.from('moods').upsert({
           'id': moodId,
           'couple_id': coupleId,
           'user_id': userId,
@@ -382,7 +426,9 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
             feature: 'love_meter',
           );
         } catch (fcmError) {
-          debugPrint('DailyMoodProvider: Failed to trigger push notification: $fcmError');
+          debugPrint(
+            'DailyMoodProvider: Failed to trigger push notification: $fcmError',
+          );
         }
       } catch (e) {
         debugPrint('DailyMoodProvider.logMood Supabase error: $e');
@@ -423,22 +469,24 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
         }
         answers[userId!] = answer;
 
-        await Supabase.instance.client
-            .from('daily_questions')
-            .upsert({
+        await Supabase.instance.client.from('daily_questions').upsert({
           'couple_id': coupleId,
           'date': _todayString,
-          'question': _todayQuestion?.question ?? _generateTodayQuestion().question,
+          'question':
+              _todayQuestion?.question ?? _generateTodayQuestion().question,
           'answers': answers,
         });
 
         // Trigger push notification to partner
         try {
           final partnerJoined = _partnerId != null;
-          final partnerAnswered = response != null &&
+          final partnerAnswered =
+              response != null &&
               response['answers'] != null &&
               partnerJoined &&
-              Map<String, dynamic>.from(response['answers']).containsKey(_partnerId);
+              Map<String, dynamic>.from(
+                response['answers'],
+              ).containsKey(_partnerId);
 
           if (partnerAnswered) {
             await NotificationService().sendPartnerNotification(
@@ -454,7 +502,9 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
             );
           }
         } catch (fcmError) {
-          debugPrint('DailyMoodProvider: Failed to trigger push notification: $fcmError');
+          debugPrint(
+            'DailyMoodProvider: Failed to trigger push notification: $fcmError',
+          );
         }
       } catch (e) {
         debugPrint('DailyMoodProvider.answerDailyQuestion Supabase error: $e');
@@ -484,7 +534,6 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
     _persistQuestion();
   }
 
-
   Future<void> _persistMoods() async {
     await _persistLocalMoodsOnly();
     if (!isDisposed) notifyListeners();
@@ -512,7 +561,10 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (_todayQuestion != null) {
-        await prefs.setString(_questionKey, jsonEncode(_todayQuestion!.toJson()));
+        await prefs.setString(
+          _questionKey,
+          jsonEncode(_todayQuestion!.toJson()),
+        );
       }
     } catch (e, st) {
       debugPrint('DailyMoodProvider._persistLocalQuestionOnly failed: $e\n$st');
@@ -535,5 +587,4 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
         return '😊';
     }
   }
-
 }

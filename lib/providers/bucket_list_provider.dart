@@ -3,12 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/bucket_list_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -65,8 +62,7 @@ class BucketListProvider extends SupabaseLifecycleProvider {
               ? DateTime.parse(data['scheduled_at'] as String)
               : null,
         );
-      }).toList()
-        ..sort((a, b) => a.order.compareTo(b.order));
+      }).toList()..sort((a, b) => a.order.compareTo(b.order));
 
       _items = parsed;
       await _persistLocalOnly();
@@ -83,10 +79,16 @@ class BucketListProvider extends SupabaseLifecycleProvider {
         id: data['id'] as String,
         title: data['title'] ?? '',
         isCompleted: data['is_completed'] ?? false,
-        completedAt: data['completed_at'] != null ? DateTime.parse(data['completed_at'] as String) : null,
+        completedAt: data['completed_at'] != null
+            ? DateTime.parse(data['completed_at'] as String)
+            : null,
         order: data['order_index'] ?? 0,
-        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-        scheduledAt: data['scheduled_at'] != null ? DateTime.parse(data['scheduled_at'] as String) : null,
+        createdAt: data['created_at'] != null
+            ? DateTime.parse(data['created_at'] as String)
+            : DateTime.now(),
+        scheduledAt: data['scheduled_at'] != null
+            ? DateTime.parse(data['scheduled_at'] as String)
+            : null,
       );
     }).toList();
 
@@ -94,7 +96,9 @@ class BucketListProvider extends SupabaseLifecycleProvider {
 
     if (!_isLoading) {
       // Detect additions
-      final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !_items.any((old) => old.id == inc.id))
+          .toList();
       for (var item in added) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -111,9 +115,17 @@ class BucketListProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect completions
-      final completed = incoming.where((inc) => inc.isCompleted && !_items.any((old) => old.id == inc.id && old.isCompleted)).toList();
+      final completed = incoming
+          .where(
+            (inc) =>
+                inc.isCompleted &&
+                !_items.any((old) => old.id == inc.id && old.isCompleted),
+          )
+          .toList();
       for (var item in completed) {
-        final existedAndNotCompleted = _items.any((old) => old.id == item.id && !old.isCompleted);
+        final existedAndNotCompleted = _items.any(
+          (old) => old.id == item.id && !old.isCompleted,
+        );
         if (existedAndNotCompleted) {
           if (_localMutations.contains(item.id)) {
             _localMutations.remove(item.id);
@@ -131,7 +143,9 @@ class BucketListProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect deletions
-      final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = _items
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (var item in deleted) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -168,9 +182,7 @@ class BucketListProvider extends SupabaseLifecycleProvider {
       final jsonString = prefs.getString(_storageKey);
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        _items = jsonList
-            .map((json) => BucketListItem.fromJson(json))
-            .toList()
+        _items = jsonList.map((json) => BucketListItem.fromJson(json)).toList()
           ..sort((a, b) => a.order.compareTo(b.order));
       } else {
         _items = [];
@@ -193,9 +205,7 @@ class BucketListProvider extends SupabaseLifecycleProvider {
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('bucket_list')
-            .upsert({
+        await Supabase.instance.client.from('bucket_list').upsert({
           'id': item.id,
           'couple_id': coupleId,
           'title': item.title,
@@ -231,7 +241,12 @@ class BucketListProvider extends SupabaseLifecycleProvider {
     );
   }
 
-  Future<void> updateItem(String id, {String? title, DateTime? scheduledAt, bool clearDate = false}) async {
+  Future<void> updateItem(
+    String id, {
+    String? title,
+    DateTime? scheduledAt,
+    bool clearDate = false,
+  }) async {
     _localMutations.add(id);
     if (coupleId != null) {
       try {
@@ -248,7 +263,8 @@ class BucketListProvider extends SupabaseLifecycleProvider {
             .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Bucket List Updated',
-          body: '📝 Your partner updated the bucket list item:\n"${title ?? 'Item'}"',
+          body:
+              '📝 Your partner updated the bucket list item:\n"${title ?? 'Item'}"',
           feature: 'bucket_list',
           itemId: id,
         );
@@ -258,7 +274,9 @@ class BucketListProvider extends SupabaseLifecycleProvider {
         if (index != -1) {
           _items[index] = _items[index].copyWith(
             title: title,
-            scheduledAt: clearDate ? null : (scheduledAt ?? _items[index].scheduledAt),
+            scheduledAt: clearDate
+                ? null
+                : (scheduledAt ?? _items[index].scheduledAt),
           );
           await _persist();
         }
@@ -267,12 +285,17 @@ class BucketListProvider extends SupabaseLifecycleProvider {
       if (index == -1) return;
       _items[index] = _items[index].copyWith(
         title: title,
-        scheduledAt: clearDate ? null : (scheduledAt ?? _items[index].scheduledAt),
+        scheduledAt: clearDate
+            ? null
+            : (scheduledAt ?? _items[index].scheduledAt),
       );
       await _persist();
     }
 
-    final updatedItem = _items.firstWhere((i) => i.id == id, orElse: () => BucketListItem(title: title ?? '', order: 0));
+    final updatedItem = _items.firstWhere(
+      (i) => i.id == id,
+      orElse: () => BucketListItem(title: title ?? '', order: 0),
+    );
     await RecentActivityService.instance.logActivity(
       activityType: 'updated',
       title: 'Bucket List item updated',
@@ -302,13 +325,15 @@ class BucketListProvider extends SupabaseLifecycleProvider {
           await Supabase.instance.client
               .from('bucket_list')
               .update({
-            'is_completed': newCompleted,
-            'completed_at': newCompletedAt?.toIso8601String(),
-          }).eq('id', id);
+                'is_completed': newCompleted,
+                'completed_at': newCompletedAt?.toIso8601String(),
+              })
+              .eq('id', id);
           if (newCompleted) {
             NotificationService().sendPartnerNotification(
               title: 'Bucket List Completed!',
-              body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
+              body:
+                  '🎉 Your partner completed a bucket list item:\n"${item.title}"',
               feature: 'bucket_list',
               itemId: id,
             );
@@ -323,8 +348,12 @@ class BucketListProvider extends SupabaseLifecycleProvider {
     final updatedItem = _items.firstWhere((i) => i.id == id);
     await RecentActivityService.instance.logActivity(
       activityType: updatedItem.isCompleted ? 'completed' : 'updated',
-      title: updatedItem.isCompleted ? 'Bucket List item completed' : 'Bucket List item updated',
-      description: updatedItem.isCompleted ? 'We did: "${updatedItem.title}" 🎉' : 'Marked active: "${updatedItem.title}"',
+      title: updatedItem.isCompleted
+          ? 'Bucket List item completed'
+          : 'Bucket List item updated',
+      description: updatedItem.isCompleted
+          ? 'We did: "${updatedItem.title}" 🎉'
+          : 'Marked active: "${updatedItem.title}"',
       icon: updatedItem.isCompleted ? '🎉' : '🪣',
       referenceId: id,
       route: 'bucket_list',
@@ -451,5 +480,4 @@ class BucketListProvider extends SupabaseLifecycleProvider {
       debugPrint('BucketListProvider._persistLocalOnly failed: $e\n$st');
     }
   }
-
 }

@@ -18,7 +18,6 @@ import 'package:days_together/screens/settings/notification_settings_screen.dart
 import 'package:days_together/screens/wrapped/wrapped_service.dart';
 import 'package:days_together/screens/wrapped/wrapped_screen.dart';
 import 'package:days_together/screens/wrapped/wrapped_archive_screen.dart';
-import 'package:days_together/navigator_key.dart';
 
 import '../main.dart';
 
@@ -38,23 +37,27 @@ class SettingsTab extends StatelessWidget {
 
     final data = WrappedService.aggregate(
       year: year,
-      rp: rp, tp: tp, np: np, bp: bp, mp: mp, cp: cp, cap: cap, vp: vp,
+      rp: rp,
+      tp: tp,
+      np: np,
+      bp: bp,
+      mp: mp,
+      cp: cp,
+      cap: cap,
+      vp: vp,
     );
 
     if (!context.mounted) return;
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => WrappedScreen(data: data),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
-          opacity: animation,
-          child: child,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) => WrappedScreen(data: data),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 600),
       ),
     );
   }
-
 
   void _showLogoutConfirmation(BuildContext context, RelationshipProvider rp) {
     final theme = Provider.of<ThemeProvider>(
@@ -232,7 +235,6 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-
   Widget _buildWrappedTile(dynamic theme, BuildContext context) {
     return GestureDetector(
       onTap: () => _launchWrapped(context),
@@ -291,11 +293,7 @@ class SettingsTab extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
+            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 28),
           ],
         ),
       ),
@@ -346,7 +344,6 @@ class SettingsTab extends StatelessWidget {
               ),
             ],
           ),
-
         ],
       ),
     );

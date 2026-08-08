@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:days_together/screens/onboarding/genesis_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/widgets/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -18,6 +20,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
     with SingleTickerProviderStateMixin {
   late String _code;
   late AnimationController _animController;
+  Timer? _rotationTimer;
   bool _copied = false;
   bool _copiedRecovery = false;
   bool _savedRecoveryCode = false;
@@ -31,10 +34,19 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..forward();
+
+    // Check/refresh active pairing code on open & schedule periodic checks
+    provider.refreshPairingCode();
+    _rotationTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      if (mounted) {
+        context.read<RelationshipProvider>().refreshPairingCode();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _rotationTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
@@ -58,7 +70,14 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
               children: [
                 const SizedBox(height: 20),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () async {
+                    final provider = context.read<RelationshipProvider>();
+                    await SafeLoadingDialog.run(
+                      context: context,
+                      future: () => provider.unlinkPartner(),
+                      loadingMessage: 'Canceling workspace...',
+                    );
+                  },
                   icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
                 ),
                 const SizedBox(height: 20),
@@ -122,10 +141,10 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                           ),
                         const SizedBox(height: 10),
                         Text(
-                          'This code is your key to connect. Keep it safe.',
+                          '⏱️ Code changes every 20 mins while waiting to connect.',
                           style: AppTypography.caption(
                             fontSize: 12,
-                            color: theme.textColor.withValues(alpha: 0.5),
+                            color: theme.textColor.withValues(alpha: 0.6),
                           ).copyWith(fontStyle: FontStyle.italic),
                         ),
                       ],

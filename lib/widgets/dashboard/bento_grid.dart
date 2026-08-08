@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
@@ -1991,6 +1992,30 @@ class BentoGrid extends StatelessWidget {
 
     final latest = messages.first;
     final isMe = latest.senderId == 'you';
+    
+    String displayContent = latest.content;
+    if (displayContent.startsWith('[scrapbook]:')) {
+      final payload = displayContent.substring('[scrapbook]:'.length).trim();
+      if (payload.startsWith('{')) {
+        try {
+          final parsed = jsonDecode(payload);
+          final typeIndex = parsed['type'] as int? ?? 0;
+          if (typeIndex == 2) {
+            displayContent = 'Shared a scrapbook note: "${parsed['content'] ?? ''}" 📝';
+          } else if (typeIndex == 1) {
+            displayContent = 'Shared a scrapbook photo 📸';
+          } else {
+            displayContent = 'Shared a scrapbook doodle 🎨';
+          }
+        } catch (_) {
+          displayContent = 'Shared a scrapbook doodle 🎨';
+        }
+      } else {
+        displayContent = 'Shared a scrapbook doodle 🎨';
+      }
+    } else if (displayContent.trim().startsWith('{')) {
+      displayContent = 'Shared a scrapbook doodle 🎨';
+    }
 
     return Row(
       children: [
@@ -2009,7 +2034,7 @@ class BentoGrid extends StatelessWidget {
                 ),
               ),
               Text(
-                latest.content,
+                displayContent,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.bodyMedium(
@@ -2284,7 +2309,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
       } else {
         drawingWidget = CustomPaint(
           painter: ScaleDrawingPainter(
-            strokes: NoteitItem.deserializeStrokes(latest.content),
+            colorfulStrokes: NoteitItem.deserializeColorfulStrokes(latest.content, widget.theme.textColor),
             color: widget.theme.textColor,
             strokeWidth: 2.5,
           ),

@@ -209,6 +209,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
 
   Future<void> _pickAvatar() async {
     final hasPermission = await PermissionService().requestPhotosPermission(context);
+    if (!mounted) return;
     if (!hasPermission) return;
 
     final picker = ImagePicker();
@@ -219,9 +220,13 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
       imageQuality: 85,
     );
     if (picked == null) return;
+    if (!mounted) return;
+
     final directory = await getApplicationDocumentsDirectory();
     final newPath = '${directory.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
     await File(picked.path).copy(newPath);
+    if (!mounted) return;
+
     setState(() => _avatarPath = newPath);
   }
 
@@ -233,19 +238,31 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
       return;
     }
 
-    setState(() => _isSaving = true);
-    final provider = context.read<RelationshipProvider>();
-    await provider.setYourName(
-      _yourNameController.text.trim(),
-    );
-    if (_avatarPath != null) {
-      await provider.setAvatars(yourPath: _avatarPath);
+    try {
+      setState(() => _isSaving = true);
+      final provider = context.read<RelationshipProvider>();
+      await provider.setYourName(
+        _yourNameController.text.trim(),
+      );
+      if (_avatarPath != null) {
+        await provider.setAvatars(yourPath: _avatarPath);
+      }
+      await provider.completeOnboarding();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoveStoryScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to complete setup: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-    await provider.completeOnboarding();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoveStoryScreen()),
-      (route) => false,
-    );
   }
 }

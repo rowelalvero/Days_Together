@@ -14,6 +14,7 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
+  bool _isNavigating = false;
 
   @override
   void initState() {
@@ -108,6 +109,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     _buildActionButton(
                       label: 'Begin Your Story',
                       onPressed: () {
+                        if (_isNavigating) return;
+                        _isNavigating = true;
                         Navigator.push(
                           context,
                           PageRouteBuilder(
@@ -122,7 +125,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             transitionDuration:
                                 const Duration(milliseconds: 500),
                           ),
-                        );
+                        ).then((_) {
+                          if (mounted) _isNavigating = false;
+                        });
                       },
                       isPrimary: true,
                       theme: theme,

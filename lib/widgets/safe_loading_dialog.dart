@@ -138,8 +138,14 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
   void initState() {
     super.initState();
 
-    // Start the async operation
-    widget.future();
+    // Defer the async operation to after the current build frame completes.
+    // This prevents "setState() called during build" when the future
+    // synchronously calls notifyListeners() on a provider.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.future();
+      }
+    });
 
     // Show cancel button after delay
     _cancelTimer = Timer(Duration(seconds: widget.cancelDelaySeconds), () {

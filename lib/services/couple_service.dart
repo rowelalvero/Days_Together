@@ -16,6 +16,15 @@ class CoupleService {
     return Map<String, dynamic>.from(response);
   }
 
+  /// Fetches the active pairing code or rotates it if older than 20 minutes.
+  Future<Map<String, dynamic>> getOrRotatePairingCode({bool forceRotate = false}) async {
+    final response = await Supabase.instance.client.rpc(
+      'get_or_rotate_pairing_code',
+      params: {'p_force_rotate': forceRotate},
+    );
+    return Map<String, dynamic>.from(response);
+  }
+
   /// Attempts to join a workspace using a 6-digit invitation code via Database RPC.
   Future<Map<String, dynamic>> joinWithCode(String code) async {
     final response = await Supabase.instance.client.rpc(

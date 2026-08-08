@@ -1235,10 +1235,29 @@ Widget _buildDangerZoneDivider(dynamic theme) {
       imageQuality: 50,
     );
     if (pickedFile != null) {
-      if (isYou) {
-        await rp.setAvatars(yourPath: pickedFile.path);
-      } else {
-        await rp.setAvatars(partnerPath: pickedFile.path);
+      try {
+        if (isYou) {
+          await rp.setAvatars(yourPath: pickedFile.path);
+        } else {
+          await rp.setAvatars(partnerPath: pickedFile.path);
+        }
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile image updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update profile image: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

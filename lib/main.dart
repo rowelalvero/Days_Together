@@ -18,13 +18,17 @@ import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/onboarding/welcome_screen.dart';
 import 'package:days_together/screens/onboarding/pairing_selection_screen.dart';
 import 'package:days_together/screens/onboarding/loading_screen.dart';
+import 'package:days_together/screens/onboarding/create_couple_code_screen.dart';
+import 'package:days_together/screens/onboarding/genesis_screen.dart';
+import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:days_together/app_config.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/navigator_key.dart';
+import 'package:days_together/services/home_widget_service.dart';
 
 @pragma('vm:entry-point')
 void main() {
@@ -47,12 +51,12 @@ void main() {
 
 Future<void> _initializeApp() async {
   try {
-    await dotenv.load(fileName: ".env");
     await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? '',
-      publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+      url: AppConfig.supabaseUrl,
+      publishableKey: AppConfig.supabaseAnonKey,
     );
     await NotificationService().init();
+    await HomeWidgetService.instance.initialize();
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
@@ -192,6 +196,22 @@ class AppHome extends StatelessWidget {
 
     if (rp.isOnboardingComplete) {
       return const LoveStoryScreen(key: ValueKey('home'));
+    }
+
+    // Resume onboarding flow if a workspace has already been created/joined
+    if (rp.relationshipId != null) {
+      if (rp.isCreator) {
+        // If not paired yet and start date not set, show the couple code screen
+        if (!rp.isPaired && rp.startDate == null) {
+          return const CreateCoupleCodeScreen(key: ValueKey('couple_code'));
+        }
+        // If paired but start date not set, go to GenesisScreen
+        if (rp.startDate == null) {
+          return const GenesisScreen(key: ValueKey('genesis'));
+        }
+      }
+      // Otherwise (not creator, or creator with start date set), go to AvatarCreationScreen
+      return const AvatarCreationScreen(key: ValueKey('avatar'));
     }
 
     return const PairingSelectionScreen(key: ValueKey('pairing'));

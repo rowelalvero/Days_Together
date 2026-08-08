@@ -3,12 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/time_capsule_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -64,8 +61,7 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
               ? DateTime.parse(data['created_at'] as String).toLocal()
               : DateTime.now(),
         );
-      }).toList()
-        ..sort((a, b) => a.openDate.compareTo(b.openDate));
+      }).toList()..sort((a, b) => a.openDate.compareTo(b.openDate));
 
       _capsules = parsed;
       await _persistLocalOnly();
@@ -81,9 +77,13 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
       return TimeCapsule(
         id: data['id'] as String,
         message: data['message'] ?? '',
-        openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String) : DateTime.now(),
+        openDate: data['open_date'] != null
+            ? DateTime.parse(data['open_date'] as String)
+            : DateTime.now(),
         isOpened: data['is_opened'] ?? false,
-        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+        createdAt: data['created_at'] != null
+            ? DateTime.parse(data['created_at'] as String)
+            : DateTime.now(),
       );
     }).toList();
 
@@ -91,7 +91,9 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
 
     if (!_isLoading) {
       // Detect additions by partner
-      final added = incoming.where((inc) => !_capsules.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !_capsules.any((old) => old.id == inc.id))
+          .toList();
       for (var capsule in added) {
         if (_localMutations.contains(capsule.id)) {
           _localMutations.remove(capsule.id);
@@ -108,7 +110,13 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect openings by partner
-      final opened = incoming.where((inc) => inc.isOpened && !_capsules.any((old) => old.id == inc.id && old.isOpened)).toList();
+      final opened = incoming
+          .where(
+            (inc) =>
+                inc.isOpened &&
+                !_capsules.any((old) => old.id == inc.id && old.isOpened),
+          )
+          .toList();
       for (var capsule in opened) {
         if (_localMutations.contains(capsule.id)) {
           _localMutations.remove(capsule.id);
@@ -145,9 +153,7 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
       final jsonString = prefs.getString(_storageKey);
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        _capsules = jsonList
-            .map((json) => TimeCapsule.fromJson(json))
-            .toList()
+        _capsules = jsonList.map((json) => TimeCapsule.fromJson(json)).toList()
           ..sort((a, b) => a.openDate.compareTo(b.openDate));
       } else {
         _capsules = [];
@@ -166,9 +172,7 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('time_capsules')
-            .upsert({
+        await Supabase.instance.client.from('time_capsules').upsert({
           'id': capsule.id,
           'couple_id': coupleId,
           'message': message,
@@ -179,7 +183,8 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
         final openDateStr = openDate.toLocal().toString().substring(0, 10);
         NotificationService().sendPartnerNotification(
           title: 'Time Capsule Created ⏳',
-          body: 'Your partner locked a new time capsule to be opened on $openDateStr!',
+          body:
+              'Your partner locked a new time capsule to be opened on $openDateStr!',
           feature: 'time_capsule',
           itemId: capsule.id,
         );
@@ -284,5 +289,4 @@ class TimeCapsuleProvider extends SupabaseLifecycleProvider {
       debugPrint('TimeCapsuleProvider._persistLocalOnly failed: $e\n$st');
     }
   }
-
 }

@@ -3,10 +3,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/topic_card_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 import 'package:days_together/services/realtime_subscription_manager.dart';
@@ -134,111 +132,136 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
     _isLoading = true;
     if (!isDisposed) notifyListeners();
 
+    // Backup safety timeout to prevent infinite spinner
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_isLoading && !isDisposed) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
+
     // Stream 1: Sync Custom Cards
     _syncCardsSub?.cancel();
     _syncCardsSub = RealtimeSubscriptionManager.instance
         .getStream(tableName: 'topic_cards', coupleId: coupleId!)
         .listen(
-      (dataList) {
-        final List<TopicCard> newCustoms = [];
+          (dataList) {
+            final List<TopicCard> newCustoms = [];
 
-        for (final data in dataList) {
-          final docId = data['id'] as String;
-          final isCustom = data['is_custom'] as bool? ?? false;
+            for (final data in dataList) {
+              final docId = data['id'] as String;
+              final isCustom = data['is_custom'] as bool? ?? false;
 
-          if (isCustom) {
-            newCustoms.add(TopicCard(
-              id: docId,
-              category: data['category'] ?? '',
-              question: data['question'] ?? '',
-              isCustom: true,
-              isLiked: _likedCardIds.contains(docId),
-            ));
-          }
-        }
-
-        if (!_isLoading) {
-          final added = newCustoms.where((inc) => !_customCards.any((old) => old.id == inc.id)).toList();
-          for (var card in added) {
-            if (_localMutations.contains(card.id)) {
-              _localMutations.remove(card.id);
-              continue;
+              if (isCustom) {
+                newCustoms.add(
+                  TopicCard(
+                    id: docId,
+                    category: data['category'] ?? '',
+                    question: data['question'] ?? '',
+                    isCustom: true,
+                    isLiked: _likedCardIds.contains(docId),
+                  ),
+                );
+              }
             }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: "Partner added custom card 🎴",
-              description: 'Added: "${card.question}"',
-              icon: '🎴',
-              referenceId: card.id,
-              route: 'topic_cards',
-            );
-          }
-        }
 
-        _customCards = newCustoms;
-        _isLoading = false;
-        _updateActiveDeck();
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('TopicCardsProvider: Supabase cards sync error: $err');
-        _loadData();
-      },
-    );
+            if (!_isLoading) {
+              final added = newCustoms
+                  .where((inc) => !_customCards.any((old) => old.id == inc.id))
+                  .toList();
+              for (var card in added) {
+                if (_localMutations.contains(card.id)) {
+                  _localMutations.remove(card.id);
+                  continue;
+                }
+                RecentActivityService.instance.logActivity(
+                  activityType: 'created',
+                  title: "Partner added custom card 🎴",
+                  description: 'Added: "${card.question}"',
+                  icon: '🎴',
+                  referenceId: card.id,
+                  route: 'topic_cards',
+                );
+              }
+            }
+
+            _customCards = newCustoms;
+            _isLoading = false;
+            _updateActiveDeck();
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('TopicCardsProvider: Supabase cards sync error: $err');
+            _loadData();
+          },
+        );
 
     // Stream 2: Sync Liked Card IDs
     _syncLikesSub?.cancel();
     _syncLikesSub = RealtimeSubscriptionManager.instance
         .getStream(tableName: 'topic_card_likes', coupleId: coupleId!)
-        .listen((dataList) {
-      final Set<String> newLikes = {};
-      final Set<String> newPartnerLikes = {};
+        .listen(
+          (dataList) {
+            final Set<String> newLikes = {};
+            final Set<String> newPartnerLikes = {};
 
-      for (final data in dataList) {
-        final cardId = data['card_id'] as String;
-        final likedByUserId = data['user_id'] as String;
+            for (final data in dataList) {
+              final cardId = data['card_id'] as String;
+              final likedByUserId = data['user_id'] as String;
 
-        if (likedByUserId == userId) {
-          newLikes.add(cardId);
-        } else {
-          newPartnerLikes.add(cardId);
-        }
-      }
+              if (likedByUserId == userId) {
+                newLikes.add(cardId);
+              } else {
+                newPartnerLikes.add(cardId);
+              }
+            }
 
-      if (!_isLoading) {
-        final addedLikes = newPartnerLikes.difference(_partnerLikedCardIds);
-        for (var cardId in addedLikes) {
-          final card = allCards.firstWhere((c) => c.id == cardId, orElse: () => TopicCard(id: cardId, category: 'All', question: '', isCustom: false));
-          if (card.question.isNotEmpty) {
-            RecentActivityService.instance.logActivity(
-              activityType: 'updated',
-              title: "Partner liked card 💖",
-              description: 'Liked: "${card.question}"',
-              icon: '💖',
-              referenceId: cardId,
-              route: 'topic_cards',
-            );
-          }
-        }
-      }
+            if (!_isLoading) {
+              final addedLikes = newPartnerLikes.difference(
+                _partnerLikedCardIds,
+              );
+              for (var cardId in addedLikes) {
+                final card = allCards.firstWhere(
+                  (c) => c.id == cardId,
+                  orElse: () => TopicCard(
+                    id: cardId,
+                    category: 'All',
+                    question: '',
+                    isCustom: false,
+                  ),
+                );
+                if (card.question.isNotEmpty) {
+                  RecentActivityService.instance.logActivity(
+                    activityType: 'updated',
+                    title: "Partner liked card 💖",
+                    description: 'Liked: "${card.question}"',
+                    icon: '💖',
+                    referenceId: cardId,
+                    route: 'topic_cards',
+                  );
+                }
+              }
+            }
 
-      _partnerLikedCardIds = newPartnerLikes;
-      _likedCardIds = newLikes;
+            _partnerLikedCardIds = newPartnerLikes;
+            _likedCardIds = newLikes;
 
-      // Apply local pending overrides to maintain visual consistency
-      for (final entry in _pendingLikes.entries) {
-        if (entry.value) {
-          _likedCardIds.add(entry.key);
-        } else {
-          _likedCardIds.remove(entry.key);
-        }
-      }
+            // Apply local pending overrides to maintain visual consistency
+            for (final entry in _pendingLikes.entries) {
+              if (entry.value) {
+                _likedCardIds.add(entry.key);
+              } else {
+                _likedCardIds.remove(entry.key);
+              }
+            }
 
-      _updateActiveDeck();
-      _persistLocalOnly();
-    }, onError: (err) {
-      debugPrint('TopicCardsProvider: Supabase likes sync error: $err');
-    });
+            _updateActiveDeck();
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('TopicCardsProvider: Supabase likes sync error: $err');
+          },
+        );
 
     // Run initial sync of offline/pending likes
     _syncPendingLikes();
@@ -250,6 +273,7 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
     _syncLikesSub?.cancel();
     _syncCardsSub = null;
     _syncLikesSub = null;
+    super.disposeRealtime();
   }
 
   @override
@@ -260,52 +284,256 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
 
   void _initializeDefaultCards() {
     final defaultQuestions = [
-      {'id': 'd1', 'cat': 'Deep Conversations', 'q': 'What is a memory with me that always makes you smile, no matter how tough your day is?'},
-      {'id': 'd2', 'cat': 'Deep Conversations', 'q': 'If you could change one event in your past to make our lives better today, what would it be?'},
-      {'id': 'd3', 'cat': 'Deep Conversations', 'q': 'What is your biggest fear about our relationship, and how can we work through it together?'},
-      {'id': 'd4', 'cat': 'Deep Conversations', 'q': 'What does unconditional love mean to you, and do you feel it between us?'},
-      {'id': 'd5', 'cat': 'Deep Conversations', 'q': "Is there a secret or a worry you've been holding onto that you feel ready to share with me?"},
-      {'id': 'd6', 'cat': 'Deep Conversations', 'q': 'When was the moment you realized you were falling in love with me?'},
-      {'id': 'd7', 'cat': 'Deep Conversations', 'q': 'What is something I did recently that made you feel incredibly appreciated and loved?'},
-      {'id': 'd8', 'cat': 'Deep Conversations', 'q': 'If our relationship was a book title, what would it be and why?'},
-      {'id': 'd9', 'cat': 'Deep Conversations', 'q': 'What is one thing about how your parents loved each other that you want to replicate or avoid?'},
-      {'id': 'd10', 'cat': 'Deep Conversations', 'q': "What is the hardest thing we've gone through together, and how did it change us?"},
+      {
+        'id': 'd1',
+        'cat': 'Deep Conversations',
+        'q':
+            'What is a memory with me that always makes you smile, no matter how tough your day is?',
+      },
+      {
+        'id': 'd2',
+        'cat': 'Deep Conversations',
+        'q':
+            'If you could change one event in your past to make our lives better today, what would it be?',
+      },
+      {
+        'id': 'd3',
+        'cat': 'Deep Conversations',
+        'q':
+            'What is your biggest fear about our relationship, and how can we work through it together?',
+      },
+      {
+        'id': 'd4',
+        'cat': 'Deep Conversations',
+        'q':
+            'What does unconditional love mean to you, and do you feel it between us?',
+      },
+      {
+        'id': 'd5',
+        'cat': 'Deep Conversations',
+        'q':
+            "Is there a secret or a worry you've been holding onto that you feel ready to share with me?",
+      },
+      {
+        'id': 'd6',
+        'cat': 'Deep Conversations',
+        'q':
+            'When was the moment you realized you were falling in love with me?',
+      },
+      {
+        'id': 'd7',
+        'cat': 'Deep Conversations',
+        'q':
+            'What is something I did recently that made you feel incredibly appreciated and loved?',
+      },
+      {
+        'id': 'd8',
+        'cat': 'Deep Conversations',
+        'q': 'If our relationship was a book title, what would it be and why?',
+      },
+      {
+        'id': 'd9',
+        'cat': 'Deep Conversations',
+        'q':
+            'What is one thing about how your parents loved each other that you want to replicate or avoid?',
+      },
+      {
+        'id': 'd10',
+        'cat': 'Deep Conversations',
+        'q':
+            "What is the hardest thing we've gone through together, and how did it change us?",
+      },
 
-      {'id': 'f1', 'cat': 'Fun & Quirky', 'q': 'If we were characters in a movie, who would we be and who would survive a zombie apocalypse?'},
-      {'id': 'f2', 'cat': 'Fun & Quirky', 'q': 'What is the most ridiculous or funny first impression you had of me?'},
-      {'id': 'f3', 'cat': 'Fun & Quirky', 'q': 'If we won a million dollars today, what is the first silly thing we would buy?'},
-      {'id': 'f4', 'cat': 'Fun & Quirky', 'q': "What is a secret talent or weird habit of yours that you haven't fully shown me yet?"},
-      {'id': 'f5', 'cat': 'Fun & Quirky', 'q': 'If we could switch bodies for a single day, what is the first thing you would do?'},
-      {'id': 'f6', 'cat': 'Fun & Quirky', 'q': 'What is a song that perfectly summarizes how chaotic or beautiful our love is?'},
-      {'id': 'f7', 'cat': 'Fun & Quirky', 'q': 'If we had to live in a fictional universe (e.g., Harry Potter, Marvel) for a year, which one would it be?'},
-      {'id': 'f8', 'cat': 'Fun & Quirky', 'q': 'Who is the better driver, and who is the backseat driver who thinks they are better?'},
-      {'id': 'f9', 'cat': 'Fun & Quirky', 'q': 'What is our absolute worst inside joke that nobody else would find funny?'},
+      {
+        'id': 'f1',
+        'cat': 'Fun & Quirky',
+        'q':
+            'If we were characters in a movie, who would we be and who would survive a zombie apocalypse?',
+      },
+      {
+        'id': 'f2',
+        'cat': 'Fun & Quirky',
+        'q':
+            'What is the most ridiculous or funny first impression you had of me?',
+      },
+      {
+        'id': 'f3',
+        'cat': 'Fun & Quirky',
+        'q':
+            'If we won a million dollars today, what is the first silly thing we would buy?',
+      },
+      {
+        'id': 'f4',
+        'cat': 'Fun & Quirky',
+        'q':
+            "What is a secret talent or weird habit of yours that you haven't fully shown me yet?",
+      },
+      {
+        'id': 'f5',
+        'cat': 'Fun & Quirky',
+        'q':
+            'If we could switch bodies for a single day, what is the first thing you would do?',
+      },
+      {
+        'id': 'f6',
+        'cat': 'Fun & Quirky',
+        'q':
+            'What is a song that perfectly summarizes how chaotic or beautiful our love is?',
+      },
+      {
+        'id': 'f7',
+        'cat': 'Fun & Quirky',
+        'q':
+            'If we had to live in a fictional universe (e.g., Harry Potter, Marvel) for a year, which one would it be?',
+      },
+      {
+        'id': 'f8',
+        'cat': 'Fun & Quirky',
+        'q':
+            'Who is the better driver, and who is the backseat driver who thinks they are better?',
+      },
+      {
+        'id': 'f9',
+        'cat': 'Fun & Quirky',
+        'q':
+            'What is our absolute worst inside joke that nobody else would find funny?',
+      },
 
-      {'id': 'u1', 'cat': 'Future & Dreams', 'q': 'Where do you see us living in ten years, and what does our ideal morning routine look like?'},
-      {'id': 'u2', 'cat': 'Future & Dreams', 'q': 'What is a dream or goal you have for yourself that you want me to help you achieve?'},
-      {'id': 'u3', 'cat': 'Future & Dreams', 'q': 'How do you picture our lives when we are old and grey?'},
-      {'id': 'u4', 'cat': 'Future & Dreams', 'q': "What is one adventure or travel destination we haven't been to yet that is a must-do for us?"},
-      {'id': 'u5', 'cat': 'Future & Dreams', 'q': 'What are your hopes for our home together in the future?'},
-      {'id': 'u6', 'cat': 'Future & Dreams', 'q': 'If we could open any business together, what would it be and who would be the boss?'},
-      {'id': 'u7', 'cat': 'Future & Dreams', 'q': 'What is a major life milestone you are most excited to share with me?'},
-      {'id': 'u8', 'cat': 'Future & Dreams', 'q': 'How do you think our relationship will grow or adapt over the next 5 years?'},
+      {
+        'id': 'u1',
+        'cat': 'Future & Dreams',
+        'q':
+            'Where do you see us living in ten years, and what does our ideal morning routine look like?',
+      },
+      {
+        'id': 'u2',
+        'cat': 'Future & Dreams',
+        'q':
+            'What is a dream or goal you have for yourself that you want me to help you achieve?',
+      },
+      {
+        'id': 'u3',
+        'cat': 'Future & Dreams',
+        'q': 'How do you picture our lives when we are old and grey?',
+      },
+      {
+        'id': 'u4',
+        'cat': 'Future & Dreams',
+        'q':
+            "What is one adventure or travel destination we haven't been to yet that is a must-do for us?",
+      },
+      {
+        'id': 'u5',
+        'cat': 'Future & Dreams',
+        'q': 'What are your hopes for our home together in the future?',
+      },
+      {
+        'id': 'u6',
+        'cat': 'Future & Dreams',
+        'q':
+            'If we could open any business together, what would it be and who would be the boss?',
+      },
+      {
+        'id': 'u7',
+        'cat': 'Future & Dreams',
+        'q':
+            'What is a major life milestone you are most excited to share with me?',
+      },
+      {
+        'id': 'u8',
+        'cat': 'Future & Dreams',
+        'q':
+            'How do you think our relationship will grow or adapt over the next 5 years?',
+      },
 
-      {'id': 'l1', 'cat': 'Love & Romance', 'q': 'What is your favorite way to receive affection from me (words, touch, gifts, quality time, acts of service)?'},
-      {'id': 'l2', 'cat': 'Love & Romance', 'q': "What is a romantic gesture you've always wanted to experience but haven't told me yet?"},
-      {'id': 'l3', 'cat': 'Love & Romance', 'q': 'How has your definition of love changed since we first met?'},
-      {'id': 'l4', 'cat': 'Love & Romance', 'q': "What was the sweetest thing you think I've ever done for you?"},
-      {'id': 'l5', 'cat': 'Love & Romance', 'q': 'If you could freeze a single moment we shared together forever, which one would it be?'},
-      {'id': 'l6', 'cat': 'Love & Romance', 'q': 'What is a small, everyday habit of mine that makes you feel deeply loved?'},
-      {'id': 'l7', 'cat': 'Love & Romance', 'q': "What was your favorite date we've ever been on, and why does it stand out?"},
-      {'id': 'l8', 'cat': 'Love & Romance', 'q': 'If you could dedicate any love poem or quote to me, which one describes us best?'},
+      {
+        'id': 'l1',
+        'cat': 'Love & Romance',
+        'q':
+            'What is your favorite way to receive affection from me (words, touch, gifts, quality time, acts of service)?',
+      },
+      {
+        'id': 'l2',
+        'cat': 'Love & Romance',
+        'q':
+            "What is a romantic gesture you've always wanted to experience but haven't told me yet?",
+      },
+      {
+        'id': 'l3',
+        'cat': 'Love & Romance',
+        'q': 'How has your definition of love changed since we first met?',
+      },
+      {
+        'id': 'l4',
+        'cat': 'Love & Romance',
+        'q': "What was the sweetest thing you think I've ever done for you?",
+      },
+      {
+        'id': 'l5',
+        'cat': 'Love & Romance',
+        'q':
+            'If you could freeze a single moment we shared together forever, which one would it be?',
+      },
+      {
+        'id': 'l6',
+        'cat': 'Love & Romance',
+        'q':
+            'What is a small, everyday habit of mine that makes you feel deeply loved?',
+      },
+      {
+        'id': 'l7',
+        'cat': 'Love & Romance',
+        'q':
+            "What was your favorite date we've ever been on, and why does it stand out?",
+      },
+      {
+        'id': 'l8',
+        'cat': 'Love & Romance',
+        'q':
+            'If you could dedicate any love poem or quote to me, which one describes us best?',
+      },
 
-      {'id': 'i1', 'cat': 'Intimacy & Bonding', 'q': 'What makes you feel closest and most connected to me?'},
-      {'id': 'i2', 'cat': 'Intimacy & Bonding', 'q': "Is there a way we can improve our emotional or physical intimacy that you'd like to explore?"},
-      {'id': 'i3', 'cat': 'Intimacy & Bonding', 'q': 'What is a subtle look, touch, or word of mine that always gets your heart racing?'},
-      {'id': 'i4', 'cat': 'Intimacy & Bonding', 'q': 'What is something we do together that makes you feel completely safe and secure?'},
-      {'id': 'i5', 'cat': 'Intimacy & Bonding', 'q': 'How can I support you better during times when you feel overwhelmed or emotionally drained?'},
-      {'id': 'i6', 'cat': 'Intimacy & Bonding', 'q': "What is your favorite way to reconnect after we've had a busy week apart?"},
-      {'id': 'i7', 'cat': 'Intimacy & Bonding', 'q': 'What are some ways we can make our physical touch feel more intentional and loving?'},
+      {
+        'id': 'i1',
+        'cat': 'Intimacy & Bonding',
+        'q': 'What makes you feel closest and most connected to me?',
+      },
+      {
+        'id': 'i2',
+        'cat': 'Intimacy & Bonding',
+        'q':
+            "Is there a way we can improve our emotional or physical intimacy that you'd like to explore?",
+      },
+      {
+        'id': 'i3',
+        'cat': 'Intimacy & Bonding',
+        'q':
+            'What is a subtle look, touch, or word of mine that always gets your heart racing?',
+      },
+      {
+        'id': 'i4',
+        'cat': 'Intimacy & Bonding',
+        'q':
+            'What is something we do together that makes you feel completely safe and secure?',
+      },
+      {
+        'id': 'i5',
+        'cat': 'Intimacy & Bonding',
+        'q':
+            'How can I support you better during times when you feel overwhelmed or emotionally drained?',
+      },
+      {
+        'id': 'i6',
+        'cat': 'Intimacy & Bonding',
+        'q':
+            "What is your favorite way to reconnect after we've had a busy week apart?",
+      },
+      {
+        'id': 'i7',
+        'cat': 'Intimacy & Bonding',
+        'q':
+            'What are some ways we can make our physical touch feel more intentional and loving?',
+      },
     ];
 
     _defaultCards = defaultQuestions.map((item) {
@@ -384,7 +612,8 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
 
   void previousCard() {
     if (_activeDeck.isEmpty) return;
-    _currentIndex = (_currentIndex - 1 + _activeDeck.length) % _activeDeck.length;
+    _currentIndex =
+        (_currentIndex - 1 + _activeDeck.length) % _activeDeck.length;
     if (!isDisposed) notifyListeners();
   }
 
@@ -413,9 +642,7 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('topic_cards')
-            .upsert({
+        await Supabase.instance.client.from('topic_cards').upsert({
           'id': newCard.id,
           'couple_id': coupleId,
           'category': category,
@@ -515,7 +742,11 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
     _syncPendingLikes();
 
     if (nextLiked) {
-      final card = allCards.firstWhere((c) => c.id == id, orElse: () => TopicCard(id: id, category: 'All', question: '', isCustom: false));
+      final card = allCards.firstWhere(
+        (c) => c.id == id,
+        orElse: () =>
+            TopicCard(id: id, category: 'All', question: '', isCustom: false),
+      );
       await RecentActivityService.instance.logActivity(
         activityType: 'updated',
         title: 'Liked custom card 💖',
@@ -559,7 +790,9 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
           }
           completedIds.add(cardId);
         } catch (e) {
-          debugPrint('TopicCardsProvider: Failed to sync pending like for $cardId: $e');
+          debugPrint(
+            'TopicCardsProvider: Failed to sync pending like for $cardId: $e',
+          );
           break; // Stop and retry later if network fails
         }
       }
@@ -606,5 +839,4 @@ class TopicCardsProvider extends SupabaseLifecycleProvider {
     await _saveLikedCardIds();
     await _savePendingLikes();
   }
-
 }

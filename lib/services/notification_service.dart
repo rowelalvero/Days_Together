@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:days_together/navigator_key.dart';
+import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/studio/time_capsule_screen.dart';
@@ -103,16 +104,55 @@ class NotificationService {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
 
+      try {
+        await Supabase.instance.client.rpc('upsert_user_fcm_token', params: {
+          'p_token': token,
+          'p_device_type': Platform.isIOS ? 'ios' : 'android',
+        });
+        _tokenSynced = true;
+        debugPrint('NotificationService: Token synced via RPC successfully.');
+        return;
+      } catch (rpcError) {
+        debugPrint('NotificationService: RPC token sync failed, falling back to direct ops: $rpcError');
+      }
+
+      // Fallback: delete existing token for user before upsert
+      try {
+        await Supabase.instance.client
+            .from('user_fcm_tokens')
+            .delete()
+            .eq('user_id', userId);
+      } catch (_) {}
+
       await Supabase.instance.client.from('user_fcm_tokens').upsert({
         'user_id': userId,
         'token': token,
         'device_type': Platform.isIOS ? 'ios' : 'android',
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'token');
+
       _tokenSynced = true;
       debugPrint('NotificationService: Token synced successfully.');
     } catch (e) {
       debugPrint('NotificationService: Failed to sync token to Supabase: $e');
+    }
+  }
+
+  /// Remove the current device's FCM token from Supabase on logout (Audit 12.1)
+  Future<void> clearToken() async {
+    try {
+      final token = await _fcm.getToken();
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (token != null && userId != null) {
+        await Supabase.instance.client
+          .from('user_fcm_tokens')
+          .delete()
+          .eq('user_id', userId)
+          .eq('token', token);
+      }
+      _tokenSynced = false;
+    } catch (e) {
+      debugPrint('NotificationService: Failed to clear token: $e');
     }
   }
 
@@ -171,11 +211,36 @@ class NotificationService {
     final itemId = data['item_id'] as String?;
     if (feature == null) return;
 
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    // Check if the user is logged in and has completed onboarding before allowing sub-screen navigation
+    final rp = context.read<RelationshipProvider>();
+    if (rp.userId == null || !rp.isOnboardingComplete) {
+      debugPrint('NotificationService: Bypassing payload routing because user is not authenticated or onboarding is incomplete.');
+      return;
+    }
+
     final state = navigatorKey.currentState;
     if (state == null) return;
 
-    switch (feature) {
+    void navigateToTab(int index) {
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        final lss = LoveStoryScreen.of(context);
+        if (lss != null) {
+          lss.setIndex(index);
+          state.popUntil((route) => route.isFirst);
+          return;
+        }
+      }
+      state.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => LoveStoryScreen(initialIndex: index)),
+        (route) => false,
+      );
+    }
 
+    switch (feature) {
       case 'chat':
         state.push(MaterialPageRoute(builder: (_) => const LoveChatScreen()));
         break;
@@ -202,7 +267,7 @@ class NotificationService {
             } catch (_) {}
           }
         }
-        state.push(MaterialPageRoute(builder: (_) => const LoveStoryScreen(initialIndex: 1)));
+        navigateToTab(1);
         break;
       case 'time_capsule':
         state.push(MaterialPageRoute(builder: (_) => const TimeCapsuleScreen()));

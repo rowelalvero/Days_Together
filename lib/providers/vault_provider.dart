@@ -5,20 +5,18 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/vault_item_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
-class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserver {
+class VaultProvider extends SupabaseLifecycleProvider
+    with WidgetsBindingObserver {
   static const String _storageKey = 'vault_items';
   static const String _pinKey = 'vault_pin';
   static const String _hasPinKey = 'vault_has_pin';
@@ -37,7 +35,8 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
   final Set<String> _localMutations = {};
 
   List<VaultItem> get items => _isUnlocked ? List.unmodifiable(_items) : [];
-  List<VaultItem> get allItems => _isUnlocked ? List.unmodifiable(_items) : const [];
+  List<VaultItem> get allItems =>
+      _isUnlocked ? List.unmodifiable(_items) : const [];
   List<VaultItem> get photos =>
       _items.where((i) => i.type == VaultItemType.photo).toList();
   List<VaultItem> get letters =>
@@ -57,7 +56,8 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       lock();
     }
   }
@@ -82,10 +82,9 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
           .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         final typeIndex = data['type'] as int? ?? 0;
-        final type =
-            (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
-                ? VaultItemType.values[typeIndex]
-                : VaultItemType.photo;
+        final type = (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+            ? VaultItemType.values[typeIndex]
+            : VaultItemType.photo;
 
         return VaultItem(
           id: data['id'] as String,
@@ -97,8 +96,7 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
               ? DateTime.parse(data['created_at'] as String)
               : DateTime.now(),
         );
-      }).toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       _items = parsed;
       await _persistLocalOnly();
@@ -112,8 +110,7 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     final incoming = dataList.map((data) {
       final typeIndex = data['type'] as int? ?? 0;
-      final type =
-          (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+      final type = (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
           ? VaultItemType.values[typeIndex]
           : VaultItemType.photo;
 
@@ -132,7 +129,9 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
 
     if (!_isLoading) {
       // Detect additions by partner
-      final added = incoming.where((inc) => !_items.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !_items.any((old) => old.id == inc.id))
+          .toList();
       for (var item in added) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -149,7 +148,9 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
       }
 
       // Detect deletions by partner
-      final deleted = _items.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = _items
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (var item in deleted) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -184,7 +185,7 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
     try {
       final prefs = await SharedPreferences.getInstance();
       _hasPin = prefs.getBool(_hasPinKey) ?? false;
-      
+
       // Load wrong attempts and decoy state
       _wrongAttempts = prefs.getInt(_wrongAttemptsKey) ?? 0;
       final decoyTimeStr = prefs.getString(_decoyActivatedAtKey);
@@ -207,7 +208,9 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
             await _secureStorage.write(key: _pinKey, value: storedSharedPin);
             await prefs.remove(_pinKey);
           } catch (e) {
-            debugPrint('Secure storage write failed during migration: $e. Falling back.');
+            debugPrint(
+              'Secure storage write failed during migration: $e. Falling back.',
+            );
             await prefs.setString('vault_pin_fallback', storedSharedPin);
           }
           _hasPin = true;
@@ -271,7 +274,10 @@ class VaultProvider extends SupabaseLifecycleProvider with WidgetsBindingObserve
       _wrongAttempts++;
       await prefs.setInt(_wrongAttemptsKey, _wrongAttempts);
       if (_wrongAttempts >= 3) {
-        await prefs.setString(_decoyActivatedAtKey, DateTime.now().toIso8601String());
+        await prefs.setString(
+          _decoyActivatedAtKey,
+          DateTime.now().toIso8601String(),
+        );
       }
       if (!isDisposed) notifyListeners();
       return false;

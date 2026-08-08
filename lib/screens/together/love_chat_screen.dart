@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
+import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -54,6 +55,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
     final theme = themeProvider.currentLoveTheme;
     final rp = context.watch<RelationshipProvider>();
     final provider = context.watch<LoveChatProvider>();
+    context.watch<NoteitProvider>();
     
     final yourName = rp.yourName ?? 'Me';
     final partnerName = rp.partnerName ?? 'Partner';
@@ -201,7 +203,22 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
     if (isScrapbook) {
       try {
         final payload = message.content.substring('[scrapbook]:'.length);
-        scrapbookItem = NoteitItem.fromJson(jsonDecode(payload));
+        if (payload.trim().startsWith('{')) {
+          scrapbookItem = NoteitItem.fromJson(jsonDecode(payload));
+        } else {
+          final noteId = payload.trim();
+          final noteitProvider = context.read<NoteitProvider>();
+          try {
+            scrapbookItem = noteitProvider.notes.firstWhere((n) => n.id == noteId);
+          } catch (_) {
+            scrapbookItem = NoteitItem(
+              id: noteId,
+              type: NoteitType.drawing,
+              sender: isMe ? 'you' : 'partner',
+              createdAt: message.createdAt,
+            );
+          }
+        }
       } catch (e) {
         debugPrint('Failed to parse scrapbook chat message: $e');
       }
@@ -315,7 +332,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
         } else {
           drawingWidget = CustomPaint(
             painter: ScaleDrawingPainter(
-              strokes: NoteitItem.deserializeStrokes(scrapbookItem.content),
+              colorfulStrokes: NoteitItem.deserializeColorfulStrokes(scrapbookItem.content, theme.textColor),
               color: theme.textColor,
               strokeWidth: 2.0,
             ),
@@ -681,7 +698,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
     if (item.type == NoteitType.drawing) {
       return CustomPaint(
         painter: ScaleDrawingPainter(
-          strokes: NoteitItem.deserializeStrokes(item.content),
+          colorfulStrokes: NoteitItem.deserializeColorfulStrokes(item.content, theme.textColor),
           color: theme.textColor,
           strokeWidth: 3.5,
         ),

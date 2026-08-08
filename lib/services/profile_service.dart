@@ -16,6 +16,14 @@ class ProfileService {
         .eq('id', userId);
   }
 
+  /// Updates partner profile fields via the update_partner_profile RPC (Audit C-2).
+  Future<void> updatePartnerProfile(String targetUserId, Map<String, dynamic> updates) async {
+    await Supabase.instance.client.rpc('update_partner_profile', params: {
+      'p_target_user_id': targetUserId,
+      'p_updates': updates,
+    });
+  }
+
   /// Updates relationship details in the `couples` table.
   Future<void> updateCoupleDetails(String coupleId, Map<String, dynamic> data) async {
     await Supabase.instance.client
@@ -55,16 +63,36 @@ class ProfileService {
     required String storagePath,
   }) async {
     final file = File(filePath);
+    if (!await file.exists()) {
+      throw Exception('Avatar image file does not exist at $filePath');
+    }
+
+    final lowerPath = filePath.toLowerCase();
+    String mimeType = 'image/jpeg';
+    if (lowerPath.endsWith('.png')) {
+      mimeType = 'image/png';
+    } else if (lowerPath.endsWith('.gif')) {
+      mimeType = 'image/gif';
+    } else if (lowerPath.endsWith('.webp')) {
+      mimeType = 'image/webp';
+    }
+
     await Supabase.instance.client.storage
         .from(bucketName)
         .upload(
           storagePath,
           file,
-          fileOptions: const FileOptions(upsert: true),
+          fileOptions: FileOptions(upsert: true, contentType: mimeType),
         );
 
-    return Supabase.instance.client.storage
+    final publicUrl = Supabase.instance.client.storage
         .from(bucketName)
         .getPublicUrl(storagePath);
+
+    if (publicUrl.isEmpty) {
+      throw Exception('Failed to generate public URL for avatar at $storagePath');
+    }
+
+    return publicUrl;
   }
 }

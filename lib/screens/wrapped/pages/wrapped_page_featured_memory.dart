@@ -33,16 +33,16 @@ class WrappedPageFeaturedMemory extends StatelessWidget {
                 ? CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) =>
+                    placeholder: (context, url) =>
                         Container(color: const Color(0xFF1c1c2e)),
-                    errorWidget: (_, __, ___) =>
+                    errorWidget: (context, url, error) =>
                         _gradientFallback(context),
                   )
                 : imagePath != null
                     ? Image.asset(
                         imagePath,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorBuilder: (context, error, stackTrace) =>
                             _gradientFallback(context),
                       )
                     : _gradientFallback(context),

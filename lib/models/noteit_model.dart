@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:convert';
+import 'canvas_document.dart';
 
 enum NoteitType { drawing, photo, text }
 enum SyncStatus { sending, synced, failed }
@@ -149,22 +151,71 @@ class NoteitItem {
       return [];
     }
   }
+
+  static List<ColorfulStroke> deserializeColorfulStrokes(String? data, Color defaultColor) {
+    if (data == null || data.isEmpty) return [];
+    try {
+      final trimmed = data.trim();
+      if (trimmed.startsWith('{')) {
+        final doc = CanvasDocument.fromJson(jsonDecode(trimmed));
+        final List<ColorfulStroke> list = [];
+        for (final obj in doc.objects) {
+          if (obj is StrokeObject && !obj.isEraser) {
+            final points = obj.points.map((p) => Offset(p.x, p.y)).toList();
+            list.add(ColorfulStroke(
+              points: points,
+              color: Color(obj.color),
+              strokeWidth: obj.strokeWidth,
+            ));
+          }
+        }
+        return list;
+      } else {
+        final legacy = deserializeStrokes(data);
+        return legacy.map((s) => ColorfulStroke(
+          points: s,
+          color: defaultColor,
+          strokeWidth: 2.5,
+        )).toList();
+      }
+    } catch (e) {
+      debugPrint('Failed to deserialize colorful strokes: $e');
+      return [];
+    }
+  }
+}
+
+class ColorfulStroke {
+  final List<Offset> points;
+  final Color color;
+  final double strokeWidth;
+
+  ColorfulStroke({
+    required this.points,
+    required this.color,
+    required this.strokeWidth,
+  });
 }
 
 class ScaleDrawingPainter extends CustomPainter {
-  final List<List<Offset>> strokes;
+  final List<List<Offset>>? strokes;
+  final List<ColorfulStroke>? colorfulStrokes;
   final Color color;
   final double strokeWidth;
 
   ScaleDrawingPainter({
-    required this.strokes,
+    this.strokes,
+    this.colorfulStrokes,
     required this.color,
     required this.strokeWidth,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (strokes.isEmpty) return;
+    final List<ColorfulStroke> finalStrokes = colorfulStrokes ?? 
+        (strokes?.map((s) => ColorfulStroke(points: s, color: color, strokeWidth: strokeWidth)).toList() ?? []);
+
+    if (finalStrokes.isEmpty) return;
 
     double minX = double.infinity;
     double maxX = double.negativeInfinity;
@@ -172,8 +223,8 @@ class ScaleDrawingPainter extends CustomPainter {
     double maxY = double.negativeInfinity;
     bool hasPoints = false;
 
-    for (final stroke in strokes) {
-      for (final p in stroke) {
+    for (final stroke in finalStrokes) {
+      for (final p in stroke.points) {
         if (p.dx < minX) minX = p.dx;
         if (p.dx > maxX) maxX = p.dx;
         if (p.dy < minY) minY = p.dy;
@@ -201,22 +252,23 @@ class ScaleDrawingPainter extends CustomPainter {
     final sourceCenterX = minX + w / 2;
     final sourceCenterY = minY + h / 2;
 
-    final paint = Paint()
-      ..color = color
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
+    for (final stroke in finalStrokes) {
+      if (stroke.points.isEmpty) continue;
 
-    for (final stroke in strokes) {
-      if (stroke.isEmpty) continue;
-      final firstPoint = stroke.first;
+      final paint = Paint()
+        ..color = stroke.color
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..strokeWidth = stroke.strokeWidth * scale
+        ..style = PaintingStyle.stroke;
+
+      final firstPoint = stroke.points.first;
       final startX = targetCenterX + (firstPoint.dx - sourceCenterX) * scale;
       final startY = targetCenterY + (firstPoint.dy - sourceCenterY) * scale;
 
       final path = Path()..moveTo(startX, startY);
-      for (int i = 1; i < stroke.length; i++) {
-        final p = stroke[i];
+      for (int i = 1; i < stroke.points.length; i++) {
+        final p = stroke.points[i];
         final px = targetCenterX + (p.dx - sourceCenterX) * scale;
         final py = targetCenterY + (p.dy - sourceCenterY) * scale;
         path.lineTo(px, py);
@@ -228,6 +280,7 @@ class ScaleDrawingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant ScaleDrawingPainter oldDelegate) {
     return oldDelegate.strokes != strokes ||
+        oldDelegate.colorfulStrokes != colorfulStrokes ||
         oldDelegate.color != color ||
         oldDelegate.strokeWidth != strokeWidth;
   }

@@ -44,7 +44,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _descController.text = existingEvent?.description ?? '';
     _selectedType = existingEvent?.type ?? CalendarEventType.other;
     _selectedTime = existingEvent?.time;
-    final eventDate = existingEvent?.date ?? initialDate ?? _selectedDay;
+    var eventDate = existingEvent?.date ?? initialDate ?? _selectedDay;
 
     showModalBottomSheet(
       context: context,
@@ -91,11 +91,69 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Date: ${DateFormat('MMMM dd, yyyy').format(eventDate)}',
-                    style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: eventDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                        builder: (context, child) {
+                          final isDark = theme.isDark;
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: isDark
+                                  ? ColorScheme.dark(
+                                      primary: theme.accentColor,
+                                      onPrimary: Colors.white,
+                                      surface: theme.secondaryColor,
+                                      onSurface: theme.textColor,
+                                    )
+                                  : ColorScheme.light(
+                                      primary: theme.accentColor,
+                                      onPrimary: Colors.white,
+                                      surface: theme.primaryColor,
+                                      onSurface: theme.textColor,
+                                    ),
+                              dialogTheme: DialogThemeData(backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor),
+                              datePickerTheme: DatePickerThemeData(
+                                backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor,
+                                headerForegroundColor: theme.textColor,
+                                weekdayStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
+                                dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                  if (states.contains(WidgetState.selected)) {
+                                    return Colors.white;
+                                  }
+                                  return theme.textColor;
+                                }),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) setModalState(() => eventDate = picked);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: theme.textColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Date: ${DateFormat('MMMM dd, yyyy').format(eventDate)}',
+                            style: AppTypography.body(color: theme.textColor),
+                          ),
+                          Icon(Icons.calendar_today_rounded, color: theme.textColor.withValues(alpha: 0.7)),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   TextField(
                     controller: _titleController,
                     style: AppTypography.body(color: theme.textColor),
@@ -137,18 +195,41 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   InkWell(
                     onTap: () async {
                       final picked = await showTimePicker(
                         context: context,
                         initialTime: _selectedTime ?? TimeOfDay.now(),
                         builder: (context, child) {
+                          final isDark = theme.isDark;
                           return Theme(
                             data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.dark(
-                                primary: theme.accentColor,
-                                surface: theme.secondaryColor,
+                              colorScheme: isDark
+                                  ? ColorScheme.dark(
+                                      primary: theme.accentColor,
+                                      onPrimary: Colors.white,
+                                      surface: theme.secondaryColor,
+                                      onSurface: theme.textColor,
+                                    )
+                                  : ColorScheme.light(
+                                      primary: theme.accentColor,
+                                      onPrimary: Colors.white,
+                                      surface: theme.primaryColor,
+                                      onSurface: theme.textColor,
+                                    ),
+                              dialogTheme: DialogThemeData(backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor),
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor,
+                                hourMinuteTextColor: theme.textColor,
+                                hourMinuteColor: theme.textColor.withValues(alpha: 0.08),
+                                dayPeriodTextColor: theme.textColor,
+                                dayPeriodColor: theme.textColor.withValues(alpha: 0.08),
+                                dialTextColor: theme.textColor,
+                                dialBackgroundColor: theme.textColor.withValues(alpha: 0.08),
+                                dialHandColor: theme.accentColor,
+                                entryModeIconColor: theme.accentColor,
+                                helpTextStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
                               ),
                             ),
                             child: child!,

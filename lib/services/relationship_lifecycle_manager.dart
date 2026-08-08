@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:days_together/services/realtime_subscription_manager.dart';
+import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
 /// Standard interface for relationship lifecycle observers.
@@ -22,6 +23,8 @@ class RelationshipLifecycleManager {
 
   final List<RelationshipLifecycleAware> _listeners = [];
   RelationshipProvider? _relationshipProvider;
+
+  RelationshipProvider? get relationshipProvider => _relationshipProvider;
 
   void setRelationshipProvider(RelationshipProvider provider) {
     _relationshipProvider = provider;
@@ -61,6 +64,7 @@ class RelationshipLifecycleManager {
 
   Future<void> handleDisconnect() async {
     debugPrint('RelationshipLifecycleManager: Coordinating Disconnect event...');
+    await HomeWidgetService.instance.clearWidget();
     for (final listener in _listeners) {
       try {
         await listener.onDisconnect();
@@ -72,6 +76,7 @@ class RelationshipLifecycleManager {
 
   Future<void> handleLogout() async {
     debugPrint('RelationshipLifecycleManager: Coordinating Logout event...');
+    await HomeWidgetService.instance.clearWidget();
     for (final listener in _listeners) {
       try {
         await listener.onLogout();
@@ -216,11 +221,11 @@ abstract class SupabaseLifecycleProvider extends RelationshipLifecycleProvider {
       disposeRealtime();
 
       if (coupleId != null && userId != null) {
-        if (hasListeners && relationship.isFirebaseAvailable) {
+        if (hasListeners && relationship.isSupabaseAvailable) {
           initRealtime();
         }
       }
-    } else if (relationship.isFirebaseAvailable && _syncSub == null && hasListeners && coupleId != null) {
+    } else if (relationship.isSupabaseAvailable && _syncSub == null && hasListeners && coupleId != null) {
       initRealtime();
     }
   }

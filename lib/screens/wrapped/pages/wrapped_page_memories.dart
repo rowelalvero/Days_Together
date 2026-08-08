@@ -105,9 +105,9 @@ class WrappedPageMemories extends StatelessWidget {
                                   ? CachedNetworkImage(
                                       imageUrl: imageUrl,
                                       fit: BoxFit.cover,
-                                      placeholder: (_, __) => Container(
+                                      placeholder: (context, url) => Container(
                                           color: Colors.white10),
-                                      errorWidget: (_, __, ___) =>
+                                      errorWidget: (context, url, error) =>
                                           _emptyImageBox(),
                                     )
                                   : imagePath != null
@@ -115,7 +115,7 @@ class WrappedPageMemories extends StatelessWidget {
                                           imagePath,
                                           fit: BoxFit.cover,
                                           errorBuilder:
-                                              (_, __, ___) => _emptyImageBox(),
+                                              (context, error, stackTrace) => _emptyImageBox(),
                                         )
                                       : _emptyImageBox(),
                             ),

@@ -42,7 +42,7 @@ class CurrentlyProvider extends SupabaseLifecycleProvider {
   String get tableName => 'love_taps';
 
   @override
-  List<String> get primaryKey => const ['couple_id', 'date'];
+  List<String> get primaryKey => const ['id'];
 
   CurrentlyProvider() : super();
 

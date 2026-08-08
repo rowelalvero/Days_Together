@@ -5,15 +5,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/repositories/timeline_repository.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -47,7 +44,10 @@ class TimelineProvider extends SupabaseLifecycleProvider {
     if (_timelineItems.isEmpty) {
       _currentScrubIndex = 0;
     } else {
-      _currentScrubIndex = _currentScrubIndex.clamp(0, _timelineItems.length - 1);
+      _currentScrubIndex = _currentScrubIndex.clamp(
+        0,
+        _timelineItems.length - 1,
+      );
     }
     if (notify && !isDisposed) {
       notifyListeners();
@@ -72,18 +72,22 @@ class TimelineProvider extends SupabaseLifecycleProvider {
   }
 
   Future<void> toggleSortOrder() async {
-    final oldItem = _timelineItems.isNotEmpty && _currentScrubIndex < _timelineItems.length
+    final oldItem =
+        _timelineItems.isNotEmpty && _currentScrubIndex < _timelineItems.length
         ? _timelineItems[_currentScrubIndex]
         : null;
     _isAscending = !_isAscending;
-    _timelineItems.sort((a, b) => _isAscending
-        ? a.date.compareTo(b.date)
-        : b.date.compareTo(a.date));
+    _timelineItems.sort(
+      (a, b) =>
+          _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+    );
     for (var i = 0; i < _timelineItems.length; i++) {
       _timelineItems[i].position = i;
     }
     if (oldItem != null) {
-      final newIndex = _timelineItems.indexWhere((item) => item.id == oldItem.id);
+      final newIndex = _timelineItems.indexWhere(
+        (item) => item.id == oldItem.id,
+      );
       if (newIndex != -1) {
         _currentScrubIndex = newIndex;
       }
@@ -113,7 +117,9 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       final List<dynamic> res = await Supabase.instance.client
           .from('timeline_items')
           .select()
-          .eq('couple_id', coupleId!);
+          .eq('couple_id', coupleId!)
+          .order('date', ascending: false)
+          .limit(100);
       final parsed = res.map((data) {
         final rawComments = data['comments'];
         List<CommentData> parsedComments = [];
@@ -152,9 +158,10 @@ class TimelineProvider extends SupabaseLifecycleProvider {
         );
       }).toList();
 
-      parsed.sort((a, b) => _isAscending
-          ? a.date.compareTo(b.date)
-          : b.date.compareTo(a.date));
+      parsed.sort(
+        (a, b) =>
+            _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+      );
 
       for (var i = 0; i < parsed.length; i++) {
         parsed[i].position = i;
@@ -202,7 +209,9 @@ class TimelineProvider extends SupabaseLifecycleProvider {
         location: data['location'] as String?,
         imagePath: data['image_path'] as String?,
         networkImageUrl: data['network_image_url'] as String?,
-        date: data['date'] != null ? DateTime.parse(data['date'] as String).toLocal() : DateTime.now(),
+        date: data['date'] != null
+            ? DateTime.parse(data['date'] as String).toLocal()
+            : DateTime.now(),
         isImageCard: data['is_image_card'] ?? false,
         position: data['position'] ?? 0,
         mood: data['mood'] ?? '😍',
@@ -212,13 +221,16 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       );
     }).toList();
 
-    incoming.sort((a, b) => _isAscending
-        ? a.date.compareTo(b.date)
-        : b.date.compareTo(a.date));
+    incoming.sort(
+      (a, b) =>
+          _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+    );
 
     if (!_isLoading) {
       // Detect additions by partner
-      final added = incoming.where((inc) => !_timelineItems.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !_timelineItems.any((old) => old.id == inc.id))
+          .toList();
       for (var item in added) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -260,7 +272,13 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect deletions by partner
-      final deleted = _timelineItems.where((old) => !incoming.any((inc) => inc.id == old.id) && !_locallyDeletedIds.contains(old.id)).toList();
+      final deleted = _timelineItems
+          .where(
+            (old) =>
+                !incoming.any((inc) => inc.id == old.id) &&
+                !_locallyDeletedIds.contains(old.id),
+          )
+          .toList();
       for (var item in deleted) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -300,9 +318,10 @@ class TimelineProvider extends SupabaseLifecycleProvider {
 
     try {
       _timelineItems = await _repository.loadTimelineItems();
-      _timelineItems.sort((a, b) => _isAscending
-          ? a.date.compareTo(b.date)
-          : b.date.compareTo(a.date));
+      _timelineItems.sort(
+        (a, b) =>
+            _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+      );
       for (var i = 0; i < _timelineItems.length; i++) {
         _timelineItems[i].position = i;
       }
@@ -339,10 +358,13 @@ class TimelineProvider extends SupabaseLifecycleProvider {
         }
 
         // Calculate chronological position of this item
-        final sortedList = List<TimelineItemData>.from(_timelineItems)..add(item);
-        sortedList.sort((a, b) => _isAscending
-            ? a.date.compareTo(b.date)
-            : b.date.compareTo(a.date));
+        final sortedList = List<TimelineItemData>.from(_timelineItems)
+          ..add(item);
+        sortedList.sort(
+          (a, b) => _isAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date),
+        );
         final calculatedPosition = sortedList.indexOf(item);
 
         final Map<String, dynamic> dbData = {
@@ -397,9 +419,11 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       } catch (e) {
         debugPrint('TimelineProvider.addTimelineItem Supabase error: $e');
         _timelineItems.add(item);
-        _timelineItems.sort((a, b) => _isAscending
-            ? a.date.compareTo(b.date)
-            : b.date.compareTo(a.date));
+        _timelineItems.sort(
+          (a, b) => _isAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date),
+        );
         for (var i = 0; i < _timelineItems.length; i++) {
           _timelineItems[i].position = i;
         }
@@ -408,9 +432,10 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       }
     } else {
       _timelineItems.add(item);
-      _timelineItems.sort((a, b) => _isAscending
-          ? a.date.compareTo(b.date)
-          : b.date.compareTo(a.date));
+      _timelineItems.sort(
+        (a, b) =>
+            _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+      );
       for (var i = 0; i < _timelineItems.length; i++) {
         _timelineItems[i].position = i;
       }
@@ -469,9 +494,11 @@ class TimelineProvider extends SupabaseLifecycleProvider {
         } else {
           sortedList.add(updatedItem);
         }
-        sortedList.sort((a, b) => _isAscending
-            ? a.date.compareTo(b.date)
-            : b.date.compareTo(a.date));
+        sortedList.sort(
+          (a, b) => _isAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date),
+        );
         final calculatedPosition = sortedList.indexOf(updatedItem);
 
         final Map<String, dynamic> dbData = {
@@ -512,9 +539,11 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       } catch (e) {
         debugPrint('TimelineProvider.updateTimelineItem Supabase error: $e');
         _timelineItems[index] = updatedItem;
-        _timelineItems.sort((a, b) => _isAscending
-            ? a.date.compareTo(b.date)
-            : b.date.compareTo(a.date));
+        _timelineItems.sort(
+          (a, b) => _isAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date),
+        );
         for (var i = 0; i < _timelineItems.length; i++) {
           _timelineItems[i].position = i;
         }
@@ -523,9 +552,10 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       }
     } else {
       _timelineItems[index] = updatedItem;
-      _timelineItems.sort((a, b) => _isAscending
-          ? a.date.compareTo(b.date)
-          : b.date.compareTo(a.date));
+      _timelineItems.sort(
+        (a, b) =>
+            _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+      );
       for (var i = 0; i < _timelineItems.length; i++) {
         _timelineItems[i].position = i;
       }
@@ -750,5 +780,4 @@ class TimelineProvider extends SupabaseLifecycleProvider {
     );
     await updateTimelineItem(itemId, updatedItem);
   }
-
 }

@@ -1,4 +1,3 @@
-import 'package:days_together/screens/onboarding/create_couple_code_screen.dart';
 import 'package:days_together/screens/onboarding/join_couple_code_screen.dart';
 import 'package:days_together/screens/onboarding/recover_relationship_screen.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +7,15 @@ import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/widgets/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
 
-class PairingSelectionScreen extends StatelessWidget {
+class PairingSelectionScreen extends StatefulWidget {
   const PairingSelectionScreen({super.key});
+
+  @override
+  State<PairingSelectionScreen> createState() => _PairingSelectionScreenState();
+}
+
+class _PairingSelectionScreenState extends State<PairingSelectionScreen> {
+  bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +35,10 @@ class PairingSelectionScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: theme.textColor,
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -57,8 +66,10 @@ class PairingSelectionScreen extends StatelessWidget {
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () async {
+                    if (_isNavigating) return;
+                    _isNavigating = true;
                     final provider = context.read<RelationshipProvider>();
-                    final result = await SafeLoadingDialog.run<bool>(
+                    await SafeLoadingDialog.run<bool>(
                       context: context,
                       future: () async {
                         await provider.createRelationshipWorkspace();
@@ -67,47 +78,49 @@ class PairingSelectionScreen extends StatelessWidget {
                       timeoutSeconds: 15,
                       loadingMessage: 'Creating workspace...',
                     );
-
-                    if (result == true && context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CreateCoupleCodeScreen(),
-                        ),
-                      );
-                    }
+                    if (mounted) _isNavigating = false;
                   },
                 ),
                 const SizedBox(height: 16),
                 _PairingCard(
                   icon: Icons.link_rounded,
                   title: "Join with Pairing Code",
-                  subtitle: "Connect to your partner's newly created workspace.",
+                  subtitle:
+                      "Connect to your partner's newly created workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () {
+                    if (_isNavigating) return;
+                    _isNavigating = true;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => const JoinCoupleCodeScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      if (mounted) _isNavigating = false;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
                 _PairingCard(
                   icon: Icons.security_rounded,
                   title: "Recover Existing Relationship",
-                  subtitle: "Reconnect to a workspace you previously belonged to.",
+                  subtitle:
+                      "Reconnect to a workspace you previously belonged to.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
                   onTap: () {
+                    if (_isNavigating) return;
+                    _isNavigating = true;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => const RecoverRelationshipScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      if (mounted) _isNavigating = false;
+                    });
                   },
                 ),
                 const Spacer(flex: 2),
@@ -184,10 +197,7 @@ class _PairingCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: textColor.withValues(alpha: 0.4),
-            ),
+            Icon(Icons.chevron_right, color: textColor.withValues(alpha: 0.4)),
           ],
         ),
       ),

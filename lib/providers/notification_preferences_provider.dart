@@ -1,5 +1,4 @@
 import 'package:days_together/models/notification_preferences_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -50,11 +49,15 @@ class NotificationPreferencesProvider extends RelationshipLifecycleProvider {
           userId: userId,
           timezone: DateTime.now().timeZoneName,
         );
-        await client.from('user_notification_preferences').insert(defaultPref.toJson());
+        await client
+            .from('user_notification_preferences')
+            .insert(defaultPref.toJson());
         _preferences = defaultPref;
       }
     } catch (e) {
-      debugPrint('NotificationPreferencesProvider: Error loading preferences: $e');
+      debugPrint(
+        'NotificationPreferencesProvider: Error loading preferences: $e',
+      );
     } finally {
       _isLoading = false;
       if (!isDisposed) notifyListeners();
@@ -70,14 +73,14 @@ class NotificationPreferencesProvider extends RelationshipLifecycleProvider {
 
     try {
       final client = Supabase.instance.client;
-      await client
-          .from('user_notification_preferences')
-          .upsert(updatedJson);
+      await client.from('user_notification_preferences').upsert(updatedJson);
 
       _preferences = NotificationPreferences.fromJson(updatedJson);
       notifyListeners();
     } catch (e) {
-      debugPrint('NotificationPreferencesProvider: Error updating preference $key: $e');
+      debugPrint(
+        'NotificationPreferencesProvider: Error updating preference $key: $e',
+      );
     }
   }
 

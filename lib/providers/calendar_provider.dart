@@ -3,12 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/calendar_event_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -50,7 +47,8 @@ class CalendarProvider extends SupabaseLifecycleProvider {
         final hour = data['hour'] as int?;
         final minute = data['minute'] as int?;
         final typeIndex = data['type'] as int? ?? 4;
-        final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
+        final type =
+            (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
             ? CalendarEventType.values[typeIndex]
             : CalendarEventType.other;
 
@@ -83,7 +81,8 @@ class CalendarProvider extends SupabaseLifecycleProvider {
       final hour = data['hour'] as int?;
       final minute = data['minute'] as int?;
       final typeIndex = data['type'] as int? ?? 4;
-      final type = (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
+      final type =
+          (typeIndex >= 0 && typeIndex < CalendarEventType.values.length)
           ? CalendarEventType.values[typeIndex]
           : CalendarEventType.other;
 
@@ -91,8 +90,12 @@ class CalendarProvider extends SupabaseLifecycleProvider {
         id: data['id'] as String,
         title: data['title'] ?? '',
         description: data['description'] as String?,
-        date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-        time: hour != null && minute != null ? TimeOfDay(hour: hour, minute: minute) : null,
+        date: data['date'] != null
+            ? DateTime.parse(data['date'] as String)
+            : DateTime.now(),
+        time: hour != null && minute != null
+            ? TimeOfDay(hour: hour, minute: minute)
+            : null,
         type: type,
         isRecurringYearly: data['is_recurring_yearly'] ?? false,
       );
@@ -100,7 +103,9 @@ class CalendarProvider extends SupabaseLifecycleProvider {
 
     if (!_isLoading) {
       // Detect additions by partner
-      final added = incoming.where((inc) => !_events.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !_events.any((old) => old.id == inc.id))
+          .toList();
       for (var event in added) {
         if (_localMutations.contains(event.id)) {
           _localMutations.remove(event.id);
@@ -118,8 +123,19 @@ class CalendarProvider extends SupabaseLifecycleProvider {
 
       // Detect edits by partner
       final updated = incoming.where((inc) {
-        final match = _events.firstWhere((old) => old.id == inc.id, orElse: () => CalendarEvent(id: '', title: '', date: DateTime.now(), type: CalendarEventType.other));
-        return match.id.isNotEmpty && (match.title != inc.title || match.description != inc.description || match.date != inc.date);
+        final match = _events.firstWhere(
+          (old) => old.id == inc.id,
+          orElse: () => CalendarEvent(
+            id: '',
+            title: '',
+            date: DateTime.now(),
+            type: CalendarEventType.other,
+          ),
+        );
+        return match.id.isNotEmpty &&
+            (match.title != inc.title ||
+                match.description != inc.description ||
+                match.date != inc.date);
       }).toList();
       for (var event in updated) {
         if (_localMutations.contains(event.id)) {
@@ -137,7 +153,9 @@ class CalendarProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect deletions by partner
-      final deleted = _events.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = _events
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (var event in deleted) {
         if (_localMutations.contains(event.id)) {
           _localMutations.remove(event.id);
@@ -174,9 +192,7 @@ class CalendarProvider extends SupabaseLifecycleProvider {
       final jsonString = prefs.getString(_storageKey);
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        _events = jsonList
-            .map((json) => CalendarEvent.fromJson(json))
-            .toList();
+        _events = jsonList.map((json) => CalendarEvent.fromJson(json)).toList();
       } else {
         _events = [];
       }
@@ -192,9 +208,7 @@ class CalendarProvider extends SupabaseLifecycleProvider {
     _localMutations.add(event.id);
     if (coupleId != null) {
       try {
-        await Supabase.instance.client
-            .from('calendar_events')
-            .upsert({
+        await Supabase.instance.client.from('calendar_events').upsert({
           'id': event.id,
           'couple_id': coupleId,
           'title': event.title,
@@ -238,14 +252,15 @@ class CalendarProvider extends SupabaseLifecycleProvider {
         await Supabase.instance.client
             .from('calendar_events')
             .update({
-          'title': updatedEvent.title,
-          'description': updatedEvent.description,
-          'date': updatedEvent.date.toIso8601String(),
-          'hour': updatedEvent.time?.hour,
-          'minute': updatedEvent.time?.minute,
-          'type': updatedEvent.type.index,
-          'is_recurring_yearly': updatedEvent.isRecurringYearly,
-        }).eq('id', updatedEvent.id);
+              'title': updatedEvent.title,
+              'description': updatedEvent.description,
+              'date': updatedEvent.date.toIso8601String(),
+              'hour': updatedEvent.time?.hour,
+              'minute': updatedEvent.time?.minute,
+              'type': updatedEvent.type.index,
+              'is_recurring_yearly': updatedEvent.isRecurringYearly,
+            })
+            .eq('id', updatedEvent.id);
         NotificationService().sendPartnerNotification(
           title: 'Calendar Event Updated 📅',
           body: 'Your partner updated the event: "${updatedEvent.title}"',
@@ -279,7 +294,15 @@ class CalendarProvider extends SupabaseLifecycleProvider {
 
   Future<void> deleteEvent(String id) async {
     _localMutations.add(id);
-    final eventToDelete = _events.firstWhere((e) => e.id == id, orElse: () => CalendarEvent(id: id, title: 'Event', date: DateTime.now(), type: CalendarEventType.date));
+    final eventToDelete = _events.firstWhere(
+      (e) => e.id == id,
+      orElse: () => CalendarEvent(
+        id: id,
+        title: 'Event',
+        date: DateTime.now(),
+        type: CalendarEventType.date,
+      ),
+    );
     if (coupleId != null) {
       try {
         await Supabase.instance.client
@@ -337,5 +360,4 @@ class CalendarProvider extends SupabaseLifecycleProvider {
       debugPrint('CalendarProvider._persistLocalOnly failed: $e\n$st');
     }
   }
-
 }

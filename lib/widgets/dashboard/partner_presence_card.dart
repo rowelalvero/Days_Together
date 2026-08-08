@@ -30,6 +30,14 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
     _isOnlineSimulated = widget.relationshipProvider.isPartnerOnline;
   }
 
+  @override
+  void didUpdateWidget(covariant PartnerPresenceCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.relationshipProvider.isPartnerOnline != oldWidget.relationshipProvider.isPartnerOnline) {
+      _isOnlineSimulated = widget.relationshipProvider.isPartnerOnline;
+    }
+  }
+
   void _triggerLoveTap(BuildContext context) {
     setState(() {
       _isTapped = true;

@@ -357,7 +357,7 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                   pinned: true,
                   backgroundColor: Colors.transparent,
                   leading: IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    icon: Icon(Icons.close_rounded, color: theme.textColor),
                     onPressed: () => Navigator.pop(context),
                   ),
                   actions: [

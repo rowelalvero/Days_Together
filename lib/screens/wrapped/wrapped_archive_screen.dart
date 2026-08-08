@@ -43,8 +43,8 @@ class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => WrappedScreen(data: data!),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+        pageBuilder: (context, animation, secondaryAnimation) => WrappedScreen(data: data!),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
           opacity: animation,
           child: child,
         ),

@@ -651,7 +651,7 @@ class _NoteitScreenState extends State<NoteitScreen>
       // 3b. Mirror to love chat if paired
       try {
         final yourName = rp.yourName ?? 'Me';
-        final scrapbookMessageContent = '[scrapbook]:${jsonEncode(newItem.toJson())}';
+        final scrapbookMessageContent = '[scrapbook]:${newItem.id}';
         await chatProvider.sendMessage(scrapbookMessageContent, yourName);
       } catch (chatError) {
         debugPrint('Failed to mirror scrapbook to chat: $chatError');
@@ -2545,7 +2545,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     if (item.type == NoteitType.drawing) {
       return CustomPaint(
         painter: ScaleDrawingPainter(
-          strokes: NoteitItem.deserializeStrokes(item.content),
+          colorfulStrokes: NoteitItem.deserializeColorfulStrokes(item.content, Colors.white),
           color: Colors.white,
           strokeWidth: 3.5,
         ),

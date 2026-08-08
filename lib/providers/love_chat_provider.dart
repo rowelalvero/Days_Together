@@ -1,23 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:days_together/models/love_chat_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
 class LoveChatProvider extends SupabaseLifecycleProvider {
   static const String _storageKey = 'love_chat_messages';
+  static const int maxLocalMessages = 200;
 
   List<LoveChatMessage> _messages = [];
   bool _isLoading = true;
 
-  List<LoveChatMessage> get messages => coupleId == null ? const [] : List.unmodifiable(_messages);
+  List<LoveChatMessage> get messages => List.unmodifiable(_messages);
   bool get isLoading => _isLoading;
 
   @override
@@ -45,24 +42,29 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
           .from('love_notes')
           .select()
           .eq('couple_id', coupleId!)
-          .eq('type', 'chat');
-      final parsed = res.map((data) {
-        final senderId = data['sender_id'] as String? ?? '';
-        final senderType = (senderId == userId) ? 'you' : 'partner';
-        return LoveChatMessage(
-          id: data['id'] as String,
-          senderId: senderType,
-          senderName: (senderType == 'you') ? 'Me' : 'Partner',
-          content: data['content'] as String? ?? '',
-          createdAt: data['created_at'] != null
-              ? DateTime.parse(data['created_at'] as String).toLocal()
-              : DateTime.now(),
-          isPinned: false,
-        );
-      }).toList()
+          .eq('type', 'chat')
+          .order('created_at', ascending: false)
+          .limit(maxLocalMessages);
+
+      final parsed = res
+          .map((data) {
+            final senderId = data['sender_id'] as String? ?? '';
+            final senderType = (senderId == userId) ? 'you' : 'partner';
+            return LoveChatMessage(
+              id: data['id'] as String,
+              senderId: senderType,
+              senderName: (senderType == 'you') ? 'Me' : 'Partner',
+              content: data['content'] as String? ?? '',
+              createdAt: data['created_at'] != null
+                  ? DateTime.parse(data['created_at'] as String).toLocal()
+                  : DateTime.now(),
+              isPinned: false,
+            );
+          })
+          .toList()
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-      _messages = parsed;
+      _messages = parsed.take(maxLocalMessages).toList();
       await _persistLocalOnly();
       if (!isDisposed) notifyListeners();
     } catch (e) {
@@ -72,22 +74,26 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
 
   @override
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
-    _messages = dataList
+    final parsed = dataList
         .where((data) => data['type'] == 'chat')
         .map((data) {
-      final senderId = data['sender_id'] as String? ?? '';
-      final senderType = (senderId == userId) ? 'you' : 'partner';
-      return LoveChatMessage(
-        id: data['id'] as String,
-        senderId: senderType,
-        senderName: (senderType == 'you') ? 'Me' : 'Partner',
-        content: data['content'] as String? ?? '',
-        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String).toLocal() : DateTime.now(),
-        isPinned: false,
-      );
-    }).toList();
+          final senderId = data['sender_id'] as String? ?? '';
+          final senderType = (senderId == userId) ? 'you' : 'partner';
+          return LoveChatMessage(
+            id: data['id'] as String,
+            senderId: senderType,
+            senderName: (senderType == 'you') ? 'Me' : 'Partner',
+            content: data['content'] as String? ?? '',
+            createdAt: data['created_at'] != null
+                ? DateTime.parse(data['created_at'] as String).toLocal()
+                : DateTime.now(),
+            isPinned: false,
+          );
+        })
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    _messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _messages = parsed.take(maxLocalMessages).toList();
     _isLoading = false;
     if (!isDisposed) notifyListeners();
     _persistLocalOnly();
@@ -107,15 +113,36 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
       final jsonString = prefs.getString(_storageKey);
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
-        _messages = jsonList
-            .map((json) => LoveChatMessage.fromJson(json))
-            .toList();
+        final List<LoveChatMessage> parsedList = [];
+        for (final item in jsonList) {
+          try {
+            if (item is Map<String, dynamic>) {
+              parsedList.add(LoveChatMessage.fromJson(item));
+            } else if (item is Map) {
+              parsedList.add(
+                LoveChatMessage.fromJson(Map<String, dynamic>.from(item)),
+              );
+            }
+          } catch (itemErr) {
+            debugPrint('LoveChatProvider: skipping malformed chat item: $itemErr');
+          }
+        }
+
+        parsedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        final bool hadExcess = parsedList.length > maxLocalMessages;
+        _messages = parsedList.take(maxLocalMessages).toList();
+
+        // Migrate/trim oversized legacy SharedPreferences cache on disk
+        if (hadExcess) {
+          _persistLocalOnly();
+        }
       } else {
         _messages = [];
         _prepopulateWelcome();
       }
     } catch (e, st) {
       debugPrint('LoveChatProvider._loadMessages failed: $e\n$st');
+      _messages = [];
     } finally {
       _isLoading = false;
       if (!isDisposed) notifyListeners();
@@ -127,11 +154,12 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
       LoveChatMessage(
         senderId: 'partner',
         senderName: 'Partner',
-        content: 'Hi honey! Welcome to our private Love Chat! 💬 Type a message to chat with me.',
+        content:
+            'Hi honey! Welcome to our private Love Chat! 💬 Type a message to chat with me.',
         createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
       ),
     ];
-    _persist();
+    _persistLocalOnly();
   }
 
   Future<void> sendMessage(String content, String senderName) async {
@@ -142,6 +170,9 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
     );
 
     _messages.insert(0, newMessage);
+    _messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _messages = _messages.take(maxLocalMessages).toList();
+
     notifyListeners();
     await _persist();
 
@@ -163,11 +194,15 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
             body: {
               'sender_id': userId,
               'title': 'New Love Note 💖',
-              'body': content.length > 50 ? '${content.substring(0, 47)}...' : content,
+              'body': content.length > 50
+                  ? '${content.substring(0, 47)}...'
+                  : content,
             },
           );
         } catch (fcmError) {
-          debugPrint('LoveChatProvider: Failed to trigger push notification: $fcmError');
+          debugPrint(
+            'LoveChatProvider: Failed to trigger push notification: $fcmError',
+          );
         }
       } catch (e) {
         debugPrint('LoveChatProvider.sendMessage Supabase error: $e');
@@ -182,46 +217,12 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('love_notes').delete().eq('id', messageId);
+        await Supabase.instance.client
+            .from('love_notes')
+            .delete()
+            .eq('id', messageId);
       } catch (e) {
         debugPrint('LoveChatProvider.deleteMessage Supabase error: $e');
-      }
-    }
-  }
-
-  Future<void> simulatePartnerResponse() async {
-    final responses = [
-      "Aww, you make my heart melt! 🥰",
-      "Miss you so much! ❤️ Can't wait to see you.",
-      "I was just thinking about you! 💕 What are you up to?",
-      "You are the best thing that ever happened to me. 😘",
-      "Sending you the biggest hug! 🫂",
-    ];
-    final random = Random();
-    final replyContent = responses[random.nextInt(responses.length)];
-
-    final reply = LoveChatMessage(
-      senderId: 'partner',
-      senderName: 'Honey',
-      content: replyContent,
-    );
-
-    _messages.insert(0, reply);
-    notifyListeners();
-    await _persist();
-
-    if (coupleId != null) {
-      try {
-        await Supabase.instance.client.from('love_notes').upsert({
-          'id': reply.id,
-          'couple_id': coupleId,
-          'type': 'chat',
-          'content': replyContent,
-          'sender_id': 'partner_sim',
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-        });
-      } catch (e) {
-        debugPrint('LoveChatProvider.simulatePartnerResponse Supabase error: $e');
       }
     }
   }
@@ -234,11 +235,12 @@ class LoveChatProvider extends SupabaseLifecycleProvider {
   Future<void> _persistLocalOnly() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonList = _messages.map((m) => m.toJson()).toList();
+      _messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final boundedList = _messages.take(maxLocalMessages).toList();
+      final jsonList = boundedList.map((m) => m.toJson()).toList();
       await prefs.setString(_storageKey, jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('LoveChatProvider._persistLocalOnly failed: $e\n$st');
     }
   }
-
 }

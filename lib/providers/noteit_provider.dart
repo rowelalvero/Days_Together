@@ -6,13 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/services/supabase_sync_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -22,7 +20,8 @@ class NoteitProvider extends SupabaseLifecycleProvider {
   List<NoteitItem> _notes = [];
   bool _isLoading = true;
 
-  List<NoteitItem> get notes => coupleId == null ? const [] : List.unmodifiable(_notes);
+  List<NoteitItem> get notes =>
+      coupleId == null ? const [] : List.unmodifiable(_notes);
   bool get isLoading => _isLoading;
 
   NoteitItem? get latestReceived {
@@ -74,9 +73,14 @@ class NoteitProvider extends SupabaseLifecycleProvider {
           .from('love_notes')
           .select()
           .eq('couple_id', coupleId!);
-      final parsed = res.map((data) => NoteitItem.fromSupabase(data, userId!)).toList();
+      final filteredList = res.where((data) => data['type'] != 'chat').toList();
+      final parsed = filteredList
+          .map((data) => NoteitItem.fromSupabase(data, userId!))
+          .toList();
 
-      final localUnsynced = _notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
+      final localUnsynced = _notes
+          .where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you')
+          .toList();
       final Map<String, NoteitItem> mergedMap = {};
       for (var note in parsed) {
         mergedMap[note.id] = note;
@@ -99,10 +103,16 @@ class NoteitProvider extends SupabaseLifecycleProvider {
   @override
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     // Identify local unsynced love notes to preserve optimistic states
-    final localUnsynced = _notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
+    final localUnsynced = _notes
+        .where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you')
+        .toList();
 
-    final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
-    final serverNotes = filteredList.map((data) => NoteitItem.fromSupabase(data, userId!)).toList();
+    final filteredList = dataList
+        .where((data) => data['type'] != 'chat')
+        .toList();
+    final serverNotes = filteredList
+        .map((data) => NoteitItem.fromSupabase(data, userId!))
+        .toList();
 
     // Merge local optimistic unsynced notes with incoming server notes
     final Map<String, NoteitItem> mergedMap = {};
@@ -117,7 +127,13 @@ class NoteitProvider extends SupabaseLifecycleProvider {
 
     if (!_isLoading) {
       // Detect additions by partner
-      final added = serverNotes.where((srv) => srv.sender == 'partner' && !_notes.any((old) => old.id == srv.id)).toList();
+      final added = serverNotes
+          .where(
+            (srv) =>
+                srv.sender == 'partner' &&
+                !_notes.any((old) => old.id == srv.id),
+          )
+          .toList();
       for (var note in added) {
         String title = 'Partner sent a love note 💌';
         String desc = 'Shared a new text love note';
@@ -147,15 +163,27 @@ class NoteitProvider extends SupabaseLifecycleProvider {
       }
 
       // Detect deletions by partner
-      final deleted = _notes.where((old) => old.sender == 'partner' && !serverNotes.any((srv) => srv.id == old.id)).toList();
+      final deleted = _notes
+          .where(
+            (old) =>
+                old.sender == 'partner' &&
+                !serverNotes.any((srv) => srv.id == old.id),
+          )
+          .toList();
       for (var note in deleted) {
         RecentActivityService.instance.logActivity(
           activityType: 'deleted',
-          title: note.type == NoteitType.drawing ? "Partner's doodle deleted 🗑️" : "Partner's love note deleted 🗑️",
-          description: note.type == NoteitType.drawing ? 'Partner deleted a doodle' : 'Partner deleted a love note',
+          title: note.type == NoteitType.drawing
+              ? "Partner's doodle deleted 🗑️"
+              : "Partner's love note deleted 🗑️",
+          description: note.type == NoteitType.drawing
+              ? 'Partner deleted a doodle'
+              : 'Partner deleted a love note',
           icon: '🗑️',
           referenceId: note.id,
-          route: note.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+          route: note.type == NoteitType.drawing
+              ? 'doodle_notes'
+              : 'love_notes',
         );
       }
     }
@@ -343,14 +371,19 @@ class NoteitProvider extends SupabaseLifecycleProvider {
       debugPrint('NoteitProvider.sendPhoto failed: $e');
     }
   }
-  Future<NoteitItem> sendCanvas(String jsonContent, String? localImagePath) async {
+
+  Future<NoteitItem> sendCanvas(
+    String jsonContent,
+    String? localImagePath,
+  ) async {
     final noteId = const Uuid().v4();
     String? finalLocalPath;
-    
+
     if (localImagePath != null) {
       try {
         final directory = await getApplicationDocumentsDirectory();
-        final fileName = 'noteit_canvas_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final fileName =
+            'noteit_canvas_${DateTime.now().millisecondsSinceEpoch}.jpg';
         finalLocalPath = '${directory.path}/$fileName';
         await File(localImagePath).copy(finalLocalPath);
       } catch (e) {
@@ -392,7 +425,7 @@ class NoteitProvider extends SupabaseLifecycleProvider {
       referenceId: noteId,
       route: 'doodle_notes',
     );
-    
+
     return newItem;
   }
 
@@ -433,11 +466,17 @@ class NoteitProvider extends SupabaseLifecycleProvider {
 
     await RecentActivityService.instance.logActivity(
       activityType: 'deleted',
-      title: noteToDelete.type == NoteitType.drawing ? 'Doodle deleted 🗑️' : 'Love note deleted 🗑️',
-      description: noteToDelete.type == NoteitType.drawing ? 'Deleted a doodle' : 'Deleted a love note',
+      title: noteToDelete.type == NoteitType.drawing
+          ? 'Doodle deleted 🗑️'
+          : 'Love note deleted 🗑️',
+      description: noteToDelete.type == NoteitType.drawing
+          ? 'Deleted a doodle'
+          : 'Deleted a love note',
       icon: '🗑️',
       referenceId: id,
-      route: noteToDelete.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+      route: noteToDelete.type == NoteitType.drawing
+          ? 'doodle_notes'
+          : 'love_notes',
     );
   }
 
@@ -481,5 +520,4 @@ class NoteitProvider extends SupabaseLifecycleProvider {
       debugPrint('NoteitProvider._persistLocalOnly failed: $e\n$st');
     }
   }
-
 }
