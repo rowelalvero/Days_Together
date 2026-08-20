@@ -1,7 +1,10 @@
 name: days_together
 description: "A beautiful love story timeline app"
 publish_to: "none"
-version: 0.1.0
+# <versionName>+<versionCode>. The Play Store requires a unique, strictly
+# increasing build number (the part after '+') for every upload -- bump it on
+# each release or the upload is rejected.
+version: 0.1.0+1
 
 environment:
   sdk: ^3.10.0
@@ -35,6 +38,10 @@ dependencies:
   google_sign_in: ^6.2.1
   permission_handler: ^11.3.1
   cached_network_image: ^3.4.1
+  # Already pulled in transitively by cached_network_image; declared explicitly
+  # because StorageImage reads the disk cache directly to render images offline
+  # when a signed URL cannot be minted.
+  flutter_cache_manager: ^3.4.1
   flutter_secure_storage: ^9.0.0
   flutter_launcher_icons: ^0.13.1
   sqflite: ^2.3.0

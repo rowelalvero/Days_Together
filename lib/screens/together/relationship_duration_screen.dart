@@ -12,6 +12,8 @@ import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 class RelationshipDurationScreen extends StatelessWidget {
   const RelationshipDurationScreen({super.key});
@@ -914,12 +916,14 @@ class RelationshipDurationScreen extends StatelessWidget {
     if (photoUrl != null && photoUrl.isNotEmpty) {
       imageWidget = ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: Image.network(
-          photoUrl,
+        child: StorageImage(
+          bucket: StorageBuckets.timeline,
+          storageRef: photoUrl,
+          localPath: localPath,
           fit: BoxFit.cover,
           width: double.infinity,
           height: 180,
-          errorBuilder: (context, error, stackTrace) => Container(
+          errorWidget: (context) => Container(
             color: theme.textColor.withValues(alpha: 0.05),
             height: 180,
             child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 36),

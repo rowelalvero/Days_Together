@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +7,8 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/currently_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 class CurrentlyCard extends StatefulWidget {
   const CurrentlyCard({super.key});
@@ -260,19 +261,17 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
                               width: 2,
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: 24,
-                            backgroundColor: theme.textColor.withValues(alpha: 0.1),
-                            foregroundImage: partnerJoined && rp.partnerAvatarPath != null
-                                ? (rp.partnerAvatarPath!.startsWith('http')
-                                    ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
-                                    : (File(rp.partnerAvatarPath!).existsSync()
-                                        ? FileImage(File(rp.partnerAvatarPath!))
-                                        : null))
-                                : null,
-                            child: (!partnerJoined || rp.partnerAvatarPath == null)
-                                ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.3))
-                                : null,
+                          child: StorageImageBuilder(
+                            bucket: StorageBuckets.avatars,
+                            storageRef: partnerJoined ? rp.partnerAvatarPath : null,
+                            builder: (context, image) => CircleAvatar(
+                              radius: 24,
+                              backgroundColor: theme.textColor.withValues(alpha: 0.1),
+                              foregroundImage: image,
+                              child: image == null
+                                  ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.3))
+                                  : null,
+                            ),
                           ),
                         ),
                         Positioned(

@@ -6,7 +6,9 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 // Providers
 import 'package:days_together/providers/noteit_provider.dart';
@@ -2298,12 +2300,13 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
           height: double.infinity,
         );
       } else if (latest.imageUrl != null && latest.imageUrl!.isNotEmpty) {
-        drawingWidget = Image.network(
-          latest.imageUrl!,
+        drawingWidget = StorageImage(
+          bucket: StorageBuckets.loveNotes,
+          storageRef: latest.imageUrl,
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
-          errorBuilder: (context, error, stackTrace) =>
+          errorWidget: (context) =>
               const Icon(Icons.broken_image, size: 24, color: Colors.grey),
         );
       } else {
@@ -2327,12 +2330,13 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
               height: double.infinity,
             )
           : latest.imageUrl != null && latest.imageUrl!.isNotEmpty
-          ? Image.network(
-              latest.imageUrl!,
+          ? StorageImage(
+              bucket: StorageBuckets.loveNotes,
+              storageRef: latest.imageUrl,
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              errorBuilder: (context, error, stackTrace) =>
+              errorWidget: (context) =>
                   const Icon(Icons.broken_image, size: 24, color: Colors.grey),
             )
           : Center(

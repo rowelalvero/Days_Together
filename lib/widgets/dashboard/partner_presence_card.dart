@@ -1,8 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
+import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/storage_image.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 
@@ -90,28 +91,22 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
                         width: 2,
                       ),
                     ),
-                    child: CircleAvatar(
-                      radius: 26,
-                      backgroundColor: widget.theme.textColor.withValues(alpha: 0.1),
-                      foregroundImage: partnerJoined && rp.partnerAvatarPath != null
-                          ? (rp.partnerAvatarPath!.startsWith('http')
-                              ? NetworkImage(rp.partnerAvatarPath!) as ImageProvider
-                              : (File(rp.partnerAvatarPath!).existsSync()
-                                  ? FileImage(File(rp.partnerAvatarPath!))
-                                  : null))
-                          : null,
-                      onForegroundImageError: (rp.partnerAvatarPath != null &&
-                              rp.partnerAvatarPath!.startsWith('http'))
-                          ? (exception, stackTrace) {
-                              debugPrint('Error loading partner presence avatar: $exception');
-                            }
-                          : null,
-                      child: (!partnerJoined ||
-                              rp.partnerAvatarPath == null ||
-                              (rp.partnerAvatarPath!.startsWith('http') == false &&
-                                  !File(rp.partnerAvatarPath!).existsSync()))
-                          ? Icon(Icons.person, color: widget.theme.textColor.withValues(alpha: 0.3))
-                          : null,
+                    child: StorageImageBuilder(
+                      bucket: StorageBuckets.avatars,
+                      storageRef: partnerJoined ? rp.partnerAvatarPath : null,
+                      builder: (context, image) => CircleAvatar(
+                        radius: 26,
+                        backgroundColor: widget.theme.textColor.withValues(alpha: 0.1),
+                        foregroundImage: image,
+                        onForegroundImageError: image == null
+                            ? null
+                            : (exception, stackTrace) {
+                                debugPrint('Error loading partner presence avatar: $exception');
+                              },
+                        child: image == null
+                            ? Icon(Icons.person, color: widget.theme.textColor.withValues(alpha: 0.3))
+                            : null,
+                      ),
                     ),
                   ),
                   Positioned(

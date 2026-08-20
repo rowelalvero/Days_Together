@@ -14,6 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
+import 'package:days_together/services/storage_url_service.dart';
 
 class VaultProvider extends SupabaseLifecycleProvider
     with WidgetsBindingObserver {
@@ -91,7 +92,11 @@ class VaultProvider extends SupabaseLifecycleProvider
           type: type,
           content: data['content'] as String?,
           imagePath: data['image_path'] as String?,
-          imageUrl: data['network_image_url'] as String?,
+          // Must match the column addPhoto writes and the realtime handler
+          // reads. This previously read 'network_image_url', a column nothing
+          // writes, so server-synced vault photos lost their image on every
+          // cold start until a realtime event happened to arrive.
+          imageUrl: data['image_url'] as String?,
           createdAt: data['created_at'] != null
               ? DateTime.parse(data['created_at'] as String)
               : DateTime.now(),
@@ -349,21 +354,20 @@ class VaultProvider extends SupabaseLifecycleProvider
           final file = File(picked.path);
           final storagePath = 'couples/$coupleId/vault_photos/$photoId.jpg';
           await Supabase.instance.client.storage
-              .from('vault-photos')
+              .from(StorageBuckets.vaultPhotos)
               .upload(
                 storagePath,
                 file,
                 fileOptions: const FileOptions(upsert: true),
               );
-          final imageUrl = Supabase.instance.client.storage
-              .from('vault-photos')
-              .getPublicUrl(storagePath);
 
           await Supabase.instance.client.from('vault_items').upsert({
             'id': photoId,
             'couple_id': coupleId,
             'type': VaultItemType.photo.index,
-            'image_url': imageUrl,
+            // The storage PATH, not a URL. The bucket is private, so the image
+            // is rendered through StorageImage, which signs this on demand.
+            'image_url': storagePath,
             'created_at': DateTime.now().toIso8601String(),
           });
           NotificationService().sendPartnerNotification(

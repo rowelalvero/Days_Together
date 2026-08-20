@@ -1,7 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
+
+/// Compact circular avatar.
+///
+/// Accepts the same avatar refs as [CachedAvatar]: a bare storage path, a
+/// legacy public URL, a foreign URL, or a local file path.
 class AppAvatar extends StatelessWidget {
   final String? path;
   final double radius;
@@ -20,43 +25,26 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isNetwork = path != null && path!.startsWith('http');
-    final bool isLocal = path != null && !isNetwork && path!.isNotEmpty;
-
     return CircleAvatar(
       radius: radius,
       backgroundColor: backgroundColor ?? Colors.grey.withValues(alpha: 0.1),
       child: ClipOval(
-        child: _buildImage(context, isNetwork, isLocal),
+        child: StorageImageBuilder(
+          bucket: StorageBuckets.avatars,
+          storageRef: path,
+          builder: (context, image) {
+            if (image == null) return _buildPlaceholder();
+            return Image(
+              image: image,
+              width: radius * 2,
+              height: radius * 2,
+              fit: BoxFit.cover,
+              errorBuilder: (context, _, _) => _buildPlaceholder(),
+            );
+          },
+        ),
       ),
     );
-  }
-
-  Widget _buildImage(BuildContext context, bool isNetwork, bool isLocal) {
-    if (isNetwork) {
-      return CachedNetworkImage(
-        imageUrl: path!,
-        width: radius * 2,
-        height: radius * 2,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => _buildPlaceholder(),
-        errorWidget: (context, url, error) {
-          debugPrint('AppAvatar Error: $error for URL: $url');
-          return _buildPlaceholder();
-        },
-      );
-    } else if (isLocal) {
-      final file = File(path!);
-      if (file.existsSync()) {
-        return Image.file(
-          file,
-          width: radius * 2,
-          height: radius * 2,
-          fit: BoxFit.cover,
-        );
-      }
-    }
-    return _buildPlaceholder();
   }
 
   Widget _buildPlaceholder() {

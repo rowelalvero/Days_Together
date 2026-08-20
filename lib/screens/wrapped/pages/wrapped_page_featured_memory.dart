@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
 import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 /// Page 12 — full-bleed immersive featured memory image.
 class WrappedPageFeaturedMemory extends StatelessWidget {
@@ -30,13 +31,13 @@ class WrappedPageFeaturedMemory extends StatelessWidget {
               child: child,
             ),
             child: imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: imageUrl,
+                ? StorageImage(
+                    bucket: StorageBuckets.timeline,
+                    storageRef: imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) =>
+                    placeholder: (context) =>
                         Container(color: const Color(0xFF1c1c2e)),
-                    errorWidget: (context, url, error) =>
-                        _gradientFallback(context),
+                    errorWidget: (context) => _gradientFallback(context),
                   )
                 : imagePath != null
                     ? Image.asset(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/storage_url_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -222,6 +223,71 @@ void main() {
       final content = profileServiceFile.readAsStringSync();
       expect(content.contains("update_partner_profile"), true);
       expect(content.contains(".from('users')"), true);
+    });
+
+    // Regression guard for the signed-URL migration. Avatar refs are now bare
+    // storage paths rather than URLs. Anything that still asks
+    // "is this remote?" with `startsWith('http')` inverts on a bare path and
+    // treats an uploaded avatar as an un-synced local file — which makes the
+    // profile sync try to re-upload a file that does not exist.
+    test('13. a stored avatar path is not mistaken for a local file', () async {
+      SharedPreferences.setMockInitialValues({
+        'your_avatar_path': 'couples/c1/avatars/u1_1700000000.jpg',
+        'partner_avatar_path': 'couples/c1/avatars/u2_1700000001.jpg',
+      });
+
+      final provider = RelationshipProvider();
+      await Future.delayed(Duration.zero);
+
+      expect(
+        StorageUrlService.isLocalFileRef(provider.yourAvatarPath),
+        isFalse,
+        reason: 'a bare storage path must not classify as a device file',
+      );
+      expect(
+        StorageUrlService.pathFrom(
+          provider.yourAvatarPath,
+          bucket: StorageBuckets.avatars,
+        ),
+        'couples/c1/avatars/u1_1700000000.jpg',
+      );
+      expect(
+        StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.avatars,
+          ref: provider.yourAvatarPath,
+        ),
+        isNot(
+          StorageUrlService.cacheKeyFor(
+            bucket: StorageBuckets.avatars,
+            ref: provider.partnerAvatarPath,
+          ),
+        ),
+        reason: 'each partner must get a distinct image cache key',
+      );
+
+      provider.dispose();
+    });
+
+    test('14. a legacy public avatar URL still resolves after migration', () async {
+      // Rows written before the backfill still hold full public URLs; the app
+      // must keep rendering them.
+      const legacy =
+          'https://p.supabase.co/storage/v1/object/public/avatars/couples/c1/avatars/u1_1.jpg?t=1';
+      SharedPreferences.setMockInitialValues({'your_avatar_path': legacy});
+
+      final provider = RelationshipProvider();
+      await Future.delayed(Duration.zero);
+
+      expect(
+        StorageUrlService.pathFrom(
+          provider.yourAvatarPath,
+          bucket: StorageBuckets.avatars,
+        ),
+        'couples/c1/avatars/u1_1.jpg',
+        reason: 'legacy URLs must reduce to the same path as a bare ref',
+      );
+
+      provider.dispose();
     });
   });
 }

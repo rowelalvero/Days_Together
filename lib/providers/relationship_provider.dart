@@ -14,6 +14,7 @@ import 'package:days_together/services/profile_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 import 'package:days_together/services/home_widget_service.dart';
+import 'package:days_together/services/storage_url_service.dart';
 
 const Object _unset = Object();
 
@@ -57,62 +58,54 @@ class RelationshipProvider with ChangeNotifier {
     }
   }
 
-  /// Returns `true` when [url] looks like a valid, loadable HTTP(S) URL.
-  static bool _isValidAvatarUrl(String? url) {
-    if (url == null || url.trim().isEmpty) return false;
-    final uri = Uri.tryParse(url);
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
-  }
+  /// Validates a cached avatar ref against storage.
+  ///
+  /// Returns the ref when it is usable, or `null` ONLY when the object is
+  /// definitively gone. A transient failure (offline, 403 while unpaired) must
+  /// never return null — the caller deletes the cached ref on null, and doing
+  /// that on a network blip wipes the user's avatar for no reason.
+  ///
+  /// Replaces an earlier HTTP HEAD probe, which cannot work now that the
+  /// buckets are private: every HEAD would 403 and every avatar would be
+  /// deleted on the next launch.
+  Future<String?> _validateAvatarRef(String ref) async {
+    if (StorageUrlService.isLocalFileRef(ref)) return ref;
 
-  /// Validates an avatar URL by making a HEAD (or fallback GET) request.
-  /// Returns the URL if reachable, or `null` if it fails.
-  Future<String?> _validateAvatarUrl(String url) async {
-    if (!_isValidAvatarUrl(url)) return null;
-    try {
-      final client = HttpClient();
-      final uri = Uri.parse(url);
-      var request = await client.headUrl(uri);
-      var response = await request.close().timeout(
-        const Duration(seconds: 5),
-      );
-      if (response.statusCode >= 200 && response.statusCode < 400) {
-        client.close(force: false);
-        return url;
-      }
-
-      if (response.statusCode == 405 || response.statusCode == 403 || response.statusCode == 400) {
-        request = await client.getUrl(uri);
-        response = await request.close().timeout(
-          const Duration(seconds: 5),
-        );
-        if (response.statusCode >= 200 && response.statusCode < 400) {
-          client.close(force: false);
-          return url;
-        }
-      }
-
-      client.close(force: false);
-      debugPrint('Avatar URL validation failed ($url): HTTP ${response.statusCode}');
-      return null;
-    } catch (e) {
-      debugPrint('Avatar URL validation error ($url): $e');
-      return null;
+    // A foreign URL (e.g. a Google OAuth avatar) is not ours to validate.
+    if (StorageUrlService.pathFrom(ref, bucket: StorageBuckets.avatars) == null) {
+      return ref;
     }
+
+    final url = await StorageUrlService.instance
+        .resolve(bucket: StorageBuckets.avatars, ref: ref);
+    if (url != null) return ref;
+
+    final gone = StorageUrlService.instance.lastFailureWasNotFound(
+      bucket: StorageBuckets.avatars,
+      ref: ref,
+    );
+    return gone ? null : ref;
   }
 
-  /// Clears a stale avatar URL from SharedPreferences and evicts it
-  /// from the CachedNetworkImage cache.
-  Future<void> _clearStaleAvatarCache(String prefsKey, String? url) async {
+  /// Clears a stale avatar ref from SharedPreferences and drops its cached
+  /// image bytes.
+  Future<void> _clearStaleAvatarCache(String prefsKey, String? ref) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(prefsKey);
-    if (url != null && _isValidAvatarUrl(url)) {
-      try {
-        final evictFuture = CachedNetworkImage.evictFromCache(url);
-        await evictFuture.catchError((_) => false);
-      } catch (_) {}
-    }
+    if (ref == null || ref.trim().isEmpty) return;
+
+    await StorageUrlService.instance
+        .evict(bucket: StorageBuckets.avatars, ref: ref);
+
+    final cacheKey = StorageUrlService.cacheKeyFor(
+      bucket: StorageBuckets.avatars,
+      ref: ref,
+    );
+    if (cacheKey.isEmpty) return;
+    try {
+      final evictFuture = CachedNetworkImage.evictFromCache(cacheKey);
+      await evictFuture.catchError((_) => false);
+    } catch (_) {}
   }
 
   DateTime? _startDate;
@@ -321,24 +314,29 @@ class RelationshipProvider with ChangeNotifier {
     _backgroundValidateAvatars();
   }
 
-  /// Validates cached avatar URLs in the background on startup.
-  /// Clears any that are unreachable so we stop retrying broken URLs.
+  /// Validates cached avatar refs in the background on startup, clearing only
+  /// those whose object is definitively gone so the UI stops retrying them.
+  ///
+  /// Local file refs are skipped: they are un-synced uploads, and the widget
+  /// layer already falls back to a placeholder when the file is missing.
   void _backgroundValidateAvatars() {
-    if (_yourAvatarPath != null && _yourAvatarPath!.startsWith('http')) {
-      _validateAvatarUrl(_yourAvatarPath!).then((validUrl) {
-        if (validUrl == null && _yourAvatarPath != null) {
-          debugPrint('Clearing stale your_avatar_path: $_yourAvatarPath');
-          _clearStaleAvatarCache('your_avatar_path', _yourAvatarPath);
+    final yourRef = _yourAvatarPath;
+    if (yourRef != null && !StorageUrlService.isLocalFileRef(yourRef)) {
+      _validateAvatarRef(yourRef).then((valid) {
+        if (valid == null && _yourAvatarPath == yourRef) {
+          debugPrint('Clearing stale your_avatar_path (object not found)');
+          _clearStaleAvatarCache('your_avatar_path', yourRef);
           _yourAvatarPath = null;
           notifyListeners();
         }
       });
     }
-    if (_partnerAvatarPath != null && _partnerAvatarPath!.startsWith('http')) {
-      _validateAvatarUrl(_partnerAvatarPath!).then((validUrl) {
-        if (validUrl == null && _partnerAvatarPath != null) {
-          debugPrint('Clearing stale partner_avatar_path: $_partnerAvatarPath');
-          _clearStaleAvatarCache('partner_avatar_path', _partnerAvatarPath);
+    final partnerRef = _partnerAvatarPath;
+    if (partnerRef != null && !StorageUrlService.isLocalFileRef(partnerRef)) {
+      _validateAvatarRef(partnerRef).then((valid) {
+        if (valid == null && _partnerAvatarPath == partnerRef) {
+          debugPrint('Clearing stale partner_avatar_path (object not found)');
+          _clearStaleAvatarCache('partner_avatar_path', partnerRef);
           _partnerAvatarPath = null;
           notifyListeners();
         }
@@ -399,11 +397,20 @@ class RelationshipProvider with ChangeNotifier {
               (dataList) async {
                 if (dataList.isEmpty) {
                   try {
-                    await Supabase.instance.client.from('users').upsert({
-                      'id': _userId!,
-                      'display_name': _yourName,
-                      'couple_id': null,
-                    });
+                    // Self-heal a missing public.users row. Deliberately an
+                    // insert-if-absent, NOT an upsert: the stream can yield an
+                    // empty list transiently (reconnect, RLS hiccup) even when
+                    // the row exists, and an upsert would then degrade to
+                    // `UPDATE ... SET couple_id = NULL` and silently wipe a
+                    // live pairing. couple_id is omitted entirely so this can
+                    // never clear an existing link.
+                    await Supabase.instance.client.from('users').upsert(
+                      {
+                        'id': _userId!,
+                        'display_name': _yourName,
+                      },
+                      ignoreDuplicates: true,
+                    );
                   } catch (_) {}
                   _isInitialized = true;
                   notifyListeners();
@@ -803,10 +810,12 @@ class RelationshipProvider with ChangeNotifier {
       }
     } catch (_) {}
 
-    // 3. Upload local avatar if needed
-    if (_yourAvatarPath != null &&
-        !_yourAvatarPath!.startsWith('http') &&
-        _yourAvatarPath!.isNotEmpty) {
+    // 3. Upload the avatar if it is still only a local file.
+    // Must test for a real device path, NOT `!startsWith('http')`: avatar refs
+    // are now bare storage paths, so the old check would treat an
+    // already-uploaded avatar as pending and try to re-upload a file that no
+    // longer exists, throwing on every sync.
+    if (StorageUrlService.isLocalFileRef(_yourAvatarPath)) {
       final path = _yourAvatarPath!;
       await setAvatars(yourPath: path);
     }
@@ -1429,7 +1438,9 @@ class RelationshipProvider with ChangeNotifier {
 
     if (isSupabaseAvailable && _coupleId != null) {
       if (yourPath != null) {
-        if (!yourPath.startsWith('http') && yourPath.isNotEmpty) {
+        // Only a real device path means "upload this". A bare storage path is
+        // an avatar that is already uploaded.
+        if (StorageUrlService.isLocalFileRef(yourPath)) {
           final file = File(yourPath);
           if (!await file.exists()) {
             throw Exception('Selected avatar image file does not exist.');
@@ -1439,24 +1450,20 @@ class RelationshipProvider with ChangeNotifier {
           final storagePath =
               'couples/$_coupleId/avatars/${_userId ?? 'user'}_$timestamp.jpg';
 
-          final yourUrl = await ProfileService.instance.uploadAvatar(
-            bucketName: 'avatars',
+          // Returns the storage path, not a URL.
+          final yourRef = await ProfileService.instance.uploadAvatar(
+            bucketName: StorageBuckets.avatars,
             filePath: yourPath,
             storagePath: storagePath,
           );
 
-          if (_yourAvatarPath != null && _yourAvatarPath!.startsWith('http')) {
-            try {
-              final evictFuture = CachedNetworkImage.evictFromCache(_yourAvatarPath!);
-              await evictFuture.catchError((_) => false);
-            } catch (_) {}
-          }
+          // Reclaim the disk cache held by the superseded object. No cache
+          // busting is needed on the new ref: the path embeds a timestamp, so
+          // it is already a distinct cache key.
+          await _clearStaleAvatarCache('your_avatar_path', _yourAvatarPath);
 
-          final timestampedUrl =
-              '$yourUrl${yourUrl.contains('?') ? '&' : '?'}t=$timestamp';
-
-          _yourAvatarPath = timestampedUrl;
-          await prefs.setString('your_avatar_path', timestampedUrl);
+          _yourAvatarPath = yourRef;
+          await prefs.setString('your_avatar_path', yourRef);
         } else {
           _yourAvatarPath = yourPath;
           if (yourPath.isEmpty) {
@@ -1468,7 +1475,7 @@ class RelationshipProvider with ChangeNotifier {
       }
 
       if (partnerPath != null) {
-        if (!partnerPath.startsWith('http') && partnerPath.isNotEmpty) {
+        if (StorageUrlService.isLocalFileRef(partnerPath)) {
           final file = File(partnerPath);
           if (!await file.exists()) {
             throw Exception('Selected partner avatar image file does not exist.');
@@ -1478,24 +1485,16 @@ class RelationshipProvider with ChangeNotifier {
           final storagePath =
               'couples/$_coupleId/avatars/${_partnerId ?? 'partner'}_$timestamp.jpg';
 
-          final partnerUrl = await ProfileService.instance.uploadAvatar(
-            bucketName: 'avatars',
+          final partnerRef = await ProfileService.instance.uploadAvatar(
+            bucketName: StorageBuckets.avatars,
             filePath: partnerPath,
             storagePath: storagePath,
           );
 
-          if (_partnerAvatarPath != null && _partnerAvatarPath!.startsWith('http')) {
-            try {
-              final evictFuture = CachedNetworkImage.evictFromCache(_partnerAvatarPath!);
-              await evictFuture.catchError((_) => false);
-            } catch (_) {}
-          }
+          await _clearStaleAvatarCache('partner_avatar_path', _partnerAvatarPath);
 
-          final timestampedUrl =
-              '$partnerUrl${partnerUrl.contains('?') ? '&' : '?'}t=$timestamp';
-
-          _partnerAvatarPath = timestampedUrl;
-          await prefs.setString('partner_avatar_path', timestampedUrl);
+          _partnerAvatarPath = partnerRef;
+          await prefs.setString('partner_avatar_path', partnerRef);
         } else {
           _partnerAvatarPath = partnerPath;
           if (partnerPath.isEmpty) {

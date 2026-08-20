@@ -30,6 +30,8 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 class RelationshipLicenseScreen extends StatefulWidget {
   const RelationshipLicenseScreen({super.key});
@@ -2086,32 +2088,19 @@ class _LicenseFront extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(6.8),
                               child: holderAvatar != null
-                                  ? (holderAvatar!.startsWith('http')
-                                      ? Image.network(
-                                          holderAvatar!,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => Container(
-                                            color: Colors.white10,
-                                            child: const Icon(
-                                              Icons.broken_image,
-                                              color: Colors.white30,
-                                              size: 28,
-                                            ),
-                                          ),
-                                        )
-                                      : (File(holderAvatar!).existsSync()
-                                          ? Image.file(
-                                              File(holderAvatar!),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : Container(
-                                              color: Colors.white10,
-                                              child: const Icon(
-                                                Icons.broken_image,
-                                                color: Colors.white30,
-                                                size: 28,
-                                              ),
-                                            )))
+                                  ? StorageImage(
+                                      bucket: StorageBuckets.avatars,
+                                      storageRef: holderAvatar,
+                                      fit: BoxFit.cover,
+                                      errorWidget: (context) => Container(
+                                        color: Colors.white10,
+                                        child: const Icon(
+                                          Icons.broken_image,
+                                          color: Colors.white30,
+                                          size: 28,
+                                        ),
+                                      ),
+                                    )
                                   : Container(
                                       color: Colors.white10,
                                       child: const Icon(

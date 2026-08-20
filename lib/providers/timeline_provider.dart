@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
+import 'package:days_together/services/storage_url_service.dart';
 
 class TimelineProvider extends SupabaseLifecycleProvider {
   final TimelineRepository _repository = TimelineRepository();
@@ -339,21 +341,21 @@ class TimelineProvider extends SupabaseLifecycleProvider {
     _localMutations.add(item.id);
     if (coupleId != null) {
       try {
-        String? downloadUrl;
+        // Stores the storage PATH, not a URL: the bucket is private, so images
+        // are rendered through StorageImage, which signs the path on demand.
+        String? imageRef;
         if (item.imagePath != null) {
           final file = File(item.imagePath!);
           if (await file.exists()) {
             final storagePath = 'couples/$coupleId/timeline/${item.id}.jpg';
             await Supabase.instance.client.storage
-                .from('timeline')
+                .from(StorageBuckets.timeline)
                 .upload(
                   storagePath,
                   file,
                   fileOptions: const FileOptions(upsert: true),
                 );
-            downloadUrl = Supabase.instance.client.storage
-                .from('timeline')
-                .getPublicUrl(storagePath);
+            imageRef = storagePath;
           }
         }
 
@@ -374,7 +376,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
           'description': item.description,
           'location': item.location,
           'image_path': item.imagePath,
-          'network_image_url': downloadUrl ?? item.networkImageUrl,
+          'network_image_url': imageRef ?? item.networkImageUrl,
           'date': item.date.toUtc().toIso8601String(),
           'is_image_card': item.isImageCard,
           'position': calculatedPosition,
@@ -466,7 +468,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
 
     if (coupleId != null) {
       try {
-        String? downloadUrl = updatedItem.networkImageUrl;
+        String? imageRef = updatedItem.networkImageUrl;
         if (updatedItem.imagePath != null &&
             updatedItem.imagePath != _timelineItems[index].imagePath) {
           final file = File(updatedItem.imagePath!);
@@ -474,15 +476,25 @@ class TimelineProvider extends SupabaseLifecycleProvider {
             final storagePath =
                 'couples/$coupleId/timeline/${updatedItem.id}.jpg';
             await Supabase.instance.client.storage
-                .from('timeline')
+                .from(StorageBuckets.timeline)
                 .upload(
                   storagePath,
                   file,
                   fileOptions: const FileOptions(upsert: true),
                 );
-            downloadUrl = Supabase.instance.client.storage
-                .from('timeline')
-                .getPublicUrl(storagePath);
+            imageRef = storagePath;
+            // The object is overwritten in place (same path, upsert), so any
+            // signed URL and cached bytes for it are now stale.
+            await StorageUrlService.instance.evict(
+              bucket: StorageBuckets.timeline,
+              ref: storagePath,
+            );
+            await CachedNetworkImage.evictFromCache(
+              StorageUrlService.cacheKeyFor(
+                bucket: StorageBuckets.timeline,
+                ref: storagePath,
+              ),
+            );
           }
         }
 
@@ -508,7 +520,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
           'description': updatedItem.description,
           'location': updatedItem.location,
           'image_path': updatedItem.imagePath,
-          'network_image_url': downloadUrl,
+          'network_image_url': imageRef,
           'date': updatedItem.date.toUtc().toIso8601String(),
           'is_image_card': updatedItem.isImageCard,
           'position': calculatedPosition,

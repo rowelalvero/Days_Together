@@ -25,6 +25,8 @@ import 'package:days_together/widgets/raster_canvas.dart';
 import 'package:days_together/widgets/custom_backgrounds.dart';
 import 'package:days_together/models/canvas_document.dart';
 import 'package:days_together/utils/canvas_mapping.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -2524,20 +2526,17 @@ class _NoteitScreenState extends State<NoteitScreen>
         height: double.infinity,
       );
     } else if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-      return Image.network(
-        item.imageUrl!,
+      return StorageImage(
+        bucket: StorageBuckets.loveNotes,
+        storageRef: item.imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return const Center(child: CircularProgressIndicator());
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(
-            child: Icon(Icons.broken_image, color: Colors.grey),
-          );
-        },
+        placeholder: (context) =>
+            const Center(child: CircularProgressIndicator()),
+        errorWidget: (context) => const Center(
+          child: Icon(Icons.broken_image, color: Colors.grey),
+        ),
       );
     }
 

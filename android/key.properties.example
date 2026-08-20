@@ -1,0 +1,19 @@
+# Template for android/key.properties -- copy to `key.properties` and fill in.
+#
+# `key.properties`, `*.jks` and `*.keystore` are gitignored (see android/.gitignore).
+# NEVER commit the real file or the keystore itself.
+#
+# Generate an upload keystore first:
+#
+#   keytool -genkey -v -keystore upload-keystore.jks \
+#     -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Back the .jks file up somewhere durable. If it is lost, you can never publish
+# an update to the same Play Store listing again.
+#
+# storeFile accepts an absolute path, or a path relative to android/app/.
+
+storePassword=<password chosen during keytool>
+keyPassword=<password chosen during keytool>
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

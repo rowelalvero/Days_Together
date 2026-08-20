@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/widgets/wrapped/wrapped_animated_counter.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 class WrappedPageMemories extends StatelessWidget {
   final WrappedData data;
@@ -102,13 +103,13 @@ class WrappedPageMemories extends StatelessWidget {
                             child: AspectRatio(
                               aspectRatio: 16 / 9,
                               child: imageUrl != null
-                                  ? CachedNetworkImage(
-                                      imageUrl: imageUrl,
+                                  ? StorageImage(
+                                      bucket: StorageBuckets.timeline,
+                                      storageRef: imageUrl,
                                       fit: BoxFit.cover,
-                                      placeholder: (context, url) => Container(
-                                          color: Colors.white10),
-                                      errorWidget: (context, url, error) =>
-                                          _emptyImageBox(),
+                                      placeholder: (context) =>
+                                          Container(color: Colors.white10),
+                                      errorWidget: (context) => _emptyImageBox(),
                                     )
                                   : imagePath != null
                                       ? Image.asset(

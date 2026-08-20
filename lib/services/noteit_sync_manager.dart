@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/services/storage_url_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class NoteitSyncTask {
@@ -252,7 +253,9 @@ class NoteitSyncManager {
 
   Future<bool> _executeTask(NoteitSyncTask task, String coupleId, String userId) async {
     try {
-      String? imageUrl;
+      // Holds the storage PATH, not a URL: the bucket is private, so the image
+      // is rendered through StorageImage, which signs the path on demand.
+      String? imageRef;
 
       // Handle file uploads for any task with local image path
       if (task.imagePath != null) {
@@ -265,16 +268,14 @@ class NoteitSyncManager {
 
         final storagePath = 'couples/$coupleId/love_notes/${task.id}.jpg';
         await Supabase.instance.client.storage
-            .from('love-notes')
+            .from(StorageBuckets.loveNotes)
             .upload(
               storagePath,
               file,
               fileOptions: const FileOptions(upsert: true), // Idempotency
             );
 
-        imageUrl = Supabase.instance.client.storage
-            .from('love-notes')
-            .getPublicUrl(storagePath);
+        imageRef = storagePath;
       }
 
       final typeStr = task.type == NoteitType.drawing
@@ -289,7 +290,7 @@ class NoteitSyncManager {
         'couple_id': coupleId,
         'type': typeStr,
         'content': task.content,
-        'image_url': imageUrl,
+        'image_url': imageRef,
         'sender_id': userId,
         'created_at': task.createdAt.toIso8601String(),
         'background_color': task.backgroundColor?.toARGB32().toSigned(32),
@@ -321,6 +322,18 @@ class NoteitSyncManager {
       if (code == '42501' || code?.startsWith('23') == true || code == '400' || code == '403') {
         debugPrint('NoteitSyncManager: Non-recoverable database error: $e');
         task.retryCount = 5; // Forces failure without retrying
+      }
+      return false;
+    } on StorageException catch (e) {
+      // Storage failures surface as StorageException, NOT PostgrestException,
+      // so without this branch an RLS denial fell through to the generic catch
+      // below and retried forever with backoff.
+      final code = e.statusCode;
+      if (code == '400' || code == '403' || code == '42501') {
+        debugPrint('NoteitSyncManager: Non-recoverable storage error: ${e.message}');
+        task.retryCount = 5; // Forces failure without retrying
+      } else {
+        debugPrint('NoteitSyncManager: Recoverable storage error: ${e.message}');
       }
       return false;
     } catch (e) {

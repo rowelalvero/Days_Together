@@ -1,16 +1,21 @@
-import 'dart:io';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/memory_notes_section.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 import 'package:intl/intl.dart';
+
+/// Shown while a memory's image is resolving, or when it has none.
+const AssetImage _kTimelineFallbackImage =
+    AssetImage('assets/images/app_icon.png');
 
 class TimelineItemWidget extends StatefulWidget {
   final TimelineItemData item;
@@ -220,16 +225,21 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
           borderRadius: BorderRadius.circular(18),
           child: Stack(
             children: [
-              Image(
-                image: _getImageProvider(widget.item),
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+              StorageImageBuilder(
+                bucket: StorageBuckets.timeline,
+                storageRef: widget.item.networkImageUrl,
+                localPath: widget.item.imagePath,
+                builder: (context, image) => Image(
+                  image: image ?? _kTimelineFallbackImage,
                   height: 120,
                   width: double.infinity,
-                  color: theme.textColor.withValues(alpha: 0.1),
-                  child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2)),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 120,
+                    width: double.infinity,
+                    color: theme.textColor.withValues(alpha: 0.1),
+                    child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2)),
+                  ),
                 ),
               ),
               Positioned(
@@ -293,16 +303,6 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
     );
   }
 
-  ImageProvider _getImageProvider(TimelineItemData item) {
-    final path = item.imagePath;
-    if (path != null && path.isNotEmpty) {
-      final file = File(path);
-      if (file.existsSync()) return FileImage(file);
-    }
-    final url = item.networkImageUrl;
-    if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/app_icon.png');
-  }
 }
 
 class MemoryDetailScreen extends StatefulWidget {
@@ -385,13 +385,18 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                         ? Stack(
                             fit: StackFit.expand,
                             children: [
-                              Image(
-                                image: _getImageProvider(currentItem),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: theme.textColor.withValues(alpha: 0.1),
-                                  child: Center(
-                                    child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 48),
+                              StorageImageBuilder(
+                                bucket: StorageBuckets.timeline,
+                                storageRef: currentItem.networkImageUrl,
+                                localPath: currentItem.imagePath,
+                                builder: (context, image) => Image(
+                                  image: image ?? _kTimelineFallbackImage,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: theme.textColor.withValues(alpha: 0.1),
+                                    child: Center(
+                                      child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 48),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -509,16 +514,6 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
     );
   }
 
-  ImageProvider _getImageProvider(TimelineItemData item) {
-    final path = item.imagePath;
-    if (path != null && path.isNotEmpty) {
-      final file = File(path);
-      if (file.existsSync()) return FileImage(file);
-    }
-    final url = item.networkImageUrl;
-    if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/app_icon.png');
-  }
 }
 
 class _EditItemDialog extends StatefulWidget {
@@ -641,13 +636,19 @@ class _EditItemDialogState extends State<_EditItemDialog> {
             Positioned.fill(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),
-                child: Image(
-                  image: _getImageProvider(),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: theme.textColor.withValues(alpha: 0.1),
-                    child: Center(
-                      child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 48),
+                child: StorageImageBuilder(
+                  bucket: StorageBuckets.timeline,
+                  storageRef: widget.item.networkImageUrl,
+                  // A freshly picked image wins over whatever is stored.
+                  localPath: _newImagePath ?? widget.item.imagePath,
+                  builder: (context, image) => Image(
+                    image: image ?? _kTimelineFallbackImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: theme.textColor.withValues(alpha: 0.1),
+                      child: Center(
+                        child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 48),
+                      ),
                     ),
                   ),
                 ),
@@ -826,21 +827,6 @@ class _EditItemDialogState extends State<_EditItemDialog> {
         label: Text('Delete Memory', style: AppTypography.bodyLarge(color: Colors.redAccent, fontWeight: FontWeight.bold)),
       ),
     );
-  }
-
-  ImageProvider _getImageProvider() {
-    if (_newImagePath != null) {
-      final file = File(_newImagePath!);
-      if (file.existsSync()) return FileImage(file);
-    }
-    if (widget.item.imagePath != null && widget.item.imagePath!.isNotEmpty) {
-      final file = File(widget.item.imagePath!);
-      if (file.existsSync()) return FileImage(file);
-    }
-    if (widget.item.networkImageUrl != null && widget.item.networkImageUrl!.isNotEmpty) {
-      return NetworkImage(widget.item.networkImageUrl!);
-    }
-    return const AssetImage('assets/images/app_icon.png');
   }
 
   Future<void> _changeImage() async {

@@ -4,6 +4,8 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/widgets/storage_image.dart';
 
 class VaultScreen extends StatelessWidget {
   const VaultScreen({super.key});
@@ -326,16 +328,14 @@ class _VaultContentScreen extends StatelessWidget {
                     child: item.imagePath != null && File(item.imagePath!).existsSync()
                         ? Image.file(File(item.imagePath!), fit: BoxFit.cover)
                         : (item.imageUrl != null
-                            ? Image.network(
-                                item.imageUrl!,
+                            ? StorageImage(
+                                bucket: StorageBuckets.vaultPhotos,
+                                storageRef: item.imageUrl,
                                 fit: BoxFit.cover,
-                                loadingBuilder: (context, child, progress) {
-                                  if (progress == null) return child;
-                                  return const Center(child: CircularProgressIndicator());
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(child: Icon(Icons.broken_image, color: Colors.grey));
-                                },
+                                placeholder: (context) =>
+                                    const Center(child: CircularProgressIndicator()),
+                                errorWidget: (context) => const Center(
+                                    child: Icon(Icons.broken_image, color: Colors.grey)),
                               )
                             : Container(color: Colors.grey)),
                   ),

@@ -10,7 +10,9 @@ import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/widgets/storage_image.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 
 class LoveChatScreen extends StatefulWidget {
@@ -322,12 +324,13 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
             height: double.infinity,
           );
         } else if (scrapbookItem.imageUrl != null && scrapbookItem.imageUrl!.isNotEmpty) {
-          drawingWidget = Image.network(
-            scrapbookItem.imageUrl!,
+          drawingWidget = StorageImage(
+            bucket: StorageBuckets.loveNotes,
+            storageRef: scrapbookItem.imageUrl,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+            errorWidget: (context) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
           );
         } else {
           drawingWidget = CustomPaint(
@@ -348,12 +351,13 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                 height: double.infinity,
               )
             : scrapbookItem.imageUrl != null && scrapbookItem.imageUrl!.isNotEmpty
-                ? Image.network(
-                    scrapbookItem.imageUrl!,
+                ? StorageImage(
+                    bucket: StorageBuckets.loveNotes,
+                    storageRef: scrapbookItem.imageUrl,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+                    errorWidget: (context) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
                   )
                 : Center(
                     child: Icon(
@@ -678,20 +682,17 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
         height: double.infinity,
       );
     } else if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
-      return Image.network(
-        item.imageUrl!,
+      return StorageImage(
+        bucket: StorageBuckets.loveNotes,
+        storageRef: item.imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return const Center(child: CircularProgressIndicator());
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(
-            child: Icon(Icons.broken_image, color: Colors.grey),
-          );
-        },
+        placeholder: (context) =>
+            const Center(child: CircularProgressIndicator()),
+        errorWidget: (context) => const Center(
+          child: Icon(Icons.broken_image, color: Colors.grey),
+        ),
       );
     }
 

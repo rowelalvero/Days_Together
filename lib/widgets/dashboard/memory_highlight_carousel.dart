@@ -2,9 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
+import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/widgets/storage_image.dart';
 import 'package:days_together/widgets/timeline_item.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
@@ -35,17 +37,6 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  ImageProvider _getImageProvider(TimelineItemData item) {
-    final path = item.imagePath;
-    if (path != null && path.isNotEmpty) {
-      final file = File(path);
-      if (file.existsSync()) return FileImage(file);
-    }
-    final url = item.networkImageUrl;
-    if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/app_icon.png');
   }
 
   @override
@@ -169,13 +160,18 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image(
-              image: _getImageProvider(item),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: theme.textColor.withValues(alpha: 0.1),
-                child: Center(
-                  child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 40),
+            StorageImageBuilder(
+              bucket: StorageBuckets.timeline,
+              storageRef: item.networkImageUrl,
+              localPath: item.imagePath,
+              builder: (context, image) => Image(
+                image: image ?? const AssetImage('assets/images/app_icon.png'),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: theme.textColor.withValues(alpha: 0.1),
+                  child: Center(
+                    child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 40),
+                  ),
                 ),
               ),
             ),

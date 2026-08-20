@@ -56,7 +56,12 @@ class ProfileService {
     return list.isNotEmpty ? list.first : null;
   }
 
-  /// Uploads an avatar image to the specified storage bucket and returns its public URL.
+  /// Uploads an avatar image to [bucketName] and returns its **storage path**
+  /// (not a URL).
+  ///
+  /// The buckets are private, so a durable public URL does not exist. Callers
+  /// persist this path and render it through `StorageImage`, which mints a
+  /// short-lived signed URL on demand.
   Future<String> uploadAvatar({
     required String bucketName,
     required String filePath,
@@ -85,14 +90,6 @@ class ProfileService {
           fileOptions: FileOptions(upsert: true, contentType: mimeType),
         );
 
-    final publicUrl = Supabase.instance.client.storage
-        .from(bucketName)
-        .getPublicUrl(storagePath);
-
-    if (publicUrl.isEmpty) {
-      throw Exception('Failed to generate public URL for avatar at $storagePath');
-    }
-
-    return publicUrl;
+    return storagePath;
   }
 }

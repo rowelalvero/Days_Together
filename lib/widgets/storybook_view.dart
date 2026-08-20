@@ -1,12 +1,17 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/memory_notes_section.dart';
+import 'package:days_together/widgets/storage_image.dart';
+
+/// Shown while a memory's image is resolving, or when it has none.
+const AssetImage _kStorybookFallbackImage =
+    AssetImage('assets/images/app_icon.png');
 
 class StorybookView extends StatefulWidget {
   final List<TimelineItemData> items;
@@ -55,17 +60,6 @@ class _StorybookViewState extends State<StorybookView> {
     }
   }
 
-  ImageProvider _getImageProvider(TimelineItemData item) {
-    final path = item.imagePath;
-    if (path != null && path.isNotEmpty) {
-      final file = File(path);
-      if (file.existsSync()) return FileImage(file);
-    }
-    final url = item.networkImageUrl;
-    if (url != null && url.isNotEmpty) return NetworkImage(url);
-    return const AssetImage('assets/images/app_icon.png');
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
@@ -105,16 +99,23 @@ class _StorybookViewState extends State<StorybookView> {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 child: hasImage
-                    ? Container(
+                    ? StorageImageBuilder(
+                        // Key lives here so AnimatedSwitcher still sees a new
+                        // child when the memory changes.
                         key: ValueKey(item.id),
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: _getImageProvider(item),
-                            fit: BoxFit.cover,
+                        bucket: StorageBuckets.timeline,
+                        storageRef: item.networkImageUrl,
+                        localPath: item.imagePath,
+                        builder: (context, image) => Container(
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: image ?? _kStorybookFallbackImage,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.55),
+                          child: Container(
+                            color: Colors.black.withValues(alpha: 0.55),
+                          ),
                         ),
                       )
                     : Container(
@@ -185,11 +186,16 @@ class _StorybookViewState extends State<StorybookView> {
                           if (hasImage) ...[
                             ClipRRect(
                               borderRadius: BorderRadius.circular(16),
-                              child: Image(
-                                image: _getImageProvider(item),
-                                height: 160,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+                              child: StorageImageBuilder(
+                                bucket: StorageBuckets.timeline,
+                                storageRef: item.networkImageUrl,
+                                localPath: item.imagePath,
+                                builder: (context, image) => Image(
+                                  image: image ?? _kStorybookFallbackImage,
+                                  height: 160,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 20),
