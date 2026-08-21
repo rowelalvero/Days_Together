@@ -14,7 +14,7 @@ import 'package:days_together/screens/together/noteit_screen.dart';
 import 'package:days_together/screens/together/relationship_license_screen.dart';
 import 'package:days_together/screens/together/topic_cards_screen.dart';
 import 'package:days_together/screens/together/vault_screen.dart';
-import 'package:days_together/widgets/timeline_item.dart';
+import 'package:days_together/screens/timeline/memory_detail_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';

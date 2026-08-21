@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/models/app_settings.dart';
 
 void main() {
   group('TimelineItemData', () {

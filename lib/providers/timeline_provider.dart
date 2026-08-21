@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/repositories/timeline_repository.dart';
+import 'package:days_together/services/local_persistence_service.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +17,7 @@ import 'package:days_together/services/relationship_lifecycle_manager.dart';
 import 'package:days_together/services/storage_url_service.dart';
 
 class TimelineProvider extends SupabaseLifecycleProvider {
-  final TimelineRepository _repository = TimelineRepository();
+  final LocalPersistenceService _repository = LocalPersistenceService();
   final ImagePicker _picker = ImagePicker();
   List<TimelineItemData> _timelineItems = [];
   bool _isLoading = true;

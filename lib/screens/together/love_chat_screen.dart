@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/widgets/scale_drawing_painter.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/noteit_provider.dart';

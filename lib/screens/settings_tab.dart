@@ -10,7 +10,7 @@ import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/widgets/theme_selector.dart';
+import 'package:days_together/screens/settings/theme_selector_screen.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 import 'package:days_together/screens/settings/relationship_profile_screen.dart';

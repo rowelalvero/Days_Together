@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/repositories/timeline_repository.dart';
+import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/services/local_persistence_service.dart';
 import 'package:days_together/services/music_service.dart';
 
 class MusicProvider with ChangeNotifier {
-  final TimelineRepository _repository = TimelineRepository();
+  final LocalPersistenceService _repository = LocalPersistenceService();
   final MusicService _musicService = MusicService();
   AppSettings _settings = AppSettings();
   bool _isPlaying = false;

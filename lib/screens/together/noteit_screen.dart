@@ -16,6 +16,7 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/widgets/scale_drawing_painter.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';

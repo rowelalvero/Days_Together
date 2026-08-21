@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show LinearGradient;
-import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/repositories/timeline_repository.dart';
+import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/services/local_persistence_service.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
 class ThemeProvider with ChangeNotifier {
-  final TimelineRepository _repository = TimelineRepository();
+  final LocalPersistenceService _repository = LocalPersistenceService();
   ThemeType _currentTheme = ThemeType.offWhite;
   AppSettings _settings = AppSettings();
   bool _disposed = false;

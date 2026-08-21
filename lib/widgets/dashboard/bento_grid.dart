@@ -6,6 +6,7 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/storage_image.dart';
@@ -13,6 +14,7 @@ import 'package:days_together/widgets/storage_image.dart';
 // Providers
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/widgets/scale_drawing_painter.dart';
 import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
@@ -725,22 +727,8 @@ class BentoGrid extends StatelessWidget {
     );
   }
 
-  String _formatRelativeTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inSeconds < 60) {
-      return 'Just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return DateFormat('MM/dd').format(dateTime);
-    }
-  }
+  String _formatRelativeTime(DateTime dateTime) =>
+      DateHelper.formatRelativeTimeShort(dateTime);
 
   Widget _buildCalendarContent(
     BuildContext context,
@@ -2081,44 +2069,8 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
     super.dispose();
   }
 
-  String _formatRelativeTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final localDateTime = dateTime.toLocal();
-    final localNow = now.toLocal();
-
-    // Check if same day
-    final isSameDay =
-        localDateTime.year == localNow.year &&
-        localDateTime.month == localNow.month &&
-        localDateTime.day == localNow.day;
-
-    if (isSameDay) {
-      final difference = localNow.difference(localDateTime);
-      if (difference.inSeconds < 60) {
-        return 'Just now';
-      } else if (difference.inMinutes < 60) {
-        final mins = difference.inMinutes;
-        return '$mins ${mins == 1 ? "minute" : "minutes"} ago';
-      } else {
-        final hours = difference.inHours;
-        return '$hours ${hours == 1 ? "hour" : "hours"} ago';
-      }
-    }
-
-    // Check if yesterday
-    final yesterday = localNow.subtract(const Duration(days: 1));
-    final isYesterday =
-        localDateTime.year == yesterday.year &&
-        localDateTime.month == yesterday.month &&
-        localDateTime.day == yesterday.day;
-
-    if (isYesterday) {
-      return 'Yesterday';
-    }
-
-    // Formatted date for older entries (using locale)
-    return DateFormat.yMMMd().format(localDateTime);
-  }
+  String _formatRelativeTime(DateTime dateTime) =>
+      DateHelper.formatRelativeTimeLong(dateTime);
 
   @override
   Widget build(BuildContext context) {

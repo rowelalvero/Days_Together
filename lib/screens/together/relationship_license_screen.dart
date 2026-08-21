@@ -26,6 +26,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 
@@ -150,20 +151,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
     }
   }
 
-  int? _calculateAge(DateTime? birthdate) {
-    if (birthdate == null) return null;
-
-    final today = DateTime.now();
-
-    int age = today.year - birthdate.year;
-
-    if (today.month < birthdate.month ||
-        (today.month == birthdate.month && today.day < birthdate.day)) {
-      age--;
-    }
-
-    return age;
-  }
+  int? _calculateAge(DateTime? birthdate) => DateHelper.calculateAge(birthdate);
 
   void _showEnlargedDialog() {
     final rp = context.read<RelationshipProvider>();
@@ -4120,16 +4108,7 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
         : widget.partnerShowingFront;
   }
 
-  int? _calculateAge(DateTime? birthdate) {
-    if (birthdate == null) return null;
-    final today = DateTime.now();
-    int age = today.year - birthdate.year;
-    if (today.month < birthdate.month ||
-        (today.month == birthdate.month && today.day < birthdate.day)) {
-      age--;
-    }
-    return age;
-  }
+  int? _calculateAge(DateTime? birthdate) => DateHelper.calculateAge(birthdate);
 
   Future<void> _shareImage() async {
     setState(() => _isSharing = true);

@@ -526,44 +526,18 @@ class RelationshipDurationScreen extends StatelessWidget {
   Widget _buildFunStatistics(DateTime startDate, RelationshipProvider rp, LoveStoryTheme theme) {
     final today = DateTime.now();
 
-    // Helper functions
-    int countWeekends(DateTime start, DateTime end) {
-      int count = 0;
-      DateTime current = DateTime(start.year, start.month, start.day);
-      final normalizedEnd = DateTime(end.year, end.month, end.day);
-      while (current.isBefore(normalizedEnd) || current.isAtSameMomentAs(normalizedEnd)) {
-        if (current.weekday == DateTime.saturday || current.weekday == DateTime.sunday) {
-          count++;
-        }
-        current = current.add(const Duration(days: 1));
-      }
-      return count;
-    }
-
-    int countOccurrencesOfDate(DateTime start, DateTime end, int month, int day) {
-      int count = 0;
-      for (int y = start.year; y <= end.year; y++) {
-        final d = DateTime(y, month, day);
-        if ((d.isAfter(start) || d.isAtSameMomentAs(start)) &&
-            (d.isBefore(end) || d.isAtSameMomentAs(end))) {
-          count++;
-        }
-      }
-      return count;
-    }
-
     final totalDays = rp.totalDays;
-    final weekends = countWeekends(startDate, today);
-    final valentines = countOccurrencesOfDate(startDate, today, 2, 14);
-    final christmases = countOccurrencesOfDate(startDate, today, 12, 25);
-    final newYears = countOccurrencesOfDate(startDate, today, 1, 1);
+    final weekends = DateHelper.countWeekendDays(startDate, today);
+    final valentines = DateHelper.countOccurrencesOfDate(startDate, today, 2, 14);
+    final christmases = DateHelper.countOccurrencesOfDate(startDate, today, 12, 25);
+    final newYears = DateHelper.countOccurrencesOfDate(startDate, today, 1, 1);
 
     int birthdays = 0;
     if (rp.yourBirthdate != null) {
-      birthdays += countOccurrencesOfDate(startDate, today, rp.yourBirthdate!.month, rp.yourBirthdate!.day);
+      birthdays += DateHelper.countOccurrencesOfDate(startDate, today, rp.yourBirthdate!.month, rp.yourBirthdate!.day);
     }
     if (rp.partnerBirthdate != null) {
-      birthdays += countOccurrencesOfDate(startDate, today, rp.partnerBirthdate!.month, rp.partnerBirthdate!.day);
+      birthdays += DateHelper.countOccurrencesOfDate(startDate, today, rp.partnerBirthdate!.month, rp.partnerBirthdate!.day);
     }
 
     final stats = [

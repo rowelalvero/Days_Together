@@ -7,7 +7,7 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/widgets/storage_image.dart';
-import 'package:days_together/widgets/timeline_item.dart';
+import 'package:days_together/screens/timeline/memory_detail_screen.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
   final TimelineProvider timelineProvider;

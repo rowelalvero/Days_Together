@@ -3,8 +3,16 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/models/app_settings.dart';
 
-class TimelineRepository {
+/// General local persistence for data that never touches Supabase: cached
+/// timeline items (SharedPreferences), app settings (theme/music,
+/// SharedPreferences), and locally-saved image files (path_provider).
+///
+/// Previously named `TimelineRepository` and located under `lib/repositories/`
+/// despite having no Supabase dependency at all -- moved here as part of
+/// architecture Phase 0 (see docs/architecture/migration-roadmap.md).
+class LocalPersistenceService {
   static const String _timelineKey = 'timeline_items';
   static const String _settingsKey = 'app_settings';
 
@@ -17,11 +25,11 @@ class TimelineRepository {
   Future<List<TimelineItemData>> loadTimelineItems() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_timelineKey);
-    
+
     if (jsonString == null) {
       return [];
     }
-    
+
     try {
       final jsonList = jsonDecode(jsonString) as List;
       return jsonList.map((json) => TimelineItemData.fromJson(json)).toList();
@@ -38,11 +46,11 @@ class TimelineRepository {
   Future<AppSettings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_settingsKey);
-    
+
     if (jsonString == null) {
       return AppSettings();
     }
-    
+
     try {
       final json = jsonDecode(jsonString);
       return AppSettings.fromJson(json);
@@ -55,7 +63,7 @@ class TimelineRepository {
     final directory = await getApplicationDocumentsDirectory();
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final newPath = '${directory.path}/$fileName';
-    
+
     await imageFile.copy(newPath);
     return newPath;
   }
