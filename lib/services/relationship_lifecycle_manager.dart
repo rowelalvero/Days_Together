@@ -4,6 +4,7 @@ import 'package:days_together/services/realtime_subscription_manager.dart';
 import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 
 /// Standard interface for relationship lifecycle observers.
 abstract class RelationshipLifecycleAware {
@@ -143,12 +144,12 @@ abstract class RelationshipLifecycleProvider extends ChangeNotifier implements R
   @override
   void disposeRealtime() {}
 
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = _coupleId != relationship.coupleId || _userId != relationship.userId;
+  void updateSession(CoupleSession session) {
+    final bool credentialsChanged = _coupleId != session.coupleId || _userId != session.userId;
 
     if (credentialsChanged) {
-      _coupleId = relationship.coupleId;
-      _userId = relationship.userId;
+      _coupleId = session.coupleId;
+      _userId = session.userId;
 
       if (_coupleId != null && _userId != null) {
         syncInitialData().timeout(_syncTimeout, onTimeout: () {
@@ -218,19 +219,19 @@ abstract class SupabaseLifecycleProvider extends RelationshipLifecycleProvider {
   }
 
   @override
-  void updateRelationship(RelationshipProvider relationship) {
-    final bool credentialsChanged = coupleId != relationship.coupleId || userId != relationship.userId;
+  void updateSession(CoupleSession session) {
+    final bool credentialsChanged = coupleId != session.coupleId || userId != session.userId;
 
     if (credentialsChanged) {
-      super.updateRelationship(relationship);
+      super.updateSession(session);
       disposeRealtime();
 
       if (coupleId != null && userId != null) {
-        if (hasListeners && relationship.isSupabaseAvailable) {
+        if (hasListeners && session.isSupabaseAvailable) {
           initRealtime();
         }
       }
-    } else if (relationship.isSupabaseAvailable && _syncSub == null && hasListeners && coupleId != null) {
+    } else if (session.isSupabaseAvailable && _syncSub == null && hasListeners && coupleId != null) {
       initRealtime();
     }
   }

@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 
@@ -48,11 +48,11 @@ class NoteitProvider extends SupabaseLifecycleProvider {
   }
 
   @override
-  void updateRelationship(RelationshipProvider relationship) {
-    if (relationship.coupleId != null && relationship.userId != null) {
+  void updateSession(CoupleSession session) {
+    if (session.coupleId != null && session.userId != null) {
       NoteitSyncManager.instance.initialize(this);
     }
-    super.updateRelationship(relationship);
+    super.updateSession(session);
   }
 
   @override

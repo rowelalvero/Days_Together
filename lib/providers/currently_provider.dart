@@ -1,7 +1,7 @@
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 
 enum LoveTapState {
   idle,
@@ -47,9 +47,9 @@ class CurrentlyProvider extends SupabaseLifecycleProvider {
   CurrentlyProvider() : super();
 
   @override
-  void updateRelationship(RelationshipProvider relationship) {
-    _partnerId = relationship.partnerId;
-    super.updateRelationship(relationship);
+  void updateSession(CoupleSession session) {
+    _partnerId = session.partnerId;
+    super.updateSession(session);
   }
 
   @override

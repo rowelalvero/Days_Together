@@ -11,6 +11,10 @@
 //     in lib/models/, since a model importing Flutter's rendering layer is
 //     a model->UI layering violation.
 //
+//   Phase 1 exit criterion -- no lib/providers/ file other than
+//     relationship_provider.dart itself references RelationshipProvider;
+//     every domain provider depends on CoupleSession instead.
+//
 // Plain dart:io file-walking and string search -- no new dependency, no
 // codegen, consistent with this project's explicit no-over-engineering
 // stance (docs/architecture/Days_Together_Architecture_Design_Specification.md
@@ -75,6 +79,34 @@ void main() {
         violations,
         isEmpty,
         reason: 'Model files declaring a CustomPainter (model->UI violation, see migration-roadmap.md Phase 0): $violations',
+      );
+    });
+  });
+
+  group('Migration Phase 1 -- domain providers depend on CoupleSession, not RelationshipProvider', () {
+    test('no lib/providers/ file besides relationship_provider.dart and couple_session.dart references RelationshipProvider', () {
+      // couple_session.dart is the one deliberate exception: CoupleSession
+      // mirrors RelationshipProvider (see its updateFromRelationship), which
+      // is exactly what lets every other domain provider depend on
+      // CoupleSession instead.
+      const exceptions = {
+        'lib/providers/relationship_provider.dart',
+        'lib/providers/couple_session.dart',
+      };
+      final violations = <String>[];
+      for (final file in _dartFilesUnder('lib/providers')) {
+        if (exceptions.contains(file.path.replaceAll('\\', '/'))) {
+          continue;
+        }
+        final content = file.readAsStringSync();
+        if (content.contains('RelationshipProvider')) {
+          violations.add(file.path);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'Domain providers referencing RelationshipProvider directly instead of CoupleSession (see migration-roadmap.md Phase 1): $violations',
       );
     });
   });

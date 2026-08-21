@@ -174,6 +174,11 @@ class RelationshipProvider with ChangeNotifier {
   String? get coupleCode => _coupleCode;
   bool get isPaired => _isPaired;
   bool get isOnboardingComplete => _onboardingCompleted && _coupleId != null;
+  /// The raw persisted flag, distinct from [isOnboardingComplete] which also
+  /// requires a non-null [coupleId]. Exposed for `CoupleSession` (Phase 1 of
+  /// the architecture migration) to mirror the exact field it owns per
+  /// `PrefsKeys`' "Session / pairing identity" group.
+  bool get onboardingCompleted => _onboardingCompleted;
   bool get isPremium => _isPremium;
   String get storyTitle => _storyTitle ?? 'Our Story';
   String? get yourGender => _yourGender;

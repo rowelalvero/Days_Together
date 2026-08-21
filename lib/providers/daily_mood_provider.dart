@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/daily_mood_model.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 import 'package:days_together/services/realtime_subscription_manager.dart';
@@ -84,9 +84,9 @@ class DailyMoodProvider extends SupabaseLifecycleProvider {
   }
 
   @override
-  void updateRelationship(RelationshipProvider relationship) {
-    _partnerId = relationship.partnerId;
-    super.updateRelationship(relationship);
+  void updateSession(CoupleSession session) {
+    _partnerId = session.partnerId;
+    super.updateSession(session);
   }
 
   @override
