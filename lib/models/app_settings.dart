@@ -6,19 +6,19 @@ const Object _unset = Object();
 enum ThemeType { midnightRose, liquidGlass, pink, deepPurple, offWhite, custom }
 
 class AppSettings {
-  ThemeType currentTheme;
-  bool backgroundMusicEnabled;
-  double musicVolume;
-  String? selectedMusicPath;
-  List<String> favoriteThemes;
-  DateTime? relationshipStartDate;
+  final ThemeType currentTheme;
+  final bool backgroundMusicEnabled;
+  final double musicVolume;
+  final String? selectedMusicPath;
+  final List<String> favoriteThemes;
+  final DateTime? relationshipStartDate;
 
   // Custom theme fields
-  int customPrimaryColor;
-  int customSecondaryColor;
-  int customBackgroundColor;
-  int customAccentColor;
-  bool customIsDark;
+  final int customPrimaryColor;
+  final int customSecondaryColor;
+  final int customBackgroundColor;
+  final int customAccentColor;
+  final bool customIsDark;
 
   AppSettings({
     this.currentTheme = ThemeType.offWhite,

@@ -56,19 +56,19 @@ class CommentData {
 }
 
 class TimelineItemData {
-  String id;
-  String title;
-  String description;
-  String? location; // New field for where it happened
-  String? imagePath;
-  String? networkImageUrl;
-  DateTime date;
-  bool isImageCard;
-  int position;
-  String mood;
-  List<String> photoUrls; // Up to 3 photos
-  bool isPinned; // Featured on widget
-  List<CommentData> comments;
+  final String id;
+  final String title;
+  final String description;
+  final String? location; // New field for where it happened
+  final String? imagePath;
+  final String? networkImageUrl;
+  final DateTime date;
+  final bool isImageCard;
+  final int position;
+  final String mood;
+  final List<String> photoUrls; // Up to 3 photos
+  final bool isPinned; // Featured on widget
+  final List<CommentData> comments;
 
   TimelineItemData({
     String? id,

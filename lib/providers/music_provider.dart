@@ -39,7 +39,7 @@ class MusicProvider with ChangeNotifier {
   }
 
   Future<void> toggleMusic() async {
-    _settings.backgroundMusicEnabled = !_settings.backgroundMusicEnabled;
+    _settings = _settings.copyWith(backgroundMusicEnabled: !_settings.backgroundMusicEnabled);
 
     try {
       if (_settings.backgroundMusicEnabled) {
@@ -52,7 +52,7 @@ class MusicProvider with ChangeNotifier {
     } catch (e, st) {
       debugPrint('MusicProvider.toggleMusic failed: $e\n$st');
       // Roll back the optimistic toggle so UI and persisted state stay in sync.
-      _settings.backgroundMusicEnabled = !_settings.backgroundMusicEnabled;
+      _settings = _settings.copyWith(backgroundMusicEnabled: !_settings.backgroundMusicEnabled);
       _isPlaying = _musicService.isPlaying;
     }
 
@@ -72,7 +72,7 @@ class MusicProvider with ChangeNotifier {
   }
 
   Future<void> setMusicPath(String? path) async {
-    _settings.selectedMusicPath = path;
+    _settings = _settings.copyWith(selectedMusicPath: path);
     try {
       await _repository.saveSettings(_settings);
       if (_settings.backgroundMusicEnabled) {
@@ -86,7 +86,7 @@ class MusicProvider with ChangeNotifier {
 
   Future<void> setVolume(double volume) async {
     final clamped = volume.clamp(0.0, 1.0).toDouble();
-    _settings.musicVolume = clamped;
+    _settings = _settings.copyWith(musicVolume: clamped);
     try {
       await _musicService.setVolume(clamped);
       await _repository.saveSettings(_settings);

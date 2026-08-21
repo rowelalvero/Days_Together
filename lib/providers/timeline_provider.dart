@@ -84,7 +84,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
           _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
     );
     for (var i = 0; i < _timelineItems.length; i++) {
-      _timelineItems[i].position = i;
+      _timelineItems[i] = _timelineItems[i].copyWith(position: i);
     }
     if (oldItem != null) {
       final newIndex = _timelineItems.indexWhere(
@@ -166,7 +166,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       );
 
       for (var i = 0; i < parsed.length; i++) {
-        parsed[i].position = i;
+        parsed[i] = parsed[i].copyWith(position: i);
       }
 
       _timelineItems = parsed;
@@ -299,7 +299,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
 
     _timelineItems = incoming;
     for (var i = 0; i < _timelineItems.length; i++) {
-      _timelineItems[i].position = i;
+      _timelineItems[i] = _timelineItems[i].copyWith(position: i);
     }
     _clampCurrentScrubIndex();
     _isLoading = false;
@@ -325,7 +325,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
             _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
       );
       for (var i = 0; i < _timelineItems.length; i++) {
-        _timelineItems[i].position = i;
+        _timelineItems[i] = _timelineItems[i].copyWith(position: i);
       }
       _clampCurrentScrubIndex();
     } catch (e, st) {
@@ -427,7 +427,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
               : b.date.compareTo(a.date),
         );
         for (var i = 0; i < _timelineItems.length; i++) {
-          _timelineItems[i].position = i;
+          _timelineItems[i] = _timelineItems[i].copyWith(position: i);
         }
         _clampCurrentScrubIndex();
         await _persist();
@@ -439,7 +439,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
             _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
       );
       for (var i = 0; i < _timelineItems.length; i++) {
-        _timelineItems[i].position = i;
+        _timelineItems[i] = _timelineItems[i].copyWith(position: i);
       }
       _clampCurrentScrubIndex();
       await _persist();
@@ -557,7 +557,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
               : b.date.compareTo(a.date),
         );
         for (var i = 0; i < _timelineItems.length; i++) {
-          _timelineItems[i].position = i;
+          _timelineItems[i] = _timelineItems[i].copyWith(position: i);
         }
         _clampCurrentScrubIndex();
         await _persist();
@@ -569,7 +569,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
             _isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
       );
       for (var i = 0; i < _timelineItems.length; i++) {
-        _timelineItems[i].position = i;
+        _timelineItems[i] = _timelineItems[i].copyWith(position: i);
       }
       _clampCurrentScrubIndex();
       await _persist();
@@ -608,7 +608,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
     // Update local state first for immediate UI response
     _timelineItems.removeAt(index);
     for (var i = 0; i < _timelineItems.length; i++) {
-      _timelineItems[i].position = i;
+      _timelineItems[i] = _timelineItems[i].copyWith(position: i);
     }
     _clampCurrentScrubIndex();
     notifyListeners();
@@ -673,14 +673,14 @@ class TimelineProvider extends SupabaseLifecycleProvider {
       } catch (e) {
         debugPrint('TimelineProvider.reorderTimelineItems Supabase error: $e');
         for (var i = 0; i < _timelineItems.length; i++) {
-          _timelineItems[i].position = i;
+          _timelineItems[i] = _timelineItems[i].copyWith(position: i);
         }
         _clampCurrentScrubIndex();
         await _persist();
       }
     } else {
       for (var i = 0; i < _timelineItems.length; i++) {
-        _timelineItems[i].position = i;
+        _timelineItems[i] = _timelineItems[i].copyWith(position: i);
       }
       _clampCurrentScrubIndex();
       await _persist();

@@ -3,12 +3,12 @@ import 'package:uuid/uuid.dart';
 enum VaultItemType { photo, letter }
 
 class VaultItem {
-  String id;
-  VaultItemType type;
-  String? content; // Text content for letters
-  String? imagePath; // File path for photos
-  String? imageUrl; // Firebase Storage URL for photos
-  DateTime createdAt;
+  final String id;
+  final VaultItemType type;
+  final String? content; // Text content for letters
+  final String? imagePath; // File path for photos
+  final String? imageUrl; // Firebase Storage URL for photos
+  final DateTime createdAt;
 
   VaultItem({
     String? id,

@@ -36,7 +36,7 @@ class ThemeProvider with ChangeNotifier {
   Future<void> changeTheme(ThemeType newTheme) async {
     if (_currentTheme == newTheme && _settings.currentTheme == newTheme) return;
     _currentTheme = newTheme;
-    _settings.currentTheme = newTheme;
+    _settings = _settings.copyWith(currentTheme: newTheme);
     try {
       await _repository.saveSettings(_settings);
     } catch (e, st) {
@@ -78,11 +78,13 @@ class ThemeProvider with ChangeNotifier {
   }
 
   Future<void> toggleFavoriteTheme(String themeName) async {
-    if (_settings.favoriteThemes.contains(themeName)) {
-      _settings.favoriteThemes.remove(themeName);
+    final updated = List<String>.from(_settings.favoriteThemes);
+    if (updated.contains(themeName)) {
+      updated.remove(themeName);
     } else {
-      _settings.favoriteThemes.add(themeName);
+      updated.add(themeName);
     }
+    _settings = _settings.copyWith(favoriteThemes: updated);
     try {
       await _repository.saveSettings(_settings);
     } catch (e, st) {

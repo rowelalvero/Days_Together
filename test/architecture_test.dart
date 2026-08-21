@@ -19,6 +19,9 @@
 //     confined to the three files whose Navigator.push sites are dialogs,
 //     not navigational destinations, and so are deliberately out of
 //     go_router's scope (ADR-007).
+//   Phase 4 exit criterion -- every class under lib/models/ has all-`final`
+//     fields (ADR-003's "Neutral" consequence; the model-immutability rule
+//     folded into Migration Phase 4).
 //
 // Plain dart:io file-walking and string search -- no new dependency, no
 // codegen, consistent with this project's explicit no-over-engineering
@@ -164,6 +167,65 @@ void main() {
         violations,
         isEmpty,
         reason: 'MaterialPageRoute used outside the known, documented exceptions -- convert to a named Routes.* entry (see migration-roadmap.md Phase 3): $violations',
+      );
+    });
+  });
+
+  group('Migration Phase 4 -- every model is immutable (ADR-003)', () {
+    test('no class under lib/models/ declares a non-final instance field', () {
+      // Plain line-based scan, not a real parser -- consistent with this
+      // suite's stated "no codegen" approach. Tracks brace depth so it only
+      // inspects lines at a class's top level (depth 1), skipping method/
+      // constructor bodies (depth 2+) where a local variable declaration
+      // must not be mistaken for a field. A field declaration is
+      // recognized as a line ending in `;` with no `(` on it (ruling out
+      // method signatures and constructor initializer lists) that doesn't
+      // start with `final`/`static`/`const`/an annotation/a comment.
+      final fieldDeclaration = RegExp(r'^[A-Za-z_][\w<>?., ]*\s[A-Za-z_]\w*(\s*=\s*[^;]+)?;$');
+      final violations = <String>[];
+
+      for (final file in _dartFilesUnder('lib/models')) {
+        final lines = file.readAsLinesSync();
+        var depth = 0;
+        var inClassAtDepth1 = false;
+
+        for (final rawLine in lines) {
+          final line = rawLine.trim();
+
+          if (depth == 1 &&
+              inClassAtDepth1 &&
+              line.isNotEmpty &&
+              !line.startsWith('final ') &&
+              !line.startsWith('static ') &&
+              !line.startsWith('const ') &&
+              !line.startsWith('@') &&
+              !line.startsWith('//') &&
+              !line.contains('(') &&
+              !line.contains('=>') &&
+              !RegExp(r'\bget\s').hasMatch(line) &&
+              fieldDeclaration.hasMatch(line)) {
+            violations.add('${file.path}: $line');
+          }
+
+          if (RegExp(r'^\s*(?:abstract\s+)?class\s+\w').hasMatch(rawLine) && depth == 0) {
+            inClassAtDepth1 = true;
+          }
+
+          for (final char in rawLine.split('')) {
+            if (char == '{') {
+              depth++;
+            } else if (char == '}') {
+              depth--;
+              if (depth == 0) inClassAtDepth1 = false;
+            }
+          }
+        }
+      }
+
+      expect(
+        violations,
+        isEmpty,
+        reason: 'Mutable field found in lib/models/ -- add final and convert call sites to copyWith (see migration-roadmap.md Phase 4): $violations',
       );
     });
   });

@@ -1,12 +1,12 @@
 import 'package:uuid/uuid.dart';
 
 class DailyMood {
-  String id;
-  String? userId;
-  String date; // YYYY-MM-DD format for easy querying
-  int moodScore; // 1 to 10
-  String? note;
-  DateTime createdAt;
+  final String id;
+  final String? userId;
+  final String date; // YYYY-MM-DD format for easy querying
+  final int moodScore; // 1 to 10
+  final String? note;
+  final DateTime createdAt;
 
   DailyMood({
     String? id,
@@ -60,10 +60,10 @@ class DailyMood {
 }
 
 class DailySyncQuestion {
-  String question;
-  String? myAnswer;
-  String? partnerAnswer;
-  String date; // YYYY-MM-DD
+  final String question;
+  final String? myAnswer;
+  final String? partnerAnswer;
+  final String date; // YYYY-MM-DD
 
   DailySyncQuestion({
     required this.question,

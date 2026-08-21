@@ -1,13 +1,13 @@
 import 'package:uuid/uuid.dart';
 
 class GiftReminder {
-  String id;
-  String title;
-  DateTime date;
-  List<int> reminderDaysBefore; // e.g. [30, 14, 7]
-  bool isEnabled;
-  bool isRecurringYearly;
-  DateTime createdAt;
+  final String id;
+  final String title;
+  final DateTime date;
+  final List<int> reminderDaysBefore; // e.g. [30, 14, 7]
+  final bool isEnabled;
+  final bool isRecurringYearly;
+  final DateTime createdAt;
 
   GiftReminder({
     String? id,

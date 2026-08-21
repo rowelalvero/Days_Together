@@ -1,13 +1,13 @@
 import 'package:uuid/uuid.dart';
 
 class BucketListItem {
-  String id;
-  String title;
-  bool isCompleted;
-  DateTime? completedAt;
-  int order;
-  DateTime createdAt;
-  DateTime? scheduledAt; // Added optional date/time
+  final String id;
+  final String title;
+  final bool isCompleted;
+  final DateTime? completedAt;
+  final int order;
+  final DateTime createdAt;
+  final DateTime? scheduledAt; // Added optional date/time
 
   BucketListItem({
     String? id,

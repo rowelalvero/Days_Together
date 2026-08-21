@@ -1,11 +1,11 @@
 import 'package:uuid/uuid.dart';
 
 class TimeCapsule {
-  String id;
-  String message;
-  DateTime openDate;
-  bool isOpened;
-  DateTime createdAt;
+  final String id;
+  final String message;
+  final DateTime openDate;
+  final bool isOpened;
+  final DateTime createdAt;
 
   TimeCapsule({
     String? id,
