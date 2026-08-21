@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/relationship_provider.dart';
-
-import 'package:days_together/screens/together/relationship_duration_screen.dart';
 
 class DetailedDaysCounter extends StatefulWidget {
   final RelationshipProvider relationshipProvider;
@@ -47,26 +47,10 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
 
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const RelationshipDurationScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: animation.drive(Tween<Offset>(
-                    begin: const Offset(0.0, 0.05),
-                    end: Offset.zero,
-                  ).chain(CurveTween(curve: Curves.easeOutCubic))),
-                  child: child,
-                ),
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 350),
-          ),
-        );
+        // The custom fade+slide transition moved to app_router.dart's
+        // Routes.duration route (a CustomTransitionPage), so it still
+        // applies here even though this call site no longer specifies it.
+        context.push(Routes.duration);
       },
       borderRadius: BorderRadius.circular(28),
       child: GlassContainer(

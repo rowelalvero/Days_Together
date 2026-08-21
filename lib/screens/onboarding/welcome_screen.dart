@@ -1,7 +1,8 @@
-import 'package:days_together/screens/onboarding/auth_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:provider/provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -111,21 +112,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       onPressed: () {
                         if (_isNavigating) return;
                         _isNavigating = true;
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                const AuthScreen(),
-                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              );
-                            },
-                            transitionDuration:
-                                const Duration(milliseconds: 500),
-                          ),
-                        ).then((_) {
+                        // The custom fade transition moved to
+                        // app_router.dart's Routes.auth route (a
+                        // CustomTransitionPage), so it still applies here.
+                        context.push(Routes.auth).then((_) {
                           if (mounted) _isNavigating = false;
                         });
                       },

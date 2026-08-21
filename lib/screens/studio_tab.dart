@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
-import 'package:days_together/screens/studio/ai_love_letter_screen.dart';
-import 'package:days_together/screens/studio/time_capsule_screen.dart';
-import 'package:days_together/screens/studio/relationship_insights_screen.dart';
+import 'package:days_together/routing/routes.dart';
 
 class StudioTab extends StatelessWidget {
   const StudioTab({super.key});
@@ -204,12 +203,7 @@ class StudioTab extends StatelessWidget {
                     theme: theme,
                     onTap: () {
                       if (rp.isPremium) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AILoveLetterScreen(),
-                          ),
-                        );
+                        context.push(Routes.studioLoveLetter);
                       } else {
                         _showPremiumPaywall(context, theme);
                       }
@@ -226,12 +220,7 @@ class StudioTab extends StatelessWidget {
                     isUnlocked: true,
                     theme: theme,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const TimeCapsuleScreen(),
-                        ),
-                      );
+                      context.push(Routes.timeCapsule);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -246,12 +235,7 @@ class StudioTab extends StatelessWidget {
                     theme: theme,
                     onTap: () {
                       if (rp.isPremium) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RelationshipInsightsScreen(),
-                          ),
-                        );
+                        context.push(Routes.studioInsights);
                       } else {
                         _showPremiumPaywall(context, theme);
                       }

@@ -1,9 +1,9 @@
-import 'package:days_together/screens/onboarding/join_couple_code_screen.dart';
-import 'package:days_together/screens/onboarding/recover_relationship_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/widgets/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -92,12 +92,7 @@ class _PairingSelectionScreenState extends State<PairingSelectionScreen> {
                   onTap: () {
                     if (_isNavigating) return;
                     _isNavigating = true;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const JoinCoupleCodeScreen(),
-                      ),
-                    ).then((_) {
+                    context.push(Routes.joinCode).then((_) {
                       if (mounted) _isNavigating = false;
                     });
                   },
@@ -113,12 +108,7 @@ class _PairingSelectionScreenState extends State<PairingSelectionScreen> {
                   onTap: () {
                     if (_isNavigating) return;
                     _isNavigating = true;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RecoverRelationshipScreen(),
-                      ),
-                    ).then((_) {
+                    context.push(Routes.recover).then((_) {
                       if (mounted) _isNavigating = false;
                     });
                   },

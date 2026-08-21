@@ -14,6 +14,11 @@
 //   Phase 1 exit criterion -- no lib/providers/ file other than
 //     relationship_provider.dart itself references RelationshipProvider;
 //     every domain provider depends on CoupleSession instead.
+//   Phase 3 exit criteria -- lib/navigator_key.dart is deleted;
+//     notification_service.dart imports no screen; MaterialPageRoute is
+//     confined to the three files whose Navigator.push sites are dialogs,
+//     not navigational destinations, and so are deliberately out of
+//     go_router's scope (ADR-007).
 //
 // Plain dart:io file-walking and string search -- no new dependency, no
 // codegen, consistent with this project's explicit no-over-engineering
@@ -107,6 +112,58 @@ void main() {
         violations,
         isEmpty,
         reason: 'Domain providers referencing RelationshipProvider directly instead of CoupleSession (see migration-roadmap.md Phase 1): $violations',
+      );
+    });
+  });
+
+  group('Migration Phase 3 -- go_router owns screen-level navigation (ADR-007)', () {
+    test('lib/navigator_key.dart no longer exists', () {
+      expect(File('lib/navigator_key.dart').existsSync(), isFalse);
+    });
+
+    test('notification_service.dart imports no screen file', () {
+      final content = File('lib/services/notification_service.dart').readAsStringSync();
+      final violations = RegExp(r"import 'package:days_together/screens/[^']+';")
+          .allMatches(content)
+          .map((m) => m.group(0)!)
+          .toList();
+      expect(
+        violations,
+        isEmpty,
+        reason: 'notification_service.dart must resolve payloads to routes, not import screens directly (ADR-007): $violations',
+      );
+    });
+
+    test('MaterialPageRoute is confined to the three known dialog-shaped call sites', () {
+      // AddItemDialog, EditItemDialog, and SignatureDrawingDialog are
+      // pushed via Navigator.push rather than showDialog, but are
+      // conceptually dialogs (no deep-link/back-button target of their
+      // own) -- explicitly out of ADR-007's "distinct screens" scope. Every
+      // other MaterialPageRoute site was converted to a named go_router
+      // route.
+      const exceptions = {
+        'lib/screens/love_story_screen.dart',
+        'lib/screens/timeline/memory_detail_screen.dart',
+        'lib/screens/together/relationship_license_screen.dart',
+        // Deliberately preserved as plain Navigator (not dialogs, but a
+        // provably-safe conversion couldn't be made -- see the inline
+        // comments at each site for the specific redirect-fight risk):
+        'lib/screens/onboarding/create_couple_code_screen.dart',
+        'lib/screens/onboarding/recover_relationship_screen.dart',
+      };
+      final violations = <String>[];
+      for (final file in _dartFilesUnder('lib')) {
+        final normalized = file.path.replaceAll('\\', '/');
+        if (exceptions.any((e) => normalized.endsWith(e))) continue;
+        final content = file.readAsStringSync();
+        if (content.contains('MaterialPageRoute(')) {
+          violations.add(normalized);
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'MaterialPageRoute used outside the known, documented exceptions -- convert to a named Routes.* entry (see migration-roadmap.md Phase 3): $violations',
       );
     });
   });

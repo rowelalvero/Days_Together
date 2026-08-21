@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/relationship_provider.dart';
@@ -10,16 +11,10 @@ import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/screens/settings/theme_selector_screen.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
-import 'package:days_together/screens/settings/relationship_profile_screen.dart';
-import 'package:days_together/screens/settings/notification_settings_screen.dart';
 import 'package:days_together/screens/wrapped/wrapped_service.dart';
-import 'package:days_together/screens/wrapped/wrapped_screen.dart';
-import 'package:days_together/screens/wrapped/wrapped_archive_screen.dart';
-
-import '../main.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -48,15 +43,7 @@ class SettingsTab extends StatelessWidget {
     );
 
     if (!context.mounted) return;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => WrappedScreen(data: data),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-            FadeTransition(opacity: animation, child: child),
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-    );
+    context.push(Routes.wrapped, extra: data);
   }
 
   void _showLogoutConfirmation(BuildContext context, RelationshipProvider rp) {
@@ -104,13 +91,14 @@ class SettingsTab extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx); // close dialog
+              // No explicit navigation after this: logging out clears
+              // CoupleSession's identity fields, which the router's single
+              // redirect (app_router.dart) picks up via refreshListenable
+              // and recomputes the correct destination for -- replacing the
+              // old pushAndRemoveUntil(AppHome())/popUntil two-strategies
+              // split ADR-007 found (this screen previously also imported
+              // main.dart just to reach AppHome, a layering violation).
               await rp.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => AppHome()),
-                  (route) => false,
-                );
-              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
@@ -159,14 +147,7 @@ class SettingsTab extends StatelessWidget {
               title: 'App Theme',
               subtitle: theme.name,
               theme: theme,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ThemeSelectorScreen(),
-                  ),
-                );
-              },
+              onTap: () => context.push(Routes.themeSelector),
             ),
             const SizedBox(height: 12),
             _buildModernTile(
@@ -174,14 +155,7 @@ class SettingsTab extends StatelessWidget {
               title: 'Notifications',
               subtitle: 'Configure alerts & quiet hours',
               theme: theme,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationSettingsScreen(),
-                  ),
-                );
-              },
+              onTap: () => context.push(Routes.notificationSettings),
             ),
             const SizedBox(height: 12),
             _buildWrappedTile(theme, context),
@@ -196,14 +170,7 @@ class SettingsTab extends StatelessWidget {
                   ? 'Connected with partner'
                   : 'Waiting for connection',
               theme: theme,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RelationshipProfileScreen(),
-                  ),
-                );
-              },
+              onTap: () => context.push(Routes.profile),
             ),
             const SizedBox(height: 12),
             _buildPremiumGlassCard(rp, theme),
@@ -306,10 +273,7 @@ class SettingsTab extends StatelessWidget {
       title: 'Wrapped Archive',
       subtitle: 'Revisit past years',
       theme: theme,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const WrappedArchiveScreen()),
-      ),
+      onTap: () => context.push(Routes.wrappedArchive),
     );
   }
 

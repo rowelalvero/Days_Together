@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -24,13 +26,6 @@ import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
 // Screens
-import 'package:days_together/screens/together/noteit_screen.dart';
-import 'package:days_together/screens/together/calendar_screen.dart';
-import 'package:days_together/screens/together/love_meter_screen.dart';
-import 'package:days_together/screens/together/bucket_list_screen.dart';
-import 'package:days_together/screens/studio/time_capsule_screen.dart';
-import 'package:days_together/screens/together/vault_screen.dart';
-import 'package:days_together/screens/together/love_chat_screen.dart';
 
 class BentoGrid extends StatelessWidget {
   final dynamic theme;
@@ -72,10 +67,7 @@ class BentoGrid extends StatelessWidget {
         final count = calendar.events.length;
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CalendarScreen()),
-          ),
+          onTap: () => context.push(Routes.calendar),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -198,10 +190,7 @@ class BentoGrid extends StatelessWidget {
             : 'Awaiting check-in';
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
-          ),
+          onTap: () => context.push(Routes.loveMeter),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -319,10 +308,7 @@ class BentoGrid extends StatelessWidget {
         final isPaired = relationship.isPaired;
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
-          ),
+          onTap: () => context.push(Routes.loveMeter),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -485,10 +471,7 @@ class BentoGrid extends StatelessWidget {
         final isUnlocked = vault.isUnlocked;
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const VaultScreen()),
-          ),
+          onTap: () => context.push(Routes.vault),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -612,10 +595,7 @@ class BentoGrid extends StatelessWidget {
         }
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LoveChatScreen()),
-          ),
+          onTap: () => context.push(Routes.chat),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -1221,10 +1201,7 @@ class BentoGrid extends StatelessWidget {
             : 'Waiting for today\'s relationship prompt...';
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LoveMeterScreen()),
-          ),
+          onTap: () => context.push(Routes.loveMeter),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -1466,10 +1443,7 @@ class BentoGrid extends StatelessWidget {
         }
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BucketListScreen()),
-          ),
+          onTap: () => context.push(Routes.bucketList),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -1713,10 +1687,7 @@ class BentoGrid extends StatelessWidget {
         final sealedCount = lockedCapsules.length;
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const TimeCapsuleScreen()),
-          ),
+          onTap: () => context.push(Routes.timeCapsule),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),
@@ -2086,10 +2057,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
         }
 
         return InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NoteitScreen()),
-          ),
+          onTap: () => context.push(Routes.notes),
           borderRadius: BorderRadius.circular(24),
           child: GlassContainer(
             padding: const EdgeInsets.all(20),

@@ -1,16 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
-import 'package:days_together/screens/together/vault_screen.dart';
-import 'package:days_together/screens/together/bucket_list_screen.dart';
-import 'package:days_together/screens/together/love_meter_screen.dart';
-import 'package:days_together/screens/together/gift_reminders_screen.dart';
-import 'package:days_together/screens/together/calendar_screen.dart';
-import 'package:days_together/screens/together/relationship_license_screen.dart';
-import 'package:days_together/screens/together/topic_cards_screen.dart';
-import 'package:days_together/screens/together/noteit_screen.dart';
-import 'package:days_together/screens/together/love_chat_screen.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -64,10 +57,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'The Vault',
                     subtitle: 'Private memories.',
                     color: theme.accentColor,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const VaultScreen()),
-                    ),
+                    onTap: () => context.push(Routes.vault),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -77,12 +67,7 @@ class TogetherTab extends StatelessWidget {
                     subtitle:
                         '${bucketList.completedItems}/${bucketList.totalItems} done',
                     color: Colors.lightBlue,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const BucketListScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.bucketList),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -93,12 +78,7 @@ class TogetherTab extends StatelessWidget {
                         ? 'Today: ${dailyMood.todayMood?.moodScore}/10'
                         : 'How are we today?',
                     color: Colors.pink,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LoveMeterScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.loveMeter),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -107,12 +87,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Gift Ideas',
                     subtitle: 'Never forget a date.',
                     color: Colors.orange,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const GiftRemindersScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.gifts),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -121,10 +96,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Calendar',
                     subtitle: 'Our important dates.',
                     color: Colors.teal,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CalendarScreen()),
-                    ),
+                    onTap: () => context.push(Routes.calendar),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -133,12 +105,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Love License',
                     subtitle: 'Our official bond.',
                     color: const Color(0xFFD4AF37),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RelationshipLicenseScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.license),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -147,12 +114,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Topic Cards',
                     subtitle: 'Deep questions for couples.',
                     color: Colors.purple,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const TopicCardsScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.topicCards),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -161,12 +123,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Scrapbook',
                     subtitle: 'Doodle, write notes & pin photos.',
                     color: Colors.pink,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NoteitScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.notes),
                   ),
                   _buildFeatureCard(
                     context: context,
@@ -175,12 +132,7 @@ class TogetherTab extends StatelessWidget {
                     title: 'Love Chat',
                     subtitle: 'Connected messaging.',
                     color: theme.accentColor,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LoveChatScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(Routes.chat),
                   ),
                 ],
               ),

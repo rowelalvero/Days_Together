@@ -68,6 +68,17 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
           );
 
           if (mounted && (initialized == true)) {
+            // Deliberately NOT context.go(Routes.avatar): this branch is
+            // gated on provider.yourName, a signal computeSessionStage does
+            // not consider at all (it looks at isCreator/isPaired/
+            // startDate). A recovered workspace could plausibly still be
+            // mid-genesis (creator, no startDate yet), in which case
+            // app_router.dart's appRedirect would compute needsGenesis and
+            // immediately bounce a router-mediated push to /avatar back to
+            // /genesis -- a redirect fight this screen's own, narrower check
+            // doesn't anticipate. Left as plain Navigator calls (both
+            // branches -- Navigator.pop is out of ADR-007's scope regardless)
+            // to preserve the existing behavior exactly.
             if (provider.yourName == null || provider.yourName!.trim().isEmpty) {
               Navigator.pushAndRemoveUntil(
                 context,

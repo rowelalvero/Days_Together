@@ -1,8 +1,9 @@
-import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -132,12 +133,7 @@ class _GenesisScreenState extends State<GenesisScreen> {
                       await provider.setStartDate(_selectedDate);
                       await provider.setStartTime(_selectedTime);
                       if (!context.mounted) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AvatarCreationScreen(),
-                        ),
-                      );
+                      context.push(Routes.avatar);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.accentColor,

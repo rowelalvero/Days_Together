@@ -1620,6 +1620,12 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
     return GestureDetector(
       onTap: () async {
         final strokes = _deserializeSignature(signatureStr.isNotEmpty ? signatureStr : null);
+        // SignatureDrawingDialog stays a plain Navigator.push (both sites
+        // in this file): it's a dialog with a typed return value, not a
+        // navigational destination -- ADR-007's scope only covers "distinct
+        // screens", and modeling a typed-result dialog as a go_router route
+        // would be exactly the over-engineering ADR-007's rejected option 2
+        // warns against.
         final result = await Navigator.push<List<List<Offset>>>(
           context,
           MaterialPageRoute(
@@ -3409,6 +3415,8 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
                 isYou ? _yourSignatureStr : _partnerSignatureStr,
               );
 
+              // See _buildSignatureBox's onTap above for why this stays a
+              // plain Navigator.push.
               final result = await Navigator.push<List<List<Offset>>>(
                 context,
 

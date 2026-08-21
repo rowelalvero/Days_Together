@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -10,10 +11,7 @@ import 'package:days_together/providers/gift_reminder_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/models/vault_item_model.dart';
-import 'package:days_together/screens/together/vault_screen.dart';
-import 'package:days_together/screens/together/bucket_list_screen.dart';
-import 'package:days_together/screens/together/gift_reminders_screen.dart';
-import 'package:days_together/screens/love_story_screen.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/themes/app_typography.dart';
 
@@ -578,28 +576,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     subtitle: 'Story Entry • ${DateFormat.jm().format(item.date)}${item.location != null ? ' • ${item.location}' : ''}',
                     emoji: '📖',
                     color: Colors.blueAccent,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoveStoryScreen())),
+                    // Was Navigator.push(... LoveStoryScreen()) -- pushed a
+                    // second, redundant instance of the app's own shell on
+                    // top of the stack, since CalendarScreen is already
+                    // reached from inside it (ADR-007's confirmed duplicate-
+                    // shell finding). context.go returns to the existing
+                    // shell instead of stacking a new one.
+                    onTap: () => context.go(Routes.home),
                   )),
                   ...bucketItems.map((item) => _buildIntegratedCard(
                     title: item.title,
                     subtitle: 'Bucket List Goal${item.scheduledAt!.hour != 0 || item.scheduledAt!.minute != 0 ? ' • ${DateFormat.jm().format(item.scheduledAt!)}' : ''}',
                     emoji: '✅',
                     color: Colors.greenAccent,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BucketListScreen())),
+                    onTap: () => context.push(Routes.bucketList),
                   )),
                   ...giftItems.map((item) => _buildIntegratedCard(
                     title: item.title,
                     subtitle: 'Gift Reminder${item.date.hour != 0 || item.date.minute != 0 ? ' • ${DateFormat.jm().format(item.date)}' : ''}',
                     emoji: '🎁',
                     color: Colors.orangeAccent,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GiftRemindersScreen())),
+                    onTap: () => context.push(Routes.gifts),
                   )),
                   ...vaultItems.map((item) => _buildIntegratedCard(
                     title: vaultProvider.isUnlocked ? (item.type == VaultItemType.letter ? 'Private Letter' : 'Private Photo') : 'Locked Memory',
                     subtitle: 'The Vault • ${DateFormat.jm().format(item.createdAt)}',
                     emoji: '🔒',
                     color: Colors.purpleAccent,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VaultScreen())),
+                    onTap: () => context.push(Routes.vault),
                   )),
                 ],
               ),

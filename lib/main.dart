@@ -15,13 +15,7 @@ import 'package:days_together/providers/recent_activity_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/notification_preferences_provider.dart';
 import 'package:days_together/providers/currently_provider.dart';
-import 'package:days_together/screens/love_story_screen.dart';
-import 'package:days_together/screens/onboarding/welcome_screen.dart';
-import 'package:days_together/screens/onboarding/pairing_selection_screen.dart';
-import 'package:days_together/screens/onboarding/loading_screen.dart';
-import 'package:days_together/screens/onboarding/create_couple_code_screen.dart';
-import 'package:days_together/screens/onboarding/genesis_screen.dart';
-import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
+import 'package:days_together/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:google_fonts/google_fonts.dart';
@@ -30,7 +24,6 @@ import 'package:provider/single_child_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/app_config.dart';
 import 'package:days_together/services/notification_service.dart';
-import 'package:days_together/navigator_key.dart';
 import 'package:days_together/services/home_widget_service.dart';
 
 @pragma('vm:entry-point')
@@ -162,6 +155,13 @@ List<SingleChildWidget> buildAppProviders() {
   ];
 }
 
+/// The app's top-level widget. Navigation is now entirely `go_router`'s
+/// responsibility (Phase 3 of the architecture migration, ADR-007) --
+/// `AppHome`'s old inline `SessionStage` switch is gone; the identical
+/// mapping now lives once, in `lib/routing/app_router.dart`'s
+/// `appRedirect`/route table, which is also what `notification_service.dart`
+/// and every screen-to-screen push now goes through instead of constructing
+/// `MaterialPageRoute`s by hand.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -180,8 +180,17 @@ class MyApp extends StatelessWidget {
     final theme = themeProvider.currentLoveTheme;
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
 
-    return MaterialApp(
-      navigatorKey: navigatorKey,
+    // Read (not watch) deliberately: this is the app's single,
+    // process-lifetime relationship instance -- ensureAppRouter only needs
+    // it once, to build the Listenable the router re-evaluates its redirect
+    // against on every change (see app_router.dart, which reads
+    // RelationshipProvider directly rather than through CoupleSession's
+    // one-frame-delayed mirror, for exactly this reactivity).
+    final relationshipProvider = context.read<RelationshipProvider>();
+    final router = ensureAppRouter(refreshListenable: relationshipProvider);
+
+    return MaterialApp.router(
+      routerConfig: router,
       title: 'Our Love Story',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -196,54 +205,6 @@ class MyApp extends StatelessWidget {
         ),
         cardColor: theme.cardColor,
       ),
-      home: const AppHome(),
     );
-  }
-}
-
-class AppHome extends StatelessWidget {
-  const AppHome({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final session = Provider.of<CoupleSession>(context);
-    // startDate isn't yet a CoupleSession field -- see SessionStage's doc
-    // comment in couple_session.dart -- so it's read from RelationshipProvider
-    // directly until Phase 5's WorkspaceController absorbs it.
-    final startDate = Provider.of<RelationshipProvider>(context).startDate;
-
-    final stage = computeSessionStage(
-      isInitialized: session.isInitialized,
-      userId: session.userId,
-      coupleId: session.coupleId,
-      isCreator: session.isCreator,
-      isPaired: session.isPaired,
-      onboardingCompleted: session.onboardingCompleted,
-      startDate: startDate,
-    );
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      child: _buildHomeContent(stage),
-    );
-  }
-
-  Widget _buildHomeContent(SessionStage stage) {
-    switch (stage) {
-      case SessionStage.loading:
-        return const LoadingScreen(key: ValueKey('loading'));
-      case SessionStage.unauthenticated:
-        return const WelcomeScreen(key: ValueKey('welcome'));
-      case SessionStage.ready:
-        return const LoveStoryScreen(key: ValueKey('home'));
-      case SessionStage.needsWorkspace:
-        return const CreateCoupleCodeScreen(key: ValueKey('couple_code'));
-      case SessionStage.needsGenesis:
-        return const GenesisScreen(key: ValueKey('genesis'));
-      case SessionStage.needsAvatar:
-        return const AvatarCreationScreen(key: ValueKey('avatar'));
-      case SessionStage.needsCouple:
-        return const PairingSelectionScreen(key: ValueKey('pairing'));
-    }
   }
 }

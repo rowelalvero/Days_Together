@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
-import 'package:days_together/screens/love_story_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/services/permission_service.dart';
 
@@ -247,12 +246,15 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
       if (_avatarPath != null) {
         await provider.setAvatars(yourPath: _avatarPath);
       }
+      // No explicit navigation after this: completeOnboarding() flips
+      // CoupleSession's stage to `ready`, which the router's single
+      // redirect (app_router.dart) picks up via refreshListenable and
+      // bounces to Routes.home automatically -- this was previously one of
+      // ADR-007's four independent "is the user ready" restatements
+      // (main.dart's old AppHome switch, notification_service.dart,
+      // recover_relationship_screen.dart, and this screen), each hand-coded
+      // separately; now there is exactly one.
       await provider.completeOnboarding();
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoveStoryScreen()),
-        (route) => false,
-      );
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);

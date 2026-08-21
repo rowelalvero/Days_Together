@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/widgets/storage_image.dart';
-import 'package:days_together/screens/timeline/memory_detail_screen.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
   final TimelineProvider timelineProvider;
@@ -320,15 +321,8 @@ class OpenContainerWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Standard navigation wrapper that doesn't rely on Animations package open_container if it is not suitable,
-    // but here we can just use a simple InkWell + Navigator.push to avoid any animation package mismatch.
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => MemoryDetailScreen(item: item)),
-        );
-      },
+      onTap: () => context.push(Routes.memory(item.id)),
       borderRadius: BorderRadius.circular(24),
       child: child,
     );

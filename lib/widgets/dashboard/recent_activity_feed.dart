@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -16,16 +17,11 @@ import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/gift_reminder_provider.dart';
 
-// Screens for Navigation
-import 'package:days_together/screens/together/bucket_list_screen.dart';
-import 'package:days_together/screens/together/calendar_screen.dart';
-import 'package:days_together/screens/studio/time_capsule_screen.dart';
-import 'package:days_together/screens/together/vault_screen.dart';
-import 'package:days_together/screens/together/noteit_screen.dart';
-import 'package:days_together/screens/together/topic_cards_screen.dart';
-import 'package:days_together/screens/together/gift_reminders_screen.dart';
-import 'package:days_together/screens/together/relationship_license_screen.dart';
-import 'package:days_together/screens/together/love_chat_screen.dart';
+import 'package:days_together/routing/routes.dart';
+// LoveStoryScreen.of(context)?.setIndex(...) below is tab-switching inside
+// the already-mounted shell, not screen navigation -- deliberately out of
+// go_router's scope (ADR-007); every other case now resolves to a Routes
+// constant instead of a screen import.
 import 'package:days_together/screens/love_story_screen.dart';
 
 class RecentActivityFeed extends StatefulWidget {
@@ -116,7 +112,7 @@ class _RecentActivityFeedState extends State<RecentActivityFeed> {
     if (route == null) return;
 
     bool exists = true;
-    Widget? targetScreen;
+    String? targetRoute;
 
     switch (route) {
       case 'bucket_list':
@@ -124,14 +120,14 @@ class _RecentActivityFeedState extends State<RecentActivityFeed> {
           final provider = Provider.of<BucketListProvider>(context, listen: false);
           exists = provider.items.any((i) => i.id == referenceId);
         }
-        targetScreen = const BucketListScreen();
+        targetRoute = Routes.bucketList;
         break;
       case 'calendar':
         if (referenceId != null && activity.activityType != 'deleted') {
           final provider = Provider.of<CalendarProvider>(context, listen: false);
           exists = provider.events.any((e) => e.id == referenceId);
         }
-        targetScreen = const CalendarScreen();
+        targetRoute = Routes.calendar;
         break;
       case 'timeline':
         if (referenceId != null && activity.activityType != 'deleted') {
@@ -148,14 +144,14 @@ class _RecentActivityFeedState extends State<RecentActivityFeed> {
           final provider = Provider.of<TimeCapsuleProvider>(context, listen: false);
           exists = provider.capsules.any((c) => c.id == referenceId);
         }
-        targetScreen = const TimeCapsuleScreen();
+        targetRoute = Routes.timeCapsule;
         break;
       case 'vault':
         if (referenceId != null && activity.activityType != 'deleted') {
           final provider = Provider.of<VaultProvider>(context, listen: false);
           exists = provider.items.any((i) => i.id == referenceId);
         }
-        targetScreen = const VaultScreen();
+        targetRoute = Routes.vault;
         break;
       case 'love_notes':
       case 'doodle_notes':
@@ -163,23 +159,23 @@ class _RecentActivityFeedState extends State<RecentActivityFeed> {
           final provider = Provider.of<NoteitProvider>(context, listen: false);
           exists = provider.notes.any((n) => n.id == referenceId);
         }
-        targetScreen = const NoteitScreen();
+        targetRoute = Routes.notes;
         break;
       case 'topic_cards':
-        targetScreen = const TopicCardsScreen();
+        targetRoute = Routes.topicCards;
         break;
       case 'gifts':
         if (referenceId != null && activity.activityType != 'deleted') {
           final provider = Provider.of<GiftReminderProvider>(context, listen: false);
           exists = provider.reminders.any((r) => r.id == referenceId);
         }
-        targetScreen = const GiftRemindersScreen();
+        targetRoute = Routes.gifts;
         break;
       case 'relationship_profile':
-        targetScreen = const RelationshipLicenseScreen();
+        targetRoute = Routes.license;
         break;
       case 'chat':
-        targetScreen = const LoveChatScreen();
+        targetRoute = Routes.chat;
         break;
     }
 
@@ -192,11 +188,8 @@ class _RecentActivityFeedState extends State<RecentActivityFeed> {
       );
     }
 
-    if (targetScreen != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => targetScreen!),
-      );
+    if (targetRoute != null) {
+      context.push(targetRoute);
     }
   }
 

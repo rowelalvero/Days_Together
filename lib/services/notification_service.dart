@@ -1,27 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:days_together/navigator_key.dart';
-import 'package:days_together/providers/relationship_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/screens/love_story_screen.dart';
-import 'package:days_together/screens/studio/time_capsule_screen.dart';
-import 'package:days_together/screens/together/bucket_list_screen.dart';
-import 'package:days_together/screens/together/calendar_screen.dart';
-import 'package:days_together/screens/together/gift_reminders_screen.dart';
-import 'package:days_together/screens/together/love_chat_screen.dart';
-import 'package:days_together/screens/together/love_meter_screen.dart';
-import 'package:days_together/screens/together/noteit_screen.dart';
-import 'package:days_together/screens/together/relationship_license_screen.dart';
-import 'package:days_together/screens/together/topic_cards_screen.dart';
-import 'package:days_together/screens/together/vault_screen.dart';
-import 'package:days_together/screens/timeline/memory_detail_screen.dart';
+import 'package:days_together/routing/app_router.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NotificationService {
@@ -206,87 +191,51 @@ class NotificationService {
     }
   }
 
+  /// Resolves a notification payload to a route and hands it to the router
+  /// -- this service never imports a screen or constructs a
+  /// `MaterialPageRoute` (architecture-rules.md, Rule 15; ADR-007). It also
+  /// no longer duplicates the "is the user ready" check the old
+  /// `navigatorKey`-based version had here: `appRouter`'s single `redirect`
+  /// (see `app_router.dart`) already forces any requested route to the
+  /// correct onboarding screen when the session isn't `ready`, including the
+  /// case this service previously handled by silently dropping the payload
+  /// -- a real, previously-unaddressed gap ADR-007 calls out explicitly (a
+  /// deep link arriving mid-hydration is now deferred and replayed, not
+  /// lost).
   void _handleNotificationPayload(Map<String, dynamic> data) {
     final feature = data['feature'] as String?;
     final itemId = data['item_id'] as String?;
     if (feature == null) return;
 
-    final context = navigatorKey.currentContext;
-    if (context == null) return;
-
-    // Check if the user is logged in and has completed onboarding before allowing sub-screen navigation
-    final rp = context.read<RelationshipProvider>();
-    if (rp.userId == null || !rp.isOnboardingComplete) {
-      debugPrint('NotificationService: Bypassing payload routing because user is not authenticated or onboarding is incomplete.');
-      return;
-    }
-
-    final state = navigatorKey.currentState;
-    if (state == null) return;
-
-    void navigateToTab(int index) {
-      final context = navigatorKey.currentContext;
-      if (context != null) {
-        final lss = LoveStoryScreen.of(context);
-        if (lss != null) {
-          lss.setIndex(index);
-          state.popUntil((route) => route.isFirst);
-          return;
-        }
-      }
-      state.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => LoveStoryScreen(initialIndex: index)),
-        (route) => false,
-      );
-    }
-
     switch (feature) {
       case 'chat':
-        state.push(MaterialPageRoute(builder: (_) => const LoveChatScreen()));
-        break;
+        appRouter.push(Routes.chat);
       case 'bucket_list':
-        state.push(MaterialPageRoute(builder: (_) => const BucketListScreen()));
-        break;
+        appRouter.push(Routes.bucketList);
       case 'love_meter':
       case 'daily_prompt':
-        state.push(MaterialPageRoute(builder: (_) => const LoveMeterScreen()));
-        break;
+        appRouter.push(Routes.loveMeter);
       case 'doodle_notes':
-        state.push(MaterialPageRoute(builder: (_) => const NoteitScreen()));
-        break;
+        appRouter.push(Routes.notes);
       case 'timeline':
       case 'memories':
         if (itemId != null) {
-          final context = navigatorKey.currentContext;
-          if (context != null) {
-            try {
-              final provider = context.read<TimelineProvider>();
-              final item = provider.timelineItems.firstWhere((i) => i.id == itemId);
-              state.push(MaterialPageRoute(builder: (_) => MemoryDetailScreen(item: item)));
-              return;
-            } catch (_) {}
-          }
+          appRouter.push(Routes.memory(itemId));
+        } else {
+          appRouter.go(Routes.homeTab(1));
         }
-        navigateToTab(1);
-        break;
       case 'time_capsule':
-        state.push(MaterialPageRoute(builder: (_) => const TimeCapsuleScreen()));
-        break;
+        appRouter.push(Routes.timeCapsule);
       case 'calendar':
-        state.push(MaterialPageRoute(builder: (_) => const CalendarScreen()));
-        break;
+        appRouter.push(Routes.calendar);
       case 'vault':
-        state.push(MaterialPageRoute(builder: (_) => const VaultScreen()));
-        break;
+        appRouter.push(Routes.vault);
       case 'topic_cards':
-        state.push(MaterialPageRoute(builder: (_) => const TopicCardsScreen()));
-        break;
+        appRouter.push(Routes.topicCards);
       case 'relationship':
-        state.push(MaterialPageRoute(builder: (_) => const RelationshipLicenseScreen()));
-        break;
+        appRouter.push(Routes.license);
       case 'gifts':
-        state.push(MaterialPageRoute(builder: (_) => const GiftRemindersScreen()));
-        break;
+        appRouter.push(Routes.gifts);
     }
   }
 }

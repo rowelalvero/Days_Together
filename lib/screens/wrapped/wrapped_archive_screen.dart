@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:days_together/routing/routes.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'wrapped_data.dart';
-import 'wrapped_screen.dart';
 import 'wrapped_service.dart';
 
 /// Displays all archived Wrapped years and allows replaying any one of them.
@@ -40,17 +41,11 @@ class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
       if (data != null) _dataCache[year] = data;
     }
     if (!mounted || data == null) return;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => WrappedScreen(data: data!),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
-          opacity: animation,
-          child: child,
-        ),
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
+    // The fade transition (previously 500ms here vs. settings_tab.dart's
+    // 600ms for the same destination) now lives once, on app_router.dart's
+    // Routes.wrapped route -- go_router defines a transition per route, not
+    // per call site, so the two calls' durations are consolidated to 600ms.
+    context.push(Routes.wrapped, extra: data);
   }
 
   @override

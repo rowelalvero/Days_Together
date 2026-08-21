@@ -53,15 +53,18 @@ class _AuthScreenState extends State<AuthScreen> {
           setState(() => _isSignUp = false);
         }
       } else {
+        // No explicit navigation after this: signing in flips
+        // RelationshipProvider.userId away from null, which the router's
+        // single redirect (app_router.dart) picks up via refreshListenable
+        // and moves off Routes.auth (no longer a valid `unauthenticated`
+        // location) to whatever stage comes next -- replacing the old
+        // popUntil-to-root-and-let-AppHome-decide pattern this method's own
+        // comment already described; that decision now lives in
+        // appRedirect instead of AppHome.
         await provider.signInWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
-        if (mounted) {
-          // Instead of a single pop, we ensure we return to the root 
-          // where MaterialApp.home will decide the next screen based on state.
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
       }
     } catch (e) {
       if (mounted) {
@@ -84,10 +87,9 @@ class _AuthScreenState extends State<AuthScreen> {
     final provider = context.read<RelationshipProvider>();
 
     try {
+      // Same reasoning as _submit's email sign-in above: no explicit
+      // navigation needed, the redirect handles the transition.
       await provider.signInWithGoogle();
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
     } catch (e) {
       if (e.toString() != 'Sign in aborted by user' && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

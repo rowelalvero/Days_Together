@@ -81,6 +81,11 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                       icon: Icon(Icons.edit_note_rounded, color: theme.accentColor, size: 28),
                       tooltip: 'Edit Memory',
                       onPressed: () {
+                        // EditItemDialog stays a plain Navigator.push --
+                        // it's a dialog (edits then closes), not a
+                        // navigational destination, despite using
+                        // Navigator.push instead of showDialog (ADR-007's
+                        // scope only covers "distinct screens").
                         Navigator.push(
                           context,
                           MaterialPageRoute(

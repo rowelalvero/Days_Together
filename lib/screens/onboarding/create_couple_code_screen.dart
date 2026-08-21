@@ -279,6 +279,20 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                         ? () {
                             // Wipe recovery code from memory for security
                             provider.clearRecoveryCode();
+                            // Deliberately NOT context.push(Routes.genesis):
+                            // this button has no isPaired gate, so a creator
+                            // can reach it before their partner joins.
+                            // computeSessionStage's needsGenesis requires
+                            // isPaired (matching this app's pre-migration
+                            // AppHome logic verbatim), so a router-mediated
+                            // push here would be immediately redirected back
+                            // to /workspace by app_router.dart's appRedirect
+                            // -- a real behavior change from today's app,
+                            // where a pushed screen isn't re-validated
+                            // against AppHome. Left as a plain Navigator.push
+                            // to preserve the existing "continue regardless
+                            // of pairing" flow; revisit once/if the product
+                            // decides whether that flow is actually correct.
                             Navigator.push(
                               context,
                               MaterialPageRoute(

@@ -910,7 +910,16 @@ Widget _buildDangerZoneDivider(dynamic theme) {
                         onPressed: () async {
                           Navigator.pop(dialogContext); // Close confirmation dialog
 
-                          final success = await SafeLoadingDialog.run<bool>(
+                          // No explicit navigation after this: deleteAccount()
+                          // ends in logout(wipeAll: true), which clears
+                          // RelationshipProvider's identity fields -- the
+                          // router's single redirect (app_router.dart) picks
+                          // that up via refreshListenable and recomputes the
+                          // correct destination, replacing the old
+                          // popUntil(isFirst)-to-root strategy (ADR-007
+                          // found this used a different "return to root"
+                          // mechanism than settings_tab.dart's logout did).
+                          await SafeLoadingDialog.run<bool>(
                             context: context,
                             future: () async {
                               await rp.deleteAccount();
@@ -920,10 +929,6 @@ Widget _buildDangerZoneDivider(dynamic theme) {
                             loadingMessage: 'Deleting account...',
                             indicatorColor: Colors.redAccent,
                           );
-
-                          if (success == true && context.mounted) {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
-                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,

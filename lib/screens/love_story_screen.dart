@@ -288,6 +288,12 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
           floatingActionButton: (_currentIndex == 0 || _currentIndex == 1)
               ? FloatingActionButton(
                   onPressed: () {
+                    // AddItemDialog is pushed via Navigator, not
+                    // context.push, deliberately: despite using
+                    // Navigator.push rather than showDialog, it's
+                    // conceptually a dialog (full-screen overlay, no deep
+                    // link or back-button target of its own) -- out of
+                    // ADR-007's scope the same way showDialog sites are.
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AddItemDialog()),
                     );
@@ -936,6 +942,8 @@ class _TimelineTabState extends State<TimelineTab> {
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () {
+              // See the FAB's onPressed above for why this stays a plain
+              // Navigator.push.
               Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const AddItemDialog()));
