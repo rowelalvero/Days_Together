@@ -11,6 +11,10 @@ import 'package:flutter/rendering.dart';
 
 import 'package:provider/provider.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
+
+import 'package:days_together/features/relationship/license_details.dart';
+import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 import 'package:intl/intl.dart';
@@ -34,15 +38,15 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/storage_image.dart';
 
-class RelationshipLicenseScreen extends StatefulWidget {
+class RelationshipLicenseScreen extends ConsumerStatefulWidget {
   const RelationshipLicenseScreen({super.key});
 
   @override
-  State<RelationshipLicenseScreen> createState() =>
+  ConsumerState<RelationshipLicenseScreen> createState() =>
       _RelationshipLicenseScreenState();
 }
 
-class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
+class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseScreen> {
   final GlobalKey _licenseKey = GlobalKey();
 
   bool _isYourLicense =
@@ -155,13 +159,14 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
   void _showEnlargedDialog() {
     final rp = context.read<RelationshipProvider>();
+    final license = ref.read(licenseControllerProvider).value ?? const LicenseDetails();
     final myName = rp.yourName ?? 'You';
     final partnerName = rp.partnerName ?? 'Partner';
-    final myPhone = rp.yourPhone?.isNotEmpty == true
-        ? rp.yourPhone!
+    final myPhone = license.yourPhone?.isNotEmpty == true
+        ? license.yourPhone!
         : 'Not provided';
-    final partnerPhone = rp.partnerPhone?.isNotEmpty == true
-        ? rp.partnerPhone!
+    final partnerPhone = license.partnerPhone?.isNotEmpty == true
+        ? license.partnerPhone!
         : 'Not provided';
 
     showDialog(
@@ -201,47 +206,47 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
                     child: _isYourLicense
                         ? FlippableLicenseCard(
                             holderName: myName,
-                            holderGender: rp.yourGender,
+                            holderGender: license.yourGender,
                             holderAvatar: rp.yourAvatarPath,
-                            holderBirthdate: rp.yourBirthdate,
-                            holderAddress: rp.yourAddress,
-                            holderNationality: rp.yourNationality,
-                            holderWeight: rp.yourWeight,
-                            holderHeight: rp.yourHeight,
-                            holderBloodType: rp.yourBloodType,
-                            holderEyeColor: rp.yourEyeColor,
-                            holderConditions: rp.yourConditions,
-                            holderDateIssued: rp.yourDateIssued,
-                            holderSignature: rp.yourSignature,
+                            holderBirthdate: license.yourBirthdate,
+                            holderAddress: license.yourAddress,
+                            holderNationality: (license.yourNationality ?? 'Love Land'),
+                            holderWeight: (license.yourWeight ?? '—'),
+                            holderHeight: (license.yourHeight ?? '—'),
+                            holderBloodType: (license.yourBloodType ?? '—'),
+                            holderEyeColor: (license.yourEyeColor ?? '—'),
+                            holderConditions: (license.yourConditions ?? 'Madly in Love'),
+                            holderDateIssued: license.yourDateIssued,
+                            holderSignature: license.yourSignature,
                             startDate: rp.startDate,
-                            calculatedAge: _calculateAge(rp.yourBirthdate),
+                            calculatedAge: _calculateAge(license.yourBirthdate),
                             isYourLicense: true,
                             onAvatarTap: () {},
                             emergencyName: partnerName,
                             emergencyPhone: partnerPhone,
-                            emergencyAddress: rp.partnerAddress,
+                            emergencyAddress: license.partnerAddress,
                           )
                         : FlippableLicenseCard(
                             holderName: partnerName,
-                            holderGender: rp.partnerGender,
+                            holderGender: license.partnerGender,
                             holderAvatar: rp.partnerAvatarPath,
-                            holderBirthdate: rp.partnerBirthdate,
-                            holderAddress: rp.partnerAddress,
-                            holderNationality: rp.partnerNationality,
-                            holderWeight: rp.partnerWeight,
-                            holderHeight: rp.partnerHeight,
-                            holderBloodType: rp.partnerBloodType,
-                            holderEyeColor: rp.partnerEyeColor,
-                            holderConditions: rp.partnerConditions,
-                            holderDateIssued: rp.partnerDateIssued,
-                            holderSignature: rp.partnerSignature,
+                            holderBirthdate: license.partnerBirthdate,
+                            holderAddress: license.partnerAddress,
+                            holderNationality: (license.partnerNationality ?? 'Love Land'),
+                            holderWeight: (license.partnerWeight ?? '—'),
+                            holderHeight: (license.partnerHeight ?? '—'),
+                            holderBloodType: (license.partnerBloodType ?? '—'),
+                            holderEyeColor: (license.partnerEyeColor ?? '—'),
+                            holderConditions: (license.partnerConditions ?? 'Madly in Love'),
+                            holderDateIssued: license.partnerDateIssued,
+                            holderSignature: license.partnerSignature,
                             startDate: rp.startDate,
-                            calculatedAge: _calculateAge(rp.partnerBirthdate),
+                            calculatedAge: _calculateAge(license.partnerBirthdate),
                             isYourLicense: false,
                             onAvatarTap: () {},
                             emergencyName: myName,
                             emergencyPhone: myPhone,
-                            emergencyAddress: rp.yourAddress,
+                            emergencyAddress: license.yourAddress,
                           ),
                   ),
                 ),
@@ -261,6 +266,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
   @override
   Widget build(BuildContext context) {
     final rp = context.watch<RelationshipProvider>();
+    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
     final partnerJoined = rp.partnerId != null;
 
     if (!partnerJoined) {
@@ -272,7 +278,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
     final theme = themeProvider.currentLoveTheme;
 
-    final isFirstTime = rp.yourDateIssued == null;
+    final isFirstTime = license.yourDateIssued == null;
 
     if (isFirstTime) {
       if (_isLoading) {
@@ -284,7 +290,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
       return _buildFirstTimeWelcomeScreen(theme);
     }
 
-    final partnerSetupCompleted = rp.partnerDateIssued != null;
+    final partnerSetupCompleted = license.partnerDateIssued != null;
 
     if (!partnerJoined || !partnerSetupCompleted) {
       return _buildWaitingForPartnerScreen(theme, rp);
@@ -296,12 +302,12 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
     final partnerName = rp.partnerName ?? 'Partner';
 
-    final myPhone = rp.yourPhone?.isNotEmpty == true
-        ? rp.yourPhone!
+    final myPhone = license.yourPhone?.isNotEmpty == true
+        ? license.yourPhone!
         : 'Not provided';
 
-    final partnerPhone = rp.partnerPhone?.isNotEmpty == true
-        ? rp.partnerPhone!
+    final partnerPhone = license.partnerPhone?.isNotEmpty == true
+        ? license.partnerPhone!
         : 'Not provided';
 
     return Scaffold(
@@ -412,33 +418,33 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                                 holderName: myName,
 
-                                holderGender: rp.yourGender,
+                                holderGender: license.yourGender,
 
                                 holderAvatar: rp.yourAvatarPath,
 
-                                holderBirthdate: rp.yourBirthdate,
+                                holderBirthdate: license.yourBirthdate,
 
-                                holderAddress: rp.yourAddress,
+                                holderAddress: license.yourAddress,
 
-                                holderNationality: rp.yourNationality,
+                                holderNationality: (license.yourNationality ?? 'Love Land'),
 
-                                holderWeight: rp.yourWeight,
+                                holderWeight: (license.yourWeight ?? '—'),
 
-                                holderHeight: rp.yourHeight,
+                                holderHeight: (license.yourHeight ?? '—'),
 
-                                holderBloodType: rp.yourBloodType,
+                                holderBloodType: (license.yourBloodType ?? '—'),
 
-                                holderEyeColor: rp.yourEyeColor,
+                                holderEyeColor: (license.yourEyeColor ?? '—'),
 
-                                holderConditions: rp.yourConditions,
+                                holderConditions: (license.yourConditions ?? 'Madly in Love'),
 
-                                holderDateIssued: rp.yourDateIssued,
+                                holderDateIssued: license.yourDateIssued,
 
-                                holderSignature: rp.yourSignature,
+                                holderSignature: license.yourSignature,
 
                                 startDate: rp.startDate,
 
-                                calculatedAge: _calculateAge(rp.yourBirthdate),
+                                calculatedAge: _calculateAge(license.yourBirthdate),
 
                                 isYourLicense: true,
 
@@ -448,7 +454,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                                 emergencyPhone: partnerPhone,
 
-                                emergencyAddress: rp.partnerAddress,
+                                emergencyAddress: license.partnerAddress,
                               ),
 
                               const SizedBox(height: 20),
@@ -458,34 +464,34 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                                 holderName: partnerName,
 
-                                holderGender: rp.partnerGender,
+                                holderGender: license.partnerGender,
 
                                 holderAvatar: rp.partnerAvatarPath,
 
-                                holderBirthdate: rp.partnerBirthdate,
+                                holderBirthdate: license.partnerBirthdate,
 
-                                holderAddress: rp.partnerAddress,
+                                holderAddress: license.partnerAddress,
 
-                                holderNationality: rp.partnerNationality,
+                                holderNationality: (license.partnerNationality ?? 'Love Land'),
 
-                                holderWeight: rp.partnerWeight,
+                                holderWeight: (license.partnerWeight ?? '—'),
 
-                                holderHeight: rp.partnerHeight,
+                                holderHeight: (license.partnerHeight ?? '—'),
 
-                                holderBloodType: rp.partnerBloodType,
+                                holderBloodType: (license.partnerBloodType ?? '—'),
 
-                                holderEyeColor: rp.partnerEyeColor,
+                                holderEyeColor: (license.partnerEyeColor ?? '—'),
 
-                                holderConditions: rp.partnerConditions,
+                                holderConditions: (license.partnerConditions ?? 'Madly in Love'),
 
-                                holderDateIssued: rp.partnerDateIssued,
+                                holderDateIssued: license.partnerDateIssued,
 
-                                holderSignature: rp.partnerSignature,
+                                holderSignature: license.partnerSignature,
 
                                 startDate: rp.startDate,
 
                                 calculatedAge: _calculateAge(
-                                  rp.partnerBirthdate,
+                                  license.partnerBirthdate,
                                 ),
 
                                 isYourLicense: false,
@@ -496,7 +502,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                                 emergencyPhone: myPhone,
 
-                                emergencyAddress: rp.yourAddress,
+                                emergencyAddress: license.yourAddress,
                               ),
                             ],
                           )
@@ -506,33 +512,33 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                             holderName: myName,
 
-                            holderGender: rp.yourGender,
+                            holderGender: license.yourGender,
 
                             holderAvatar: rp.yourAvatarPath,
 
-                            holderBirthdate: rp.yourBirthdate,
+                            holderBirthdate: license.yourBirthdate,
 
-                            holderAddress: rp.yourAddress,
+                            holderAddress: license.yourAddress,
 
-                            holderNationality: rp.yourNationality,
+                            holderNationality: (license.yourNationality ?? 'Love Land'),
 
-                            holderWeight: rp.yourWeight,
+                            holderWeight: (license.yourWeight ?? '—'),
 
-                            holderHeight: rp.yourHeight,
+                            holderHeight: (license.yourHeight ?? '—'),
 
-                            holderBloodType: rp.yourBloodType,
+                            holderBloodType: (license.yourBloodType ?? '—'),
 
-                            holderEyeColor: rp.yourEyeColor,
+                            holderEyeColor: (license.yourEyeColor ?? '—'),
 
-                            holderConditions: rp.yourConditions,
+                            holderConditions: (license.yourConditions ?? 'Madly in Love'),
 
-                            holderDateIssued: rp.yourDateIssued,
+                            holderDateIssued: license.yourDateIssued,
 
-                            holderSignature: rp.yourSignature,
+                            holderSignature: license.yourSignature,
 
                             startDate: rp.startDate,
 
-                            calculatedAge: _calculateAge(rp.yourBirthdate),
+                            calculatedAge: _calculateAge(license.yourBirthdate),
 
                             isYourLicense: true,
 
@@ -542,40 +548,40 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                             emergencyPhone: partnerPhone,
 
-                            emergencyAddress: rp.partnerAddress,
+                            emergencyAddress: license.partnerAddress,
                           )
                         : FlippableLicenseCard(
                             key: _partnerCardKey,
 
                             holderName: partnerName,
 
-                            holderGender: rp.partnerGender,
+                            holderGender: license.partnerGender,
 
                             holderAvatar: rp.partnerAvatarPath,
 
-                            holderBirthdate: rp.partnerBirthdate,
+                            holderBirthdate: license.partnerBirthdate,
 
-                            holderAddress: rp.partnerAddress,
+                            holderAddress: license.partnerAddress,
 
-                            holderNationality: rp.partnerNationality,
+                            holderNationality: (license.partnerNationality ?? 'Love Land'),
 
-                            holderWeight: rp.partnerWeight,
+                            holderWeight: (license.partnerWeight ?? '—'),
 
-                            holderHeight: rp.partnerHeight,
+                            holderHeight: (license.partnerHeight ?? '—'),
 
-                            holderBloodType: rp.partnerBloodType,
+                            holderBloodType: (license.partnerBloodType ?? '—'),
 
-                            holderEyeColor: rp.partnerEyeColor,
+                            holderEyeColor: (license.partnerEyeColor ?? '—'),
 
-                            holderConditions: rp.partnerConditions,
+                            holderConditions: (license.partnerConditions ?? 'Madly in Love'),
 
-                            holderDateIssued: rp.partnerDateIssued,
+                            holderDateIssued: license.partnerDateIssued,
 
-                            holderSignature: rp.partnerSignature,
+                            holderSignature: license.partnerSignature,
 
                             startDate: rp.startDate,
 
-                            calculatedAge: _calculateAge(rp.partnerBirthdate),
+                            calculatedAge: _calculateAge(license.partnerBirthdate),
 
                             isYourLicense: false,
 
@@ -585,7 +591,7 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
                             emergencyPhone: myPhone,
 
-                            emergencyAddress: rp.yourAddress,
+                            emergencyAddress: license.yourAddress,
                           ),
                   ),
                 ),
@@ -966,8 +972,11 @@ class _RelationshipLicenseScreenState extends State<RelationshipLicenseScreen> {
 
   void _saveFirstTimeDetails(RelationshipProvider rp) {
     final now = DateTime.now();
-    rp.updateLicense(
-      yourName: _createYourNameCtrl.text.trim(),
+    // Split across the two controllers that used to be one updateLicense
+    // call: yourName is ProfileController's field (untouched by this
+    // extraction), the rest are LicenseController's.
+    rp.setYourName(_createYourNameCtrl.text.trim());
+    ref.read(licenseControllerProvider.notifier).updateFields(
       yourGender: _createYourGender,
       yourPhone: _createYourPhoneCtrl.text.trim(),
       yourBirthdate: _createYourBirthdate,
@@ -2805,7 +2814,7 @@ class _WatermarkPainter extends CustomPainter {
 
 // ════════════════════════════════════════
 
-class _EditLicenseSheet extends StatefulWidget {
+class _EditLicenseSheet extends ConsumerStatefulWidget {
   final RelationshipProvider rp;
 
   final dynamic theme;
@@ -2813,10 +2822,10 @@ class _EditLicenseSheet extends StatefulWidget {
   const _EditLicenseSheet({required this.rp, required this.theme});
 
   @override
-  State<_EditLicenseSheet> createState() => _EditLicenseSheetState();
+  ConsumerState<_EditLicenseSheet> createState() => _EditLicenseSheetState();
 }
 
-class _EditLicenseSheetState extends State<_EditLicenseSheet> {
+class _EditLicenseSheetState extends ConsumerState<_EditLicenseSheet> {
   // Personal Controllers
 
   late TextEditingController _yourNameCtrl;
@@ -2877,69 +2886,71 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
   void initState() {
     super.initState();
 
+    final license = ref.read(licenseControllerProvider).value ?? const LicenseDetails();
+
     _yourNameCtrl = TextEditingController(text: widget.rp.yourName ?? '');
 
     _partnerNameCtrl = TextEditingController(text: widget.rp.partnerName ?? '');
 
-    _yourPhoneCtrl = TextEditingController(text: widget.rp.yourPhone ?? '');
+    _yourPhoneCtrl = TextEditingController(text: license.yourPhone ?? '');
 
     _partnerPhoneCtrl = TextEditingController(
-      text: widget.rp.partnerPhone ?? '',
+      text: license.partnerPhone ?? '',
     );
 
-    _yourAddressCtrl = TextEditingController(text: widget.rp.yourAddress ?? '');
+    _yourAddressCtrl = TextEditingController(text: license.yourAddress ?? '');
 
     _partnerAddressCtrl = TextEditingController(
-      text: widget.rp.partnerAddress ?? '',
+      text: license.partnerAddress ?? '',
     );
 
     _yourNationalityCtrl = TextEditingController(
-      text: widget.rp.yourNationality,
+      text: license.yourNationality ?? 'Love Land',
     );
 
     _partnerNationalityCtrl = TextEditingController(
-      text: widget.rp.partnerNationality,
+      text: license.partnerNationality ?? 'Love Land',
     );
 
-    _yourWeightCtrl = TextEditingController(text: widget.rp.yourWeight);
+    _yourWeightCtrl = TextEditingController(text: license.yourWeight ?? '—');
 
-    _partnerWeightCtrl = TextEditingController(text: widget.rp.partnerWeight);
+    _partnerWeightCtrl = TextEditingController(text: license.partnerWeight ?? '—');
 
-    _yourHeightCtrl = TextEditingController(text: widget.rp.yourHeight);
+    _yourHeightCtrl = TextEditingController(text: license.yourHeight ?? '—');
 
-    _partnerHeightCtrl = TextEditingController(text: widget.rp.partnerHeight);
+    _partnerHeightCtrl = TextEditingController(text: license.partnerHeight ?? '—');
 
-    _yourBloodCtrl = TextEditingController(text: widget.rp.yourBloodType);
+    _yourBloodCtrl = TextEditingController(text: license.yourBloodType ?? '—');
 
-    _partnerBloodCtrl = TextEditingController(text: widget.rp.partnerBloodType);
+    _partnerBloodCtrl = TextEditingController(text: license.partnerBloodType ?? '—');
 
-    _yourEyeColorCtrl = TextEditingController(text: widget.rp.yourEyeColor);
+    _yourEyeColorCtrl = TextEditingController(text: license.yourEyeColor ?? '—');
 
     _partnerEyeColorCtrl = TextEditingController(
-      text: widget.rp.partnerEyeColor,
+      text: license.partnerEyeColor ?? '—',
     );
 
-    _yourConditionsCtrl = TextEditingController(text: widget.rp.yourConditions);
+    _yourConditionsCtrl = TextEditingController(text: license.yourConditions ?? 'Madly in Love');
 
     _partnerConditionsCtrl = TextEditingController(
-      text: widget.rp.partnerConditions,
+      text: license.partnerConditions ?? 'Madly in Love',
     );
 
-    _yourGender = widget.rp.yourGender ?? 'Male';
+    _yourGender = license.yourGender ?? 'Male';
 
-    _partnerGender = widget.rp.partnerGender ?? 'Female';
+    _partnerGender = license.partnerGender ?? 'Female';
 
-    _yourBirthdate = widget.rp.yourBirthdate;
+    _yourBirthdate = license.yourBirthdate;
 
-    _partnerBirthdate = widget.rp.partnerBirthdate;
+    _partnerBirthdate = license.partnerBirthdate;
 
-    _yourDateIssued = widget.rp.yourDateIssued;
+    _yourDateIssued = license.yourDateIssued;
 
-    _partnerDateIssued = widget.rp.partnerDateIssued;
+    _partnerDateIssued = license.partnerDateIssued;
 
-    _yourSignatureStr = widget.rp.yourSignature ?? '';
+    _yourSignatureStr = license.yourSignature ?? '';
 
-    _partnerSignatureStr = widget.rp.partnerSignature ?? '';
+    _partnerSignatureStr = license.partnerSignature ?? '';
   }
 
   @override
@@ -3068,8 +3079,11 @@ class _EditLicenseSheetState extends State<_EditLicenseSheet> {
   }
 
   void _save() {
-    widget.rp.updateLicense(
-      yourName: _yourNameCtrl.text.trim(),
+    // Split across the two controllers that used to be one updateLicense
+    // call: yourName is ProfileController's field (untouched by this
+    // extraction), the rest are LicenseController's.
+    widget.rp.setYourName(_yourNameCtrl.text.trim());
+    ref.read(licenseControllerProvider.notifier).updateFields(
       yourGender: _yourGender,
       yourPhone: _yourPhoneCtrl.text.trim(),
       yourBirthdate: _yourBirthdate,
@@ -4072,7 +4086,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
   }
 }
 
-class _ExportStudioBottomSheet extends StatefulWidget {
+class _ExportStudioBottomSheet extends ConsumerStatefulWidget {
   final RelationshipProvider rp;
   final dynamic theme;
   final bool showBoth;
@@ -4092,13 +4106,13 @@ class _ExportStudioBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_ExportStudioBottomSheet> createState() =>
+  ConsumerState<_ExportStudioBottomSheet> createState() =>
       _ExportStudioBottomSheetState();
 }
 
 enum ExportTemplate { transparent, story, post }
 
-class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
+class _ExportStudioBottomSheetState extends ConsumerState<_ExportStudioBottomSheet> {
   ExportTemplate _selectedTemplate = ExportTemplate.story;
   bool _exportFront = true;
   bool _isSharing = false;
@@ -4248,37 +4262,38 @@ class _ExportStudioBottomSheetState extends State<_ExportStudioBottomSheet> {
     required bool showFront,
     required RelationshipProvider rp,
   }) {
+    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
     final myName = rp.yourName ?? 'You';
     final partnerName = rp.partnerName ?? 'Partner';
-    final myPhone = rp.yourPhone?.isNotEmpty == true
-        ? rp.yourPhone!
+    final myPhone = license.yourPhone?.isNotEmpty == true
+        ? license.yourPhone!
         : 'Not provided';
-    final partnerPhone = rp.partnerPhone?.isNotEmpty == true
-        ? rp.partnerPhone!
+    final partnerPhone = license.partnerPhone?.isNotEmpty == true
+        ? license.partnerPhone!
         : 'Not provided';
 
     final name = isYourLicense ? myName : partnerName;
-    final gender = isYourLicense ? rp.yourGender : rp.partnerGender;
+    final gender = isYourLicense ? license.yourGender : license.partnerGender;
     final avatar = isYourLicense ? rp.yourAvatarPath : rp.partnerAvatarPath;
-    final birthdate = isYourLicense ? rp.yourBirthdate : rp.partnerBirthdate;
-    final address = isYourLicense ? rp.yourAddress : rp.partnerAddress;
+    final birthdate = isYourLicense ? license.yourBirthdate : license.partnerBirthdate;
+    final address = isYourLicense ? license.yourAddress : license.partnerAddress;
     final nationality = isYourLicense
-        ? rp.yourNationality
-        : rp.partnerNationality;
-    final weight = isYourLicense ? rp.yourWeight : rp.partnerWeight;
-    final height = isYourLicense ? rp.yourHeight : rp.partnerHeight;
-    final bloodType = isYourLicense ? rp.yourBloodType : rp.partnerBloodType;
-    final eyeColor = isYourLicense ? rp.yourEyeColor : rp.partnerEyeColor;
-    final conditions = isYourLicense ? rp.yourConditions : rp.partnerConditions;
-    final dateIssued = isYourLicense ? rp.yourDateIssued : rp.partnerDateIssued;
-    final signature = isYourLicense ? rp.yourSignature : rp.partnerSignature;
+        ? (license.yourNationality ?? 'Love Land')
+        : (license.partnerNationality ?? 'Love Land');
+    final weight = isYourLicense ? (license.yourWeight ?? '—') : (license.partnerWeight ?? '—');
+    final height = isYourLicense ? (license.yourHeight ?? '—') : (license.partnerHeight ?? '—');
+    final bloodType = isYourLicense ? (license.yourBloodType ?? '—') : (license.partnerBloodType ?? '—');
+    final eyeColor = isYourLicense ? (license.yourEyeColor ?? '—') : (license.partnerEyeColor ?? '—');
+    final conditions = isYourLicense ? (license.yourConditions ?? 'Madly in Love') : (license.partnerConditions ?? 'Madly in Love');
+    final dateIssued = isYourLicense ? license.yourDateIssued : license.partnerDateIssued;
+    final signature = isYourLicense ? license.yourSignature : license.partnerSignature;
 
     final age = isYourLicense
-        ? _calculateAge(rp.yourBirthdate)
-        : _calculateAge(rp.partnerBirthdate);
+        ? _calculateAge(license.yourBirthdate)
+        : _calculateAge(license.partnerBirthdate);
     final emergencyN = isYourLicense ? partnerName : myName;
     final emergencyP = isYourLicense ? partnerPhone : myPhone;
-    final emergencyA = isYourLicense ? rp.partnerAddress : rp.yourAddress;
+    final emergencyA = isYourLicense ? license.partnerAddress : license.yourAddress;
 
     if (showFront) {
       return _LicenseFront(

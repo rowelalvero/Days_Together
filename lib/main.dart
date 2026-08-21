@@ -15,9 +15,14 @@ import 'package:days_together/providers/recent_activity_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/notification_preferences_provider.dart';
 import 'package:days_together/providers/currently_provider.dart';
+import 'package:days_together/features/relationship/license_controller.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/routing/app_router.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerStatefulWidget, ConsumerState, ProviderScope;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -76,11 +81,152 @@ Widget buildAppRoot({required Widget child}) {
       child: Consumer<CoupleSession>(
         builder: (context, session, _) => ProviderScope(
           overrides: [coupleSessionProvider.overrideWithValue(session)],
-          child: child,
+          child: _LicenseLifecycleBridge(
+            child: _ProfileControllerBridge(
+              child: _WorkspaceControllerBridge(
+                child: _PresenceControllerBridge(child: child),
+              ),
+            ),
+          ),
         ),
       ),
     ),
   );
+}
+
+/// Invalidates [licenseControllerProvider] whenever `RelationshipProvider`'s
+/// identity fields clear (logout, account deletion, or a partner
+/// disconnect), so a signed-out user's cached license data can never leak
+/// into a second account signed into the same app session -- see
+/// `license_controller.dart`'s doc comment on why a default (non-
+/// `autoDispose`) `AsyncNotifierProvider` needs this hook at all.
+class _LicenseLifecycleBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const _LicenseLifecycleBridge({required this.child});
+
+  @override
+  ConsumerState<_LicenseLifecycleBridge> createState() => _LicenseLifecycleBridgeState();
+}
+
+class _LicenseLifecycleBridgeState extends ConsumerState<_LicenseLifecycleBridge> {
+  String? _lastUserId;
+  String? _lastCoupleId;
+  bool _seeded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final rp = context.watch<RelationshipProvider>();
+    final userId = rp.userId;
+    final coupleId = rp.coupleId;
+
+    if (!_seeded) {
+      // First build: record the starting identity without treating it as a
+      // transition (there is nothing to invalidate on cold start).
+      _seeded = true;
+      _lastUserId = userId;
+      _lastCoupleId = coupleId;
+    } else if (userId != _lastUserId || coupleId != _lastCoupleId) {
+      final identityCleared =
+          (_lastUserId != null && userId == null) || (_lastCoupleId != null && coupleId == null);
+      _lastUserId = userId;
+      _lastCoupleId = coupleId;
+      if (identityCleared) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.invalidate(licenseControllerProvider);
+        });
+      }
+    }
+
+    return widget.child;
+  }
+}
+
+/// Mirrors `RelationshipProvider`'s 6 profile fields (name, avatar path,
+/// join date) into [profileControllerProvider] on every `RelationshipProvider`
+/// change, so Riverpod consumers can read them without holding a `provider`
+/// package `context.watch` -- see `profile_controller.dart`'s doc comment for
+/// why this is a mirror rather than a cutover (Phase 5 of the architecture
+/// migration, unit 3). Deliberately does not invalidate/reset on
+/// logout/disconnect the way [_LicenseLifecycleBridge] does: since this is a
+/// pure mirror of `RelationshipProvider`, the next `updateFromRelationship`
+/// call (e.g. with all-null fields after a logout) already overwrites any
+/// stale state, so there is nothing extra to clear.
+class _ProfileControllerBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const _ProfileControllerBridge({required this.child});
+
+  @override
+  ConsumerState<_ProfileControllerBridge> createState() => _ProfileControllerBridgeState();
+}
+
+class _ProfileControllerBridgeState extends ConsumerState<_ProfileControllerBridge> {
+  @override
+  Widget build(BuildContext context) {
+    final rp = context.watch<RelationshipProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(profileControllerProvider.notifier).updateFromRelationship(rp);
+    });
+    return widget.child;
+  }
+}
+
+/// Mirrors `RelationshipProvider`'s 7 workspace fields (pairing code, story
+/// title, start date/time, premium flag, status, recovery code) into
+/// [workspaceControllerProvider] on every `RelationshipProvider` change --
+/// see `workspace_controller.dart`'s doc comment for why this is a mirror
+/// rather than a cutover, including for `recoveryCode` despite it not being
+/// realtime-synced (Phase 5 of the architecture migration, unit 4). Same
+/// shape as [_ProfileControllerBridge]: no invalidate-on-logout hook needed,
+/// since the next `updateFromRelationship` call already overwrites stale
+/// state with the post-logout/disconnect values.
+class _WorkspaceControllerBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const _WorkspaceControllerBridge({required this.child});
+
+  @override
+  ConsumerState<_WorkspaceControllerBridge> createState() => _WorkspaceControllerBridgeState();
+}
+
+class _WorkspaceControllerBridgeState extends ConsumerState<_WorkspaceControllerBridge> {
+  @override
+  Widget build(BuildContext context) {
+    final rp = context.watch<RelationshipProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
+    });
+    return widget.child;
+  }
+}
+
+/// Mirrors `RelationshipProvider`'s 3 presence fields (`isPartnerOnline`,
+/// `yourActivity`, `partnerActivity`) into [presenceControllerProvider] on
+/// every `RelationshipProvider` change -- see `presence_controller.dart`'s
+/// doc comment for why this is a mirror rather than a cutover (Phase 5 of
+/// the architecture migration, unit 5, the last of the five). Same shape as
+/// [_ProfileControllerBridge]/[_WorkspaceControllerBridge]: no
+/// invalidate-on-logout hook needed, since the next `updateFromRelationship`
+/// call already overwrites stale state with the post-logout/disconnect
+/// values.
+class _PresenceControllerBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const _PresenceControllerBridge({required this.child});
+
+  @override
+  ConsumerState<_PresenceControllerBridge> createState() => _PresenceControllerBridgeState();
+}
+
+class _PresenceControllerBridgeState extends ConsumerState<_PresenceControllerBridge> {
+  @override
+  Widget build(BuildContext context) {
+    final rp = context.watch<RelationshipProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(presenceControllerProvider.notifier).updateFromRelationship(rp);
+    });
+    return widget.child;
+  }
 }
 
 /// The app's full provider tree, factored out of [runApp] so it has a single

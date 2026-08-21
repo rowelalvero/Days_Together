@@ -16,8 +16,6 @@ import 'package:days_together/services/relationship_lifecycle_manager.dart';
 import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/services/storage_url_service.dart';
 
-const Object _unset = Object();
-
 enum RelationshipStatus {
   waiting,
   active,
@@ -122,30 +120,13 @@ class RelationshipProvider with ChangeNotifier {
   bool _isUnlinking = false;
   bool _showPartnerDeletedNotice = false;
   String? _storyTitle;
-  String? _yourGender;
-  String? _partnerGender;
-  String? _yourPhone;
-  String? _partnerPhone;
-  DateTime? _yourBirthdate;
-  DateTime? _partnerBirthdate;
-  String? _yourAddress;
-  String? _partnerAddress;
-  String? _yourNationality;
-  String? _partnerNationality;
-  String? _yourWeight;
-  String? _partnerWeight;
-  String? _yourHeight;
-  String? _partnerHeight;
-  String? _yourBloodType;
-  String? _partnerBloodType;
-  String? _yourEyeColor;
-  String? _partnerEyeColor;
-  String? _yourConditions;
-  String? _partnerConditions;
-  DateTime? _yourDateIssued;
-  DateTime? _partnerDateIssued;
-  String? _yourSignature;
-  String? _partnerSignature;
+  // The 24 license fields (12 your*/partner* pairs) that used to live here
+  // -- gender through signature -- moved to LicenseController
+  // (lib/features/relationship/license_controller.dart, Phase 5 of the
+  // architecture migration). See migration-roadmap.md's Phase 5 corrections
+  // for why the roadmap's original "28 fields" figure included 4 fields
+  // (yourName/partnerName/yourAvatarPath/partnerAvatarPath) that are
+  // ProfileController's, not this extraction's.
   // Firebase Streams Subscriptions
   StreamSubscription? _userSub;
   StreamSubscription? _partnerUserSub;
@@ -181,30 +162,8 @@ class RelationshipProvider with ChangeNotifier {
   bool get onboardingCompleted => _onboardingCompleted;
   bool get isPremium => _isPremium;
   String get storyTitle => _storyTitle ?? 'Our Story';
-  String? get yourGender => _yourGender;
-  String? get partnerGender => _partnerGender;
-  String? get yourPhone => _yourPhone;
-  String? get partnerPhone => _partnerPhone;
-  DateTime? get yourBirthdate => _yourBirthdate;
-  DateTime? get partnerBirthdate => _partnerBirthdate;
-  String? get yourAddress => _yourAddress;
-  String? get partnerAddress => _partnerAddress;
-  String get yourNationality => _yourNationality ?? 'Love Land';
-  String get partnerNationality => _partnerNationality ?? 'Love Land';
-  String get yourWeight => _yourWeight ?? '—';
-  String get partnerWeight => _partnerWeight ?? '—';
-  String get yourHeight => _yourHeight ?? '—';
-  String get partnerHeight => _partnerHeight ?? '—';
-  String get yourBloodType => _yourBloodType ?? '—';
-  String get partnerBloodType => _partnerBloodType ?? '—';
-  String get yourEyeColor => _yourEyeColor ?? '—';
-  String get partnerEyeColor => _partnerEyeColor ?? '—';
-  String get yourConditions => _yourConditions ?? 'Madly in Love';
-  String get partnerConditions => _partnerConditions ?? 'Madly in Love';
-  DateTime? get yourDateIssued => _yourDateIssued;
-  DateTime? get partnerDateIssued => _partnerDateIssued;
-  String? get yourSignature => _yourSignature;
-  String? get partnerSignature => _partnerSignature;
+  // The 24 license-field getters that used to live here moved to
+  // LicenseController alongside the fields (see above).
   String? get coupleId => _coupleId;
   String? get userId => _userId;
   String? get partnerId => _partnerId;
@@ -257,42 +216,8 @@ class RelationshipProvider with ChangeNotifier {
     _onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
     _isPremium = prefs.getBool('is_premium') ?? false;
     _storyTitle = prefs.getString('story_title');
-    _yourGender = prefs.getString('your_gender');
-    _partnerGender = prefs.getString('partner_gender');
-    _yourPhone = prefs.getString('your_phone');
-    _partnerPhone = prefs.getString('partner_phone');
-    final yourBirthdateStr = prefs.getString('your_birthdate');
-    if (yourBirthdateStr != null) {
-      _yourBirthdate = DateTime.parse(yourBirthdateStr);
-    }
-    final partnerBirthdateStr = prefs.getString('partner_birthdate');
-    if (partnerBirthdateStr != null) {
-      _partnerBirthdate = DateTime.parse(partnerBirthdateStr);
-    }
-    _yourAddress = prefs.getString('your_address');
-    _partnerAddress = prefs.getString('partner_address');
-    _yourNationality = prefs.getString('your_nationality');
-    _partnerNationality = prefs.getString('partner_nationality');
-    _yourWeight = prefs.getString('your_weight');
-    _partnerWeight = prefs.getString('partner_weight');
-    _yourHeight = prefs.getString('your_height');
-    _partnerHeight = prefs.getString('partner_height');
-    _yourBloodType = prefs.getString('your_blood_type');
-    _partnerBloodType = prefs.getString('partner_blood_type');
-    _yourEyeColor = prefs.getString('your_eye_color');
-    _partnerEyeColor = prefs.getString('partner_eye_color');
-    _yourConditions = prefs.getString('your_conditions');
-    _partnerConditions = prefs.getString('partner_conditions');
-    final yourDateIssuedStr = prefs.getString('your_date_issued');
-    if (yourDateIssuedStr != null) {
-      _yourDateIssued = DateTime.parse(yourDateIssuedStr);
-    }
-    final partnerDateIssuedStr = prefs.getString('partner_date_issued');
-    if (partnerDateIssuedStr != null) {
-      _partnerDateIssued = DateTime.parse(partnerDateIssuedStr);
-    }
-    _yourSignature = prefs.getString('your_signature');
-    _partnerSignature = prefs.getString('partner_signature');
+    // The 24 license fields used to be loaded here -- LicenseController now
+    // hydrates them independently (lib/features/relationship/license_controller.dart).
 
     final yourJoinDateStr = prefs.getString('your_join_date');
     if (yourJoinDateStr != null) {
@@ -775,18 +700,16 @@ class RelationshipProvider with ChangeNotifier {
         final userUpdates = <String, dynamic>{};
         if (_yourName != null) userUpdates['display_name'] = _yourName;
         if (_yourAvatarPath != null) userUpdates['avatar_url'] = _yourAvatarPath;
-        if (_yourGender != null) userUpdates['gender'] = _yourGender;
-        if (_yourPhone != null) userUpdates['phone'] = _yourPhone;
-        if (_yourBirthdate != null) userUpdates['birthdate'] = _yourBirthdate!.toIso8601String();
-        if (_yourAddress != null) userUpdates['address'] = _yourAddress;
-        if (_yourNationality != null) userUpdates['nationality'] = _yourNationality;
-        if (_yourWeight != null) userUpdates['weight'] = _yourWeight;
-        if (_yourHeight != null) userUpdates['height'] = _yourHeight;
-        if (_yourBloodType != null) userUpdates['blood_type'] = _yourBloodType;
-        if (_yourEyeColor != null) userUpdates['eye_color'] = _yourEyeColor;
-        if (_yourConditions != null) userUpdates['conditions'] = _yourConditions;
-        if (_yourDateIssued != null) userUpdates['date_issued'] = _yourDateIssued!.toIso8601String();
-        if (_yourSignature != null) userUpdates['signature'] = _yourSignature;
+        // The 12 license fields (gender..signature) used to get a second
+        // sync attempt here on newly pairing, in case their write-time push
+        // (now LicenseController.updateFields, still try/catch-silent on
+        // failure exactly like the code this replaced) had failed earlier.
+        // RelationshipProvider no longer holds those fields to re-push --
+        // narrower resync coverage than before for this one edge case
+        // (offline-set license fields whose original push failed, never
+        // edited again), acknowledged and left as a known gap rather than
+        // building new Riverpod-from-non-widget plumbing to close it (see
+        // migration-roadmap.md's Phase 5 corrections).
 
         if (userUpdates.isNotEmpty) {
           await ProfileService.instance.updateUserDetails(_userId!, userUpdates);
@@ -907,535 +830,6 @@ class RelationshipProvider with ChangeNotifier {
       }
     }
     notifyListeners();
-  }
-
-  Future<void> setGenders(String yours, String partner) async {
-    _yourGender = yours;
-    _partnerGender = partner;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_gender', yours);
-    await prefs.setString('partner_gender', partner);
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'gender': yours});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'gender': partner});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setPhoneNumbers(String yours, String partner) async {
-    _yourPhone = yours;
-    _partnerPhone = partner;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_phone', yours);
-    await prefs.setString('partner_phone', partner);
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'phone': yours});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'phone': partner});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setBirthdates(DateTime? yours, DateTime? partner) async {
-    _yourBirthdate = yours;
-    _partnerBirthdate = partner;
-    final prefs = await SharedPreferences.getInstance();
-    if (yours != null) {
-      await prefs.setString('your_birthdate', yours.toIso8601String());
-    } else {
-      await prefs.remove('your_birthdate');
-    }
-    if (partner != null) {
-      await prefs.setString('partner_birthdate', partner.toIso8601String());
-    } else {
-      await prefs.remove('partner_birthdate');
-    }
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'birthdate': yours?.toIso8601String()});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'birthdate': partner?.toIso8601String()});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setAddresses(String? yours, String? partner) async {
-    _yourAddress = yours;
-    _partnerAddress = partner;
-    final prefs = await SharedPreferences.getInstance();
-    if (yours != null) {
-      await prefs.setString('your_address', yours);
-    } else {
-      await prefs.remove('your_address');
-    }
-    if (partner != null) {
-      await prefs.setString('partner_address', partner);
-    } else {
-      await prefs.remove('partner_address');
-    }
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'address': yours});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'address': partner});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setNationalities(String yours, String partner) async {
-    _yourNationality = yours;
-    _partnerNationality = partner;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_nationality', yours);
-    await prefs.setString('partner_nationality', partner);
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'nationality': yours});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'nationality': partner});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setWeightsAndHeights(
-    String yourW,
-    String partnerW,
-    String yourH,
-    String partnerH,
-  ) async {
-    _yourWeight = yourW;
-    _partnerWeight = partnerW;
-    _yourHeight = yourH;
-    _partnerHeight = partnerH;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_weight', yourW);
-    await prefs.setString('partner_weight', partnerW);
-    await prefs.setString('your_height', yourH);
-    await prefs.setString('partner_height', partnerH);
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'weight': yourW, 'height': yourH});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'weight': partnerW, 'height': partnerH});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setBloodAndEyes(
-    String yourB,
-    String partnerB,
-    String yourE,
-    String partnerE,
-  ) async {
-    _yourBloodType = yourB;
-    _partnerBloodType = partnerB;
-    _yourEyeColor = yourE;
-    _partnerEyeColor = partnerE;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_blood_type', yourB);
-    await prefs.setString('partner_blood_type', partnerB);
-    await prefs.setString('your_eye_color', yourE);
-    await prefs.setString('partner_eye_color', partnerE);
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {'blood_type': yourB, 'eye_color': yourE});
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {'blood_type': partnerB, 'eye_color': partnerE});
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setConditionsAndDateIssued(
-    String yourC,
-    String partnerC,
-    DateTime? yourDate,
-    DateTime? partnerDate,
-  ) async {
-    _yourConditions = yourC;
-    _partnerConditions = partnerC;
-    _yourDateIssued = yourDate;
-    _partnerDateIssued = partnerDate;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_conditions', yourC);
-    await prefs.setString('partner_conditions', partnerC);
-    if (yourDate != null) {
-      await prefs.setString('your_date_issued', yourDate.toIso8601String());
-    }
-    if (partnerDate != null) {
-      await prefs.setString(
-        'partner_date_issued',
-        partnerDate.toIso8601String(),
-      );
-    }
-
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          await ProfileService.instance.updateUserDetails(_userId!, {
-            'conditions': yourC,
-            'date_issued': yourDate?.toIso8601String(),
-          });
-        } catch (_) {}
-      }
-      if (_partnerId != null) {
-        try {
-          await ProfileService.instance.updatePartnerProfile(_partnerId!, {
-            'conditions': partnerC,
-            'date_issued': partnerDate?.toIso8601String(),
-          });
-        } catch (_) {}
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> setYourSignature(String? signature) async {
-    _yourSignature = signature;
-    final prefs = await SharedPreferences.getInstance();
-    if (signature != null) {
-      await prefs.setString('your_signature', signature);
-    } else {
-      await prefs.remove('your_signature');
-    }
-
-    if (isSupabaseAvailable && _userId != null) {
-      try {
-        await ProfileService.instance.updateUserDetails(_userId!, {'signature': signature});
-      } catch (_) {}
-    }
-    notifyListeners();
-  }
-
-  Future<void> setPartnerSignature(String? signature) async {
-    _partnerSignature = signature;
-    final prefs = await SharedPreferences.getInstance();
-    if (signature != null) {
-      await prefs.setString('partner_signature', signature);
-    } else {
-      await prefs.remove('partner_signature');
-    }
-
-    if (isSupabaseAvailable && _partnerId != null) {
-      try {
-        await ProfileService.instance.updatePartnerProfile(_partnerId!, {'signature': signature});
-      } catch (_) {}
-    }
-    notifyListeners();
-  }
-
-
-
-
-
-  Future<void> updateLicense({
-    Object? yourName = _unset,
-    Object? partnerName = _unset,
-    Object? yourGender = _unset,
-    Object? partnerGender = _unset,
-    Object? yourPhone = _unset,
-    Object? partnerPhone = _unset,
-    Object? yourBirthdate = _unset,
-    Object? partnerBirthdate = _unset,
-    Object? yourAddress = _unset,
-    Object? partnerAddress = _unset,
-    Object? yourNationality = _unset,
-    Object? partnerNationality = _unset,
-    Object? yourWeight = _unset,
-    Object? partnerWeight = _unset,
-    Object? yourHeight = _unset,
-    Object? partnerHeight = _unset,
-    Object? yourBloodType = _unset,
-    Object? partnerBloodType = _unset,
-    Object? yourEyeColor = _unset,
-    Object? partnerEyeColor = _unset,
-    Object? yourConditions = _unset,
-    Object? partnerConditions = _unset,
-    Object? yourDateIssued = _unset,
-    Object? partnerDateIssued = _unset,
-    Object? yourSignature = _unset,
-    Object? partnerSignature = _unset,
-    Object? yourAvatarPath = _unset,
-    Object? partnerAvatarPath = _unset,
-  }) async {
-    // 1. Update local variables if not unset
-    if (!identical(yourName, _unset)) _yourName = yourName as String?;
-    if (!identical(partnerName, _unset)) _partnerName = partnerName as String?;
-    if (!identical(yourGender, _unset)) _yourGender = yourGender as String?;
-    if (!identical(partnerGender, _unset)) {
-      _partnerGender = partnerGender as String?;
-    }
-    if (!identical(yourPhone, _unset)) _yourPhone = yourPhone as String?;
-    if (!identical(partnerPhone, _unset)) {
-      _partnerPhone = partnerPhone as String?;
-    }
-    if (!identical(yourBirthdate, _unset)) {
-      _yourBirthdate = yourBirthdate as DateTime?;
-    }
-    if (!identical(partnerBirthdate, _unset)) {
-      _partnerBirthdate = partnerBirthdate as DateTime?;
-    }
-    if (!identical(yourAddress, _unset)) _yourAddress = yourAddress as String?;
-    if (!identical(partnerAddress, _unset)) {
-      _partnerAddress = partnerAddress as String?;
-    }
-    if (!identical(yourNationality, _unset)) {
-      _yourNationality = yourNationality as String?;
-    }
-    if (!identical(partnerNationality, _unset)) {
-      _partnerNationality = partnerNationality as String?;
-    }
-    if (!identical(yourWeight, _unset)) _yourWeight = yourWeight as String?;
-    if (!identical(partnerWeight, _unset)) {
-      _partnerWeight = partnerWeight as String?;
-    }
-    if (!identical(yourHeight, _unset)) _yourHeight = yourHeight as String?;
-    if (!identical(partnerHeight, _unset)) {
-      _partnerHeight = partnerHeight as String?;
-    }
-    if (!identical(yourBloodType, _unset)) {
-      _yourBloodType = yourBloodType as String?;
-    }
-    if (!identical(partnerBloodType, _unset)) {
-      _partnerBloodType = partnerBloodType as String?;
-    }
-    if (!identical(yourEyeColor, _unset)) {
-      _yourEyeColor = yourEyeColor as String?;
-    }
-    if (!identical(partnerEyeColor, _unset)) {
-      _partnerEyeColor = partnerEyeColor as String?;
-    }
-    if (!identical(yourConditions, _unset)) {
-      _yourConditions = yourConditions as String?;
-    }
-    if (!identical(partnerConditions, _unset)) {
-      _partnerConditions = partnerConditions as String?;
-    }
-    if (!identical(yourDateIssued, _unset)) {
-      _yourDateIssued = yourDateIssued as DateTime?;
-    }
-    if (!identical(partnerDateIssued, _unset)) {
-      _partnerDateIssued = partnerDateIssued as DateTime?;
-    }
-    if (!identical(yourSignature, _unset)) {
-      _yourSignature = yourSignature as String?;
-    }
-    if (!identical(partnerSignature, _unset)) {
-      _partnerSignature = partnerSignature as String?;
-    }
-    if (!identical(yourAvatarPath, _unset)) {
-      _yourAvatarPath = yourAvatarPath as String?;
-    }
-    if (!identical(partnerAvatarPath, _unset)) {
-      _partnerAvatarPath = partnerAvatarPath as String?;
-    }
-
-    // 2. Save all to local SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    if (_yourName != null) await prefs.setString('your_name', _yourName!);
-    if (_partnerName != null) {
-      await prefs.setString('partner_name', _partnerName!);
-    }
-    if (_yourGender != null) await prefs.setString('your_gender', _yourGender!);
-    if (_partnerGender != null) {
-      await prefs.setString('partner_gender', _partnerGender!);
-    }
-    if (_yourPhone != null) await prefs.setString('your_phone', _yourPhone!);
-    if (_partnerPhone != null) {
-      await prefs.setString('partner_phone', _partnerPhone!);
-    }
-    if (_yourBirthdate != null) {
-      await prefs.setString(
-        'your_birthdate',
-        _yourBirthdate!.toIso8601String(),
-      );
-    }
-    if (_partnerBirthdate != null) {
-      await prefs.setString(
-        'partner_birthdate',
-        _partnerBirthdate!.toIso8601String(),
-      );
-    }
-    if (_yourAddress != null) {
-      await prefs.setString('your_address', _yourAddress!);
-    }
-    if (_partnerAddress != null) {
-      await prefs.setString('partner_address', _partnerAddress!);
-    }
-    if (_yourNationality != null) {
-      await prefs.setString('your_nationality', _yourNationality!);
-    }
-    if (_partnerNationality != null) {
-      await prefs.setString('partner_nationality', _partnerNationality!);
-    }
-    if (_yourWeight != null) await prefs.setString('your_weight', _yourWeight!);
-    if (_partnerWeight != null) {
-      await prefs.setString('partner_weight', _partnerWeight!);
-    }
-    if (_yourHeight != null) await prefs.setString('your_height', _yourHeight!);
-    if (_partnerHeight != null) {
-      await prefs.setString('partner_height', _partnerHeight!);
-    }
-    if (_yourBloodType != null) {
-      await prefs.setString('your_blood_type', _yourBloodType!);
-    }
-    if (_partnerBloodType != null) {
-      await prefs.setString('partner_blood_type', _partnerBloodType!);
-    }
-    if (_yourEyeColor != null) {
-      await prefs.setString('your_eye_color', _yourEyeColor!);
-    }
-    if (_partnerEyeColor != null) {
-      await prefs.setString('partner_eye_color', _partnerEyeColor!);
-    }
-    if (_yourConditions != null) {
-      await prefs.setString('your_conditions', _yourConditions!);
-    }
-    if (_partnerConditions != null) {
-      await prefs.setString('partner_conditions', _partnerConditions!);
-    }
-    if (_yourDateIssued != null) {
-      await prefs.setString(
-        'your_date_issued',
-        _yourDateIssued!.toIso8601String(),
-      );
-    }
-    if (_partnerDateIssued != null) {
-      await prefs.setString(
-        'partner_date_issued',
-        _partnerDateIssued!.toIso8601String(),
-      );
-    }
-    if (_yourSignature != null) {
-      await prefs.setString('your_signature', _yourSignature!);
-    }
-    if (_partnerSignature != null) {
-      await prefs.setString('partner_signature', _partnerSignature!);
-    }
-    if (_yourAvatarPath != null) {
-      await prefs.setString('your_avatar_path', _yourAvatarPath!);
-    } else {
-      await prefs.remove('your_avatar_path');
-    }
-    if (_partnerAvatarPath != null) {
-      await prefs.setString('partner_avatar_path', _partnerAvatarPath!);
-    } else {
-      await prefs.remove('partner_avatar_path');
-    }
-
-    // 3. Push to Database users table
-    if (isSupabaseAvailable) {
-      if (_userId != null) {
-        try {
-          final selfData = <String, dynamic>{};
-          if (_yourName != null) selfData['display_name'] = _yourName;
-          if (_yourAvatarPath != null) selfData['avatar_url'] = _yourAvatarPath;
-          if (_yourGender != null) selfData['gender'] = _yourGender;
-          if (_yourPhone != null) selfData['phone'] = _yourPhone;
-          if (_yourBirthdate != null) selfData['birthdate'] = _yourBirthdate!.toIso8601String();
-          if (_yourAddress != null) selfData['address'] = _yourAddress;
-          if (_yourNationality != null) selfData['nationality'] = _yourNationality;
-          if (_yourWeight != null) selfData['weight'] = _yourWeight;
-          if (_yourHeight != null) selfData['height'] = _yourHeight;
-          if (_yourBloodType != null) selfData['blood_type'] = _yourBloodType;
-          if (_yourEyeColor != null) selfData['eye_color'] = _yourEyeColor;
-          if (_yourConditions != null) selfData['conditions'] = _yourConditions;
-          if (_yourDateIssued != null) selfData['date_issued'] = _yourDateIssued!.toIso8601String();
-          if (_yourSignature != null) selfData['signature'] = _yourSignature;
-          if (selfData.isNotEmpty) {
-            await ProfileService.instance.updateUserDetails(_userId!, selfData);
-          }
-        } catch (e) {
-          debugPrint('Supabase updateLicense self updates failed: $e');
-        }
-      }
-
-      if (_partnerId != null) {
-        try {
-          final partnerData = <String, dynamic>{};
-          if (_partnerName != null) partnerData['display_name'] = _partnerName;
-          if (_partnerAvatarPath != null) partnerData['avatar_url'] = _partnerAvatarPath;
-          if (_partnerGender != null) partnerData['gender'] = _partnerGender;
-          if (_partnerPhone != null) partnerData['phone'] = _partnerPhone;
-          if (_partnerBirthdate != null) partnerData['birthdate'] = _partnerBirthdate!.toIso8601String();
-          if (_partnerAddress != null) partnerData['address'] = _partnerAddress;
-          if (_partnerNationality != null) partnerData['nationality'] = _partnerNationality;
-          if (_partnerWeight != null) partnerData['weight'] = _partnerWeight;
-          if (_partnerHeight != null) partnerData['height'] = _partnerHeight;
-          if (_partnerBloodType != null) partnerData['blood_type'] = _partnerBloodType;
-          if (_partnerEyeColor != null) partnerData['eye_color'] = _partnerEyeColor;
-          if (_partnerConditions != null) partnerData['conditions'] = _partnerConditions;
-          if (_partnerDateIssued != null) partnerData['date_issued'] = _partnerDateIssued!.toIso8601String();
-          if (_partnerSignature != null) partnerData['signature'] = _partnerSignature;
-          if (partnerData.isNotEmpty) {
-            await ProfileService.instance.updatePartnerProfile(_partnerId!, partnerData);
-          }
-        } catch (e) {
-          debugPrint('Supabase updateLicense partner updates failed: $e');
-        }
-      }
-    }
-    notifyListeners();
-
-    await RecentActivityService.instance.logActivity(
-      activityType: 'updated',
-      title: 'Profile updated 💕',
-      description: 'Relationship profile details updated',
-      icon: '💕',
-      referenceId: 'relationship_profile_details',
-      route: 'relationship_profile',
-    );
   }
 
   Future<void> setAvatars({String? yourPath, String? partnerPath}) async {
@@ -1921,30 +1315,9 @@ class RelationshipProvider with ChangeNotifier {
     _onboardingCompleted = false;
     _isPremium = false;
     _storyTitle = null;
-    _yourGender = null;
-    _partnerGender = null;
-    _yourPhone = null;
-    _partnerPhone = null;
-    _yourBirthdate = null;
-    _partnerBirthdate = null;
-    _yourAddress = null;
-    _partnerAddress = null;
-    _yourNationality = null;
-    _partnerNationality = null;
-    _yourWeight = null;
-    _partnerWeight = null;
-    _yourHeight = null;
-    _partnerHeight = null;
-    _yourBloodType = null;
-    _partnerBloodType = null;
-    _yourEyeColor = null;
-    _partnerEyeColor = null;
-    _yourConditions = null;
-    _partnerConditions = null;
-    _yourDateIssued = null;
-    _partnerDateIssued = null;
-    _yourSignature = null;
-    _partnerSignature = null;
+    // The 24 license fields used to be reset here -- LicenseController's
+    // own state is invalidated on logout by main.dart's
+    // _LicenseLifecycleBridge instead (see license_controller.dart).
 
     await HomeWidgetService.instance.clearWidget();
 

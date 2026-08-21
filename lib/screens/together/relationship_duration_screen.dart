@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import 'package:days_together/features/relationship/license_controller.dart';
+import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/widgets/glass_container.dart';
@@ -15,15 +18,16 @@ import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/storage_image.dart';
 
-class RelationshipDurationScreen extends StatelessWidget {
+class RelationshipDurationScreen extends ConsumerWidget {
   const RelationshipDurationScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
     final rp = context.watch<RelationshipProvider>();
     final tp = context.watch<TimelineProvider>();
+    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
 
     final startDate = rp.startDate ?? DateTime.now();
     final totalDays = rp.totalDays;
@@ -181,7 +185,7 @@ class RelationshipDurationScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // 5. Fun Statistics Grid
-                  _buildFunStatistics(startDate, rp, theme),
+                  _buildFunStatistics(startDate, rp, license, theme),
                   const SizedBox(height: 24),
 
                   // 6. Milestone Achieved Timeline
@@ -523,7 +527,12 @@ class RelationshipDurationScreen extends StatelessWidget {
   }
 
   // Fun Statistics Section
-  Widget _buildFunStatistics(DateTime startDate, RelationshipProvider rp, LoveStoryTheme theme) {
+  Widget _buildFunStatistics(
+    DateTime startDate,
+    RelationshipProvider rp,
+    LicenseDetails license,
+    LoveStoryTheme theme,
+  ) {
     final today = DateTime.now();
 
     final totalDays = rp.totalDays;
@@ -533,11 +542,13 @@ class RelationshipDurationScreen extends StatelessWidget {
     final newYears = DateHelper.countOccurrencesOfDate(startDate, today, 1, 1);
 
     int birthdays = 0;
-    if (rp.yourBirthdate != null) {
-      birthdays += DateHelper.countOccurrencesOfDate(startDate, today, rp.yourBirthdate!.month, rp.yourBirthdate!.day);
+    if (license.yourBirthdate != null) {
+      birthdays += DateHelper.countOccurrencesOfDate(
+          startDate, today, license.yourBirthdate!.month, license.yourBirthdate!.day);
     }
-    if (rp.partnerBirthdate != null) {
-      birthdays += DateHelper.countOccurrencesOfDate(startDate, today, rp.partnerBirthdate!.month, rp.partnerBirthdate!.day);
+    if (license.partnerBirthdate != null) {
+      birthdays += DateHelper.countOccurrencesOfDate(
+          startDate, today, license.partnerBirthdate!.month, license.partnerBirthdate!.day);
     }
 
     final stats = [

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
+import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
@@ -7,7 +9,7 @@ import 'package:days_together/widgets/storage_image.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 
-class PartnerPresenceCard extends StatefulWidget {
+class PartnerPresenceCard extends ConsumerStatefulWidget {
   final RelationshipProvider relationshipProvider;
   final dynamic theme;
 
@@ -18,10 +20,11 @@ class PartnerPresenceCard extends StatefulWidget {
   });
 
   @override
-  State<PartnerPresenceCard> createState() => _PartnerPresenceCardState();
+  ConsumerState<PartnerPresenceCard> createState() => _PartnerPresenceCardState();
 }
 
-class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTickerProviderStateMixin {
+class _PartnerPresenceCardState extends ConsumerState<PartnerPresenceCard>
+    with SingleTickerProviderStateMixin {
   bool _isTapped = false;
   bool _isOnlineSimulated = false;
 
@@ -69,7 +72,8 @@ class _PartnerPresenceCardState extends State<PartnerPresenceCard> with SingleTi
     final theme = widget.theme;
     final partnerJoined = rp.partnerId != null;
     final isOnline = _isOnlineSimulated;
-    final customStatus = rp.partnerConditions;
+    final license = ref.watch(licenseControllerProvider).value;
+    final customStatus = license?.partnerConditions ?? 'Madly in Love';
 
     return GlassContainer(
       padding: const EdgeInsets.all(16),

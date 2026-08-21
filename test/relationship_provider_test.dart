@@ -196,11 +196,14 @@ void main() {
     });
 
     test('10. Profile update does not erase unrelated profile fields', () async {
+      // Gender fields were part of this fixture before Phase 5 moved the 24
+      // license fields to LicenseController (lib/features/relationship/
+      // license_controller.dart) -- see license_controller_test.dart for
+      // the equivalent "one field update doesn't clobber another" guard
+      // over there.
       SharedPreferences.setMockInitialValues({
         'your_name': 'Ashwel',
         'partner_name': 'Rowel',
-        'your_gender': 'Female',
-        'partner_gender': 'Male',
         'your_avatar_path': '/mock/avatars/ashwel.jpg',
         'partner_avatar_path': '/mock/avatars/rowel.jpg',
       });
@@ -212,8 +215,6 @@ void main() {
 
       expect(provider.yourName, 'Ashwel Updated');
       expect(provider.partnerName, 'Rowel');
-      expect(provider.yourGender, 'Female');
-      expect(provider.partnerGender, 'Male');
       expect(provider.yourAvatarPath, '/mock/avatars/ashwel.jpg');
       expect(provider.partnerAvatarPath, '/mock/avatars/rowel.jpg');
     });

@@ -12,18 +12,42 @@ void main() {
       expect(PrefsKeys.all.toSet().length, PrefsKeys.all.length);
     });
 
-    test('every key matches a string literal that exists in relationship_provider.dart', () {
-      final source = File('lib/providers/relationship_provider.dart').readAsStringSync();
+    test('every key matches a string literal or a PrefsKeys.* reference in its current owning file', () {
+      // Originally checked only relationship_provider.dart for the raw
+      // string literal (Phase 0, when it owned all 41 keys and didn't yet
+      // reference PrefsKeys itself). Phase 5 moved the 24 license keys to
+      // LicenseController, which *does* reference PrefsKeys.yourGender etc.
+      // instead of the raw literal -- exactly what prefs_keys.dart's own
+      // header says happens "naturally as each field is extracted into its
+      // owning controller". So a key now counts as covered if its owning
+      // file contains either the raw literal or `PrefsKeys.<constantName>`.
+      // Add a file here each time a further Phase 5 extraction moves
+      // another group's literals out of relationship_provider.dart.
+      final sources = [
+        'lib/providers/relationship_provider.dart',
+        'lib/features/relationship/license_controller.dart',
+      ].map((path) => File(path).readAsStringSync()).toList();
+
+      // Recover the value -> constant-name mapping directly from
+      // prefs_keys.dart, rather than hand-maintaining a second copy of it
+      // here, so this test can't silently drift from the real registry.
+      final prefsKeysSource = File('lib/core/constants/prefs_keys.dart').readAsStringSync();
+      final constantNameFor = <String, String>{};
+      for (final match in RegExp(r"static const String (\w+) = '([^']+)';").allMatches(prefsKeysSource)) {
+        constantNameFor[match.group(2)!] = match.group(1)!;
+      }
+
       final missing = <String>[];
       for (final key in PrefsKeys.all) {
-        if (!source.contains("'$key'")) {
-          missing.add(key);
-        }
+        final constantName = constantNameFor[key];
+        final found = sources.any((source) =>
+            source.contains("'$key'") || (constantName != null && source.contains('PrefsKeys.$constantName')));
+        if (!found) missing.add(key);
       }
       expect(
         missing,
         isEmpty,
-        reason: 'PrefsKeys entries with no matching literal in relationship_provider.dart: $missing',
+        reason: 'PrefsKeys entries with no matching literal or PrefsKeys.* reference in any current owning file: $missing',
       );
     });
   });
