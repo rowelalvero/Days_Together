@@ -233,4 +233,5 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
 /// code path (`build()`) responsible for what "empty" state looks like.
 final licenseControllerProvider = AsyncNotifierProvider<LicenseController, LicenseDetails>(
   LicenseController.new,
+  dependencies: [coupleSessionProvider],
 );

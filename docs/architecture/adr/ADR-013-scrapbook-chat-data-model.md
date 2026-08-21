@@ -45,9 +45,15 @@ Yes — already decided in ADR-005, reaffirmed here as the immediate, schema-unc
 - No concrete pain point (diverging RLS needs, retention differences, performance issue) currently demonstrates that a schema split is actually needed — deciding it under migration time pressure, without that evidence, risks solving a problem that doesn't yet exist while the real, confirmed bug (the shared subscription key) goes unfixed.
 - Leaving the collision entirely unaddressed was rejected because it is a real, if currently low-severity, bug class that would worsen the moment a third `love_notes`-backed feature is added.
 
+## ⚠️ Corrected on implementation (Phase 6a)
+
+**Decision point 4's "server-side filtering" and this ADR's reaffirmation of ADR-005's fix are both retracted — see ADR-005's own "Corrected on implementation" section for the full technical finding.** In short: the installed `supabase` package's `.stream()` API stores only one `.eq()` filter (verified directly against `SupabaseStreamBuilder`'s source), so `.eq('couple_id', ...).eq('type', ...)` silently drops the couple scoping rather than combining both filters — the prescribed fix is not achievable without a schema change, which decision point 5 (below) already ruled out for this migration. The shared subscription key was re-examined in light of this and found not to be a bug at all: it is `RealtimeSubscriptionManager`'s intended deduplication behavior (one physical subscription, two client-side-filtered consumers), not a violation of anything. `NoteitController`/`LoveChatController` (Phase 6a) both keep `tableName => 'love_notes'` and client-side filtering, unchanged from the original providers.
+
+**Decision point 3 (the typed Dart-side discriminator) is unaffected by this correction** and still stands as this ADR's mandate for the Phase 6 provider port — `NoteitItem`/`LoveChatMessage`'s existing `type`/derived-sender handling already satisfies it structurally, even without a shared `enum LoveNoteType` extracted yet; that extraction remains open, tracked here rather than newly introduced by this correction.
+
 ## Consequences
 
-**Positive:** the collision's symptom (shared subscription key, client-side filtering) is fixed without a risky schema migration on live data. The deeper modeling question is answered honestly — flagged as a real, considered open question rather than either ignored or decided under migration time pressure.
+**Positive:** no risky schema migration on live data — turns out none was ever required, since the "collision" this ADR's motivating context described was already correct, dedup-optimizing behavior rather than a bug. The deeper modeling question is answered honestly — flagged as a real, considered open question rather than either ignored or decided under migration time pressure.
 
 **Negative:** the `love_notes` table remains a single-table-with-discriminator design indefinitely unless a future ADR revisits it — a developer working on either `chat` or `scrapbook` must remember the table is shared and that the `type` column matters, which the typed enum (decision 2) mitigates but doesn't eliminate as a fact about the schema.
 

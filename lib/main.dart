@@ -19,6 +19,18 @@ import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
+import 'package:days_together/features/calendar/calendar_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
+import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
+import 'package:days_together/features/currently/currently_controller.dart';
+import 'package:days_together/features/settings/notification_preferences_controller.dart';
 import 'package:days_together/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
@@ -84,7 +96,9 @@ Widget buildAppRoot({required Widget child}) {
           child: _LicenseLifecycleBridge(
             child: _ProfileControllerBridge(
               child: _WorkspaceControllerBridge(
-                child: _PresenceControllerBridge(child: child),
+                child: _PresenceControllerBridge(
+                  child: _DomainProvidersBridge(child: child),
+                ),
               ),
             ),
           ),
@@ -224,6 +238,59 @@ class _PresenceControllerBridgeState extends ConsumerState<_PresenceControllerBr
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(presenceControllerProvider.notifier).updateFromRelationship(rp);
+    });
+    return widget.child;
+  }
+}
+
+/// Pushes every `CoupleSession` change into each ported domain provider's
+/// [SupabaseLifecycleNotifier.updateSession] -- the Riverpod-native
+/// equivalent of the old `ChangeNotifierProxyProvider<CoupleSession,
+/// X>.update: (_, session, provider) => provider!..updateSession(session)`
+/// chain (Phase 6a of the architecture migration). Watches `CoupleSession`
+/// directly (not `RelationshipProvider`, unlike the Phase 5 bridges above)
+/// since that's what the old domain providers watched too, and it's what
+/// `coupleSessionProvider`'s Riverpod-side bridge exposes.
+///
+/// Each provider here is `autoDispose`: calling `ref.read(x.notifier)` on
+/// one with no active widget watcher still creates it, runs its update, and
+/// lets Riverpod dispose it again shortly after -- so REST sync/cache-purge
+/// still happens for every provider on every session change regardless of
+/// which screen is open (matching the old behavior, where all 12 providers
+/// lived for the whole app session), while realtime subscriptions are only
+/// ever held open while some widget is actually watching, exactly like the
+/// old `hasListeners`-gated `initRealtime()`.
+///
+/// New domain providers are added to this single bridge as they're ported;
+/// it is not one bridge per provider like the Phase 5 mirrors, since these
+/// all react to the identical `CoupleSession` trigger with no per-provider
+/// divergence in when they should update.
+class _DomainProvidersBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const _DomainProvidersBridge({required this.child});
+
+  @override
+  ConsumerState<_DomainProvidersBridge> createState() => _DomainProvidersBridgeState();
+}
+
+class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> {
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<CoupleSession>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(bucketListControllerProvider.notifier).updateSession(session);
+      ref.read(giftReminderControllerProvider.notifier).updateSession(session);
+      ref.read(calendarControllerProvider.notifier).updateSession(session);
+      ref.read(timeCapsuleControllerProvider.notifier).updateSession(session);
+      ref.read(timelineControllerProvider.notifier).updateSession(session);
+      ref.read(vaultControllerProvider.notifier).updateSession(session);
+      ref.read(noteitControllerProvider.notifier).updateSession(session);
+      ref.read(loveChatControllerProvider.notifier).updateSession(session);
+      ref.read(topicCardsControllerProvider.notifier).updateSession(session);
+      ref.read(dailyMoodControllerProvider.notifier).updateSession(session);
+      ref.read(currentlyControllerProvider.notifier).updateSession(session);
+      ref.read(notificationPreferencesControllerProvider.notifier).updateSession(session);
     });
     return widget.child;
   }

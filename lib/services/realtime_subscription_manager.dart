@@ -64,4 +64,22 @@ class RealtimeSubscriptionManager {
     _streams[key] = controller.stream;
     return controller.stream;
   }
+
+  /// Whether a shared subscription for this table+couple key is currently
+  /// active (i.e. has at least one listener). `Stream.broadcast()`'s own
+  /// `.stream` getter mints a fresh wrapper object on every access, so two
+  /// `getStream()` calls for the same key are never `identical()` even
+  /// though they deliver from the same underlying controller -- this is
+  /// the key-presence check the identity comparison can't give a test.
+  @visibleForTesting
+  bool hasActiveStream({required String tableName, required String coupleId}) {
+    return _streams.containsKey('${tableName}_$coupleId');
+  }
+
+  /// The number of distinct table+couple keys with an active shared
+  /// subscription right now. For regression tests asserting teardown
+  /// behavior (Definition-of-Done item 19) without reaching into private
+  /// state.
+  @visibleForTesting
+  int get activeStreamCount => _streams.length;
 }
