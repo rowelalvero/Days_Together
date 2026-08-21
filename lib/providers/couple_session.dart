@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
 /// The app's single readiness/routing state, replacing today's inline
@@ -123,3 +124,22 @@ class CoupleSession extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+/// The Riverpod-side handle onto the single live [CoupleSession] instance
+/// the Provider tree owns -- the strangler bridge's "Provider -> Riverpod"
+/// direction (Phase 2 of the architecture migration, ADR-002).
+///
+/// This provider's own body is never actually read: `main.dart` overrides it
+/// with the live instance via `overrideWithValue` inside a nested
+/// `ProviderScope`, wrapped around a `Consumer<CoupleSession>` that reads the
+/// same object the Provider tree already holds -- one instance, two
+/// containers, so Riverpod-side code (starting with Phase 5's extracted
+/// controllers) and untouched Provider-side screens can never observe
+/// diverging state. See docs/architecture/state-management.md, "The
+/// strangler bridge."
+final coupleSessionProvider = Provider<CoupleSession>((ref) {
+  throw UnimplementedError(
+    'coupleSessionProvider must be overridden with the live CoupleSession '
+    'instance -- see main.dart\'s nested ProviderScope.',
+  );
+});

@@ -23,6 +23,7 @@ import 'package:days_together/screens/onboarding/create_couple_code_screen.dart'
 import 'package:days_together/screens/onboarding/genesis_screen.dart';
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -63,10 +64,28 @@ Future<void> _initializeApp() async {
     debugPrint('Initialization error: $e');
   }
 
-  runApp(
-    MultiProvider(
+  runApp(buildAppRoot(child: const MyApp()));
+}
+
+/// The app's full widget root: the outer `ProviderScope` every Riverpod
+/// provider needs somewhere above it, [buildAppProviders]'s Provider tree,
+/// and the nested `ProviderScope` that bridges the live `CoupleSession`
+/// instance onto [coupleSessionProvider] -- the "Provider -> Riverpod"
+/// direction of the strangler bridge (Phase 2 of the architecture migration,
+/// ADR-002; see docs/architecture/state-management.md). Factored out of
+/// [runApp] so `test/riverpod_bridge_test.dart` can pump the exact
+/// production wiring around a probe widget of its choosing instead of a
+/// hand-maintained duplicate that could drift.
+Widget buildAppRoot({required Widget child}) {
+  return ProviderScope(
+    child: MultiProvider(
       providers: buildAppProviders(),
-      child: const MyApp(),
+      child: Consumer<CoupleSession>(
+        builder: (context, session, _) => ProviderScope(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+          child: child,
+        ),
+      ),
     ),
   );
 }
