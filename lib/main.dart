@@ -187,15 +187,14 @@ class _ProfileControllerBridgeState extends ConsumerState<_ProfileControllerBrid
   }
 }
 
-/// Mirrors `RelationshipProvider`'s 7 workspace fields (pairing code, story
-/// title, start date/time, premium flag, status, recovery code) into
-/// [workspaceControllerProvider] on every `RelationshipProvider` change --
-/// see `workspace_controller.dart`'s doc comment for why this is a mirror
-/// rather than a cutover, including for `recoveryCode` despite it not being
-/// realtime-synced (Phase 5 of the architecture migration, unit 4). Same
-/// shape as [_ProfileControllerBridge]: no invalidate-on-logout hook needed,
-/// since the next `updateFromRelationship` call already overwrites stale
-/// state with the post-logout/disconnect values.
+/// Mirrors `CoupleSession`'s 7 workspace fields (pairing code, story title,
+/// start date/time, premium flag, status, recovery code) into
+/// [workspaceControllerProvider] on every `CoupleSession` change. Watches
+/// `CoupleSession` directly, not `RelationshipProvider`, since Phase 6b-1
+/// unit 3 made `WorkspaceController` real -- see `workspace_controller.dart`'s
+/// doc comment. Same shape as [_ProfileControllerBridge]: no
+/// invalidate-on-logout hook needed, since the next `updateFromSession` call
+/// already overwrites stale state with the post-logout/disconnect values.
 class _WorkspaceControllerBridge extends ConsumerStatefulWidget {
   final Widget child;
   const _WorkspaceControllerBridge({required this.child});
@@ -207,10 +206,10 @@ class _WorkspaceControllerBridge extends ConsumerStatefulWidget {
 class _WorkspaceControllerBridgeState extends ConsumerState<_WorkspaceControllerBridge> {
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<RelationshipProvider>();
+    final session = context.watch<CoupleSession>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
+      ref.read(workspaceControllerProvider.notifier).updateFromSession(session);
     });
     return widget.child;
   }

@@ -1,11 +1,10 @@
-// Tests for WorkspaceController (Phase 5 of the architecture migration,
-// unit 4 -- a Riverpod-native mirror of RelationshipProvider's 7 workspace
-// fields, NOT a cutover: see workspace_controller.dart's doc comment for
-// why, including recoveryCode despite it not being realtime-synced. Follows
-// the same "notify only on change" contract as
-// CoupleSession.updateFromRelationship (couple_session_test.dart) and
-// ProfileController (profile_controller_test.dart), via ProviderContainer +
-// container.listen instead of ChangeNotifier's addListener.
+// Tests for WorkspaceController (Phase 6b-1 of the architecture migration,
+// unit 3 -- "WorkspaceController real"). Since this unit, the controller
+// mirrors CoupleSession directly (not RelationshipProvider, which is now
+// just a facade over it) and gains real write methods that delegate to the
+// live CoupleSession instance -- see workspace_controller.dart's doc
+// comment for why delegation, not duplication, including for
+// createRelationshipWorkspace's entangled RPC.
 
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter/services.dart';
@@ -14,7 +13,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -30,9 +28,11 @@ void main() {
     );
   });
 
-  group('WorkspaceController.updateFromRelationship mirroring', () {
+  group('WorkspaceController.updateFromSession mirroring', () {
     test('build() starts as an empty WorkspaceState with defaults', () {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+      );
       addTearDown(container.dispose);
 
       final state = container.read(workspaceControllerProvider);
@@ -46,16 +46,18 @@ void main() {
     });
 
     test('a call with unchanged fields does not notify again', () async {
-      final container = ProviderContainer();
+      final session = CoupleSession();
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
       addTearDown(container.dispose);
-      final rp = RelationshipProvider(CoupleSession());
       await Future.delayed(Duration.zero);
 
-      container.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
 
       var notifyCount = 0;
       container.listen(workspaceControllerProvider, (prev, next) => notifyCount++);
-      container.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
 
       expect(notifyCount, 0);
     });
@@ -70,14 +72,16 @@ void main() {
         'is_premium': true,
       });
 
-      final container = ProviderContainer();
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
       addTearDown(container.dispose);
       var notifyCount = 0;
       container.listen(workspaceControllerProvider, (prev, next) => notifyCount++);
 
-      final rp = RelationshipProvider(CoupleSession());
-      await Future.delayed(Duration.zero);
-      container.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
 
       final state = container.read(workspaceControllerProvider);
       expect(notifyCount, 1);
@@ -88,8 +92,64 @@ void main() {
       expect(state.isPremium, true);
 
       // A second call with unchanged fields must not notify again.
-      container.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
       expect(notifyCount, 1);
+    });
+  });
+
+  group('WorkspaceController write methods delegate to CoupleSession', () {
+    test('setStoryTitle writes through to the live CoupleSession instance', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(workspaceControllerProvider.notifier).setStoryTitle('Us, Forever');
+
+      expect(session.storyTitle, 'Us, Forever');
+    });
+
+    test('setStartDate and setStartTime write through to the live CoupleSession instance', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(workspaceControllerProvider.notifier).setStartDate(DateTime(2022, 6, 15));
+      await container.read(workspaceControllerProvider.notifier).setStartTime(const TimeOfDay(hour: 9, minute: 30));
+
+      expect(session.startDate, DateTime(2022, 6, 15));
+      expect(session.startTime, const TimeOfDay(hour: 9, minute: 30));
+    });
+
+    test('setPremium writes through to the live CoupleSession instance', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(workspaceControllerProvider.notifier).setPremium(true);
+
+      expect(session.isPremium, true);
+    });
+
+    test('clearRecoveryCode clears the live CoupleSession instance', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      container.read(workspaceControllerProvider.notifier).clearRecoveryCode();
+
+      expect(session.recoveryCode, isNull);
     });
   });
 }

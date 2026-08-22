@@ -2,14 +2,13 @@ import 'package:flutter/material.dart' show TimeOfDay;
 
 import 'package:days_together/providers/couple_session.dart' show RelationshipStatus;
 
-/// The 7 workspace fields `WorkspaceController` mirrors from
-/// `RelationshipProvider` (Phase 5 of the architecture migration, unit 4).
-/// See `workspace_controller.dart`'s doc comment for why this is a mirror
-/// rather than a cutover, unlike `LicenseController`.
+/// The 7 workspace fields `WorkspaceController` mirrors from `CoupleSession`
+/// (Phase 6b-1 of the architecture migration, unit 3). See
+/// `workspace_controller.dart`'s doc comment for the delegation design.
 ///
-/// [storyTitle] mirrors `RelationshipProvider.storyTitle`'s own return value
-/// as-is (already defaulted to `'Our Story'` when unset) rather than the raw
-/// nullable field, since the provider exposes no raw getter to mirror
+/// [storyTitle] mirrors `CoupleSession.storyTitle`'s own return value as-is
+/// (already defaulted to `'Our Story'` when unset) rather than the raw
+/// nullable field, since `CoupleSession` exposes no raw getter to mirror
 /// instead -- see `workspace_controller.dart`'s doc comment.
 class WorkspaceState {
   final String? coupleCode;

@@ -1,74 +1,79 @@
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/relationship/workspace_state.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 
-/// Mirrors `RelationshipProvider`'s 7 workspace fields (pairing code, story
-/// title, start date/time, premium flag, status, recovery code) into a
-/// Riverpod-native read surface (Phase 5 of the architecture migration,
-/// unit 4).
+/// Owns a Riverpod-native read+write surface over `CoupleSession`'s 7
+/// workspace fields (pairing code, story title, start date/time, premium
+/// flag, status, recovery code) -- Phase 6b-1 of the architecture
+/// migration, unit 3 ("WorkspaceController real").
 ///
-/// **Mirror, not a cutover -- same reasoning as `ProfileController`
-/// (unit 3), extended to cover a field with no realtime dependency.** 6 of
-/// the 7 fields (`coupleCode`, `storyTitle`, `startDate`, `startTime`,
-/// `isPremium`, `status`) are written live inside `_initSupabaseSync`'s
-/// `_coupleSub` Supabase realtime listener (`relationship_provider.dart`,
-/// the `.from('couples').stream(...)` callback) -- the same entanglement
-/// that made `ProfileController` a mirror. The 7th, `recoveryCode`, is not
-/// realtime-synced, but its value is produced by
-/// `RelationshipProvider.createRelationshipWorkspace()`'s single RPC call,
-/// the same call that also sets `CoupleSession`-owned fields (`coupleId`,
-/// `isPaired`, `isCreator`) and this controller's own `coupleCode`/`status`.
-/// Cutting `recoveryCode` over on its own would mean either duplicating that
-/// RPC call from a new write path (risking two workspaces being created) or
-/// having `RelationshipProvider` push into Riverpod from non-widget code --
-/// exactly the global-container infrastructure the Phase 5/5b merge
-/// decision already ruled out. So all 7 fields are mirrored together.
+/// **Delegates to `CoupleSession`, does not duplicate its fields** -- same
+/// reasoning as `ProfileController` (unit 2), extended to cover
+/// `recoveryCode`'s entangled RPC: `createRelationshipWorkspace()`'s single
+/// RPC call sets `CoupleSession`-owned identity fields (`coupleId`,
+/// `isCreator`, `isPaired`) and this controller's own `coupleCode`/
+/// `recoveryCode`/`status` together, atomically, so delegating the whole
+/// call to `CoupleSession.createRelationshipWorkspace()` (rather than
+/// reimplementing any slice of it here) is what keeps that atomicity intact.
 ///
-/// `RelationshipProvider` remains the single source of truth and keeps
-/// every one of its existing workspace fields, setters
-/// (`setStoryTitle`/`setStartDate`/`setStartTime`/`setPremium`/
-/// `regenerateRecoveryCode`/`clearRecoveryCode`/`createRelationshipWorkspace`/
-/// `joinWithCode`/etc.), and realtime sync logic untouched. `togglePremium()`
-/// was confirmed to have zero callers repo-wide during this unit's
-/// investigation and was left in place rather than ported -- it was already
-/// dead before this extraction, and porting unreachable API surface forward
-/// would be exactly the kind of unrequested feature-preservation
-/// `CLAUDE.md` asks this codebase to avoid.
-///
-/// `WorkspaceController` is updated via [updateFromRelationship], called by
-/// `main.dart`'s `_WorkspaceControllerBridge` on every `RelationshipProvider`
-/// change. No write methods exist here -- writes still go through
-/// `RelationshipProvider` directly, unchanged, and flow into this mirror the
-/// same way any other field change does. The real ownership transfer
-/// (moving the realtime listener itself) is deferred to Phase 6, alongside
-/// `CoupleSession`'s and `ProfileController`'s own -- see
-/// docs/architecture/migration-roadmap.md's Phase 5 corrections.
+/// **No forcing function requires converting this controller's UI
+/// consumers in the same step, unlike unit 1 (`CoupleSession` itself).**
+/// `RelationshipProvider`'s facade already serves these 7 fields correctly
+/// to every current reader with zero regression regardless of what this
+/// controller does, so UI conversion is deferred to Phase 6b-2 (or, for
+/// `relationship_license_screen.dart`/`relationship_profile_screen.dart`,
+/// to Phase 8's already-planned decomposition) -- the same scope decision
+/// made for unit 2, applied here without re-litigating it since the
+/// underlying situation (a real hub already serving a working facade) is
+/// identical. See docs/architecture/migration-roadmap.md's Phase 6b-1 unit
+/// 3 corrections.
 class WorkspaceController extends Notifier<WorkspaceState> {
   @override
   WorkspaceState build() => const WorkspaceState();
 
   /// Called from `main.dart`'s `_WorkspaceControllerBridge` on every
-  /// `RelationshipProvider` change. Only updates (and so only notifies
-  /// watchers) when a field actually differs, via [WorkspaceState]'s value
-  /// equality -- the same "don't rebuild for no reason" contract
-  /// `CoupleSession.updateFromRelationship` established in Phase 1.
-  void updateFromRelationship(RelationshipProvider relationship) {
+  /// `CoupleSession` change. Only updates (and so only notifies watchers)
+  /// when a field actually differs, via [WorkspaceState]'s value equality.
+  void updateFromSession(CoupleSession session) {
     final next = WorkspaceState(
-      coupleCode: relationship.coupleCode,
-      storyTitle: relationship.storyTitle,
-      startDate: relationship.startDate,
-      startTime: relationship.startTime,
-      isPremium: relationship.isPremium,
-      status: relationship.status,
-      recoveryCode: relationship.recoveryCode,
+      coupleCode: session.coupleCode,
+      storyTitle: session.storyTitle,
+      startDate: session.startDate,
+      startTime: session.startTime,
+      isPremium: session.isPremium,
+      status: session.status,
+      recoveryCode: session.recoveryCode,
     );
     if (next != state) {
       state = next;
     }
   }
+
+  Future<void> setStoryTitle(String title) => ref.read(coupleSessionProvider).setStoryTitle(title);
+
+  Future<void> setStartDate(DateTime date) => ref.read(coupleSessionProvider).setStartDate(date);
+
+  Future<void> setStartTime(TimeOfDay time) => ref.read(coupleSessionProvider).setStartTime(time);
+
+  Future<void> setPremium(bool value) => ref.read(coupleSessionProvider).setPremium(value);
+
+  Future<void> createRelationshipWorkspace() =>
+      ref.read(coupleSessionProvider).createRelationshipWorkspace();
+
+  String generateCoupleCode({bool forceRegenerate = false}) =>
+      ref.read(coupleSessionProvider).generateCoupleCode(forceRegenerate: forceRegenerate);
+
+  Future<String?> refreshPairingCode({bool forceRotate = false}) =>
+      ref.read(coupleSessionProvider).refreshPairingCode(forceRotate: forceRotate);
+
+  Future<void> regenerateRecoveryCode() => ref.read(coupleSessionProvider).regenerateRecoveryCode();
+
+  void clearRecoveryCode() => ref.read(coupleSessionProvider).clearRecoveryCode();
 }
 
 final workspaceControllerProvider = NotifierProvider<WorkspaceController, WorkspaceState>(
   WorkspaceController.new,
+  dependencies: [coupleSessionProvider],
 );
