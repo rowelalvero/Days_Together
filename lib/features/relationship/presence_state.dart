@@ -1,8 +1,6 @@
-/// The 3 presence fields `PresenceController` mirrors from
-/// `RelationshipProvider` (Phase 5 of the architecture migration, unit 5).
-/// See `presence_controller.dart`'s doc comment for why this is a mirror
-/// rather than a cutover, consistent with `ProfileController`/
-/// `WorkspaceController`.
+/// The 3 presence fields `PresenceController` mirrors from `CoupleSession`
+/// (Phase 6b-1 of the architecture migration, unit 4). See
+/// `presence_controller.dart`'s doc comment for the delegation design.
 class PresenceState {
   final bool isPartnerOnline;
   final String? yourActivity;

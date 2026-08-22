@@ -458,6 +458,14 @@ This was surfaced to the user via `AskUserQuestion` (split now vs. attempt full 
 
 14. **Validation:** `flutter analyze` clean; full suite green at 264 tests (up from 260 — 4 new tests covering `setStoryTitle`/`setStartDate`+`setStartTime`/`setPremium`/`clearRecoveryCode`). `test/workspace_controller_test.dart` rewritten the same way `test/profile_controller_test.dart` was in unit 2.
 
+**Unit 4 (`PresenceController`) — the last of the four, closing out the merged 6b-1/6b-2 per-controller sequence:**
+
+15. **Smallest unit of the four: only one field (`yourActivity`) has any write path at all.** `isPartnerOnline` (flipped by `_initPresence`'s presence-channel callback) and `partnerActivity` (set by the partner-row realtime sync) are purely realtime-driven with no setter anywhere in the codebase, confirmed during Phase 5 unit 5's own investigation and reconfirmed here — nothing to delegate for either. `PresenceController` gained exactly one write method, `updateCurrentActivity`, a one-line delegation to `ref.read(coupleSessionProvider).updateCurrentActivity(...)`. The read side switched from mirroring `RelationshipProvider` to mirroring `CoupleSession` directly (`updateFromRelationship` → `updateFromSession`); `main.dart`'s `_PresenceControllerBridge` now watches `CoupleSession`. The "defer UI conversion" decision was applied again without re-litigating it, consistent with units 2/3.
+
+16. **Validation:** `flutter analyze` clean; full suite green at 265 tests (up from 264 — 1 new test covering the delegated `updateCurrentActivity`). `test/presence_controller_test.dart` rewritten the same way as units 2/3.
+
+**All four Phase 6b-1 units are now complete.** `CoupleSession` is the real, sole owner of the Supabase auth listener and every `users`/`couples`-derived field; `ProfileController`/`WorkspaceController`/`PresenceController` all have real write methods delegating to it (13 total: 3 + 9 + 1) and mirror it directly rather than through `RelationshipProvider`. `RelationshipProvider` is now purely a pass-through facade plus the still-stranded duration/milestone math (Phase 6b-3). None of the ~24 UI files needed any change — the facade's synchronous `addListener`-based mirroring (unit 1's key finding) preserved every existing call site through all four units. Phase 6b-2 (converting those UI files to read the four controllers directly, screen by screen) can now proceed independently and at low risk, since every read and write path it will switch callers onto already exists, is tested, and is live in production today via the facade.
+
 ---
 
 ## Phase 7 — Design tokens + shell (1 week, risk: low)

@@ -215,15 +215,14 @@ class _WorkspaceControllerBridgeState extends ConsumerState<_WorkspaceController
   }
 }
 
-/// Mirrors `RelationshipProvider`'s 3 presence fields (`isPartnerOnline`,
+/// Mirrors `CoupleSession`'s 3 presence fields (`isPartnerOnline`,
 /// `yourActivity`, `partnerActivity`) into [presenceControllerProvider] on
-/// every `RelationshipProvider` change -- see `presence_controller.dart`'s
-/// doc comment for why this is a mirror rather than a cutover (Phase 5 of
-/// the architecture migration, unit 5, the last of the five). Same shape as
+/// every `CoupleSession` change. Watches `CoupleSession` directly, not
+/// `RelationshipProvider`, since Phase 6b-1 unit 4 made `PresenceController`
+/// real -- see `presence_controller.dart`'s doc comment. Same shape as
 /// [_ProfileControllerBridge]/[_WorkspaceControllerBridge]: no
-/// invalidate-on-logout hook needed, since the next `updateFromRelationship`
-/// call already overwrites stale state with the post-logout/disconnect
-/// values.
+/// invalidate-on-logout hook needed, since the next `updateFromSession` call
+/// already overwrites stale state with the post-logout/disconnect values.
 class _PresenceControllerBridge extends ConsumerStatefulWidget {
   final Widget child;
   const _PresenceControllerBridge({required this.child});
@@ -235,10 +234,10 @@ class _PresenceControllerBridge extends ConsumerStatefulWidget {
 class _PresenceControllerBridgeState extends ConsumerState<_PresenceControllerBridge> {
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<RelationshipProvider>();
+    final session = context.watch<CoupleSession>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(presenceControllerProvider.notifier).updateFromRelationship(rp);
+      ref.read(presenceControllerProvider.notifier).updateFromSession(session);
     });
     return widget.child;
   }
