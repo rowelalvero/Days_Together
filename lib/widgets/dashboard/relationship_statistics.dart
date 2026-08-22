@@ -7,9 +7,10 @@ import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 
-class RelationshipStatistics extends StatelessWidget {
+class RelationshipStatistics extends ConsumerWidget {
   final dynamic theme;
 
   const RelationshipStatistics({
@@ -18,13 +19,13 @@ class RelationshipStatistics extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final timeline = context.watch<TimelineProvider>();
     final bucket = context.watch<BucketListProvider>();
     final noteit = context.watch<NoteitProvider>();
     final vault = context.watch<VaultProvider>();
     final capsule = context.watch<TimeCapsuleProvider>();
-    final rp = context.watch<RelationshipProvider>();
+    final workspace = ref.watch(workspaceControllerProvider);
 
     final totalMemories = timeline.timelineItems.length;
     final bucketStats = '${bucket.completedItems}/${bucket.totalItems}';
@@ -33,7 +34,7 @@ class RelationshipStatistics extends StatelessWidget {
     final totalCapsules = capsule.capsules.length;
 
     // Calculate timeline years from start date
-    final startDate = rp.startDate ?? DateTime.now();
+    final startDate = workspace.startDate ?? DateTime.now();
     final daysDiff = DateTime.now().difference(startDate).inDays;
     final timelineYears = (daysDiff / 365.25).toStringAsFixed(1);
 

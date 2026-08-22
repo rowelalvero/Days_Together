@@ -488,6 +488,20 @@ This was surfaced to the user via `AskUserQuestion` (split now vs. attempt full 
 
 6. **Validation:** `flutter analyze` clean; full suite green at 265 tests (unchanged — none of these 8 files have dedicated unit tests; their coverage is via `app_router_test.dart`'s stage-based redirect tests, which don't exercise widget internals). Confirmed via grep: zero remaining `RelationshipProvider` references in all 8 files.
 
+**Batch 2 — dashboard widgets: narrowed to 4 of the originally-planned 7 files before converting any of them, based on a per-file check of the stranded duration/milestone math dependency.**
+
+7. **`insights_banner.dart` (`years`), `detailed_days_counter.dart` (`preciseAge`/`totalDays`), and `milestone_card.dart` (`nextMilestones`/`totalDays`, plus a direct `MilestoneInfo` type import)** all read fields that exist *only* on `RelationshipProvider`'s facade — the pure duration/milestone math Phase 6b-3 hasn't extracted yet. Converting these three now would mean either leaving them straddling both `RelationshipProvider` (for the math) and the new controllers (for everything else), or blocking on 6b-3 first. Deferred as a group to whenever 6b-3 lands, rather than doing a partial, straddling conversion now.
+
+8. **`relationship_statistics.dart`** looked like it needed the same math (it computes a "Timeline Years" stat) but doesn't: it derives `timelineYears` itself from `DateTime.now().difference(startDate)` rather than calling `rp.totalDays`/`preciseAge`, so it only needs `startDate` — a `WorkspaceController` field. Converted from `StatelessWidget` to `ConsumerWidget`, reading `ref.watch(workspaceControllerProvider).startDate`.
+
+9. **`memory_notes_section.dart`** needed only `yourName`/`yourAvatarPath`/`partnerAvatarPath` — all `ProfileController` fields, no duration math. Converted to `ConsumerStatefulWidget`, reading `ref.watch(profileControllerProvider)`.
+
+10. **`currently_card.dart`** needed a mix: `partnerId` (`CoupleSession` identity), `isPartnerOnline`/`partnerActivity`/`yourActivity` (`PresenceController`, including the `updateCurrentActivity` write method on its activity-edit sheet), and `partnerAvatarPath`/`partnerName` (`ProfileController`). Converted to `ConsumerStatefulWidget`, reading from all three depending on the field — the same "read whichever controller actually owns this data" pattern established in batch 1's `create_couple_code_screen.dart`.
+
+11. **`partner_presence_card.dart`** (confirmed dead in Phase 6b-1 unit 2's investigation — zero instantiation sites anywhere in `lib/`) was converted anyway, since it's zero-risk (unreachable) and reduces the eventual `grep -rl "RelationshipProvider" lib/` count. Its constructor parameter was simply retyped from `RelationshipProvider` to `CoupleSession` rather than routed through the Riverpod controllers: `CoupleSession` itself still exposes every field (Profile/Workspace/Presence included) directly — Unit 1 only *added* delegation surfaces on the other controllers, it never removed the underlying getters from `CoupleSession` — so a widget that already receives a `CoupleSession` reference has no need to also thread three more controller references through just for consistency, especially one nothing actually renders.
+
+12. **Validation:** `flutter analyze` clean; full suite green at 265 tests (unchanged, same reasoning as batch 1). Confirmed via grep: zero remaining `RelationshipProvider` references in all 4 converted files.
+
 ---
 
 ## Phase 7 — Design tokens + shell (1 week, risk: low)

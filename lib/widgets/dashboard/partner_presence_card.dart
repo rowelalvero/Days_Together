@@ -6,11 +6,11 @@ import 'package:provider/provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/storage_image.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 
 class PartnerPresenceCard extends ConsumerStatefulWidget {
-  final RelationshipProvider relationshipProvider;
+  final CoupleSession relationshipProvider;
   final dynamic theme;
 
   const PartnerPresenceCard({
@@ -47,8 +47,8 @@ class _PartnerPresenceCardState extends ConsumerState<PartnerPresenceCard>
       _isTapped = true;
     });
     // Append heart chat message in provider
-    final rp = context.read<RelationshipProvider>();
-    context.read<LoveChatProvider>().sendMessage('Sent a Heartbeat Tap 💓', rp.yourName ?? 'Partner');
+    final session = context.read<CoupleSession>();
+    context.read<LoveChatProvider>().sendMessage('Sent a Heartbeat Tap 💓', session.yourName ?? 'Partner');
     
     // Floating animation trigger
     showDialog(

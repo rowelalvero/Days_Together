@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 
 /// A premium, warm inline section replacing the Sidebar Chat.
 /// Displays thoughts, letters, and reflections about a specific memory.
-class MemoryNotesSection extends StatefulWidget {
+class MemoryNotesSection extends ConsumerStatefulWidget {
   final TimelineItemData item;
   final ScrollController scrollController;
 
@@ -22,10 +23,10 @@ class MemoryNotesSection extends StatefulWidget {
   });
 
   @override
-  State<MemoryNotesSection> createState() => _MemoryNotesSectionState();
+  ConsumerState<MemoryNotesSection> createState() => _MemoryNotesSectionState();
 }
 
-class _MemoryNotesSectionState extends State<MemoryNotesSection> {
+class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
   final TextEditingController _noteController = TextEditingController();
   bool _isSending = false;
 
@@ -91,7 +92,7 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final profile = ref.watch(profileControllerProvider);
     final tp = context.watch<TimelineProvider>();
 
     final currentItem = tp.timelineItems.firstWhere(
@@ -107,7 +108,7 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
         return b.date.compareTo(a.date);
       });
 
-    final yourName = rp.yourName ?? 'Me';
+    final yourName = profile.yourName ?? 'Me';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +167,7 @@ class _MemoryNotesSectionState extends State<MemoryNotesSection> {
               
               // Resolve name and avatar path
               final authorDisplayName = isMe ? yourName : note.authorName;
-              final avatarPath = isMe ? rp.yourAvatarPath : rp.partnerAvatarPath;
+              final avatarPath = isMe ? profile.yourAvatarPath : profile.partnerAvatarPath;
 
               return TweenAnimationBuilder<double>(
                 key: ValueKey(note.id),

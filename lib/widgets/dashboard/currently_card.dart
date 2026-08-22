@@ -1,23 +1,26 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/providers/currently_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/storage_image.dart';
 
-class CurrentlyCard extends StatefulWidget {
+class CurrentlyCard extends ConsumerStatefulWidget {
   const CurrentlyCard({super.key});
 
   @override
-  State<CurrentlyCard> createState() => _CurrentlyCardState();
+  ConsumerState<CurrentlyCard> createState() => _CurrentlyCardState();
 }
 
-class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateMixin {
+class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProviderStateMixin {
   late AnimationController _heartController;
   late AnimationController _celebrationController;
   late AnimationController _pulseController;
@@ -87,9 +90,9 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
     });
   }
 
-  void _showEditActivitySheet(BuildContext context, RelationshipProvider rp) {
+  void _showEditActivitySheet(BuildContext context) {
     final theme = context.read<ThemeProvider>().currentLoveTheme;
-    final controller = TextEditingController(text: rp.yourActivity);
+    final controller = TextEditingController(text: ref.read(presenceControllerProvider).yourActivity);
 
     showModalBottomSheet(
       context: context,
@@ -184,7 +187,7 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
-                        rp.updateCurrentActivity(controller.text.trim());
+                        ref.read(presenceControllerProvider.notifier).updateCurrentActivity(controller.text.trim());
                         Navigator.pop(ctx);
                       },
                       style: ElevatedButton.styleFrom(
@@ -213,12 +216,14 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeProvider>().currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final session = context.watch<CoupleSession>();
+    final profile = ref.watch(profileControllerProvider);
+    final presence = ref.watch(presenceControllerProvider);
     final currently = context.watch<CurrentlyProvider>();
 
-    final partnerJoined = rp.partnerId != null;
-    final isOnline = rp.isPartnerOnline;
-    final partnerActivity = rp.partnerActivity;
+    final partnerJoined = session.partnerId != null;
+    final isOnline = presence.isPartnerOnline;
+    final partnerActivity = presence.partnerActivity;
 
     // Trigger celebration when mutual becomes active
     if (currently.state == LoveTapState.mutual && !_celebrationController.isAnimating && _celebrationController.value == 0) {
@@ -263,7 +268,7 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
                           ),
                           child: StorageImageBuilder(
                             bucket: StorageBuckets.avatars,
-                            storageRef: partnerJoined ? rp.partnerAvatarPath : null,
+                            storageRef: partnerJoined ? profile.partnerAvatarPath : null,
                             builder: (context, image) => CircleAvatar(
                               radius: 24,
                               backgroundColor: theme.textColor.withValues(alpha: 0.1),
@@ -296,7 +301,7 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            rp.partnerName ?? 'Waiting for partner...',
+                            profile.partnerName ?? 'Waiting for partner...',
                             style: AppTypography.body(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -346,7 +351,7 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
                   children: [
                     // Self status edit trigger
                     GestureDetector(
-                      onTap: () => _showEditActivitySheet(context, rp),
+                      onTap: () => _showEditActivitySheet(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
@@ -362,9 +367,9 @@ class _CurrentlyCardState extends State<CurrentlyCard> with TickerProviderStateM
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              (rp.yourActivity == null || rp.yourActivity!.trim().isEmpty)
+                              (presence.yourActivity == null || presence.yourActivity!.trim().isEmpty)
                                   ? "Share what you're doing..."
-                                  : rp.yourActivity!,
+                                  : presence.yourActivity!,
                               style: AppTypography.caption(
                                 fontSize: 11,
                                 color: theme.textColor.withValues(alpha: 0.7),
