@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
 
@@ -19,19 +20,26 @@ void main() {
     );
   });
 
+  // Since Phase 6b-1 of the architecture migration ("make CoupleSession
+  // real"), RelationshipProvider is a pass-through facade over a live
+  // CoupleSession instance -- every assertion below exercises the facade,
+  // which is exactly the point: these tests prove the facade's delegation
+  // preserves every behavior CoupleSession's own tests (couple_session_test.dart)
+  // verify at the source.
   group('RelationshipProvider', () {
     test('initializes default values correctly and disposes without errors', () async {
-      final provider = RelationshipProvider();
-      
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
+
       expect(provider.isPaired, false);
       expect(provider.isPremium, false);
       expect(provider.yourName, isNull);
       expect(provider.partnerName, isNull);
       expect(provider.isOnboardingComplete, false);
-      
+
       // Wait for local data load futures to complete
       await Future.delayed(Duration.zero);
-      
+
       // Call dispose and check if it runs without exceptions
       expect(() => provider.dispose(), returnsNormally);
     });
@@ -41,14 +49,16 @@ void main() {
         'is_creator': true,
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(provider.isCreator, true);
     });
 
     test('isOnboardingComplete remains false when workspace is created until completeOnboarding is called', () async {
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(provider.isOnboardingComplete, false);
@@ -66,7 +76,8 @@ void main() {
         'partner_avatar_path': '/mock/avatars/rowel.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(provider.yourName, 'Ashwel');
@@ -92,7 +103,8 @@ void main() {
         'partner_avatar_path': '/mock/avatars/user_b.jpg',
       });
 
-      final providerA = RelationshipProvider();
+      final sessionA = CoupleSession();
+      final providerA = RelationshipProvider(sessionA);
       await Future.delayed(Duration.zero);
 
       await providerA.setAvatars(yourPath: '/mock/avatars/user_a_v2.jpg');
@@ -111,7 +123,8 @@ void main() {
         'partner_avatar_path': '/mock/avatars/user_a.jpg',
       });
 
-      final providerB = RelationshipProvider();
+      final sessionB = CoupleSession();
+      final providerB = RelationshipProvider(sessionB);
       await Future.delayed(Duration.zero);
 
       await providerB.setAvatars(yourPath: '/mock/avatars/user_b_v2.jpg');
@@ -127,7 +140,8 @@ void main() {
         'your_avatar_path': '/mock/avatars/original_a.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       // Attempting to upload a non-existent local file when Supabase is active throws Exception
@@ -140,7 +154,8 @@ void main() {
         'partner_avatar_path': '/mock/avatars/user_b.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(provider.yourAvatarPath, '/mock/avatars/user_a.jpg');
@@ -148,7 +163,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
-      final newProvider = RelationshipProvider();
+      final newSession = CoupleSession();
+      final newProvider = RelationshipProvider(newSession);
       await Future.delayed(Duration.zero);
 
       expect(newProvider.yourAvatarPath, isNull);
@@ -162,7 +178,8 @@ void main() {
         'partner_avatar_path': '/mock/avatars/user_b.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(provider.yourAvatarPath, '/mock/avatars/user_a.jpg');
@@ -175,11 +192,15 @@ void main() {
     });
 
     test('11. Codebase contains no reference to nonexistent license_details.creator_id', () {
-      final file = File('lib/providers/relationship_provider.dart');
-      final content = file.readAsStringSync();
-      expect(content.contains("['creator_id']"), false);
-      expect(content.contains("'creator_id'"), false);
-      expect(content.contains('"creator_id"'), false);
+      for (final path in [
+        'lib/providers/relationship_provider.dart',
+        'lib/providers/couple_session.dart',
+      ]) {
+        final content = File(path).readAsStringSync();
+        expect(content.contains("['creator_id']"), false, reason: path);
+        expect(content.contains("'creator_id'"), false, reason: path);
+        expect(content.contains('"creator_id"'), false, reason: path);
+      }
     });
 
     test('9. Successful image update persists after app restart via SharedPreferences', () async {
@@ -188,7 +209,8 @@ void main() {
         'your_avatar_path': '/mock/avatars/ashwel.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(provider.yourAvatarPath, '/mock/avatars/ashwel.jpg');
@@ -208,7 +230,8 @@ void main() {
         'partner_avatar_path': '/mock/avatars/rowel.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       await provider.setYourName('Ashwel Updated');
@@ -237,7 +260,8 @@ void main() {
         'partner_avatar_path': 'couples/c1/avatars/u2_1700000001.jpg',
       });
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(
@@ -276,7 +300,8 @@ void main() {
           'https://p.supabase.co/storage/v1/object/public/avatars/couples/c1/avatars/u1_1.jpg?t=1';
       SharedPreferences.setMockInitialValues({'your_avatar_path': legacy});
 
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       expect(
@@ -289,6 +314,36 @@ void main() {
       );
 
       provider.dispose();
+    });
+
+    test('15. RelationshipProvider mirrors CoupleSession synchronously, not on the next frame', () async {
+      // Guards the exact lag app_router.dart's appRedirect depends on not
+      // having -- see relationship_provider.dart's class doc.
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
+      await Future.delayed(Duration.zero);
+
+      var notifyCount = 0;
+      provider.addListener(() => notifyCount++);
+
+      await session.setYourName('Synchronous Sam');
+
+      // No extra pump/frame/microtask needed: addListener callbacks run
+      // synchronously within notifyListeners(), unlike a
+      // ChangeNotifierProxyProvider's `update`, which defers to the next
+      // frame via Flutter's InheritedWidget dependency system.
+      expect(notifyCount, greaterThan(0));
+      expect(provider.yourName, 'Synchronous Sam');
+    });
+
+    test('16. forceInitialized forces the underlying CoupleSession, not just the facade', () {
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
+
+      expect(session.isInitialized, false);
+      provider.forceInitialized();
+      expect(session.isInitialized, true);
+      expect(provider.isInitialized, true);
     });
   });
 }

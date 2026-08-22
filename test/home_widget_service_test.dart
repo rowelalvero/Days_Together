@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/services/home_widget_service.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
@@ -117,7 +118,7 @@ void main() {
     });
 
     test('14. RelationshipProvider.setStartDate updates widget date without error', () async {
-      final provider = RelationshipProvider();
+      final provider = RelationshipProvider(CoupleSession());
       await expectLater(
         provider.setStartDate(DateTime(2023, 5, 20)),
         completes,

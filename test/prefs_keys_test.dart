@@ -21,10 +21,15 @@ void main() {
       // header says happens "naturally as each field is extracted into its
       // owning controller". So a key now counts as covered if its owning
       // file contains either the raw literal or `PrefsKeys.<constantName>`.
-      // Add a file here each time a further Phase 5 extraction moves
-      // another group's literals out of relationship_provider.dart.
+      // Phase 6b-1 moved the remaining 17 keys' literals (session/pairing
+      // identity + workspace + profile) from relationship_provider.dart to
+      // couple_session.dart, which now owns the real engine --
+      // relationship_provider.dart is a pass-through facade with no
+      // SharedPreferences access of its own. Add a file here each time a
+      // further extraction moves another group's literals to a new owner.
       final sources = [
         'lib/providers/relationship_provider.dart',
+        'lib/providers/couple_session.dart',
         'lib/features/relationship/license_controller.dart',
       ].map((path) => File(path).readAsStringSync()).toList();
 

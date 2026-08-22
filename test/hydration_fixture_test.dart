@@ -24,6 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
 /// A realistic 41-key hydration snapshot. Every key in [PrefsKeys.all] has
@@ -117,8 +118,12 @@ void main() {
     });
 
     test('RelationshipProvider hydrates every currently-owned field from the snapshot', () async {
+      // Since Phase 6b-1, RelationshipProvider is a pass-through facade over
+      // CoupleSession, which now owns the hydration -- see
+      // couple_session_test.dart for the equivalent coverage at the source.
       SharedPreferences.setMockInitialValues(_realDeviceSnapshot());
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       // Session / pairing identity
@@ -173,7 +178,8 @@ void main() {
       // are permitted to rename a PrefsKeys entry.
       final snapshot = _realDeviceSnapshot();
       SharedPreferences.setMockInitialValues(snapshot);
-      final provider = RelationshipProvider();
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       final prefs = await SharedPreferences.getInstance();

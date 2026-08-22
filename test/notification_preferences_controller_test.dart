@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/settings/notification_preferences_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 
 /// notificationPreferencesControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -51,10 +50,9 @@ void main() {
       await Future.delayed(Duration.zero);
       final notifier = container.read(notificationPreferencesControllerProvider.notifier);
 
-      final rp = RelationshipProvider();
+      final pairedSession = CoupleSession();
       await Future.delayed(Duration.zero);
-      final pairedSession = CoupleSession()..updateFromRelationship(rp);
-      // RelationshipProvider() without Supabase.initialize() never actually
+      // Without Supabase.initialize(), CoupleSession never actually
       // populates userId (only coupleId comes from prefs) -- so this only
       // exercises the "coupleId set, userId still null" half of the gate,
       // which correctly stays purgeCache'd. Included to document the

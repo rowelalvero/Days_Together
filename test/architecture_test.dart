@@ -93,10 +93,10 @@ void main() {
 
   group('Migration Phase 1 -- domain providers depend on CoupleSession, not RelationshipProvider', () {
     test('no lib/providers/ file besides relationship_provider.dart and couple_session.dart references RelationshipProvider', () {
-      // couple_session.dart is the one deliberate exception: CoupleSession
-      // mirrors RelationshipProvider (see its updateFromRelationship), which
-      // is exactly what lets every other domain provider depend on
-      // CoupleSession instead.
+      // couple_session.dart is the one deliberate exception: since Phase
+      // 6b-1, RelationshipProvider is a pass-through facade that depends on
+      // CoupleSession (not the other way around), which is exactly what
+      // lets every other domain provider depend on CoupleSession instead.
       const exceptions = {
         'lib/providers/relationship_provider.dart',
         'lib/providers/couple_session.dart',

@@ -299,23 +299,26 @@ class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> 
 /// The app's full provider tree, factored out of [runApp] so it has a single
 /// source of truth rather than a hand-maintained duplicate that could drift.
 ///
-/// `CoupleSession` sits between `RelationshipProvider` and the 12 domain
-/// feature providers: it owns exactly the four fields those providers
-/// actually depend on (`userId`, `coupleId`, `partnerId`,
-/// `isSupabaseAvailable` -- verified by grep, see
-/// docs/architecture/migration-roadmap.md's "Fact 1") plus the three
-/// closely-related pairing/onboarding flags. `RelationshipProvider` itself
-/// keeps its four matching getters as pass-throughs, so no other UI file
-/// needs to change in this phase (Phase 1 of the architecture migration).
+/// `CoupleSession` is created first and is now the real engine (Phase 6b-1
+/// of the architecture migration, "make CoupleSession real"): it owns the
+/// Supabase auth listener and every field it drives. The 12 domain feature
+/// providers depend on it directly, unchanged since Phase 1.
+/// `RelationshipProvider` is created after it and is now a pass-through
+/// facade over the live `CoupleSession` instance (see its own class doc) --
+/// kept only so the UI files that still read it directly don't need to
+/// change in this phase; they are converted in a later step (Phase 6b-2).
 List<SingleChildWidget> buildAppProviders() {
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
-    ChangeNotifierProvider(create: (_) => RelationshipProvider()),
     ChangeNotifierProvider(create: (_) => RecentActivityProvider()),
-    ChangeNotifierProxyProvider<RelationshipProvider, CoupleSession>(
-      create: (_) => CoupleSession(),
-      update: (_, relationship, session) =>
-          session!..updateFromRelationship(relationship),
+    ChangeNotifierProvider(create: (_) => CoupleSession()),
+    // A plain ChangeNotifierProvider, not a ChangeNotifierProxyProvider:
+    // RelationshipProvider subscribes to the live CoupleSession directly via
+    // addListener in its own constructor (see relationship_provider.dart's
+    // class doc for why this preserves synchronous update semantics that a
+    // ProxyProvider's next-frame `update` callback would not).
+    ChangeNotifierProvider(
+      create: (context) => RelationshipProvider(context.read<CoupleSession>()),
     ),
     ChangeNotifierProxyProvider<CoupleSession, TimelineProvider>(
       create: (_) => TimelineProvider(),

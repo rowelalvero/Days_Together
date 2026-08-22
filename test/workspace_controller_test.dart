@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 
 void main() {
@@ -47,7 +48,7 @@ void main() {
     test('a call with unchanged fields does not notify again', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
-      final rp = RelationshipProvider();
+      final rp = RelationshipProvider(CoupleSession());
       await Future.delayed(Duration.zero);
 
       container.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
@@ -74,7 +75,7 @@ void main() {
       var notifyCount = 0;
       container.listen(workspaceControllerProvider, (prev, next) => notifyCount++);
 
-      final rp = RelationshipProvider();
+      final rp = RelationshipProvider(CoupleSession());
       await Future.delayed(Duration.zero);
       container.read(workspaceControllerProvider.notifier).updateFromRelationship(rp);
 

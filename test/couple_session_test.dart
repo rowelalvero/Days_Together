@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -137,34 +136,15 @@ void main() {
     });
   });
 
-  group('CoupleSession.updateFromRelationship mirroring', () {
-    // userId/partnerId/isSupabaseAvailable are only ever populated via the
-    // Supabase auth listener (see relationship_provider.dart:388,532), which
-    // never runs offline in a unit test (isSupabaseAvailable is false without
-    // Supabase.initialize()). These tests exercise the prefs-derived fields
-    // instead -- coupleId/isPaired/isCreator/onboardingCompleted -- which is
-    // sufficient to prove the notify-only-on-change contract.
-    test('a second call with unchanged fields does not notify again', () async {
-      final session = CoupleSession();
-      final rp = RelationshipProvider();
-      await Future.delayed(Duration.zero);
-
-      // First call always notifies at least once: RelationshipProvider's
-      // offline early-init path (relationship_provider.dart:305-307) sets
-      // isInitialized true once _loadLocalData resolves, which never
-      // matches CoupleSession's own false default.
-      session.updateFromRelationship(rp);
-
-      var notifyCount = 0;
-      session.addListener(() => notifyCount++);
-      session.updateFromRelationship(rp);
-
-      expect(notifyCount, 0);
-      expect(session.coupleId, isNull);
-      expect(session.isPaired, false);
-    });
-
-    test('notifies listeners exactly once when identity fields change', () async {
+  // Since Phase 6b-1 of the architecture migration ("make CoupleSession
+  // real"), CoupleSession no longer mirrors RelationshipProvider -- it owns
+  // the engine directly (auth listener, users/couples streams, and every
+  // identity/pairing write method). RelationshipProvider is now the mirror,
+  // as a pass-through facade (see relationship_provider_test.dart for the
+  // facade-delegation coverage). These tests exercise CoupleSession's own
+  // hydration and write paths directly, at the source.
+  group('CoupleSession hydration and identity state', () {
+    test('hydrates identity fields from SharedPreferences on construction', () async {
       SharedPreferences.setMockInitialValues({
         'couple_id': 'c1',
         'is_paired': true,
@@ -173,21 +153,51 @@ void main() {
       });
 
       final session = CoupleSession();
-      var notifyCount = 0;
-      session.addListener(() => notifyCount++);
-
-      final rp = RelationshipProvider();
       await Future.delayed(Duration.zero);
-      session.updateFromRelationship(rp);
 
-      expect(notifyCount, 1);
       expect(session.coupleId, 'c1');
       expect(session.isPaired, true);
       expect(session.isCreator, true);
       expect(session.onboardingCompleted, true);
+    });
 
-      // A second call with unchanged fields must not notify again.
-      session.updateFromRelationship(rp);
+    test('isInitialized becomes true once local hydration resolves offline', () async {
+      final session = CoupleSession();
+      // Synchronously false: _loadLocalData is still an in-flight Future.
+      expect(session.isInitialized, false);
+
+      await Future.delayed(Duration.zero);
+
+      // Offline (no Supabase.initialize() in a unit test), so the
+      // "!isSupabaseAvailable" branch marks hydration complete immediately
+      // rather than waiting on an auth listener that will never fire.
+      expect(session.isInitialized, true);
+    });
+
+    test('completeOnboarding sets the flag and persists it', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+
+      expect(session.onboardingCompleted, false);
+
+      await session.completeOnboarding();
+
+      expect(session.onboardingCompleted, true);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('onboarding_completed'), true);
+    });
+
+    test('forceInitialized notifies listeners exactly once when it flips the flag', () {
+      final session = CoupleSession();
+      var notifyCount = 0;
+      session.addListener(() => notifyCount++);
+
+      session.forceInitialized();
+      expect(session.isInitialized, true);
+      expect(notifyCount, 1);
+
+      // Calling it again with the flag already true must be a no-op.
+      session.forceInitialized();
       expect(notifyCount, 1);
     });
   });
