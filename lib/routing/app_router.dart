@@ -30,7 +30,7 @@ import 'package:days_together/screens/together/love_chat_screen.dart';
 import 'package:days_together/screens/together/love_meter_screen.dart';
 import 'package:days_together/screens/together/noteit_screen.dart';
 import 'package:days_together/screens/together/relationship_duration_screen.dart';
-import 'package:days_together/screens/together/relationship_license_screen.dart';
+import 'package:days_together/features/relationship/presentation/license/license_screen.dart';
 import 'package:days_together/screens/together/topic_cards_screen.dart';
 import 'package:days_together/screens/together/vault_screen.dart';
 import 'package:days_together/screens/wrapped/wrapped_archive_screen.dart';

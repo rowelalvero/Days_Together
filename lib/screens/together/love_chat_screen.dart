@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:days_together/core/scrapbook_ref.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -214,11 +215,16 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
   ) {
     final isRevealed = _revealedMessageIds.contains(message.id);
 
-    final isScrapbook = message.content.startsWith('[scrapbook]:');
+    final scrapbookRef = ScrapbookRef.fromChatPayload(message.content);
+    final isScrapbook = scrapbookRef != null;
     NoteitItem? scrapbookItem;
-    if (isScrapbook) {
+    if (scrapbookRef != null) {
       try {
-        final payload = message.content.substring('[scrapbook]:'.length);
+        // ScrapbookRef.itemId is "whatever followed the prefix" -- for a
+        // genuinely old message that predates ScrapbookShareUseCase, that
+        // may still be a JSON blob rather than a bare item ID, which the
+        // branch below handles unchanged.
+        final payload = scrapbookRef.itemId;
         if (payload.trim().startsWith('{')) {
           scrapbookItem = NoteitItem.fromJson(jsonDecode(payload));
         } else {

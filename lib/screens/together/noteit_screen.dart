@@ -6,7 +6,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_painter_v2/flutter_painter.dart';
@@ -24,10 +23,11 @@ import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
 import 'package:days_together/features/scrapbook/presentation/raster_canvas.dart';
 import 'package:days_together/features/scrapbook/presentation/custom_backgrounds.dart';
-import 'package:days_together/models/canvas_document.dart';
 import 'package:days_together/utils/canvas_mapping.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/features/scrapbook/data/noteit_draft_store.dart';
+import 'package:days_together/features/scrapbook/domain/scrapbook_share_use_case.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});
@@ -87,6 +87,8 @@ class _NoteitScreenState extends State<NoteitScreen>
   Color _bgColor = Colors.white;
 
   bool _isSaving = false;
+
+  final NoteitDraftStore _draftStore = const NoteitDraftStore();
 
   final List<Color> _paletteColors = [
     Colors.black,
@@ -148,37 +150,24 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   Future<void> _saveDraft() async {
-    try {
-      final doc = CanvasMapping.toDocument(
-        _controller.drawables,
-        _controller.value.background,
-      );
-      final jsonStr = jsonEncode(doc.toJson());
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('noteit_draft_canvas', jsonStr);
-    } catch (e) {
-      debugPrint('Error saving draft: $e');
-    }
+    final doc = CanvasMapping.toDocument(
+      _controller.drawables,
+      _controller.value.background,
+    );
+    await _draftStore.save(doc);
   }
 
   Future<void> _loadDraft() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonStr = prefs.getString('noteit_draft_canvas');
-      if (jsonStr != null && jsonStr.isNotEmpty) {
-        final doc = CanvasDocument.fromJson(jsonDecode(jsonStr));
-        final drawables = await CanvasMapping.toDrawables(doc);
+    final doc = await _draftStore.load();
+    if (doc == null) return;
 
-        setState(() {
-          _controller.value = _controller.value.copyWith(
-            background: CanvasMapping.toBackgroundDrawable(doc.background),
-            drawables: drawables,
-          );
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading draft: $e');
-    }
+    final drawables = await CanvasMapping.toDrawables(doc);
+    setState(() {
+      _controller.value = _controller.value.copyWith(
+        background: CanvasMapping.toBackgroundDrawable(doc.background),
+        drawables: drawables,
+      );
+    });
   }
 
   void _updateSettings() {
@@ -646,34 +635,51 @@ class _NoteitScreenState extends State<NoteitScreen>
       );
       final jsonStr = jsonEncode(doc.toJson());
 
+      // 3-6: create the note, mirror it into love chat, clear the draft --
+      // see ScrapbookShareUseCase for why this is no longer inlined here.
+      final useCase = ScrapbookShareUseCase(provider, chatProvider, _draftStore);
+      final result = await useCase.share(
+        canvasJson: jsonStr,
+        localImagePath: file.path,
+        yourName: rp.yourName ?? 'Me',
+      );
 
-
-      // 3. Send via sync manager
-      final newItem = await provider.sendCanvas(jsonStr, file.path);
-
-      // 3b. Mirror to love chat if paired
-      try {
-        final yourName = rp.yourName ?? 'Me';
-        final scrapbookMessageContent = '[scrapbook]:${newItem.id}';
-        await chatProvider.sendMessage(scrapbookMessageContent, yourName);
-      } catch (chatError) {
-        debugPrint('Failed to mirror scrapbook to chat: $chatError');
-      }
-
-      // 4. Reset & Clear draft
-      _controller.clearDrawables();
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('noteit_draft_canvas');
-
-      _tabController.animateTo(1); // Switch to history tab
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Canvas sent to partner! 🚀'),
-            backgroundColor: Colors.green,
-          ),
-        );
+      switch (result) {
+        case ScrapbookShareSuccess():
+          _controller.clearDrawables();
+          _tabController.animateTo(1); // Switch to history tab
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Canvas sent to partner! 🚀'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        case ScrapbookShareChatMirrorFailed():
+          // The note itself was created successfully -- only the chat
+          // mirror failed -- so this still counts as "sent" for the
+          // canvas's own sake, but the user should know their partner
+          // won't get a chat notification pointing at it.
+          _controller.clearDrawables();
+          _tabController.animateTo(1);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Saved to scrapbook, but couldn\'t notify chat: ${result.failure.message}'),
+                backgroundColor: Colors.orangeAccent,
+              ),
+            );
+          }
+        case ScrapbookShareNoteFailed():
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to send: ${result.failure.message}'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
       }
     } catch (e) {
       debugPrint('Error sending canvas: $e');

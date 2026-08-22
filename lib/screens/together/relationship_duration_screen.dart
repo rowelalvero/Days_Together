@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
+import 'package:days_together/features/relationship/data/relationship_milestones.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -560,14 +561,14 @@ class RelationshipDurationScreen extends ConsumerWidget {
     }
 
     final stats = [
-      _FunStatItem('🌅', 'Sunrises Together', '$totalDays'),
-      _FunStatItem('🌙', 'Nights Shared', '$totalDays'),
-      _FunStatItem('🗓', 'Weekend Days Shared', '$weekends'),
-      _FunStatItem('📆', 'Months Shared', '${DateHelper.relationshipTotalMonths(workspace.startDate)}'),
-      if (birthdays > 0) _FunStatItem('🎂', 'Birthdays Celebrated', '$birthdays'),
-      _FunStatItem('💘', 'Valentine\'s Days', '$valentines'),
-      _FunStatItem('🎄', 'Christmases Spent', '$christmases'),
-      _FunStatItem('🎆', 'New Years Together', '$newYears'),
+      FunStatItem('🌅', 'Sunrises Together', '$totalDays'),
+      FunStatItem('🌙', 'Nights Shared', '$totalDays'),
+      FunStatItem('🗓', 'Weekend Days Shared', '$weekends'),
+      FunStatItem('📆', 'Months Shared', '${DateHelper.relationshipTotalMonths(workspace.startDate)}'),
+      if (birthdays > 0) FunStatItem('🎂', 'Birthdays Celebrated', '$birthdays'),
+      FunStatItem('💘', 'Valentine\'s Days', '$valentines'),
+      FunStatItem('🎄', 'Christmases Spent', '$christmases'),
+      FunStatItem('🎆', 'New Years Together', '$newYears'),
     ];
 
     return Column(
@@ -652,27 +653,8 @@ class RelationshipDurationScreen extends ConsumerWidget {
 
   // Milestone Achievements Timeline
   Widget _buildMilestonesTimeline(DateTime startDate, int totalDays, LoveStoryTheme theme) {
-    // Milestones list template
-    final achievements = <_AchievedMilestone>[
-      _AchievedMilestone('First Day ❤️', 0),
-      _AchievedMilestone('30 Days Together 🎉', 30),
-      _AchievedMilestone('100 Days Together 💫', 100),
-      _AchievedMilestone('1 Year Anniversary 🌹', 365, isAnniversary: true, annivYear: 1),
-      _AchievedMilestone('500 Days Together ✨', 500),
-      _AchievedMilestone('1,000 Days Together 👑', 1000),
-      _AchievedMilestone('2 Years Anniversary 💍', 730, isAnniversary: true, annivYear: 2),
-      _AchievedMilestone('1,500 Days Together 🌟', 1500),
-      _AchievedMilestone('3 Years Anniversary 🏹', 1095, isAnniversary: true, annivYear: 3),
-      _AchievedMilestone('2,000 Days Together 🌈', 2000),
-      _AchievedMilestone('4 Years Anniversary 🥂', 1461, isAnniversary: true, annivYear: 4),
-      _AchievedMilestone('2,500 Days Together 🛸', 2500),
-      _AchievedMilestone('5 Years Anniversary 🪐', 1826, isAnniversary: true, annivYear: 5),
-      _AchievedMilestone('3,000 Days Together 🛸', 3000),
-      _AchievedMilestone('10 Years Anniversary 💎', 3652, isAnniversary: true, annivYear: 10),
-    ];
-
     // Filter to completed ones
-    final achievedList = achievements.where((a) {
+    final achievedList = relationshipMilestoneCatalog.where((a) {
       if (a.isAnniversary) {
         // Double check anniversary year offset
         final date = DateHelper.getAnniversaryDate(startDate, a.annivYear);
@@ -683,7 +665,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
     }).toList();
 
     // Chronological date calculator
-    DateTime getAchievementDate(_AchievedMilestone item) {
+    DateTime getAchievementDate(AchievedMilestone item) {
       if (item.isAnniversary) {
         return DateHelper.getAnniversaryDate(startDate, item.annivYear);
       }
@@ -1227,26 +1209,3 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
   }
 }
 
-// ──────────────────────────────────────────────
-// HELPERS
-// ──────────────────────────────────────────────
-class _FunStatItem {
-  final String emoji;
-  final String label;
-  final String value;
-  _FunStatItem(this.emoji, this.label, this.value);
-}
-
-class _AchievedMilestone {
-  final String title;
-  final int targetDays;
-  final bool isAnniversary;
-  final int annivYear;
-
-  _AchievedMilestone(
-    this.title,
-    this.targetDays, {
-    this.isAnniversary = false,
-    this.annivYear = 0,
-  });
-}

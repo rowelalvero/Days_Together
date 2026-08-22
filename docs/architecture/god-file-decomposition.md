@@ -95,7 +95,7 @@ Moving this out of `_NoteitScreenState` makes the five-step sequence independent
 
 **Target structure:** once Phase 7b relocates `bento_grid.dart` into `lib/features/dashboard/presentation/`, this file's fan-in becomes a legible, correct fact about the dashboard feature (it *should* read from 8 features — that's what a home dashboard is), not evidence of a layering violation. The remaining work is fixing the actual bugs, not restructuring the file's dependency shape:
 
-- **`ScrapbookRef` (Definition-of-Done item 14):** a small, shared type in `lib/features/scrapbook/data/scrapbook_ref.dart`:
+- **`ScrapbookRef` (Definition-of-Done item 14):** a small, shared type in `lib/core/scrapbook_ref.dart` (not under `lib/features/scrapbook/`, since it describes the shared cross-feature wire format, not scrapbook's private domain model -- see ADR-013):
   ```dart
   class ScrapbookRef {
     const ScrapbookRef(this.itemId);

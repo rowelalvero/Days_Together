@@ -1,7 +1,6 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/routing/routes.dart';
@@ -25,6 +24,7 @@ import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/core/scrapbook_ref.dart';
 
 // Screens
 
@@ -1956,25 +1956,8 @@ class BentoGrid extends StatelessWidget {
     final isMe = latest.senderId == 'you';
     
     String displayContent = latest.content;
-    if (displayContent.startsWith('[scrapbook]:')) {
-      final payload = displayContent.substring('[scrapbook]:'.length).trim();
-      if (payload.startsWith('{')) {
-        try {
-          final parsed = jsonDecode(payload);
-          final typeIndex = parsed['type'] as int? ?? 0;
-          if (typeIndex == 2) {
-            displayContent = 'Shared a scrapbook note: "${parsed['content'] ?? ''}" 📝';
-          } else if (typeIndex == 1) {
-            displayContent = 'Shared a scrapbook photo 📸';
-          } else {
-            displayContent = 'Shared a scrapbook doodle 🎨';
-          }
-        } catch (_) {
-          displayContent = 'Shared a scrapbook doodle 🎨';
-        }
-      } else {
-        displayContent = 'Shared a scrapbook doodle 🎨';
-      }
+    if (ScrapbookRef.fromChatPayload(displayContent) != null) {
+      displayContent = 'Shared a scrapbook doodle 🎨';
     } else if (displayContent.trim().startsWith('{')) {
       displayContent = 'Shared a scrapbook doodle 🎨';
     }
@@ -2023,6 +2006,18 @@ class DoodleNotesBentoCard extends StatefulWidget {
 
 class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
   Timer? _timer;
+
+  // build() re-runs every 30s via _timer even when nothing about the
+  // latest note changed, so a synchronous File.existsSync() check inline
+  // in build() was hitting disk on a fixed timer indefinitely. Cached per
+  // path instead of computed once and cached (Migration Phase 8, bento_grid
+  // fix #3) -- correct as long as a path is never reused for a file whose
+  // existence later changes, which doesn't happen here (each note's image
+  // path is a fresh, uniquely-named file).
+  final Map<String, bool> _fileExistsCache = {};
+
+  bool _cachedFileExists(String path) =>
+      _fileExistsCache.putIfAbsent(path, () => File(path).existsSync());
 
   @override
   void initState() {
@@ -2213,7 +2208,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
     } else if (latest.type == NoteitType.drawing) {
       previewText = 'Doodle Drawing 🎨';
       Widget drawingWidget;
-      if (latest.imagePath != null && File(latest.imagePath!).existsSync()) {
+      if (latest.imagePath != null && _cachedFileExists(latest.imagePath!)) {
         drawingWidget = Image.file(
           File(latest.imagePath!),
           fit: BoxFit.cover,
@@ -2243,7 +2238,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
     } else if (latest.type == NoteitType.photo) {
       previewText = 'Shared Photo 📸';
       canvasContent =
-          latest.imagePath != null && File(latest.imagePath!).existsSync()
+          latest.imagePath != null && _cachedFileExists(latest.imagePath!)
           ? Image.file(
               File(latest.imagePath!),
               fit: BoxFit.cover,

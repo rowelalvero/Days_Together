@@ -155,7 +155,10 @@ void main() {
       const exceptions = {
         'lib/screens/love_story_screen.dart',
         'lib/screens/timeline/memory_detail_screen.dart',
-        'lib/screens/together/relationship_license_screen.dart',
+        // relationship_license_screen.dart's two SignatureDrawingDialog
+        // push sites, post-Phase-8 file split:
+        'lib/features/relationship/presentation/license/license_screen.dart',
+        'lib/features/relationship/presentation/license/edit/edit_license_sheet.dart',
         // Deliberately preserved as plain Navigator (not dialogs, but a
         // provably-safe conversion couldn't be made -- see the inline
         // comments at each site for the specific redirect-fight risk):
