@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:days_together/widgets/glass_permission_dialog.dart';
+import 'package:days_together/shared/glass_permission_dialog.dart';
 
 class PermissionService {
   static final PermissionService _instance = PermissionService._internal();

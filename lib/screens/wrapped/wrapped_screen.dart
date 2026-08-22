@@ -15,9 +15,9 @@ import 'pages/wrapped_page_milestones.dart';
 import 'pages/wrapped_page_featured_memory.dart';
 import 'pages/wrapped_page_letter.dart';
 import 'pages/wrapped_page_finale.dart';
-import 'package:days_together/widgets/wrapped/wrapped_progress_bar.dart';
-import 'package:days_together/widgets/wrapped/wrapped_nav_overlay.dart';
-import 'package:days_together/widgets/wrapped/wrapped_cinematic_bg.dart';
+import 'package:days_together/features/wrapped/presentation/wrapped_progress_bar.dart';
+import 'package:days_together/features/wrapped/presentation/wrapped_nav_overlay.dart';
+import 'package:days_together/features/wrapped/presentation/wrapped_cinematic_bg.dart';
 
 /// The main Wrapped story experience.
 /// Accepts a pre-computed [WrappedData] snapshot.

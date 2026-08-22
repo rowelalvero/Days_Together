@@ -16,18 +16,18 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/widgets/scale_drawing_painter.dart';
+import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
-import 'package:days_together/widgets/color_picker_dialog.dart';
-import 'package:days_together/widgets/raster_canvas.dart';
-import 'package:days_together/widgets/custom_backgrounds.dart';
+import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/raster_canvas.dart';
+import 'package:days_together/features/scrapbook/presentation/custom_backgrounds.dart';
 import 'package:days_together/models/canvas_document.dart';
 import 'package:days_together/utils/canvas_mapping.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 class NoteitScreen extends StatefulWidget {
   const NoteitScreen({super.key});

@@ -6,7 +6,7 @@ import 'package:days_together/providers/vault_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 class VaultScreen extends StatelessWidget {
   const VaultScreen({super.key});

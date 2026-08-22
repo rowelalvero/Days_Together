@@ -198,7 +198,7 @@ class ColorfulStroke {
 }
 
 // ScaleDrawingPainter previously duplicated here; the canonical definition
-// now lives in lib/widgets/scale_drawing_painter.dart (a CustomPainter is a
+// now lives in lib/shared/scale_drawing_painter.dart (a CustomPainter is a
 // Flutter rendering type and does not belong in the model layer) -- see
 // architecture Phase 0 (docs/architecture/migration-roadmap.md).
 

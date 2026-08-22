@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/widgets/wrapped/wrapped_animated_counter.dart';
+import 'package:days_together/features/wrapped/presentation/wrapped_animated_counter.dart';
 
 class WrappedPageDays extends StatelessWidget {
   final WrappedData data;

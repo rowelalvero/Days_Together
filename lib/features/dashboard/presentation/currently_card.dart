@@ -5,14 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/providers/currently_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 class CurrentlyCard extends ConsumerStatefulWidget {
   const CurrentlyCard({super.key});

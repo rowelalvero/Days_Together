@@ -58,9 +58,17 @@ void main() {
       );
     });
 
-    test('no file under lib/widgets/ imports supabase_flutter', () {
+    test('no widget file under lib/shared/ or lib/features/*/presentation/ imports supabase_flutter', () {
+      // Phase 7b relocated lib/widgets/ into lib/shared/ (design-system-tier,
+      // feature-agnostic components) and lib/features/<name>/presentation/
+      // (feature-specific ones) -- this is their combined successor scope.
       final violations = <String>[];
-      for (final file in _dartFilesUnder('lib/widgets')) {
+      final widgetDirs = [
+        ..._dartFilesUnder('lib/shared'),
+        for (final entry in Directory('lib/features').listSync())
+          if (entry is Directory) ..._dartFilesUnder('${entry.path}/presentation'),
+      ];
+      for (final file in widgetDirs) {
         final content = file.readAsStringSync();
         if (content.contains("import 'package:supabase_flutter")) {
           violations.add(file.path);
@@ -226,6 +234,46 @@ void main() {
         violations,
         isEmpty,
         reason: 'Mutable field found in lib/models/ -- add final and convert call sites to copyWith (see migration-roadmap.md Phase 4): $violations',
+      );
+    });
+  });
+
+  group('Migration Phase 7b -- features depend on each other only through public state (feature-boundaries.md)', () {
+    test('no lib/features/<A>/** file imports a non-controller/non-state file from lib/features/<B>/**', () {
+      // feature-boundaries.md's cross-feature rule: a feature may depend on
+      // another feature only through that feature's public state (a
+      // Riverpod provider intentionally exported), never through a
+      // private/internal file path. This is checkable today because every
+      // feature's public surface follows one of two file-naming
+      // conventions established since Phase 6: `*_controller.dart` (the
+      // NotifierProvider) or `*_state.dart` (the typed state it exposes).
+      final violations = <String>[];
+      final importPattern = RegExp(r"import 'package:days_together/features/([a-z_]+)/([^']+)';");
+
+      for (final file in _dartFilesUnder('lib/features')) {
+        final normalized = file.path.replaceAll('\\', '/');
+        final ownFeatureMatch = RegExp(r'^lib/features/([a-z_]+)/').firstMatch(normalized);
+        if (ownFeatureMatch == null) continue;
+        final ownFeature = ownFeatureMatch.group(1)!;
+
+        final content = file.readAsStringSync();
+        for (final match in importPattern.allMatches(content)) {
+          final targetFeature = match.group(1)!;
+          if (targetFeature == ownFeature) continue;
+
+          final targetFileName = match.group(2)!.split('/').last;
+          final isPublicSurface =
+              targetFileName.endsWith('_controller.dart') || targetFileName.endsWith('_state.dart');
+          if (!isPublicSurface) {
+            violations.add('$normalized -> ${match.group(0)}');
+          }
+        }
+      }
+
+      expect(
+        violations,
+        isEmpty,
+        reason: "A feature imported another feature's internal file directly instead of its public controller/state (see feature-boundaries.md's cross-feature rule, migration-roadmap.md Phase 7b): $violations",
       );
     });
   });

@@ -8,8 +8,8 @@ import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/cached_avatar.dart';
+import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/cached_avatar.dart';
 
 /// A premium, warm inline section replacing the Sidebar Chat.
 /// Displays thoughts, letters, and reflections about a specific memory.

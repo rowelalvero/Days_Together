@@ -11,13 +11,13 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 // Providers
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/widgets/scale_drawing_painter.dart';
+import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';

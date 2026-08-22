@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/routing/routes.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/services/date_helper.dart';
 

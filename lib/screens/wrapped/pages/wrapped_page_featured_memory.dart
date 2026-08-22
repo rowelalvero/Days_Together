@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 /// Page 12 — full-bleed immersive featured memory image.
 class WrappedPageFeaturedMemory extends StatelessWidget {

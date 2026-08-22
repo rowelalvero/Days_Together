@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 
 // Providers & Models
 import 'package:days_together/features/dashboard/recent_activity_controller.dart';

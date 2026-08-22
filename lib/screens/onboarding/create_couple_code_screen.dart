@@ -8,7 +8,7 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/widgets/safe_loading_dialog.dart';
+import 'package:days_together/shared/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 

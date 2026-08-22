@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 

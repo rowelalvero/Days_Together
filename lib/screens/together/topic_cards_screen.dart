@@ -7,7 +7,7 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/topic_cards_provider.dart';
 import 'package:days_together/models/topic_card_model.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 
 class TopicCardsScreen extends StatefulWidget {
   const TopicCardsScreen({super.key});

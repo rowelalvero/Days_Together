@@ -2,7 +2,7 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/services/date_helper.dart';
 

@@ -9,7 +9,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
-import 'package:days_together/widgets/safe_loading_dialog.dart';
+import 'package:days_together/shared/safe_loading_dialog.dart';
 
 class RecoverRelationshipScreen extends ConsumerStatefulWidget {
   const RecoverRelationshipScreen({super.key});

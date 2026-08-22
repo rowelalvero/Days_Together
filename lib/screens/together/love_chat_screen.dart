@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/widgets/scale_drawing_painter.dart';
+import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/noteit_provider.dart';
@@ -16,9 +16,9 @@ import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/storage_image.dart';
-import 'package:days_together/widgets/cached_avatar.dart';
+import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/cached_avatar.dart';
 
 class LoveChatScreen extends ConsumerStatefulWidget {
   const LoveChatScreen({super.key});
@@ -160,7 +160,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
           CachedAvatar(
             path: partnerJoined ? partnerAvatarPath : null,
             radius: 18,
-            placeholderColor: theme.textColor.withValues(alpha: 0.1),
+            backgroundColor: theme.textColor.withValues(alpha: 0.1),
           ),
           const SizedBox(width: 12),
           Expanded(

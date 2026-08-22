@@ -6,10 +6,10 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
   final TimelineProvider timelineProvider;

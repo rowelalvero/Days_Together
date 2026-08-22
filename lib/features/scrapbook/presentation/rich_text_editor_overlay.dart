@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
-import 'package:days_together/widgets/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
 import 'package:uuid/uuid.dart';
 
 enum TextBgStyle { plain, solid, translucent }

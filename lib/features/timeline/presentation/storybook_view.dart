@@ -5,9 +5,9 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/memory_notes_section.dart';
-import 'package:days_together/widgets/storage_image.dart';
+import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/features/timeline/presentation/memory_notes_section.dart';
+import 'package:days_together/shared/storage_image.dart';
 
 /// Shown while a memory's image is resolving, or when it has none.
 const AssetImage _kStorybookFallbackImage =

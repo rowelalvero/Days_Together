@@ -5,7 +5,7 @@ import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
 import 'package:days_together/routing/routes.dart';
-import 'package:days_together/widgets/glass_container.dart';
+import 'package:days_together/shared/glass_container.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 

@@ -8,12 +8,11 @@ import 'package:share_plus/share_plus.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/app_avatar.dart';
-import 'package:days_together/widgets/safe_loading_dialog.dart';
+import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/safe_loading_dialog.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:days_together/services/permission_service.dart';
-import 'package:days_together/widgets/cached_avatar.dart';
+import 'package:days_together/shared/cached_avatar.dart';
 
 class RelationshipProfileScreen extends StatelessWidget {
   const RelationshipProfileScreen({super.key});
@@ -233,9 +232,14 @@ class RelationshipProfileScreen extends StatelessWidget {
   Widget _buildAvatarWidget(String? path, String name, LoveStoryTheme theme) {
     return Column(
       children: [
-        AppAvatar(
+        CachedAvatar(
           path: path,
           radius: 44,
+          // iconSize matches AppAvatar's old default (radius * 1.2) before
+          // the Phase 7b merge into CachedAvatar, whose own default is
+          // just radius -- passed explicitly here to keep this call site's
+          // rendered icon size unchanged.
+          iconSize: 44 * 1.2,
           backgroundColor: theme.textColor.withValues(alpha: 0.1),
           iconColor: theme.textColor.withValues(alpha: 0.3),
         ),
@@ -261,8 +265,9 @@ class RelationshipProfileScreen extends StatelessWidget {
   Widget _buildAvatarPlaceholder(LoveStoryTheme theme) {
     return Column(
       children: [
-        AppAvatar(
+        CachedAvatar(
           radius: 44,
+          iconSize: 44 * 1.2,
           backgroundColor: theme.textColor.withValues(alpha: 0.1),
           iconColor: theme.textColor.withValues(alpha: 0.3),
         ),
@@ -1178,7 +1183,7 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
           CachedAvatar(
             path: path,
             radius: 40,
-            placeholderColor: theme.textColor.withValues(alpha: 0.1),
+            backgroundColor: theme.textColor.withValues(alpha: 0.1),
           ),
           Positioned(
             right: 0,

@@ -18,8 +18,8 @@ import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/routing/routes.dart';
-import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/widgets/cached_avatar.dart';
+import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/cached_avatar.dart';
 import 'package:days_together/screens/wrapped/wrapped_service.dart';
 
 class SettingsTab extends ConsumerWidget {
@@ -333,7 +333,7 @@ class SettingsTab extends ConsumerWidget {
             child: CachedAvatar(
               path: path,
               radius: 30,
-              placeholderColor: theme.textColor.withValues(alpha: 0.1),
+              backgroundColor: theme.textColor.withValues(alpha: 0.1),
             ),
           ),
           const SizedBox(height: 8),
