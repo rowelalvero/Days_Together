@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/routing/routes.dart';
 
-class StudioTab extends StatelessWidget {
+class StudioTab extends ConsumerWidget {
   const StudioTab({super.key});
 
-  void _showPremiumPaywall(BuildContext context, dynamic theme) {
+  void _showPremiumPaywall(BuildContext context, WidgetRef ref, dynamic theme) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -82,7 +83,7 @@ class StudioTab extends StatelessWidget {
                 height: 54,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.read<RelationshipProvider>().setPremium(true);
+                    ref.read(workspaceControllerProvider.notifier).setPremium(true);
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -151,10 +152,10 @@ class StudioTab extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final isPremium = ref.watch(workspaceControllerProvider).isPremium;
 
     return SafeArea(
       bottom: false,
@@ -185,7 +186,7 @@ class StudioTab extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
-            if (!rp.isPremium) _buildPremiumBanner(context, theme),
+            if (!isPremium) _buildPremiumBanner(context, ref, theme),
             const SizedBox(height: 20),
             Expanded(
               child: ListView(
@@ -199,13 +200,13 @@ class StudioTab extends StatelessWidget {
                     desc:
                         'Select a memory and let AI draft a gorgeous love letter for your partner.',
                     isPremium: true,
-                    isUnlocked: rp.isPremium,
+                    isUnlocked: isPremium,
                     theme: theme,
                     onTap: () {
-                      if (rp.isPremium) {
+                      if (isPremium) {
                         context.push(Routes.studioLoveLetter);
                       } else {
-                        _showPremiumPaywall(context, theme);
+                        _showPremiumPaywall(context, ref, theme);
                       }
                     },
                   ),
@@ -231,13 +232,13 @@ class StudioTab extends StatelessWidget {
                     desc:
                         'Fun statistics, shared milestones, and emotional dashboard charts.',
                     isPremium: true,
-                    isUnlocked: rp.isPremium,
+                    isUnlocked: isPremium,
                     theme: theme,
                     onTap: () {
-                      if (rp.isPremium) {
+                      if (isPremium) {
                         context.push(Routes.studioInsights);
                       } else {
-                        _showPremiumPaywall(context, theme);
+                        _showPremiumPaywall(context, ref, theme);
                       }
                     },
                   ),
@@ -250,7 +251,7 @@ class StudioTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumBanner(BuildContext context, dynamic theme) {
+  Widget _buildPremiumBanner(BuildContext context, WidgetRef ref, dynamic theme) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -289,7 +290,7 @@ class StudioTab extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => _showPremiumPaywall(context, theme),
+              onPressed: () => _showPremiumPaywall(context, ref, theme),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
                 foregroundColor: Colors.black87,

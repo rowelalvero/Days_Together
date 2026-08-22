@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/models/noteit_model.dart';
@@ -9,21 +10,23 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/storage_image.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 
-class LoveChatScreen extends StatefulWidget {
+class LoveChatScreen extends ConsumerStatefulWidget {
   const LoveChatScreen({super.key});
 
   @override
-  State<LoveChatScreen> createState() => _LoveChatScreenState();
+  ConsumerState<LoveChatScreen> createState() => _LoveChatScreenState();
 }
 
-class _LoveChatScreenState extends State<LoveChatScreen> {
+class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Set<String> _revealedMessageIds = {};
@@ -56,13 +59,14 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final profile = ref.watch(profileControllerProvider);
+    final session = context.watch<CoupleSession>();
     final provider = context.watch<LoveChatProvider>();
     context.watch<NoteitProvider>();
-    
-    final yourName = rp.yourName ?? 'Me';
-    final partnerName = rp.partnerName ?? 'Partner';
-    final partnerJoined = rp.partnerId != null;
+
+    final yourName = profile.yourName ?? 'Me';
+    final partnerName = profile.partnerName ?? 'Partner';
+    final partnerJoined = session.partnerId != null;
 
     final messages = provider.messages;
 
@@ -75,7 +79,14 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
           child: Column(
             children: [
               // Premium Header
-              _buildHeader(context, theme, rp, partnerJoined, partnerName),
+              _buildHeader(
+                context,
+                theme,
+                partnerAvatarPath: profile.partnerAvatarPath,
+                isPartnerOnline: ref.watch(presenceControllerProvider).isPartnerOnline,
+                partnerJoined: partnerJoined,
+                partnerName: partnerName,
+              ),
               Divider(color: theme.textColor.withValues(alpha: 0.1), height: 1),
 
               // Chat Messages List
@@ -130,11 +141,12 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
 
   Widget _buildHeader(
     BuildContext context,
-    dynamic theme,
-    RelationshipProvider rp,
-    bool partnerJoined,
-    String partnerName,
-  ) {
+    dynamic theme, {
+    required String? partnerAvatarPath,
+    required bool isPartnerOnline,
+    required bool partnerJoined,
+    required String partnerName,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
@@ -145,7 +157,7 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
           ),
           const SizedBox(width: 4),
           CachedAvatar(
-            path: partnerJoined ? rp.partnerAvatarPath : null,
+            path: partnerJoined ? partnerAvatarPath : null,
             radius: 18,
             placeholderColor: theme.textColor.withValues(alpha: 0.1),
           ),
@@ -169,12 +181,12 @@ class _LoveChatScreenState extends State<LoveChatScreen> {
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: partnerJoined && rp.isPartnerOnline ? Colors.greenAccent : Colors.grey,
+                        color: partnerJoined && isPartnerOnline ? Colors.greenAccent : Colors.grey,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      partnerJoined && rp.isPartnerOnline ? 'Active Now' : 'Offline',
+                      partnerJoined && isPartnerOnline ? 'Active Now' : 'Offline',
                       style: AppTypography.bodyMedium(
                         fontSize: 11,
                         color: theme.textColor.withValues(alpha: 0.6),

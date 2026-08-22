@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/gift_reminder_provider.dart';
@@ -15,14 +16,14 @@ import 'package:days_together/routing/routes.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class CalendarScreen extends StatefulWidget {
+class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
 
   @override
-  State<CalendarScreen> createState() => _CalendarScreenState();
+  ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   final TextEditingController _titleController = TextEditingController();
@@ -421,7 +422,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildCalendar(dynamic theme, CalendarProvider provider) {
-    final relProvider = context.watch<RelationshipProvider>();
+    final relProvider = ref.watch(workspaceControllerProvider);
     final timelineProvider = context.watch<TimelineProvider>();
     final bucketProvider = context.watch<BucketListProvider>();
     final giftProvider = context.watch<GiftReminderProvider>();
@@ -522,7 +523,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildEventList(dynamic theme, CalendarProvider provider) {
-    final relProvider = context.watch<RelationshipProvider>();
+    final relProvider = ref.watch(workspaceControllerProvider);
     final timelineProvider = context.watch<TimelineProvider>();
     final bucketProvider = context.watch<BucketListProvider>();
     final giftProvider = context.watch<GiftReminderProvider>();
