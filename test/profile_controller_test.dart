@@ -1,10 +1,9 @@
-// Tests for ProfileController (Phase 5 of the architecture migration,
-// unit 3 -- a Riverpod-native mirror of RelationshipProvider's 6 profile
-// fields, NOT a cutover: see profile_controller.dart's doc comment for why.
-// Follows the same "notify only on change" contract as
-// CoupleSession.updateFromRelationship (couple_session_test.dart), adapted
-// to Riverpod's Notifier via ProviderContainer + container.listen instead
-// of ChangeNotifier's addListener.
+// Tests for ProfileController (Phase 6b-1 of the architecture migration,
+// unit 2 -- "ProfileController real"). Since this unit, the controller
+// mirrors CoupleSession directly (not RelationshipProvider, which is now
+// just a facade over it) and gains real write methods that delegate to the
+// live CoupleSession instance -- see profile_controller.dart's doc comment
+// for why delegation, not duplication.
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
@@ -12,7 +11,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -28,9 +26,11 @@ void main() {
     );
   });
 
-  group('ProfileController.updateFromRelationship mirroring', () {
+  group('ProfileController.updateFromSession mirroring', () {
     test('build() starts as an empty ProfileState', () {
-      final container = ProviderContainer();
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+      );
       addTearDown(container.dispose);
 
       final state = container.read(profileControllerProvider);
@@ -43,16 +43,18 @@ void main() {
     });
 
     test('a call with unchanged fields does not notify again', () async {
-      final container = ProviderContainer();
+      final session = CoupleSession();
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
       addTearDown(container.dispose);
-      final rp = RelationshipProvider(CoupleSession());
       await Future.delayed(Duration.zero);
 
-      container.read(profileControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(profileControllerProvider.notifier).updateFromSession(session);
 
       var notifyCount = 0;
       container.listen(profileControllerProvider, (prev, next) => notifyCount++);
-      container.read(profileControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(profileControllerProvider.notifier).updateFromSession(session);
 
       expect(notifyCount, 0);
     });
@@ -67,14 +69,16 @@ void main() {
         'partner_join_date': DateTime(2022, 1, 2).toIso8601String(),
       });
 
-      final container = ProviderContainer();
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
       addTearDown(container.dispose);
       var notifyCount = 0;
       container.listen(profileControllerProvider, (prev, next) => notifyCount++);
 
-      final rp = RelationshipProvider(CoupleSession());
-      await Future.delayed(Duration.zero);
-      container.read(profileControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(profileControllerProvider.notifier).updateFromSession(session);
 
       final state = container.read(profileControllerProvider);
       expect(notifyCount, 1);
@@ -86,8 +90,53 @@ void main() {
       expect(state.partnerJoinDate, DateTime(2022, 1, 2));
 
       // A second call with unchanged fields must not notify again.
-      container.read(profileControllerProvider.notifier).updateFromRelationship(rp);
+      container.read(profileControllerProvider.notifier).updateFromSession(session);
       expect(notifyCount, 1);
+    });
+  });
+
+  group('ProfileController write methods delegate to CoupleSession', () {
+    test('setYourName writes through to the live CoupleSession instance', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(profileControllerProvider.notifier).setYourName('Ashwel');
+
+      expect(session.yourName, 'Ashwel');
+    });
+
+    test('setNames writes through both sides to the live CoupleSession instance', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(profileControllerProvider.notifier).setNames('Ashwel', 'Rowel');
+
+      expect(session.yourName, 'Ashwel');
+      expect(session.partnerName, 'Rowel');
+    });
+
+    test('setAvatars writes through to the live CoupleSession instance without a Supabase pairing', () async {
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(session)],
+      );
+      addTearDown(container.dispose);
+
+      // Offline/unpaired path (no Supabase, no coupleId): setAvatars falls
+      // through to the plain local-write branch, matching
+      // couple_session.dart's own behavior.
+      await container.read(profileControllerProvider.notifier).setAvatars(yourPath: '/mock/avatars/ashwel.jpg');
+
+      expect(session.yourAvatarPath, '/mock/avatars/ashwel.jpg');
     });
   });
 }

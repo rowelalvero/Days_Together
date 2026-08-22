@@ -1,60 +1,69 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/relationship/profile_state.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 
-/// Mirrors `RelationshipProvider`'s 6 profile fields (name, avatar path,
-/// join date -- both "your" and "partner" sides) into a Riverpod-native
-/// read surface (Phase 5 of the architecture migration, unit 3).
+/// Owns a Riverpod-native read+write surface over `CoupleSession`'s 6
+/// profile fields (name, avatar path, join date -- both "your" and
+/// "partner" sides) -- Phase 6b-1 of the architecture migration, unit 2
+/// ("ProfileController real").
 ///
-/// **Mirror, not a cutover -- deliberately, unlike `LicenseController`.**
-/// The license fields were pure local writes with no realtime dependency,
-/// which is what made deleting them from `RelationshipProvider` and moving
-/// the write path safe. These 6 fields are different: they are actively
-/// kept in sync by live Supabase realtime streams woven through
-/// `_initSupabaseSync`'s and `_initPartnerUserSync`'s ~400 combined lines in
-/// `relationship_provider.dart` -- the same kind of deep entanglement Phase
-/// 1 found for `CoupleSession` and deliberately did not disturb. Extracting
-/// the realtime logic itself now would be surgery on a live, working
-/// subscription callback for comparatively little benefit, since nothing
-/// yet depends on `ProfileController` the way the 12 domain providers
-/// depend on `CoupleSession`.
+/// **Delegates to `CoupleSession`, does not duplicate its fields.**
+/// `CoupleSession` (Phase 6b-1 unit 1) is the sole permitted subscriber to
+/// the `users`/`couples` realtime streams that keep these 6 fields live --
+/// see couple_session.dart's doc comment for why a second independent
+/// owner isn't possible. Unlike unit 1 (`CoupleSession` itself), there is
+/// no forcing function requiring this controller's UI consumers to convert
+/// in the same step: `RelationshipProvider`'s facade already serves these
+/// fields correctly to every current reader with zero regression, so UI
+/// conversion is deferred to Phase 6b-2 (or, for the two largest consumers,
+/// `relationship_license_screen.dart`/`relationship_profile_screen.dart`,
+/// to Phase 8's already-planned decomposition of those files) rather than
+/// bundled here. See docs/architecture/migration-roadmap.md's Phase 6b-1
+/// unit 2 corrections for the full investigation.
 ///
-/// So, like `CoupleSession`: `RelationshipProvider` remains the single
-/// source of truth and keeps every one of its existing name/avatar/
-/// join-date fields and realtime sync logic untouched. `ProfileController`
-/// is updated via [updateFromRelationship], called by `main.dart`'s
-/// `_ProfileControllerBridge` on every `RelationshipProvider` change. No
-/// write methods exist here -- writes still go through
-/// `RelationshipProvider.setYourName`/`setNames`/`setAvatars` directly,
-/// unchanged, and flow into this mirror the same way any other field
-/// change does. The real ownership transfer (moving the realtime listener
-/// itself) is deferred to Phase 6, alongside `CoupleSession`'s own -- see
-/// docs/architecture/migration-roadmap.md's Phase 5 corrections.
+/// [setYourName]/[setNames]/[setAvatars] are one-line delegations to the
+/// live `CoupleSession` instance -- the actual field mutation, persistence,
+/// and Supabase sync logic already lives there (moved from
+/// `RelationshipProvider` in unit 1) and is not duplicated here. The state
+/// update this controller's watchers see flows back through the same
+/// `updateFromSession` mirror path every other change does, via
+/// `main.dart`'s `_ProfileControllerBridge` reacting to `CoupleSession`'s
+/// `notifyListeners()`.
 class ProfileController extends Notifier<ProfileState> {
   @override
   ProfileState build() => const ProfileState();
 
   /// Called from `main.dart`'s `_ProfileControllerBridge` on every
-  /// `RelationshipProvider` change. Only updates (and so only notifies
-  /// watchers) when a field actually differs, via [ProfileState]'s value
-  /// equality -- the same "don't rebuild for no reason" contract
-  /// `CoupleSession.updateFromRelationship` established in Phase 1.
-  void updateFromRelationship(RelationshipProvider relationship) {
+  /// `CoupleSession` change. Only updates (and so only notifies watchers)
+  /// when a field actually differs, via [ProfileState]'s value equality --
+  /// the same "don't rebuild for no reason" contract
+  /// `CoupleSession`'s own hydration establishes.
+  void updateFromSession(CoupleSession session) {
     final next = ProfileState(
-      yourName: relationship.yourName,
-      partnerName: relationship.partnerName,
-      yourAvatarPath: relationship.yourAvatarPath,
-      partnerAvatarPath: relationship.partnerAvatarPath,
-      yourJoinDate: relationship.yourJoinDate,
-      partnerJoinDate: relationship.partnerJoinDate,
+      yourName: session.yourName,
+      partnerName: session.partnerName,
+      yourAvatarPath: session.yourAvatarPath,
+      partnerAvatarPath: session.partnerAvatarPath,
+      yourJoinDate: session.yourJoinDate,
+      partnerJoinDate: session.partnerJoinDate,
     );
     if (next != state) {
       state = next;
     }
   }
+
+  Future<void> setYourName(String name) => ref.read(coupleSessionProvider).setYourName(name);
+
+  Future<void> setNames(String yours, String partner) =>
+      ref.read(coupleSessionProvider).setNames(yours, partner);
+
+  Future<void> setAvatars({String? yourPath, String? partnerPath}) => ref
+      .read(coupleSessionProvider)
+      .setAvatars(yourPath: yourPath, partnerPath: partnerPath);
 }
 
 final profileControllerProvider = NotifierProvider<ProfileController, ProfileState>(
   ProfileController.new,
+  dependencies: [coupleSessionProvider],
 );

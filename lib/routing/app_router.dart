@@ -99,19 +99,23 @@ String? _routeForStage(SessionStage stage) {
 /// found (`main.dart`'s old `AppHome` switch, `notification_service.dart`,
 /// `avatar_creation_screen.dart`, `recover_relationship_screen.dart`).
 ///
-/// **Reads [RelationshipProvider] directly, not [CoupleSession].** Correction
+/// **Reads [RelationshipProvider] directly, not [CoupleSession].** Originally
 /// found while converting `join_couple_code_screen.dart`/
-/// `recover_relationship_screen.dart`: `CoupleSession.updateFromRelationship`
-/// runs on the *next* `ChangeNotifierProxyProvider` rebuild after
-/// `RelationshipProvider.notifyListeners()` fires, not synchronously within
-/// it (Provider's proxy mechanism goes through Flutter's `InheritedWidget`
-/// dependency system, which defers to the next frame). A screen that does
-/// `await provider.joinWithCode(code); if (mounted) context.push(Routes.avatar);`
+/// `recover_relationship_screen.dart` (Phase 3): back then, `CoupleSession`
+/// mirrored `RelationshipProvider` via a `ChangeNotifierProxyProvider`, whose
+/// `update` callback only runs on the *next* frame (Flutter's
+/// `InheritedWidget` dependency system), not synchronously within
+/// `RelationshipProvider.notifyListeners()`. A screen doing `await
+/// provider.joinWithCode(code); if (mounted) context.push(Routes.avatar);`
 /// calls `context.push` -- and therefore this redirect -- *before* that next
-/// frame, so reading `CoupleSession` here would see stale, pre-join values
-/// and incorrectly bounce the push back to `/pairing`. `RelationshipProvider`
-/// itself has no such lag: it's the object whose fields the calling screen
-/// just awaited being set, so reading it directly here is always current.
+/// frame, so reading `CoupleSession` would have seen stale, pre-join values.
+/// Phase 6b-1 inverted the relationship (`CoupleSession` is now the real
+/// engine; `RelationshipProvider` is a pass-through facade subscribed to it
+/// via a plain synchronous `ChangeNotifier.addListener`, not a
+/// `ChangeNotifierProxyProvider`) but the conclusion still holds: reading
+/// `RelationshipProvider` here remains correct and lag-free, and is also now
+/// the *more* natural choice, being the object every existing write-method
+/// caller already awaits.
 ///
 /// **Simplification vs. ADR-007's original text:** the ADR called for a
 /// second, separate redirect clause guarding every couple-scoped route

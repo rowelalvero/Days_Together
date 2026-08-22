@@ -155,16 +155,18 @@ class _LicenseLifecycleBridgeState extends ConsumerState<_LicenseLifecycleBridge
   }
 }
 
-/// Mirrors `RelationshipProvider`'s 6 profile fields (name, avatar path,
-/// join date) into [profileControllerProvider] on every `RelationshipProvider`
-/// change, so Riverpod consumers can read them without holding a `provider`
-/// package `context.watch` -- see `profile_controller.dart`'s doc comment for
-/// why this is a mirror rather than a cutover (Phase 5 of the architecture
-/// migration, unit 3). Deliberately does not invalidate/reset on
-/// logout/disconnect the way [_LicenseLifecycleBridge] does: since this is a
-/// pure mirror of `RelationshipProvider`, the next `updateFromRelationship`
-/// call (e.g. with all-null fields after a logout) already overwrites any
-/// stale state, so there is nothing extra to clear.
+/// Mirrors `CoupleSession`'s 6 profile fields (name, avatar path, join
+/// date) into [profileControllerProvider] on every `CoupleSession` change,
+/// so Riverpod consumers can read them without holding a `provider`
+/// package `context.watch`. Watches `CoupleSession` directly, not
+/// `RelationshipProvider`, since Phase 6b-1 made `CoupleSession` the real
+/// owner of these fields (`RelationshipProvider` is now just a
+/// pass-through facade over it) -- reading the hub directly removes a
+/// layer of indirection. Deliberately does not invalidate/reset on
+/// logout/disconnect the way [_LicenseLifecycleBridge] does: since this is
+/// a pure mirror, the next `updateFromSession` call (e.g. with all-null
+/// fields after a logout) already overwrites any stale state, so there is
+/// nothing extra to clear.
 class _ProfileControllerBridge extends ConsumerStatefulWidget {
   final Widget child;
   const _ProfileControllerBridge({required this.child});
@@ -176,10 +178,10 @@ class _ProfileControllerBridge extends ConsumerStatefulWidget {
 class _ProfileControllerBridgeState extends ConsumerState<_ProfileControllerBridge> {
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<RelationshipProvider>();
+    final session = context.watch<CoupleSession>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(profileControllerProvider.notifier).updateFromRelationship(rp);
+      ref.read(profileControllerProvider.notifier).updateFromSession(session);
     });
     return widget.child;
   }
