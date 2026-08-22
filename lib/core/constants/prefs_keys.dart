@@ -1,7 +1,13 @@
-/// Centralized registry of every SharedPreferences key currently owned by
+/// Centralized registry of every SharedPreferences key originally owned by
 /// `RelationshipProvider` (session identity, pairing, license fields, and
 /// workspace fields) -- 41 keys, verified by direct extraction from
 /// `lib/providers/relationship_provider.dart` as of architecture Phase 0.
+/// `RelationshipProvider` itself was later deleted (Definition-of-Done
+/// sweep item 4); these keys are now owned by `CoupleSession` and the
+/// controllers it feeds. 2 more (`timelineIsAscending`, `vaultPinFallback`)
+/// were added once the Definition-of-Done sweep found their owning
+/// controllers already touched but still using raw literals, per the
+/// incremental-centralization plan below.
 ///
 /// This is a **compatibility contract**, not a convenience list: these exact
 /// strings are the hydration data for real, already-installed users on real
@@ -9,11 +15,10 @@
 /// mechanism (read-old-write-new-drop-old over a release cycle) -- see
 /// docs/architecture/caching-strategy.md.
 ///
-/// Scope note (Phase 0): this registry currently covers only
+/// Scope note (Phase 0): this registry originally covered only
 /// RelationshipProvider's 41 keys, matching that phase's exit criteria.
-/// Vault PIN keys, theme/music settings, and the noteit draft key are
-/// separate and are centralized incrementally as their owning features are
-/// touched in later migration phases -- see
+/// Theme/music settings and the noteit draft key remain separate and are
+/// centralized incrementally as their owning features are touched -- see
 /// docs/architecture/architecture-rules.md, Rule 14.
 ///
 /// Existing call sites in `relationship_provider.dart` are NOT rewritten to
@@ -75,8 +80,14 @@ class PrefsKeys {
   static const String yourSignature = 'your_signature';
   static const String partnerSignature = 'partner_signature';
 
-  /// All 41 keys, for verification (e.g. the Phase 0 exit-criteria test
-  /// asserting `PrefsKeys.all.length == 41`).
+  // ---- Incrementally added as later-touched features' keys were found
+  //      still using raw literals instead of this registry (per this
+  //      file's own "centralized incrementally" scope note above) ----
+  static const String timelineIsAscending = 'timeline_is_ascending';
+  static const String vaultPinFallback = 'vault_pin_fallback';
+
+  /// All 43 keys, for verification (e.g. the Phase 0 exit-criteria test
+  /// asserting `PrefsKeys.all.length == 43`).
   static const List<String> all = [
     coupleId, partnerId, isPaired, isCreator, onboardingCompleted,
     coupleCode, isPremium, storyTitle, relationshipStartDate,
@@ -89,5 +100,6 @@ class PrefsKeys {
     yourHeight, partnerHeight, yourBloodType, partnerBloodType,
     yourEyeColor, partnerEyeColor, yourConditions, partnerConditions,
     yourDateIssued, partnerDateIssued, yourSignature, partnerSignature,
+    timelineIsAscending, vaultPinFallback,
   ];
 }

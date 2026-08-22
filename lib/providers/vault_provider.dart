@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/models/vault_item_model.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/services/permission_service.dart';
@@ -216,7 +217,7 @@ class VaultProvider extends SupabaseLifecycleProvider
             debugPrint(
               'Secure storage write failed during migration: $e. Falling back.',
             );
-            await prefs.setString('vault_pin_fallback', storedSharedPin);
+            await prefs.setString(PrefsKeys.vaultPinFallback, storedSharedPin);
           }
           _hasPin = true;
           await prefs.setBool(_hasPinKey, true);
@@ -226,7 +227,7 @@ class VaultProvider extends SupabaseLifecycleProvider
             securePin = await _secureStorage.read(key: _pinKey);
           } catch (e) {
             debugPrint('Secure storage read failed: $e. Using fallback.');
-            securePin = prefs.getString('vault_pin_fallback');
+            securePin = prefs.getString(PrefsKeys.vaultPinFallback);
           }
           _hasPin = securePin != null && securePin.isNotEmpty;
           await prefs.setBool(_hasPinKey, _hasPin);
@@ -250,7 +251,7 @@ class VaultProvider extends SupabaseLifecycleProvider
       await _secureStorage.write(key: _pinKey, value: pin);
     } catch (e) {
       debugPrint('Secure storage write failed: $e. Using fallback.');
-      await prefs.setString('vault_pin_fallback', pin);
+      await prefs.setString(PrefsKeys.vaultPinFallback, pin);
     }
     await prefs.setBool(_hasPinKey, true);
     _hasPin = true;
@@ -265,7 +266,7 @@ class VaultProvider extends SupabaseLifecycleProvider
       securePin = await _secureStorage.read(key: _pinKey);
     } catch (e) {
       debugPrint('Secure storage read failed: $e. Using fallback.');
-      securePin = prefs.getString('vault_pin_fallback');
+      securePin = prefs.getString(PrefsKeys.vaultPinFallback);
     }
 
     if (securePin == pin) {

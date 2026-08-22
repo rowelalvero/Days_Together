@@ -99,30 +99,36 @@ void main() {
     });
   });
 
-  group('Migration Phase 1 -- domain providers depend on CoupleSession, not RelationshipProvider', () {
-    test('no lib/providers/ file besides relationship_provider.dart and couple_session.dart references RelationshipProvider', () {
-      // couple_session.dart is the one deliberate exception: since Phase
-      // 6b-1, RelationshipProvider is a pass-through facade that depends on
-      // CoupleSession (not the other way around), which is exactly what
-      // lets every other domain provider depend on CoupleSession instead.
-      const exceptions = {
-        'lib/providers/relationship_provider.dart',
-        'lib/providers/couple_session.dart',
-      };
+  group('Migration Phase 1 / item 4 -- RelationshipProvider is gone; everything depends on CoupleSession', () {
+    test('no lib/ file has a live code reference to RelationshipProvider', () {
+      // RelationshipProvider started as a pass-through facade over
+      // CoupleSession (Phase 6b-1) kept alive only so UI files that hadn't
+      // converted yet didn't need to change in that phase. The
+      // Definition-of-Done sweep's item 4 converted its last direct readers
+      // (license/ presentation files, bento_grid.dart, noteit_screen.dart)
+      // to CoupleSession directly and deleted relationship_provider.dart
+      // outright -- this is the literal exit criterion the item's
+      // Definition-of-Done row always promised, finally enforced. Comment
+      // lines are skipped deliberately: several files' doc comments
+      // accurately narrate RelationshipProvider's history (e.g. "extracted
+      // from RelationshipProvider in Phase 5"), which is legitimate
+      // documentation, not a regression -- this rule only catches an actual
+      // reintroduced import/type/constructor reference.
       final violations = <String>[];
-      for (final file in _dartFilesUnder('lib/providers')) {
-        if (exceptions.contains(file.path.replaceAll('\\', '/'))) {
-          continue;
-        }
-        final content = file.readAsStringSync();
-        if (content.contains('RelationshipProvider')) {
-          violations.add(file.path);
+      for (final file in _dartFilesUnder('lib')) {
+        for (final rawLine in file.readAsLinesSync()) {
+          final line = rawLine.trim();
+          if (line.startsWith('//')) continue;
+          if (line.contains('RelationshipProvider')) {
+            violations.add(file.path);
+            break;
+          }
         }
       }
       expect(
         violations,
         isEmpty,
-        reason: 'Domain providers referencing RelationshipProvider directly instead of CoupleSession (see migration-roadmap.md Phase 1): $violations',
+        reason: 'RelationshipProvider referenced but it was deleted (see migration-roadmap.md item 4): $violations',
       );
     });
   });
@@ -277,6 +283,33 @@ void main() {
         violations,
         isEmpty,
         reason: "A feature imported another feature's internal file directly instead of its public controller/state (see feature-boundaries.md's cross-feature rule, migration-roadmap.md Phase 7b): $violations",
+      );
+    });
+  });
+
+  group('Migration Phase 5/8 -- SharedPreferences keys are centralized in PrefsKeys (item 14)', () {
+    test('no lib/ file outside prefs_keys.dart calls a SharedPreferences getter/setter with a raw string literal', () {
+      // The Definition-of-Done sweep found 2 of 19 in-use keys had never
+      // been added to PrefsKeys at all, and several call sites still used
+      // raw literals even for keys that already had a constant -- see
+      // migration-roadmap.md's Definition-of-Done sweep section. This rule
+      // is the promised guard against that regressing silently again.
+      final rawLiteralCall = RegExp(r"prefs\.(get|set)[A-Za-z]*\('[a-zA-Z_]+'");
+      final violations = <String>[];
+
+      for (final file in _dartFilesUnder('lib')) {
+        final normalized = file.path.replaceAll('\\', '/');
+        if (normalized.endsWith('lib/core/constants/prefs_keys.dart')) continue;
+        final content = file.readAsStringSync();
+        if (rawLiteralCall.hasMatch(content)) {
+          violations.add(normalized);
+        }
+      }
+
+      expect(
+        violations,
+        isEmpty,
+        reason: 'SharedPreferences call using a raw string literal instead of a PrefsKeys constant (see migration-roadmap.md item 14): $violations',
       );
     });
   });

@@ -113,8 +113,9 @@ String? _routeForStage(SessionStage stage) {
 /// reading either is equally correct regardless of which one a calling
 /// screen awaited -- `CoupleSession` is simply the more direct, permanent
 /// choice, since it doesn't depend on `RelationshipProvider` continuing to
-/// exist (see Phase 8, which still has 3 files reading `RelationshipProvider`
-/// directly).
+/// exist -- which it no longer does, having been deleted once item 4 of the
+/// Definition-of-Done sweep converted its last remaining readers directly
+/// to `CoupleSession`.
 ///
 /// **Simplification vs. ADR-007's original text:** the ADR called for a
 /// second, separate redirect clause guarding every couple-scoped route

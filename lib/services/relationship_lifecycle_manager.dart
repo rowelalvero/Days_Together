@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:days_together/services/realtime_subscription_manager.dart';
 import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/services/storage_url_service.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/couple_session.dart';
 
 /// Standard interface for relationship lifecycle observers.
@@ -24,13 +23,6 @@ class RelationshipLifecycleManager {
   RelationshipLifecycleManager._();
 
   final List<RelationshipLifecycleAware> _listeners = [];
-  RelationshipProvider? _relationshipProvider;
-
-  RelationshipProvider? get relationshipProvider => _relationshipProvider;
-
-  void setRelationshipProvider(RelationshipProvider provider) {
-    _relationshipProvider = provider;
-  }
 
   void register(RelationshipLifecycleAware listener) {
     if (!_listeners.contains(listener)) {

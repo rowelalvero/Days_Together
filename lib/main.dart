@@ -6,7 +6,6 @@ import 'package:days_together/providers/gift_reminder_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/topic_cards_provider.dart';
@@ -298,26 +297,17 @@ class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> 
 /// The app's full provider tree, factored out of [runApp] so it has a single
 /// source of truth rather than a hand-maintained duplicate that could drift.
 ///
-/// `CoupleSession` is created first and is now the real engine (Phase 6b-1
-/// of the architecture migration, "make CoupleSession real"): it owns the
-/// Supabase auth listener and every field it drives. The 12 domain feature
-/// providers depend on it directly, unchanged since Phase 1.
-/// `RelationshipProvider` is created after it and is now a pass-through
-/// facade over the live `CoupleSession` instance (see its own class doc) --
-/// kept only so the UI files that still read it directly don't need to
-/// change in this phase; they are converted in a later step (Phase 6b-2).
+/// `CoupleSession` is the real engine (Phase 6b-1 of the architecture
+/// migration, "make CoupleSession real"): it owns the Supabase auth listener
+/// and every field it drives. The 12 domain feature providers depend on it
+/// directly, unchanged since Phase 1. `RelationshipProvider`, the facade
+/// that used to sit in front of it for UI files not yet converted, was
+/// deleted once item 4 of the Definition-of-Done sweep converted the last
+/// remaining readers directly to `CoupleSession`.
 List<SingleChildWidget> buildAppProviders() {
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => CoupleSession()),
-    // A plain ChangeNotifierProvider, not a ChangeNotifierProxyProvider:
-    // RelationshipProvider subscribes to the live CoupleSession directly via
-    // addListener in its own constructor (see relationship_provider.dart's
-    // class doc for why this preserves synchronous update semantics that a
-    // ProxyProvider's next-frame `update` callback would not).
-    ChangeNotifierProvider(
-      create: (context) => RelationshipProvider(context.read<CoupleSession>()),
-    ),
     ChangeNotifierProxyProvider<CoupleSession, TimelineProvider>(
       create: (_) => TimelineProvider(),
       update: (_, session, provider) => provider!..updateSession(session),

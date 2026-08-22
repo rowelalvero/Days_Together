@@ -1,11 +1,13 @@
 // Tests for LicenseController (Phase 5 of the architecture migration,
-// unit 2 -- extracted from relationship_provider.dart's 24 license fields,
-// 10 dead setters, and updateLicense method). No network: isSupabaseAvailable
-// is false throughout (no Supabase.initialize() call), matching every other
-// offline test in this suite -- CoupleSession.isSupabaseAvailable gates the
-// Supabase push half of updateFields, so these tests exercise the
-// local-state/SharedPreferences half only, same scope as
-// relationship_provider_test.dart's existing coverage.
+// unit 2 -- extracted from the old relationship_provider.dart's 24 license
+// fields, 10 dead setters, and updateLicense method; that file was later
+// deleted once RelationshipProvider's last readers converted to
+// CoupleSession, Definition-of-Done sweep item 4). No network:
+// isSupabaseAvailable is false throughout (no Supabase.initialize() call),
+// matching every other offline test in this suite --
+// CoupleSession.isSupabaseAvailable gates the Supabase push half of
+// updateFields, so these tests exercise the local-state/SharedPreferences
+// half only.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';

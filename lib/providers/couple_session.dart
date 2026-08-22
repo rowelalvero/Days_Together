@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:days_together/app_config.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/auth_service.dart';
 import 'package:days_together/services/couple_service.dart';
@@ -235,7 +236,14 @@ class CoupleSession extends ChangeNotifier {
     }
   }
 
-  CoupleSession() {
+  final CoupleService _coupleService;
+
+  /// [coupleService] defaults to the real [CoupleService.instance] --
+  /// injectable only so a test can substitute a fake for pairing-flow
+  /// coverage (ADR-010's exception: "singletons convert to providers only
+  /// when a specific test needs a fake"), no behavior change for the app.
+  CoupleSession({CoupleService? coupleService})
+      : _coupleService = coupleService ?? CoupleService.instance {
     _loadLocalData().then((_) {
       if (isSupabaseAvailable) {
         _initSupabaseSync();
@@ -245,32 +253,32 @@ class CoupleSession extends ChangeNotifier {
 
   Future<void> _loadLocalData() async {
     final prefs = await SharedPreferences.getInstance();
-    final dateStr = prefs.getString('relationship_start_date');
+    final dateStr = prefs.getString(PrefsKeys.relationshipStartDate);
     if (dateStr != null) {
       _startDate = DateTime.parse(dateStr);
     }
-    final hour = prefs.getInt('relationship_start_hour');
-    final minute = prefs.getInt('relationship_start_minute');
+    final hour = prefs.getInt(PrefsKeys.relationshipStartHour);
+    final minute = prefs.getInt(PrefsKeys.relationshipStartMinute);
     if (hour != null && minute != null) {
       _startTime = TimeOfDay(hour: hour, minute: minute);
     }
-    _yourName = prefs.getString('your_name');
-    _partnerName = prefs.getString('partner_name');
-    _yourAvatarPath = prefs.getString('your_avatar_path');
-    _partnerAvatarPath = prefs.getString('partner_avatar_path');
-    _coupleCode = prefs.getString('couple_code');
-    _coupleId = prefs.getString('couple_id');
-    _isPaired = prefs.getBool('is_paired') ?? false;
-    _isCreator = prefs.getBool('is_creator') ?? false;
-    _onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
-    _isPremium = prefs.getBool('is_premium') ?? false;
-    _storyTitle = prefs.getString('story_title');
+    _yourName = prefs.getString(PrefsKeys.yourName);
+    _partnerName = prefs.getString(PrefsKeys.partnerName);
+    _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
+    _partnerAvatarPath = prefs.getString(PrefsKeys.partnerAvatarPath);
+    _coupleCode = prefs.getString(PrefsKeys.coupleCode);
+    _coupleId = prefs.getString(PrefsKeys.coupleId);
+    _isPaired = prefs.getBool(PrefsKeys.isPaired) ?? false;
+    _isCreator = prefs.getBool(PrefsKeys.isCreator) ?? false;
+    _onboardingCompleted = prefs.getBool(PrefsKeys.onboardingCompleted) ?? false;
+    _isPremium = prefs.getBool(PrefsKeys.isPremium) ?? false;
+    _storyTitle = prefs.getString(PrefsKeys.storyTitle);
 
-    final yourJoinDateStr = prefs.getString('your_join_date');
+    final yourJoinDateStr = prefs.getString(PrefsKeys.yourJoinDate);
     if (yourJoinDateStr != null) {
       _yourJoinDate = DateTime.parse(yourJoinDateStr);
     }
-    final partnerJoinDateStr = prefs.getString('partner_join_date');
+    final partnerJoinDateStr = prefs.getString(PrefsKeys.partnerJoinDate);
     if (partnerJoinDateStr != null) {
       _partnerJoinDate = DateTime.parse(partnerJoinDateStr);
     }
@@ -409,48 +417,48 @@ class CoupleSession extends ChangeNotifier {
                 bool coupleIdChanged = _coupleId != newCoupleId;
                 _coupleId = newCoupleId;
                 if (_coupleId != null) {
-                  await prefs.setString('couple_id', _coupleId!);
+                  await prefs.setString(PrefsKeys.coupleId, _coupleId!);
                 } else {
-                  await prefs.remove('couple_id');
+                  await prefs.remove(PrefsKeys.coupleId);
                 }
 
                 // Sync FCM Token to Supabase
                 NotificationService().syncTokenToSupabase();
 
-                _yourName = userData['display_name'] as String? ?? prefs.getString('your_name');
+                _yourName = userData['display_name'] as String? ?? prefs.getString(PrefsKeys.yourName);
                 _yourActivity = userData['current_activity'] as String?;
                 if (_yourName != null) {
-                  await prefs.setString('your_name', _yourName!);
+                  await prefs.setString(PrefsKeys.yourName, _yourName!);
                 }
                 final userAvatar = userData['avatar_url'] as String?;
                 if (userAvatar != null && userAvatar.isNotEmpty) {
                   _yourAvatarPath = userAvatar;
-                  await prefs.setString('your_avatar_path', userAvatar);
+                  await prefs.setString(PrefsKeys.yourAvatarPath, userAvatar);
                 }
 
-                final storedComp = prefs.getBool('onboarding_completed');
+                final storedComp = prefs.getBool(PrefsKeys.onboardingCompleted);
                 if (storedComp != null) {
                   _onboardingCompleted = storedComp;
                 } else if (_coupleId != null && _yourName != null && _yourName!.isNotEmpty && (_startDate != null || _isPaired)) {
                   _onboardingCompleted = true;
-                  await prefs.setBool('onboarding_completed', true);
+                  await prefs.setBool(PrefsKeys.onboardingCompleted, true);
                 }
 
                 // Restore preserved onboarding details if unpaired
                 if (_coupleId == null) {
                   _isPaired = false;
                   _status = RelationshipStatus.disconnected;
-                  await prefs.setBool('is_paired', false);
-                  final dateStr = prefs.getString('relationship_start_date');
+                  await prefs.setBool(PrefsKeys.isPaired, false);
+                  final dateStr = prefs.getString(PrefsKeys.relationshipStartDate);
                   if (dateStr != null) {
                     _startDate = DateTime.parse(dateStr);
                   }
-                  final hour = prefs.getInt('relationship_start_hour');
-                  final minute = prefs.getInt('relationship_start_minute');
+                  final hour = prefs.getInt(PrefsKeys.relationshipStartHour);
+                  final minute = prefs.getInt(PrefsKeys.relationshipStartMinute);
                   if (hour != null && minute != null) {
                     _startTime = TimeOfDay(hour: hour, minute: minute);
                   }
-                  _yourAvatarPath = prefs.getString('your_avatar_path');
+                  _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
                 }
 
                 // Load and cache your join date
@@ -465,7 +473,7 @@ class CoupleSession extends ChangeNotifier {
                 }
 
                 if (_yourJoinDate != null) {
-                  await prefs.setString('your_join_date', _yourJoinDate!.toIso8601String());
+                  await prefs.setString(PrefsKeys.yourJoinDate, _yourJoinDate!.toIso8601String());
                 }
 
                 if (_coupleId != null) {
@@ -514,22 +522,22 @@ class CoupleSession extends ChangeNotifier {
                             );
 
                             final prefs = await SharedPreferences.getInstance();
-                            await prefs.setBool('is_paired', _isPaired);
+                            await prefs.setBool(PrefsKeys.isPaired, _isPaired);
                             if (_storyTitle != null) {
-                              await prefs.setString('story_title', _storyTitle!);
+                              await prefs.setString(PrefsKeys.storyTitle, _storyTitle!);
                             }
                             if (_startDate != null) {
-                              await prefs.setString('relationship_start_date', _startDate!.toIso8601String());
+                              await prefs.setString(PrefsKeys.relationshipStartDate, _startDate!.toIso8601String());
                             }
                             if (_startTime != null) {
-                              await prefs.setInt('relationship_start_hour', _startTime!.hour);
-                              await prefs.setInt('relationship_start_minute', _startTime!.minute);
+                              await prefs.setInt(PrefsKeys.relationshipStartHour, _startTime!.hour);
+                              await prefs.setInt(PrefsKeys.relationshipStartMinute, _startTime!.minute);
                             }
-                            await prefs.setBool('is_premium', _isPremium);
+                            await prefs.setBool(PrefsKeys.isPremium, _isPremium);
 
                             if (_startDate != null || _isPaired || statusStr == 'active') {
                               _onboardingCompleted = true;
-                              await prefs.setBool('onboarding_completed', true);
+                              await prefs.setBool(PrefsKeys.onboardingCompleted, true);
                             }
 
                             if (oldPartnerId != _partnerId) {
@@ -594,14 +602,14 @@ class CoupleSession extends ChangeNotifier {
             if (partnerDisplayName != null && partnerDisplayName.isNotEmpty) {
               _partnerName = partnerDisplayName;
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('partner_name', partnerDisplayName);
+              await prefs.setString(PrefsKeys.partnerName, partnerDisplayName);
             }
 
             final partnerAvatar = pData['avatar_url'] as String?;
             if (partnerAvatar != null && partnerAvatar.isNotEmpty) {
               _partnerAvatarPath = partnerAvatar;
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('partner_avatar_path', partnerAvatar);
+              await prefs.setString(PrefsKeys.partnerAvatarPath, partnerAvatar);
             }
 
             notifyListeners();
@@ -620,19 +628,19 @@ class CoupleSession extends ChangeNotifier {
             final pCreated = pData['created_at'] as String?;
             if (pCreated != null) {
               _partnerJoinDate = DateTime.parse(pCreated);
-              await prefs.setString('partner_join_date', pCreated);
+              await prefs.setString(PrefsKeys.partnerJoinDate, pCreated);
             }
 
             final partnerDisplayName = pData['display_name'] as String?;
             if (partnerDisplayName != null && partnerDisplayName.isNotEmpty) {
               _partnerName = partnerDisplayName;
-              await prefs.setString('partner_name', partnerDisplayName);
+              await prefs.setString(PrefsKeys.partnerName, partnerDisplayName);
             }
 
             final partnerAvatar = pData['avatar_url'] as String?;
             if (partnerAvatar != null && partnerAvatar.isNotEmpty) {
               _partnerAvatarPath = partnerAvatar;
-              await prefs.setString('partner_avatar_path', partnerAvatar);
+              await prefs.setString(PrefsKeys.partnerAvatarPath, partnerAvatar);
             }
 
             notifyListeners();
@@ -710,7 +718,7 @@ class CoupleSession extends ChangeNotifier {
   Future<void> setYourName(String name) async {
     _yourName = name;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_name', name);
+    await prefs.setString(PrefsKeys.yourName, name);
 
     if (isSupabaseAvailable && _userId != null) {
       try {
@@ -783,7 +791,7 @@ class CoupleSession extends ChangeNotifier {
   Future<void> setStoryTitle(String title) async {
     _storyTitle = title;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('story_title', title);
+    await prefs.setString(PrefsKeys.storyTitle, title);
     if (_coupleId != null) {
       Supabase.instance.client
           .from('couples')
@@ -798,7 +806,7 @@ class CoupleSession extends ChangeNotifier {
     _startDate = date;
     await HomeWidgetService.instance.updateWidget(startDate: _startDate, startTime: _startTime);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('relationship_start_date', date.toIso8601String());
+    await prefs.setString(PrefsKeys.relationshipStartDate, date.toIso8601String());
     if (_coupleId != null) {
       Supabase.instance.client
           .from('couples')
@@ -822,8 +830,8 @@ class CoupleSession extends ChangeNotifier {
     _startTime = time;
     await HomeWidgetService.instance.updateWidget(startDate: _startDate, startTime: _startTime);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('relationship_start_hour', time.hour);
-    await prefs.setInt('relationship_start_minute', time.minute);
+    await prefs.setInt(PrefsKeys.relationshipStartHour, time.hour);
+    await prefs.setInt(PrefsKeys.relationshipStartMinute, time.minute);
     if (_coupleId != null) {
       Supabase.instance.client
           .from('couples')
@@ -841,8 +849,8 @@ class CoupleSession extends ChangeNotifier {
     _yourName = yours;
     _partnerName = partner;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('your_name', yours);
-    await prefs.setString('partner_name', partner);
+    await prefs.setString(PrefsKeys.yourName, yours);
+    await prefs.setString(PrefsKeys.partnerName, partner);
 
     if (isSupabaseAvailable) {
       if (_userId != null) {
@@ -893,13 +901,13 @@ class CoupleSession extends ChangeNotifier {
           await _clearStaleAvatarCache('your_avatar_path', _yourAvatarPath);
 
           _yourAvatarPath = yourRef;
-          await prefs.setString('your_avatar_path', yourRef);
+          await prefs.setString(PrefsKeys.yourAvatarPath, yourRef);
         } else {
           _yourAvatarPath = yourPath;
           if (yourPath.isEmpty) {
-            await prefs.remove('your_avatar_path');
+            await prefs.remove(PrefsKeys.yourAvatarPath);
           } else {
-            await prefs.setString('your_avatar_path', yourPath);
+            await prefs.setString(PrefsKeys.yourAvatarPath, yourPath);
           }
         }
       }
@@ -924,13 +932,13 @@ class CoupleSession extends ChangeNotifier {
           await _clearStaleAvatarCache('partner_avatar_path', _partnerAvatarPath);
 
           _partnerAvatarPath = partnerRef;
-          await prefs.setString('partner_avatar_path', partnerRef);
+          await prefs.setString(PrefsKeys.partnerAvatarPath, partnerRef);
         } else {
           _partnerAvatarPath = partnerPath;
           if (partnerPath.isEmpty) {
-            await prefs.remove('partner_avatar_path');
+            await prefs.remove(PrefsKeys.partnerAvatarPath);
           } else {
-            await prefs.setString('partner_avatar_path', partnerPath);
+            await prefs.setString(PrefsKeys.partnerAvatarPath, partnerPath);
           }
         }
       }
@@ -953,17 +961,17 @@ class CoupleSession extends ChangeNotifier {
       if (yourPath != null) {
         _yourAvatarPath = yourPath;
         if (yourPath.isEmpty) {
-          await prefs.remove('your_avatar_path');
+          await prefs.remove(PrefsKeys.yourAvatarPath);
         } else {
-          await prefs.setString('your_avatar_path', yourPath);
+          await prefs.setString(PrefsKeys.yourAvatarPath, yourPath);
         }
       }
       if (partnerPath != null) {
         _partnerAvatarPath = partnerPath;
         if (partnerPath.isEmpty) {
-          await prefs.remove('partner_avatar_path');
+          await prefs.remove(PrefsKeys.partnerAvatarPath);
         } else {
-          await prefs.setString('partner_avatar_path', partnerPath);
+          await prefs.setString(PrefsKeys.partnerAvatarPath, partnerPath);
         }
       }
     }
@@ -984,7 +992,7 @@ class CoupleSession extends ChangeNotifier {
     _isGeneratingCode = true;
     notifyListeners();
     try {
-      final result = await CoupleService.instance.createRelationshipWorkspace();
+      final result = await _coupleService.createRelationshipWorkspace();
       _coupleId = result['couple_id'] as String;
       _coupleCode = result['pairing_code'] as String;
       _recoveryCode = result['recovery_code'] as String;
@@ -994,11 +1002,11 @@ class CoupleSession extends ChangeNotifier {
       _onboardingCompleted = false;
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('couple_code', _coupleCode!);
-      await prefs.setString('couple_id', _coupleId!);
-      await prefs.setBool('is_paired', false);
-      await prefs.setBool('is_creator', true);
-      await prefs.setBool('onboarding_completed', false);
+      await prefs.setString(PrefsKeys.coupleCode, _coupleCode!);
+      await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+      await prefs.setBool(PrefsKeys.isPaired, false);
+      await prefs.setBool(PrefsKeys.isCreator, true);
+      await prefs.setBool(PrefsKeys.onboardingCompleted, false);
       notifyListeners();
     } catch (e) {
       debugPrint('Error in createRelationshipWorkspace: $e');
@@ -1021,13 +1029,13 @@ class CoupleSession extends ChangeNotifier {
   Future<String?> refreshPairingCode({bool forceRotate = false}) async {
     if (!isSupabaseAvailable || _coupleId == null) return _coupleCode;
     try {
-      final result = await CoupleService.instance.getOrRotatePairingCode(forceRotate: forceRotate);
+      final result = await _coupleService.getOrRotatePairingCode(forceRotate: forceRotate);
       if (result['success'] == true) {
         final newCode = result['pairing_code'] as String?;
         if (newCode != null && newCode.isNotEmpty) {
           _coupleCode = newCode;
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('couple_code', newCode);
+          await prefs.setString(PrefsKeys.coupleCode, newCode);
           notifyListeners();
         }
       }
@@ -1048,10 +1056,10 @@ class CoupleSession extends ChangeNotifier {
 
       _coupleCode = cleanCode;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('couple_code', cleanCode);
+      await prefs.setString(PrefsKeys.coupleCode, cleanCode);
 
       if (isSupabaseAvailable && _userId != null) {
-        final result = await CoupleService.instance.joinWithCode(cleanCode);
+        final result = await _coupleService.joinWithCode(cleanCode);
         final bool success = result['success'] as bool? ?? false;
 
         if (!success) {
@@ -1069,10 +1077,10 @@ class CoupleSession extends ChangeNotifier {
         _status = RelationshipStatus.active;
         _onboardingCompleted = false;
 
-        await prefs.setString('couple_id', _coupleId!);
-        await prefs.setString('partner_id', _partnerId!);
-        await prefs.setBool('is_paired', true);
-        await prefs.setBool('onboarding_completed', false);
+        await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+        await prefs.setString(PrefsKeys.partnerId, _partnerId!);
+        await prefs.setBool(PrefsKeys.isPaired, true);
+        await prefs.setBool(PrefsKeys.onboardingCompleted, false);
 
         await RelationshipLifecycleManager.instance.handlePair(_coupleId!, _userId!);
 
@@ -1094,17 +1102,17 @@ class CoupleSession extends ChangeNotifier {
           final startStr = coupleData['start_date'] as String?;
           if (startStr != null) {
             _startDate = DateTime.parse(startStr);
-            await prefs.setString('relationship_start_date', startStr);
+            await prefs.setString(PrefsKeys.relationshipStartDate, startStr);
           }
           final hour = coupleData['start_time_hour'] as int?;
           final minute = coupleData['start_time_minute'] as int?;
           if (hour != null && minute != null) {
             _startTime = TimeOfDay(hour: hour, minute: minute);
-            await prefs.setInt('relationship_start_hour', hour);
-            await prefs.setInt('relationship_start_minute', minute);
+            await prefs.setInt(PrefsKeys.relationshipStartHour, hour);
+            await prefs.setInt(PrefsKeys.relationshipStartMinute, minute);
           }
           _storyTitle = coupleData['story_title'] as String? ?? 'Our Story';
-          await prefs.setString('story_title', _storyTitle!);
+          await prefs.setString(PrefsKeys.storyTitle, _storyTitle!);
         }
         return true;
       }
@@ -1122,8 +1130,8 @@ class CoupleSession extends ChangeNotifier {
     _onboardingCompleted = true;
     _isPaired = _coupleId != null && _partnerId != null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_paired', _isPaired);
-    await prefs.setBool('onboarding_completed', true);
+    await prefs.setBool(PrefsKeys.isPaired, _isPaired);
+    await prefs.setBool(PrefsKeys.onboardingCompleted, true);
 
     if (isSupabaseAvailable && _userId != null) {
       final updates = <String, dynamic>{};
@@ -1145,7 +1153,7 @@ class CoupleSession extends ChangeNotifier {
   Future<void> setPremium(bool value) async {
     _isPremium = value;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_premium', _isPremium);
+    await prefs.setBool(PrefsKeys.isPremium, _isPremium);
     if (_coupleId != null) {
       Supabase.instance.client
           .from('couples')
@@ -1161,13 +1169,13 @@ class CoupleSession extends ChangeNotifier {
     _isJoining = true;
     notifyListeners();
     try {
-      final result = await CoupleService.instance.recoverWithCode(code);
+      final result = await _coupleService.recoverWithCode(code);
       final bool success = result['success'] as bool? ?? false;
       if (success) {
         _coupleId = result['couple_id'] as String;
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('couple_id', _coupleId!);
+        await prefs.setString(PrefsKeys.coupleId, _coupleId!);
 
         // Triggers active sync streams
         _initSupabaseSync();
@@ -1186,7 +1194,7 @@ class CoupleSession extends ChangeNotifier {
 
   Future<void> regenerateRecoveryCode() async {
     try {
-      final result = await CoupleService.instance.regenerateRecoveryCode();
+      final result = await _coupleService.regenerateRecoveryCode();
       _recoveryCode = result['recovery_code'] as String;
       notifyListeners();
     } catch (e) {
@@ -1218,13 +1226,13 @@ class CoupleSession extends ChangeNotifier {
       _presenceChannel = null;
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_paired', false);
-      await prefs.remove('couple_code');
-      await prefs.remove('partner_name');
-      await prefs.remove('partner_avatar_path');
-      await prefs.remove('partner_join_date');
+      await prefs.setBool(PrefsKeys.isPaired, false);
+      await prefs.remove(PrefsKeys.coupleCode);
+      await prefs.remove(PrefsKeys.partnerName);
+      await prefs.remove(PrefsKeys.partnerAvatarPath);
+      await prefs.remove(PrefsKeys.partnerJoinDate);
       _onboardingCompleted = false;
-      await prefs.setBool('onboarding_completed', false);
+      await prefs.setBool(PrefsKeys.onboardingCompleted, false);
 
       if (isSupabaseAvailable && _userId != null) {
         try {
@@ -1234,7 +1242,7 @@ class CoupleSession extends ChangeNotifier {
             feature: 'relationship',
           );
         } catch (_) {}
-        await CoupleService.instance.disconnectRelationshipWorkspace();
+        await _coupleService.disconnectRelationshipWorkspace();
       }
       _coupleId = null;
       _partnerId = null;
@@ -1342,21 +1350,21 @@ class CoupleSession extends ChangeNotifier {
     if (wipeAll) {
       await prefs.clear();
     } else {
-      final onboardingCompleted = prefs.getBool('onboarding_completed');
-      final startDate = prefs.getString('relationship_start_date');
-      final startHour = prefs.getInt('relationship_start_hour');
-      final startMinute = prefs.getInt('relationship_start_minute');
-      final yourAvatarPath = prefs.getString('your_avatar_path');
-      final yourName = prefs.getString('your_name');
+      final onboardingCompleted = prefs.getBool(PrefsKeys.onboardingCompleted);
+      final startDate = prefs.getString(PrefsKeys.relationshipStartDate);
+      final startHour = prefs.getInt(PrefsKeys.relationshipStartHour);
+      final startMinute = prefs.getInt(PrefsKeys.relationshipStartMinute);
+      final yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
+      final yourName = prefs.getString(PrefsKeys.yourName);
 
       await prefs.clear();
 
-      if (onboardingCompleted != null) await prefs.setBool('onboarding_completed', onboardingCompleted);
-      if (startDate != null) await prefs.setString('relationship_start_date', startDate);
-      if (startHour != null) await prefs.setInt('relationship_start_hour', startHour);
-      if (startMinute != null) await prefs.setInt('relationship_start_minute', startMinute);
-      if (yourAvatarPath != null) await prefs.setString('your_avatar_path', yourAvatarPath);
-      if (yourName != null) await prefs.setString('your_name', yourName);
+      if (onboardingCompleted != null) await prefs.setBool(PrefsKeys.onboardingCompleted, onboardingCompleted);
+      if (startDate != null) await prefs.setString(PrefsKeys.relationshipStartDate, startDate);
+      if (startHour != null) await prefs.setInt(PrefsKeys.relationshipStartHour, startHour);
+      if (startMinute != null) await prefs.setInt(PrefsKeys.relationshipStartMinute, startMinute);
+      if (yourAvatarPath != null) await prefs.setString(PrefsKeys.yourAvatarPath, yourAvatarPath);
+      if (yourName != null) await prefs.setString(PrefsKeys.yourName, yourName);
     }
 
     await RelationshipLifecycleManager.instance.handleLogout();

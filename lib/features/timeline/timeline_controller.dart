@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show BuildContext;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,7 +50,7 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
   Future<void> _loadSortOrder() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final isAscending = prefs.getBool('timeline_is_ascending') ?? true;
+      final isAscending = prefs.getBool(PrefsKeys.timelineIsAscending) ?? true;
       if (!ref.mounted) return;
       state = state.copyWith(isAscending: isAscending);
     } catch (_) {}
@@ -85,7 +86,7 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('timeline_is_ascending', nextAscending);
+      await prefs.setBool(PrefsKeys.timelineIsAscending, nextAscending);
     } catch (_) {}
     await _persistLocalOnly();
   }

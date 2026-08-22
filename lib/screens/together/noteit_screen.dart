@@ -17,7 +17,7 @@ import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
@@ -597,7 +597,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     NoteitProvider provider,
     LoveStoryTheme theme,
   ) async {
-    final rp = context.read<RelationshipProvider>();
+    final rp = context.read<CoupleSession>();
     final chatProvider = context.read<LoveChatProvider>();
 
     if (_controller.drawables.isEmpty) {

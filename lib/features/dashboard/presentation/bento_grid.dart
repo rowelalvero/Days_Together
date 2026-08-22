@@ -23,7 +23,7 @@ import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/time_capsule_provider.dart';
 import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/core/scrapbook_ref.dart';
 
 // Screens
@@ -181,7 +181,7 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildDailyMoodBentoCard(BuildContext context) {
-    return Consumer2<RelationshipProvider, DailyMoodProvider>(
+    return Consumer2<CoupleSession, DailyMoodProvider>(
       builder: (context, relationship, dailyMood, child) {
         final isPaired = relationship.isPaired;
         final myToday = dailyMood.todayMood;
@@ -304,7 +304,7 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildEmotionalMapBentoCard(BuildContext context) {
-    return Consumer2<RelationshipProvider, DailyMoodProvider>(
+    return Consumer2<CoupleSession, DailyMoodProvider>(
       builder: (context, relationship, dailyMood, child) {
         final isPaired = relationship.isPaired;
 
@@ -843,7 +843,7 @@ class BentoGrid extends StatelessWidget {
 
   Widget _buildMoodContent(
     BuildContext context,
-    RelationshipProvider relationship,
+    CoupleSession relationship,
     DailyMoodProvider dailyMood,
   ) {
     final isPaired = relationship.isPaired;

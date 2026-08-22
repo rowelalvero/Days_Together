@@ -19,7 +19,7 @@ import 'package:days_together/features/relationship/presentation/license/license
 import 'package:days_together/features/relationship/presentation/license/license_selector.dart';
 import 'package:days_together/features/relationship/presentation/license/waiting_for_partner_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -105,7 +105,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     }
   }
 
-  Future<void> _pickAvatar(RelationshipProvider rp, bool isYou) async {
+  Future<void> _pickAvatar(CoupleSession rp, bool isYou) async {
     final hasPermission = await PermissionService().requestPhotosPermission(context);
     if (!hasPermission) return;
 
@@ -155,7 +155,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<RelationshipProvider>();
+    final rp = context.watch<CoupleSession>();
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
     final partnerJoined = rp.partnerId != null;
 
@@ -497,7 +497,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     super.dispose();
   }
 
-  void _startLoadingAnimation(RelationshipProvider rp) {
+  void _startLoadingAnimation(CoupleSession rp) {
     setState(() {
       _isLoading = true;
       _loadingStep = 0;
@@ -519,7 +519,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     });
   }
 
-  void _saveFirstTimeDetails(RelationshipProvider rp) {
+  void _saveFirstTimeDetails(CoupleSession rp) {
     final now = DateTime.now();
     // Split across the two controllers that used to be one updateLicense
     // call: yourName is ProfileController's field (untouched by this
@@ -546,7 +546,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     });
   }
 
-  Widget _buildCreationForm(LoveStoryTheme theme, RelationshipProvider rp) {
+  Widget _buildCreationForm(LoveStoryTheme theme, CoupleSession rp) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(

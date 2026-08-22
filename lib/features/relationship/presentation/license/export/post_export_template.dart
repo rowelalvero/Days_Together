@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/presentation/license/export/license_card_preview.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
@@ -19,7 +19,7 @@ class PostExportTemplate extends StatelessWidget {
   });
 
   final LoveStoryTheme theme;
-  final RelationshipProvider rp;
+  final CoupleSession rp;
   final bool showBoth;
   final bool isYourLicense;
   final bool exportFront;

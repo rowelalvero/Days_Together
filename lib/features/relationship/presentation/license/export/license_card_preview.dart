@@ -5,7 +5,7 @@ import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/license_back.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/license_front.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/date_helper.dart';
 
 /// Renders either partner's license face (front or back) for the export
@@ -23,7 +23,7 @@ class LicenseCardPreview extends ConsumerWidget {
 
   final bool isYourLicense;
   final bool showFront;
-  final RelationshipProvider rp;
+  final CoupleSession rp;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -118,7 +118,7 @@ class ScaledLicenseCardPreview extends StatelessWidget {
 
   final bool isYourLicense;
   final bool showFront;
-  final RelationshipProvider rp;
+  final CoupleSession rp;
   final double targetWidth;
 
   @override

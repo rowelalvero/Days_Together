@@ -1,7 +1,8 @@
-/// The 6 profile fields `ProfileController` mirrors from
-/// `RelationshipProvider` (Phase 5 of the architecture migration, unit 3).
-/// See `profile_controller.dart`'s doc comment for why this is a mirror
-/// rather than a cutover, unlike `LicenseController`.
+/// The 6 profile fields `ProfileController` mirrors from `CoupleSession`
+/// (originally mirrored from `RelationshipProvider`, Phase 5 of the
+/// architecture migration, unit 3, before `RelationshipProvider` was
+/// deleted). See `profile_controller.dart`'s doc comment for why this is a
+/// mirror rather than a cutover, unlike `LicenseController`.
 class ProfileState {
   final String? yourName;
   final String? partnerName;

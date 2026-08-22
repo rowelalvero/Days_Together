@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 
 import 'package:flutter/services.dart';
@@ -117,13 +116,13 @@ void main() {
       );
     });
 
-    test('14. RelationshipProvider.setStartDate updates widget date without error', () async {
-      final provider = RelationshipProvider(CoupleSession());
+    test('14. CoupleSession.setStartDate updates widget date without error', () async {
+      final session = CoupleSession();
       await expectLater(
-        provider.setStartDate(DateTime(2023, 5, 20)),
+        session.setStartDate(DateTime(2023, 5, 20)),
         completes,
       );
-      expect(provider.startDate, equals(DateTime(2023, 5, 20)));
+      expect(session.startDate, equals(DateTime(2023, 5, 20)));
     });
   });
 }

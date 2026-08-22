@@ -6,7 +6,7 @@ import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/edit/person_license_form.dart';
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
@@ -16,7 +16,7 @@ import 'package:days_together/themes/theme_manager.dart';
 /// renamed from `_EditLicenseSheet` since it now needs to be public to
 /// be shared across the license/ file split.
 class EditLicenseSheet extends ConsumerStatefulWidget {
-  final RelationshipProvider rp;
+  final CoupleSession rp;
 
   final LoveStoryTheme theme;
 

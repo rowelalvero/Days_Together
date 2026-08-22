@@ -220,15 +220,17 @@ class DateHelper {
   // ---- Relationship duration/milestone math (Phase 6b-3 of the
   // architecture migration) ----
   //
-  // Extracted from RelationshipProvider, where it lived as a set of
-  // instance getters reading _startDate/_startTime directly. ADR-009 called
-  // for this to become plain functions "during Phase 5"; that never
-  // happened until now (Phase 6b-1's investigation found it stranded and
-  // still blocking full RelationshipProvider retirement). Every function
-  // below is a pure, parameterized equivalent of its original getter, so
-  // any caller holding a couple's startDate/startTime (WorkspaceController,
-  // now, rather than RelationshipProvider) can compute the same values
-  // without depending on RelationshipProvider at all.
+  // Extracted from the old RelationshipProvider (since deleted), where it
+  // lived as a set of instance getters reading _startDate/_startTime
+  // directly. ADR-009 called for this to become plain functions "during
+  // Phase 5"; that never happened until now (Phase 6b-1's investigation
+  // found it stranded and blocking RelationshipProvider's eventual
+  // retirement, later completed in the Definition-of-Done sweep's item 4).
+  // Every function below is a pure, parameterized equivalent of its
+  // original getter, so any caller holding a couple's startDate/startTime
+  // (WorkspaceController, now, rather than RelationshipProvider) can
+  // compute the same values without depending on RelationshipProvider at
+  // all.
 
   /// Combines a relationship's start date and start time into a single
   /// `DateTime`, defaulting the time-of-day to midnight when unset and the

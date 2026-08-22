@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/vault/vault_state.dart';
@@ -199,7 +200,7 @@ class VaultController extends Notifier<VaultState>
             await prefs.remove(_pinKey);
           } catch (e) {
             debugPrint('Secure storage write failed during migration: $e. Falling back.');
-            await prefs.setString('vault_pin_fallback', storedSharedPin);
+            await prefs.setString(PrefsKeys.vaultPinFallback, storedSharedPin);
           }
           resolvedHasPin = true;
           await prefs.setBool(_hasPinKey, true);
@@ -209,7 +210,7 @@ class VaultController extends Notifier<VaultState>
             securePin = await _secureStorage.read(key: _pinKey);
           } catch (e) {
             debugPrint('Secure storage read failed: $e. Using fallback.');
-            securePin = prefs.getString('vault_pin_fallback');
+            securePin = prefs.getString(PrefsKeys.vaultPinFallback);
           }
           resolvedHasPin = securePin != null && securePin.isNotEmpty;
           await prefs.setBool(_hasPinKey, resolvedHasPin);
@@ -251,7 +252,7 @@ class VaultController extends Notifier<VaultState>
       await _secureStorage.write(key: _pinKey, value: pin);
     } catch (e) {
       debugPrint('Secure storage write failed: $e. Using fallback.');
-      await prefs.setString('vault_pin_fallback', pin);
+      await prefs.setString(PrefsKeys.vaultPinFallback, pin);
     }
     await prefs.setBool(_hasPinKey, true);
     if (!ref.mounted) return;
@@ -265,7 +266,7 @@ class VaultController extends Notifier<VaultState>
       securePin = await _secureStorage.read(key: _pinKey);
     } catch (e) {
       debugPrint('Secure storage read failed: $e. Using fallback.');
-      securePin = prefs.getString('vault_pin_fallback');
+      securePin = prefs.getString(PrefsKeys.vaultPinFallback);
     }
 
     if (securePin == pin) {

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, Wid
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/flippable_license_card.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/date_helper.dart';
 
 /// Renders either partner's [FlippableLicenseCard], resolving
@@ -31,7 +31,7 @@ class FlippableLicensePreview extends ConsumerWidget {
   final Key? cardKey;
 
   final bool isYourLicense;
-  final RelationshipProvider rp;
+  final CoupleSession rp;
   final VoidCallback onAvatarTap;
 
   @override

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/services/local_persistence_service.dart';
 import 'package:days_together/services/permission_service.dart';
@@ -69,7 +70,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
   Future<void> _loadSortOrder() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _isAscending = prefs.getBool('timeline_is_ascending') ?? true;
+      _isAscending = prefs.getBool(PrefsKeys.timelineIsAscending) ?? true;
     } catch (_) {}
   }
 
@@ -98,7 +99,7 @@ class TimelineProvider extends SupabaseLifecycleProvider {
     notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('timeline_is_ascending', _isAscending);
+      await prefs.setBool(PrefsKeys.timelineIsAscending, _isAscending);
     } catch (_) {}
     await _persistLocalOnly();
   }

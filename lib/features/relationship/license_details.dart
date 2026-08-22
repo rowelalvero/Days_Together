@@ -12,13 +12,15 @@ const Object _unset = Object();
 /// `PrefsKeys` group and its own separate Phase 5 unit 3 description) that
 /// happen to be updatable through the same bulk-edit method, not
 /// `LicenseController`'s. This model owns exactly the 12 pairs (24 fields)
-/// verified against `relationship_provider.dart`'s getters (`:184-207` as of
-/// this migration): gender, phone, birthdate, address, nationality, weight,
-/// height, blood type, eye color, conditions, date issued, signature.
+/// verified against the now-deleted `relationship_provider.dart`'s getters
+/// (`:184-207` as of the migration phase that did the verification): gender,
+/// phone, birthdate, address, nationality, weight, height, blood type, eye
+/// color, conditions, date issued, signature.
 ///
 /// Deliberately **not** baking the UI-display defaults
-/// (`RelationshipProvider.yourNationality` etc. return `'Love Land'` when
-/// null, several return `'—'` or `'Madly in Love'`) into this model --
+/// (the old `RelationshipProvider.yourNationality` etc. returned `'Love
+/// Land'` when null, several returned `'—'` or `'Madly in Love'`) into this
+/// model --
 /// consistent with `UserRepository`/`CoupleRepository`/`LicenseRepository`'s
 /// models (Phase 4), a value object represents raw data, not presentation
 /// formatting. Call sites apply the same fallback inline, matching exactly

@@ -14,13 +14,16 @@ import 'package:days_together/providers/couple_session.dart';
 /// see couple_session.dart's doc comment for why a second independent
 /// owner isn't possible. Unlike unit 1 (`CoupleSession` itself), there is
 /// no forcing function requiring this controller's UI consumers to convert
-/// in the same step: `RelationshipProvider`'s facade already serves these
-/// fields correctly to every current reader with zero regression, so UI
-/// conversion is deferred to Phase 6b-2 (or, for the two largest consumers,
-/// `relationship_license_screen.dart`/`relationship_profile_screen.dart`,
-/// to Phase 8's already-planned decomposition of those files) rather than
-/// bundled here. See docs/architecture/migration-roadmap.md's Phase 6b-1
-/// unit 2 corrections for the full investigation.
+/// in the same step: the old `RelationshipProvider` facade served these
+/// fields correctly to every current reader with zero regression at the
+/// time, so UI conversion was deferred to Phase 6b-2 (or, for the two
+/// largest consumers, `relationship_license_screen.dart`/
+/// `relationship_profile_screen.dart`, to Phase 8's decomposition of those
+/// files) rather than bundled here -- and completed for good in the
+/// Definition-of-Done sweep's item 4, which deleted `RelationshipProvider`
+/// once its last direct readers were converted to `CoupleSession`. See
+/// docs/architecture/migration-roadmap.md's Phase 6b-1 unit 2 corrections
+/// for the full investigation.
 ///
 /// [setYourName]/[setNames]/[setAvatars] are one-line delegations to the
 /// live `CoupleSession` instance -- the actual field mutation, persistence,

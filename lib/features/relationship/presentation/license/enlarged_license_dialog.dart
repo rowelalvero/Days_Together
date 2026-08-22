@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, Wid
 import 'package:provider/provider.dart';
 
 import 'package:days_together/features/relationship/presentation/license/flippable_license_preview.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
@@ -18,7 +18,7 @@ class EnlargedLicenseDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rp = context.read<RelationshipProvider>();
+    final rp = context.read<CoupleSession>();
 
     return Dialog(
       backgroundColor: Colors.transparent,

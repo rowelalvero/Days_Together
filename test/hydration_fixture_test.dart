@@ -1,13 +1,17 @@
 // The single highest-ROI test in the Phase 5 migration
-// (docs/architecture/migration-roadmap.md): a realistic 41-key
+// (docs/architecture/migration-roadmap.md): a realistic 43-key
 // SharedPreferences snapshot, captured once here, that every state-ownership
 // extraction must continue to hydrate identically. Written before extracting
 // LicenseController (the roadmap's explicit ordering requirement), so it
 // exists as a regression baseline from the very first extraction onward.
+// (Originally 41 keys; timelineIsAscending and vaultPinFallback were added
+// once the Definition-of-Done sweep found those two production keys were
+// never in PrefsKeys.all to begin with -- see prefs_keys.dart.)
 //
 // As each field's owning controller changes across Phase 5's extractions,
 // this file's per-field assertions are updated to read the new controller
-// instead of RelationshipProvider -- but the *raw* SharedPreferences
+// instead of the old RelationshipProvider facade (deleted in the
+// Definition-of-Done sweep's item 4) -- but the *raw* SharedPreferences
 // assertions (the bottom half of the test) never change: they are the
 // controller-agnostic ground truth that hydration is lossless regardless of
 // which class currently owns which field, exactly what PrefsKeys exists to
@@ -25,9 +29,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 
-/// A realistic 41-key hydration snapshot. Every key in [PrefsKeys.all] has
+/// A realistic 43-key hydration snapshot. Every key in [PrefsKeys.all] has
 /// an entry here -- the "no key silently dropped" property this test
 /// exists to guard is checked directly against this map's own keys, not
 /// hand-copied, so PrefsKeys and this fixture can't silently drift apart.
@@ -87,6 +90,10 @@ Map<String, Object> _realDeviceSnapshot() {
     PrefsKeys.partnerDateIssued: dateIssued,
     PrefsKeys.yourSignature: 'data:image/png;base64,AAA',
     PrefsKeys.partnerSignature: 'data:image/png;base64,BBB',
+
+    // Incrementally centralized keys (see prefs_keys.dart)
+    PrefsKeys.timelineIsAscending: false,
+    PrefsKeys.vaultPinFallback: '1234',
   };
 }
 
@@ -106,47 +113,47 @@ void main() {
     );
   });
 
-  group('Hydration fixture -- the 41-key snapshot survives a fresh load', () {
+  group('Hydration fixture -- the 43-key snapshot survives a fresh load', () {
     test('the fixture itself covers exactly PrefsKeys.all, nothing more or less', () {
       final snapshot = _realDeviceSnapshot();
       expect(
         snapshot.keys.toSet(),
         PrefsKeys.all.toSet(),
         reason: 'the fixture must be updated whenever PrefsKeys.all changes, '
-            'or this test stops actually covering all 41 keys',
+            'or this test stops actually covering all 43 keys',
       );
     });
 
-    test('RelationshipProvider hydrates every currently-owned field from the snapshot', () async {
-      // Since Phase 6b-1, RelationshipProvider is a pass-through facade over
-      // CoupleSession, which now owns the hydration -- see
+    test('CoupleSession hydrates every currently-owned field from the snapshot', () async {
+      // Originally checked via the RelationshipProvider facade (since
+      // deleted, Definition-of-Done sweep item 4) -- CoupleSession has
+      // always been the real owner of this hydration since Phase 6b-1; see
       // couple_session_test.dart for the equivalent coverage at the source.
       SharedPreferences.setMockInitialValues(_realDeviceSnapshot());
       final session = CoupleSession();
-      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       // Session / pairing identity
-      expect(provider.coupleId, 'couple-fixture-1');
-      expect(provider.isPaired, true);
-      expect(provider.isCreator, true);
-      expect(provider.isOnboardingComplete, true);
+      expect(session.coupleId, 'couple-fixture-1');
+      expect(session.isPaired, true);
+      expect(session.isCreator, true);
+      expect(session.isOnboardingComplete, true);
 
       // Workspace fields
-      expect(provider.coupleCode, 'ABC123');
-      expect(provider.isPremium, true);
-      expect(provider.storyTitle, 'Our Love Story');
-      expect(provider.startDate, DateTime(2022, 6, 15));
-      expect(provider.startTime?.hour, 14);
-      expect(provider.startTime?.minute, 30);
+      expect(session.coupleCode, 'ABC123');
+      expect(session.isPremium, true);
+      expect(session.storyTitle, 'Our Love Story');
+      expect(session.startDate, DateTime(2022, 6, 15));
+      expect(session.startTime?.hour, 14);
+      expect(session.startTime?.minute, 30);
 
       // Profile fields
-      expect(provider.yourName, 'Ashwel');
-      expect(provider.partnerName, 'Rowel');
-      expect(provider.yourAvatarPath, 'couples/c1/avatars/u1_1700000000.jpg');
-      expect(provider.partnerAvatarPath, 'couples/c1/avatars/u2_1700000001.jpg');
+      expect(session.yourName, 'Ashwel');
+      expect(session.partnerName, 'Rowel');
+      expect(session.yourAvatarPath, 'couples/c1/avatars/u1_1700000000.jpg');
+      expect(session.partnerAvatarPath, 'couples/c1/avatars/u2_1700000001.jpg');
 
-      provider.dispose();
+      session.dispose();
     });
 
     test('LicenseController hydrates the 24 license fields from the same snapshot', () async {
@@ -171,7 +178,7 @@ void main() {
       expect(license.partnerSignature, 'data:image/png;base64,BBB');
     });
 
-    test('every one of the 41 raw SharedPreferences keys survives a load unchanged', () async {
+    test('every one of the 43 raw SharedPreferences keys survives a load unchanged', () async {
       // The controller-agnostic ground truth (see file doc comment): this
       // must keep passing across every Phase 5 extraction regardless of
       // which controller currently owns a given field, since none of them
@@ -179,7 +186,6 @@ void main() {
       final snapshot = _realDeviceSnapshot();
       SharedPreferences.setMockInitialValues(snapshot);
       final session = CoupleSession();
-      final provider = RelationshipProvider(session);
       await Future.delayed(Duration.zero);
 
       final prefs = await SharedPreferences.getInstance();
@@ -200,7 +206,7 @@ void main() {
         );
       }
 
-      provider.dispose();
+      session.dispose();
     });
   });
 }

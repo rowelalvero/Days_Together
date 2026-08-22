@@ -26,9 +26,9 @@ import 'package:days_together/models/relationship_metadata.dart';
 /// `creator_id`, `certificate_number`, `issue_date`, `anniversary`, `theme`,
 /// `relationship_title` -- exactly [RelationshipMetadata]'s shape.
 /// `creator_id` is deliberately not modeled here: no Dart call site reads it
-/// (guarded by `relationship_provider_test.dart`'s existing "Codebase
-/// contains no reference to nonexistent license_details.creator_id" test),
-/// so it stays a server-only column.
+/// (guarded by `couple_session_test.dart`'s "Codebase contains no reference
+/// to nonexistent license_details.creator_id" test), so it stays a
+/// server-only column.
 ///
 /// The 28 `_your*`/`_partner*` license fields the UI calls "License" are a
 /// separate concern entirely -- they live-write through the **`users`**

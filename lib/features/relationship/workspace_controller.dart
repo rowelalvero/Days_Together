@@ -20,11 +20,12 @@ import 'package:days_together/providers/couple_session.dart';
 ///
 /// **No forcing function requires converting this controller's UI
 /// consumers in the same step, unlike unit 1 (`CoupleSession` itself).**
-/// `RelationshipProvider`'s facade already serves these 7 fields correctly
-/// to every current reader with zero regression regardless of what this
-/// controller does, so UI conversion is deferred to Phase 6b-2 (or, for
+/// The old `RelationshipProvider` facade served these 7 fields correctly to
+/// every current reader with zero regression at the time, so UI conversion
+/// was deferred to Phase 6b-2 (or, for
 /// `relationship_license_screen.dart`/`relationship_profile_screen.dart`,
-/// to Phase 8's already-planned decomposition) -- the same scope decision
+/// to Phase 8's decomposition) rather than bundled here -- the same scope
+/// decision
 /// made for unit 2, applied here without re-litigating it since the
 /// underlying situation (a real hub already serving a working facade) is
 /// identical. See docs/architecture/migration-roadmap.md's Phase 6b-1 unit

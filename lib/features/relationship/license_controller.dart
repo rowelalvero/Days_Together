@@ -218,16 +218,17 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
 }
 
 /// A default (non-`autoDispose`) `AsyncNotifierProvider` stays alive for the
-/// whole app session -- unlike `RelationshipProvider`, whose fields were
-/// re-initialized to null as a direct part of its own `logout()`/
-/// `unlinkPartner()` methods, `LicenseController`'s cached state has no such
-/// hook by default, and would otherwise leak a signed-out user's license
-/// data into a second account signed into the same app session. `main.dart`'s
-/// `_LicenseLifecycleBridge` watches `RelationshipProvider`'s identity
-/// fields and calls `ref.invalidate(licenseControllerProvider)` on
-/// logout/disconnect, discarding the cached state so the next read re-runs
+/// whole app session -- unlike the old `RelationshipProvider` facade, whose
+/// fields were re-initialized to null as a direct part of its own
+/// `logout()`/`unlinkPartner()` methods, `LicenseController`'s cached state
+/// has no such hook by default, and would otherwise leak a signed-out user's
+/// license data into a second account signed into the same app session.
+/// `main.dart`'s `_LicenseLifecycleBridge` watches `CoupleSession`'s
+/// identity fields directly and calls
+/// `ref.invalidate(licenseControllerProvider)` on logout/disconnect,
+/// discarding the cached state so the next read re-runs
 /// [LicenseController.build] against SharedPreferences -- already cleared by
-/// that point, since `RelationshipProvider.logout()` awaits `prefs.clear()`
+/// that point, since `CoupleSession.logout()` awaits `prefs.clear()`
 /// before its final `notifyListeners()`. Deliberately invalidate-and-rebuild
 /// rather than a hand-written `reset()` method, so there is exactly one
 /// code path (`build()`) responsible for what "empty" state looks like.

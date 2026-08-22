@@ -4,8 +4,8 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 
 void main() {
   group('PrefsKeys', () {
-    test('contains exactly 41 entries (Phase 0 exit criterion)', () {
-      expect(PrefsKeys.all.length, 41);
+    test('contains exactly 43 entries (Phase 0 exit criterion, +2 from the item-14 sweep fix)', () {
+      expect(PrefsKeys.all.length, 43);
     });
 
     test('has no duplicate keys', () {
@@ -23,14 +23,22 @@ void main() {
       // file contains either the raw literal or `PrefsKeys.<constantName>`.
       // Phase 6b-1 moved the remaining 17 keys' literals (session/pairing
       // identity + workspace + profile) from relationship_provider.dart to
-      // couple_session.dart, which now owns the real engine --
-      // relationship_provider.dart is a pass-through facade with no
-      // SharedPreferences access of its own. Add a file here each time a
-      // further extraction moves another group's literals to a new owner.
+      // couple_session.dart, which now owns the real engine. Definition-of-
+      // Done sweep item 4 later deleted relationship_provider.dart entirely
+      // once its last direct readers converted to CoupleSession, so it's no
+      // longer in this list. Add a file here each time a further extraction
+      // moves another group's literals to a new owner. The item-14
+      // Definition-of-Done fix added timelineIsAscending and
+      // vaultPinFallback, owned by timeline_controller.dart/timeline_
+      // provider.dart and vault_controller.dart/vault_provider.dart
+      // respectively.
       final sources = [
-        'lib/providers/relationship_provider.dart',
         'lib/providers/couple_session.dart',
         'lib/features/relationship/license_controller.dart',
+        'lib/features/timeline/timeline_controller.dart',
+        'lib/providers/timeline_provider.dart',
+        'lib/features/vault/vault_controller.dart',
+        'lib/providers/vault_provider.dart',
       ].map((path) => File(path).readAsStringSync()).toList();
 
       // Recover the value -> constant-name mapping directly from

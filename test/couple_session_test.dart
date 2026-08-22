@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -137,12 +138,12 @@ void main() {
   });
 
   // Since Phase 6b-1 of the architecture migration ("make CoupleSession
-  // real"), CoupleSession no longer mirrors RelationshipProvider -- it owns
-  // the engine directly (auth listener, users/couples streams, and every
-  // identity/pairing write method). RelationshipProvider is now the mirror,
-  // as a pass-through facade (see relationship_provider_test.dart for the
-  // facade-delegation coverage). These tests exercise CoupleSession's own
-  // hydration and write paths directly, at the source.
+  // real"), CoupleSession owns the engine directly (auth listener,
+  // users/couples streams, and every identity/pairing write method). The old
+  // RelationshipProvider facade that used to mirror it was deleted once its
+  // last direct readers converted to CoupleSession (Definition-of-Done sweep
+  // item 4). These tests exercise CoupleSession's own hydration and write
+  // paths directly, at the source.
   group('CoupleSession hydration and identity state', () {
     test('hydrates identity fields from SharedPreferences on construction', () async {
       SharedPreferences.setMockInitialValues({
@@ -199,6 +200,21 @@ void main() {
       // Calling it again with the flag already true must be a no-op.
       session.forceInitialized();
       expect(notifyCount, 1);
+    });
+  });
+
+  group('license_details schema drift guard', () {
+    test('Codebase contains no reference to nonexistent license_details.creator_id', () {
+      // Ported from the now-deleted relationship_provider_test.dart when
+      // RelationshipProvider was removed (Definition-of-Done sweep item 4)
+      // -- that file's own deletion must not silently drop this regression
+      // guard, referenced by license_repository.dart's doc comment as the
+      // reason `creator_id` is deliberately left unmodeled: no Dart call
+      // site reads it, and it must stay that way (server-only column).
+      final content = File('lib/providers/couple_session.dart').readAsStringSync();
+      expect(content.contains("['creator_id']"), false);
+      expect(content.contains("'creator_id'"), false);
+      expect(content.contains('"creator_id"'), false);
     });
   });
 }

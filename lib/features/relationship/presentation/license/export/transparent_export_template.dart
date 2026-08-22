@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:days_together/features/relationship/presentation/license/export/license_card_preview.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 
 /// The export studio's transparent-background template -- just the license
 /// card(s), no decorative frame, for pasting into other designs. Extracted
@@ -16,7 +16,7 @@ class TransparentExportTemplate extends StatelessWidget {
     required this.exportFront,
   });
 
-  final RelationshipProvider rp;
+  final CoupleSession rp;
   final bool showBoth;
   final bool isYourLicense;
   final bool exportFront;
