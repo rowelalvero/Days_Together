@@ -46,7 +46,7 @@ class WrappedPageMemories extends StatelessWidget {
               child: WrappedAnimatedCounter(
                 endValue: data.memoriesThisYear.toDouble(),
                 duration: const Duration(milliseconds: 1600),
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 88,
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -140,7 +140,7 @@ class WrappedPageMemories extends StatelessWidget {
                               const SizedBox(height: 6),
                               Text(
                                 data.featuredMemoryTitle!,
-                                style: AppTypography.sectionHeader(
+                                style: AppTypography.heading(
                                   fontSize: 18,
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
@@ -218,7 +218,7 @@ class WrappedPageMemories extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'Your story starts here',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,

@@ -30,7 +30,7 @@ class WrappedPageCalendar extends StatelessWidget {
               builder: (_, v, c) => Opacity(opacity: v, child: c),
               child: Text(
                 'Special Dates',
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 38,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -61,7 +61,7 @@ class WrappedPageCalendar extends StatelessWidget {
                 child: WrappedAnimatedCounter(
                   endValue: data.calendarEventsThisYear.toDouble(),
                   duration: const Duration(milliseconds: 1400),
-                  style: AppTypography.mainCounter(
+                  style: AppTypography.display(
                     fontSize: 80,
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -153,7 +153,7 @@ class WrappedPageCalendar extends StatelessWidget {
             children: [
               Text(
                 'Mark more moments next year.',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/couple_session.dart';
@@ -448,7 +449,7 @@ class _AuthScreenState extends State<AuthScreen> {
   InputDecoration _buildInputDecoration({
     required String label,
     required IconData icon,
-    required dynamic theme,
+    required LoveStoryTheme theme,
     Widget? suffixIcon,
   }) {
     return InputDecoration(

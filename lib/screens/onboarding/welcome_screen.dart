@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -146,7 +147,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     required String label,
     required VoidCallback onPressed,
     required bool isPrimary,
-    required dynamic theme,
+    required LoveStoryTheme theme,
   }) {
     return SizedBox(
       width: double.infinity,

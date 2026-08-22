@@ -37,7 +37,7 @@ class WrappedPageMood extends StatelessWidget {
               builder: (_, v, child) => Opacity(opacity: v, child: child),
               child: Text(
                 'Mood Journey',
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 36,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -257,7 +257,7 @@ class WrappedPageMood extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Mood Journey',
-              style: AppTypography.mainCounter(
+              style: AppTypography.display(
                 fontSize: 36,
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -276,7 +276,7 @@ class WrappedPageMood extends StatelessWidget {
                 children: [
                   Text(
                     'How did this year feel?',
-                    style: AppTypography.sectionHeader(
+                    style: AppTypography.heading(
                       fontSize: 20,
                       color: Colors.white,
                       fontWeight: FontWeight.w700,

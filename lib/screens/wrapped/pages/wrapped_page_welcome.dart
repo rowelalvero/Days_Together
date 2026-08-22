@@ -82,7 +82,7 @@ class _WrappedPageWelcomeState extends State<WrappedPageWelcome>
                   Opacity(opacity: v, child: child),
               child: Text(
                 'Wrapped ${widget.data.year}',
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 52,
                   color: Colors.white,
                   fontWeight: FontWeight.w900,

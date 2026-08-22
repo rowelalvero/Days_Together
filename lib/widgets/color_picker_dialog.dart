@@ -70,7 +70,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
           children: [
             Text(
               'Select Color',
-              style: AppTypography.sectionHeader(
+              style: AppTypography.heading(
                 color: widget.theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,

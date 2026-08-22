@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +13,7 @@ import 'package:days_together/widgets/storage_image.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
   final TimelineProvider timelineProvider;
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const MemoryHighlightCarousel({
     super.key,
@@ -150,7 +151,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
     );
   }
 
-  Widget _buildImageCard(TimelineItemData item, dynamic theme) {
+  Widget _buildImageCard(TimelineItemData item, LoveStoryTheme theme) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -240,7 +241,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
     );
   }
 
-  Widget _buildTextCard(TimelineItemData item, dynamic theme) {
+  Widget _buildTextCard(TimelineItemData item, LoveStoryTheme theme) {
     return GlassContainer(
       padding: const EdgeInsets.all(16),
       borderRadius: 24,
@@ -274,7 +275,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
           Expanded(
             child: Text(
               item.description,
-              style: AppTypography.sectionHeader(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4).copyWith(fontStyle: FontStyle.italic),
+              style: AppTypography.heading(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4).copyWith(fontStyle: FontStyle.italic),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -309,7 +310,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
 
 class OpenContainerWrapper extends StatelessWidget {
   final TimelineItemData item;
-  final dynamic theme;
+  final LoveStoryTheme theme;
   final Widget child;
 
   const OpenContainerWrapper({

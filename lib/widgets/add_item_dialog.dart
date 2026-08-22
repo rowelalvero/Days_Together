@@ -99,7 +99,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           ),
           Text(
             'New Memory',
-            style: AppTypography.pageTitle(color: theme.textColor, fontSize: 22, fontWeight: FontWeight.bold),
+            style: AppTypography.display(color: theme.textColor, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveItem,

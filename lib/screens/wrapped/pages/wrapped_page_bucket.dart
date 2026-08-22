@@ -31,7 +31,7 @@ class WrappedPageBucket extends StatelessWidget {
               builder: (_, v, child) => Opacity(opacity: v, child: child),
               child: Text(
                 'Bucket List',
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 38,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -126,7 +126,7 @@ class WrappedPageBucket extends StatelessWidget {
                             WrappedAnimatedCounter(
                               endValue: data.bucketCompletedThisYear.toDouble(),
                               duration: const Duration(milliseconds: 1400),
-                              style: AppTypography.mainCounter(
+                              style: AppTypography.display(
                                 fontSize: 40,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -212,7 +212,7 @@ class WrappedPageBucket extends StatelessWidget {
             children: [
               Text(
                 'Dream big together next year.',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

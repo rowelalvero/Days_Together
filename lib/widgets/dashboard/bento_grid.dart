@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
@@ -28,7 +29,7 @@ import 'package:days_together/providers/relationship_provider.dart';
 // Screens
 
 class BentoGrid extends StatelessWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const BentoGrid({super.key, required this.theme});
 
@@ -119,7 +120,7 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Shared Calendar',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -242,7 +243,7 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Daily Mood',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -363,7 +364,7 @@ class BentoGrid extends StatelessWidget {
                   children: [
                     Text(
                       'Emotional Wave Map',
-                      style: AppTypography.cardTitle(
+                      style: AppTypography.title(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: theme.textColor,
@@ -523,7 +524,7 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Secret Vault',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -647,7 +648,7 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Chat Space',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -766,7 +767,7 @@ class BentoGrid extends StatelessWidget {
                 event.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: theme.textColor,
@@ -894,7 +895,7 @@ class BentoGrid extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '$emoji $score',
-                  style: AppTypography.sectionHeader(
+                  style: AppTypography.heading(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -1257,7 +1258,7 @@ class BentoGrid extends StatelessWidget {
                 // Title: Daily Sync Question
                 Text(
                   'Daily Sync Question',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -1281,7 +1282,7 @@ class BentoGrid extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style:
-                            AppTypography.sectionHeader(
+                            AppTypography.heading(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w600,
                               color: theme.textColor,
@@ -1499,7 +1500,7 @@ class BentoGrid extends StatelessWidget {
                 // Title: Bucket List Goals
                 Text(
                   'Bucket List Goals',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -1743,7 +1744,7 @@ class BentoGrid extends StatelessWidget {
                 // Title: Time Capsules
                 Text(
                   'Time Capsules',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -1781,7 +1782,7 @@ class BentoGrid extends StatelessWidget {
                                     latestLockedMessage,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.sectionHeader(
+                                    style: AppTypography.heading(
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w700,
                                       color: theme.textColor,
@@ -2013,7 +2014,7 @@ class BentoGrid extends StatelessWidget {
 }
 
 class DoodleNotesBentoCard extends StatefulWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
   const DoodleNotesBentoCard({super.key, required this.theme});
 
   @override
@@ -2111,7 +2112,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                 const SizedBox(height: 12),
                 Text(
                   'Scrapbook',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: widget.theme.textColor,
@@ -2298,7 +2299,7 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
           latest.type == NoteitType.text ? 'Shared Text Note 📝' : previewText,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.sectionHeader(
+          style: AppTypography.heading(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: widget.theme.textColor.withValues(alpha: 0.95),

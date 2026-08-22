@@ -106,7 +106,7 @@ class _WrappedPageFinaleState extends State<WrappedPageFinale>
                   builder: (_, v, c) => Opacity(opacity: v, child: c),
                   child: Text(
                     'Thank You',
-                    style: AppTypography.mainCounter(
+                    style: AppTypography.display(
                       fontSize: 52,
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -276,7 +276,7 @@ class _WrappedPageFinaleState extends State<WrappedPageFinale>
           const SizedBox(height: 20),
           Text(
             '${widget.data.yourName} & ${widget.data.partnerDisplayName}',
-            style: AppTypography.sectionHeader(
+            style: AppTypography.heading(
               fontSize: 22,
               color: Colors.white,
               fontWeight: FontWeight.w700,

@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'package:days_together/screens/onboarding/genesis_screen.dart';
 import 'package:flutter/material.dart';
@@ -334,7 +335,7 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
-    required dynamic theme,
+    required LoveStoryTheme theme,
   }) {
     return OutlinedButton.icon(
       onPressed: onPressed,

@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +11,7 @@ import 'package:days_together/services/date_helper.dart';
 
 class DetailedDaysCounter extends StatefulWidget {
   final WorkspaceState workspace;
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const DetailedDaysCounter({
     super.key,
@@ -96,7 +97,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                   builder: (context, value, child) {
                     return Text(
                       NumberFormat('#,###').format(value.toInt()),
-                      style: AppTypography.mainCounter(
+                      style: AppTypography.display(
                         fontSize: 72,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,

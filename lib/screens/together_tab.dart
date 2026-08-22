@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -27,7 +28,7 @@ class TogetherTab extends StatelessWidget {
           children: [
             Text(
               'Together',
-              style: AppTypography.pageTitle(
+              style: AppTypography.display(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -145,7 +146,7 @@ class TogetherTab extends StatelessWidget {
 
   Widget _buildFeatureCard({
     required BuildContext context,
-    required dynamic theme,
+    required LoveStoryTheme theme,
     required String emoji,
     required String title,
     required String subtitle,
@@ -174,7 +175,7 @@ class TogetherTab extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

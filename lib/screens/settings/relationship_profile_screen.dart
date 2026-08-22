@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -73,7 +74,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthDebugInfo(CoupleSession rp, dynamic theme) {
+  Widget _buildAuthDebugInfo(CoupleSession rp, LoveStoryTheme theme) {
     return Center(
       child: Opacity(
         opacity: 0.3,
@@ -88,7 +89,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, dynamic theme) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 10, 20, 10),
       child: Row(
@@ -117,7 +118,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   Widget _buildHeaderSection(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final partnerJoined = rp.partnerId != null;
     return GlassContainer(
@@ -187,7 +188,7 @@ class RelationshipProfileScreen extends StatelessWidget {
           ] else ...[
             Text(
               rp.yourName ?? 'You',
-              style: AppTypography.sectionHeader(
+              style: AppTypography.heading(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -229,7 +230,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarWidget(String? path, String name, dynamic theme) {
+  Widget _buildAvatarWidget(String? path, String name, LoveStoryTheme theme) {
     return Column(
       children: [
         AppAvatar(
@@ -257,7 +258,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatarPlaceholder(dynamic theme) {
+  Widget _buildAvatarPlaceholder(LoveStoryTheme theme) {
     return Column(
       children: [
         AppAvatar(
@@ -281,7 +282,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   Widget _buildInfoCard(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final start = rp.startDate;
     final formattedStart = start != null
@@ -359,7 +360,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     required String title,
     required List<Widget> items,
     bool isFullWidth = false,
-    required dynamic theme,
+    required LoveStoryTheme theme,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +398,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   Future<void> _editDate(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) async {
     final date = await showDatePicker(
       context: context,
@@ -420,7 +421,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   Future<void> _editTime(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) async {
     final time = await showTimePicker(
       context: context,
@@ -443,7 +444,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     Widget _buildRegenerateRecoveryCodeButton(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     return Container(
       width: double.infinity,
@@ -475,7 +476,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   void _showRegenerateRecoveryCodeDialog(
     BuildContext profileContext,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     showDialog(
       context: profileContext,
@@ -513,7 +514,7 @@ class RelationshipProfileScreen extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 'Regenerate Recovery Code',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: theme.textColor,
@@ -591,7 +592,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   void _showNewRecoveryCodeDialog(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     bool saved = false;
     showDialog(
@@ -621,7 +622,7 @@ class RelationshipProfileScreen extends StatelessWidget {
                 Center(
                   child: Text(
                     'Your New Recovery Code',
-                    style: AppTypography.sectionHeader(
+                    style: AppTypography.heading(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: theme.textColor,
@@ -724,7 +725,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-Widget _buildDangerZoneDivider(dynamic theme) {
+Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
     return Row(
       children: [
         Expanded(
@@ -768,7 +769,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   Widget _buildUnlinkButton(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final partnerJoined = rp.partnerId != null;
     if (!partnerJoined) {
@@ -803,7 +804,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   Widget _buildDeleteAccountButton(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     return Container(
       width: double.infinity,
@@ -834,7 +835,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   void _showDeleteAccountConfirmation(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     showDialog(
       context: context,
@@ -873,7 +874,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
                 const SizedBox(height: 20),
                 Text(
                   'Delete Account',
-                  style: AppTypography.sectionHeader(
+                  style: AppTypography.heading(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -958,7 +959,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   void _showUnlinkConfirmation(
     BuildContext profileContext,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final partnerJoined = rp.partnerId != null;
     showDialog(
@@ -997,7 +998,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
               const SizedBox(height: 20),
               Text(
                 partnerJoined ? 'Disconnect Relationship' : 'Cancel Invitation',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: theme.textColor,
@@ -1067,7 +1068,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   void _editProfileDialog(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final yourController = TextEditingController(text: rp.yourName);
     final partnerController = TextEditingController(text: rp.partnerName);
@@ -1093,7 +1094,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
               children: [
                 Text(
                   'Edit Your Profiles',
-                  style: AppTypography.sectionHeader(
+                  style: AppTypography.heading(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -1166,7 +1167,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   Widget _buildAvatarRow(
     BuildContext context,
     CoupleSession rp,
-    dynamic theme,
+    LoveStoryTheme theme,
     bool isYou,
   ) {
     final path = isYou ? rp.yourAvatarPath : rp.partnerAvatarPath;
@@ -1203,7 +1204,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
   Widget _buildNameField(
     TextEditingController controller,
     String label,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     return GlassContainer(
       opacity: 0.05,
@@ -1273,7 +1274,7 @@ class _StatTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final dynamic theme;
+  final LoveStoryTheme theme;
   final VoidCallback? onTap;
   final bool isFullWidth;
 
@@ -1344,7 +1345,7 @@ class _StatTile extends StatelessWidget {
 
 class PairingOptionsSection extends StatefulWidget {
   final CoupleSession rp;
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const PairingOptionsSection({
     super.key,
@@ -1640,7 +1641,7 @@ class _PairingOptionsSectionState extends State<PairingOptionsSection> {
   Widget _buildIconButton({
     required IconData icon,
     required VoidCallback onTap,
-    required dynamic theme,
+    required LoveStoryTheme theme,
   }) {
     return GestureDetector(
       onTap: onTap,

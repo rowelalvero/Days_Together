@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -111,7 +112,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
               children: [
                 Text(
                   "Share what you're doing...",
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -443,7 +444,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     );
   }
 
-  Widget _buildLoveTapButton(CurrentlyProvider currently, dynamic theme) {
+  Widget _buildLoveTapButton(CurrentlyProvider currently, LoveStoryTheme theme) {
     String label = 'Love Tap';
     IconData icon = Icons.favorite_border_rounded;
     Color buttonColor = theme.textColor.withValues(alpha: 0.06);

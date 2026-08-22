@@ -148,7 +148,7 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                                 children: [
                                   Text(
                                     currentItem.title,
-                                    style: AppTypography.pageTitle(
+                                    style: AppTypography.display(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: theme.textColor,
@@ -326,7 +326,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
           ),
           Text(
             'Edit Memory',
-            style: AppTypography.sectionHeader(color: theme.textColor, fontSize: 20, fontWeight: FontWeight.bold),
+            style: AppTypography.heading(color: theme.textColor, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveChanges,

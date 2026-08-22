@@ -46,7 +46,7 @@ class WrappedPageNotes extends StatelessWidget {
                 child: WrappedAnimatedCounter(
                   endValue: data.notesThisYear.toDouble(),
                   duration: const Duration(milliseconds: 1600),
-                  style: AppTypography.mainCounter(
+                  style: AppTypography.display(
                     fontSize: 88,
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -148,7 +148,7 @@ class WrappedPageNotes extends StatelessWidget {
             children: [
               Text(
                 'No notes this year — yet.',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
@@ -126,7 +127,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
           children: [
             Text(
               'Notes',
-              style: AppTypography.sectionHeader(
+              style: AppTypography.heading(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -206,7 +207,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     bool isMe,
     String authorName,
     String? avatarPath,
-    dynamic theme,
+    LoveStoryTheme theme,
     TimelineProvider provider,
   ) {
     final isDark = theme.isDark;
@@ -414,7 +415,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     );
   }
 
-  Widget _buildComposer(TimelineProvider provider, String yourName, dynamic theme) {
+  Widget _buildComposer(TimelineProvider provider, String yourName, LoveStoryTheme theme) {
     final isDark = theme.isDark;
     final composerBgColor = isDark
         ? Colors.white.withValues(alpha: 0.03)
@@ -492,7 +493,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     BuildContext context,
     CommentData note,
     TimelineProvider provider,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     showModalBottomSheet(
       context: context,
@@ -539,7 +540,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     );
   }
 
-  Widget _buildEmptyState(dynamic theme) {
+  Widget _buildEmptyState(LoveStoryTheme theme) {
     final isDark = theme.isDark;
     final emptyBgColor = isDark
         ? Colors.white.withValues(alpha: 0.02)

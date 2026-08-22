@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -74,7 +75,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                           existingReminder == null
                               ? '🎁 New Gift Reminder'
                               : '🎁 Edit Gift Reminder',
-                          style: AppTypography.cardTitle(
+                          style: AppTypography.title(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: theme.textColor,
@@ -417,7 +418,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     );
   }
 
-  Widget _buildListView(GiftReminderProvider provider, dynamic theme) {
+  Widget _buildListView(GiftReminderProvider provider, LoveStoryTheme theme) {
     final sortedList = provider.upcomingReminders;
     return ListView.builder(
       itemCount: sortedList.length,
@@ -431,7 +432,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
 
   Widget _buildReminderCard(
     GiftReminder reminder,
-    dynamic theme,
+    LoveStoryTheme theme,
     GiftReminderProvider provider,
   ) {
     final dateStr = DateFormat('MMMM dd').format(reminder.date);
@@ -579,7 +580,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                             backgroundColor: theme.primaryColor,
                             title: Text(
                               'Delete Reminder?',
-                              style: AppTypography.cardTitle(
+                              style: AppTypography.title(
                                 color: theme.textColor,
                               ),
                             ),
@@ -628,7 +629,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     );
   }
 
-  Widget _buildEmptyState(dynamic theme) {
+  Widget _buildEmptyState(LoveStoryTheme theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -650,7 +651,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
             const SizedBox(height: 24),
             Text(
               'Never forget a date.',
-              style: AppTypography.pageTitle(
+              style: AppTypography.display(
                 color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,

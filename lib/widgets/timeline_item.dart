@@ -156,7 +156,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
     ];
   }
 
-  Widget _buildCenterPoint(dynamic theme) {
+  Widget _buildCenterPoint(LoveStoryTheme theme) {
     final isSelected = widget.isSelected;
     return SizedBox(
       width: 40,
@@ -294,7 +294,7 @@ class _TimelineItemWidgetState extends State<TimelineItemWidget> with SingleTick
         const SizedBox(height: 8),
         Text(
           widget.item.description,
-          style: AppTypography.sectionHeader(fontSize: 13, color: theme.textColor.withValues(alpha: 0.7), height: 1.5).copyWith(fontStyle: FontStyle.italic),
+          style: AppTypography.heading(fontSize: 13, color: theme.textColor.withValues(alpha: 0.7), height: 1.5).copyWith(fontStyle: FontStyle.italic),
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
         ),

@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -20,7 +21,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
   bool _isGenerating = false;
   String? _generatedLetter;
 
-  void _generateLetter(dynamic theme) async {
+  void _generateLetter(LoveStoryTheme theme) async {
     final timelineProvider = context.read<TimelineProvider>();
     if (_selectedMemoryId == null && timelineProvider.timelineItems.isNotEmpty) {
       _selectedMemoryId = timelineProvider.timelineItems.first.id;
@@ -65,7 +66,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     }
   }
 
-  void _saveToVault(BuildContext context, dynamic theme) async {
+  void _saveToVault(BuildContext context, LoveStoryTheme theme) async {
     if (_generatedLetter == null) return;
     final vault = context.read<VaultProvider>();
 
@@ -74,7 +75,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: theme.primaryColor,
-          title: Text('Vault Locked', style: AppTypography.cardTitle(color: theme.textColor)),
+          title: Text('Vault Locked', style: AppTypography.title(color: theme.textColor)),
           content: Text(
             'Please set up a Secret Vault PIN under the Together tab first to save your letters securely.',
             style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
@@ -98,7 +99,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
         builder: (dialogContext) {
           return AlertDialog(
             backgroundColor: theme.primaryColor,
-            title: Text('Enter Vault PIN', style: AppTypography.cardTitle(color: theme.textColor)),
+            title: Text('Enter Vault PIN', style: AppTypography.title(color: theme.textColor)),
             content: TextField(
               controller: pinController,
               keyboardType: TextInputType.number,
@@ -202,7 +203,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, dynamic theme) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -239,7 +240,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildNoMemoriesState(dynamic theme) {
+  Widget _buildNoMemoriesState(LoveStoryTheme theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40.0),
@@ -250,7 +251,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
             const SizedBox(height: 24),
             Text(
               'No memories logged yet',
-              style: AppTypography.cardTitle(color: theme.textColor),
+              style: AppTypography.title(color: theme.textColor),
             ),
             const SizedBox(height: 8),
             Text(
@@ -264,7 +265,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildMemoryDropdown(List<dynamic> memories, dynamic theme) {
+  Widget _buildMemoryDropdown(List<dynamic> memories, LoveStoryTheme theme) {
     if (_selectedMemoryId == null && memories.isNotEmpty) {
       _selectedMemoryId = memories.first.id;
     }
@@ -311,7 +312,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildActionButtons(dynamic theme) {
+  Widget _buildActionButtons(LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SizedBox(
@@ -336,7 +337,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildGeneratingState(dynamic theme) {
+  Widget _buildGeneratingState(LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Center(
@@ -357,7 +358,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
     );
   }
 
-  Widget _buildLetterCard(dynamic theme) {
+  Widget _buildLetterCard(LoveStoryTheme theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(24),

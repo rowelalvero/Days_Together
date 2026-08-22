@@ -21,7 +21,7 @@ class ThemeSelectorScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Themes',
-          style: AppTypography.sectionHeader(
+          style: AppTypography.heading(
             fontWeight: FontWeight.bold,
             color: theme.textColor,
           ),

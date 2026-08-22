@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +24,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     super.dispose();
   }
 
-  void _showCreateCapsuleSheet(BuildContext context, dynamic theme) {
+  void _showCreateCapsuleSheet(BuildContext context, LoveStoryTheme theme) {
     _messageController.clear();
     _selectedDate = null;
 
@@ -62,7 +63,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                       children: [
                         Text(
                           '✉️ Create Time Capsule',
-                          style: AppTypography.cardTitle(
+                          style: AppTypography.title(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: theme.textColor,
@@ -219,7 +220,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
   void _showCapsuleDetailDialog(
     BuildContext context,
     TimeCapsule capsule,
-    dynamic theme,
+    LoveStoryTheme theme,
     TimeCapsuleProvider provider,
   ) {
     if (!capsule.isOpened && capsule.canOpen) {
@@ -240,7 +241,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
               const SizedBox(width: 12),
               Text(
                 'Opened Capsule',
-                style: AppTypography.cardTitle(color: theme.textColor),
+                style: AppTypography.title(color: theme.textColor),
               ),
             ],
           ),
@@ -319,7 +320,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, dynamic theme) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -359,7 +360,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildCapsuleLists(TimeCapsuleProvider provider, dynamic theme) {
+  Widget _buildCapsuleLists(TimeCapsuleProvider provider, LoveStoryTheme theme) {
     final openable = provider.openableCapsules;
     final locked = provider.lockedCapsules;
     final opened = provider.openedCapsules;
@@ -390,10 +391,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, dynamic theme) {
+  Widget _buildSectionHeader(String title, LoveStoryTheme theme) {
     return Text(
       title,
-      style: AppTypography.sectionHeader(
+      style: AppTypography.heading(
         fontSize: 16,
         color: theme.textColor.withValues(alpha: 0.7),
       ),
@@ -402,7 +403,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
 
   Widget _buildCapsuleCard(
     TimeCapsule capsule,
-    dynamic theme,
+    LoveStoryTheme theme,
     TimeCapsuleProvider provider,
     bool isOpenable,
   ) {
@@ -507,7 +508,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                     backgroundColor: theme.primaryColor,
                     title: Text(
                       'Delete Time Capsule?',
-                      style: AppTypography.cardTitle(color: theme.textColor),
+                      style: AppTypography.title(color: theme.textColor),
                     ),
                     content: Text(
                       'Are you sure you want to delete this time capsule? Its contents will be permanently lost.',
@@ -546,7 +547,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildEmptyState(dynamic theme) {
+  Widget _buildEmptyState(LoveStoryTheme theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -568,7 +569,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
             const SizedBox(height: 24),
             Text(
               'Send a message to the future.',
-              style: AppTypography.pageTitle(
+              style: AppTypography.display(
                 color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,

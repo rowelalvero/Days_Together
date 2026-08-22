@@ -417,6 +417,11 @@ class MyApp extends StatelessWidget {
           brightness: brightness,
         ),
         cardColor: theme.cardColor,
+        // Registers the full LoveStoryTheme (including the Phase 7 design
+        // tokens) as a typed accessor via Theme.of(context).extension<LoveStoryTheme>(),
+        // composing with Material's own ColorScheme/TextTheme above rather
+        // than replacing them -- see docs/architecture/design-system.md.
+        extensions: <ThemeExtension<dynamic>>[theme],
       ),
     );
   }

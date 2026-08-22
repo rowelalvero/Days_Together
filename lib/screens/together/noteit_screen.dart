@@ -504,7 +504,7 @@ class _NoteitScreenState extends State<NoteitScreen>
         backgroundColor: theme.backgroundColor,
         title: Text(
           'Clear Canvas?',
-          style: AppTypography.sectionHeader(
+          style: AppTypography.heading(
             color: theme.textColor,
             fontWeight: FontWeight.bold,
           ),
@@ -2052,7 +2052,7 @@ class _NoteitScreenState extends State<NoteitScreen>
             backgroundColor: theme.backgroundColor,
             title: Text(
               'Canvas Settings',
-              style: AppTypography.sectionHeader(
+              style: AppTypography.heading(
                 color: theme.textColor,
                 fontWeight: FontWeight.bold,
               ),
@@ -2294,7 +2294,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                 backgroundColor: theme.backgroundColor,
                 title: Text(
                   'Delete Canvas?',
-                  style: AppTypography.sectionHeader(
+                  style: AppTypography.heading(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2412,7 +2412,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                 backgroundColor: theme.backgroundColor,
                 title: Text(
                   'Sync Failed',
-                  style: AppTypography.sectionHeader(
+                  style: AppTypography.heading(
                     color: theme.textColor,
                     fontWeight: FontWeight.bold,
                   ),

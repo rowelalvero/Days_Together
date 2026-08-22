@@ -31,7 +31,7 @@ class WrappedPageCapsule extends StatelessWidget {
               builder: (_, v, c) => Opacity(opacity: v, child: c),
               child: Text(
                 'Time Capsules',
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 36,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -141,7 +141,7 @@ class WrappedPageCapsule extends StatelessWidget {
               WrappedAnimatedCounter(
                 endValue: value,
                 duration: Duration(milliseconds: 1000 + delay),
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 32,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -178,7 +178,7 @@ class WrappedPageCapsule extends StatelessWidget {
             children: [
               Text(
                 'Leave a message for future you.',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

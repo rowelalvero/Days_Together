@@ -52,7 +52,7 @@ class _WrappedPageMilestonesState extends State<WrappedPageMilestones> {
                     hasMilestones
                         ? '🏆 Milestones Unlocked'
                         : '🏆 Milestones',
-                    style: AppTypography.mainCounter(
+                    style: AppTypography.display(
                       fontSize: 30,
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -204,7 +204,7 @@ class _WrappedPageMilestonesState extends State<WrappedPageMilestones> {
             children: [
               Text(
                 'Your next milestone is coming.',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

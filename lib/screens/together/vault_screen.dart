@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -36,7 +37,7 @@ class VaultScreen extends StatelessWidget {
 
 // ── PIN SETUP ──
 class _SetPinScreen extends StatefulWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
   final LinearGradient gradient;
   const _SetPinScreen({required this.theme, required this.gradient});
 
@@ -109,7 +110,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
 
 // ── PIN ENTRY ──
 class _PinEntryScreen extends StatefulWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
   final LinearGradient gradient;
   const _PinEntryScreen({required this.theme, required this.gradient});
 
@@ -196,7 +197,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
 
 // ── VAULT CONTENT ──
 class _VaultContentScreen extends StatelessWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
   final LinearGradient gradient;
   const _VaultContentScreen({required this.theme, required this.gradient});
 
@@ -314,7 +315,7 @@ class _VaultContentScreen extends StatelessWidget {
                       context: context,
                       builder: (ctx) => AlertDialog(
                         backgroundColor: theme.primaryColor,
-                        title: Text('Delete Photo?', style: AppTypography.cardTitle(color: theme.textColor)),
+                        title: Text('Delete Photo?', style: AppTypography.title(color: theme.textColor)),
                         actions: [
                           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.5)))),
                           TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: AppTypography.button(color: Colors.red))),
@@ -461,7 +462,7 @@ class _VaultContentScreen extends StatelessWidget {
           children: [
             Text(
               '💌 Write a Love Letter',
-              style: AppTypography.cardTitle(
+              style: AppTypography.title(
                 color: theme.textColor,
                 fontSize: 20,
               ),

@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -141,7 +142,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
 
   Widget _buildHeader(
     BuildContext context,
-    dynamic theme, {
+    LoveStoryTheme theme, {
     required String? partnerAvatarPath,
     required bool isPartnerOnline,
     required bool partnerJoined,
@@ -208,7 +209,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     bool isMe,
     bool isFirstInGroup,
     bool isLastInGroup,
-    dynamic theme,
+    LoveStoryTheme theme,
     LoveChatProvider provider,
   ) {
     final isRevealed = _revealedMessageIds.contains(message.id);
@@ -547,7 +548,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  Widget _buildInputRow(LoveChatProvider provider, dynamic theme, String yourName) {
+  Widget _buildInputRow(LoveChatProvider provider, LoveStoryTheme theme, String yourName) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Row(
@@ -615,7 +616,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  Widget _buildEmptyState(dynamic theme) {
+  Widget _buildEmptyState(LoveStoryTheme theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -640,7 +641,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  void _showEnlargeNoteDialog(BuildContext context, NoteitItem item, dynamic theme) {
+  void _showEnlargeNoteDialog(BuildContext context, NoteitItem item, LoveStoryTheme theme) {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -686,7 +687,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  Widget _buildWidgetContent(NoteitItem item, dynamic theme) {
+  Widget _buildWidgetContent(NoteitItem item, LoveStoryTheme theme) {
     if (item.imagePath != null && File(item.imagePath!).existsSync()) {
       return Image.file(
         File(item.imagePath!),

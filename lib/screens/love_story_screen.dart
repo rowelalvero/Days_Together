@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:days_together/providers/theme_provider.dart';
@@ -28,7 +29,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerState, ConsumerStatefulWidget;
 import 'package:provider/provider.dart';
-import 'package:animations/animations.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 
@@ -47,6 +47,19 @@ class LoveStoryScreen extends StatefulWidget {
 class LoveStoryScreenState extends State<LoveStoryScreen> {
   int _currentIndex = 0;
   DateTime? _lastBackPressTime;
+
+  // Hoisted so each tab's widget identity is stable across LoveStoryScreen
+  // rebuilds; combined with IndexedStack below, this keeps every tab's
+  // State (scroll position, storybook mode, etc.) alive when switching
+  // away and back instead of disposing and recreating it.
+  final GlobalKey<_TimelineTabState> _timelineTabKey = GlobalKey<_TimelineTabState>();
+  late final List<Widget> _pages = [
+    const HomeDashboard(key: PageStorageKey('loveStoryPage_home')),
+    TimelineTab(key: _timelineTabKey),
+    const TogetherTab(key: PageStorageKey('loveStoryPage_together')),
+    const StudioTab(key: PageStorageKey('loveStoryPage_studio')),
+    const SettingsTab(key: PageStorageKey('loveStoryPage_settings')),
+  ];
 
   void setIndex(int index) {
     if (mounted) {
@@ -99,7 +112,7 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
             ),
             title: Text(
               'Connection Update',
-              style: AppTypography.sectionHeader(
+              style: AppTypography.heading(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -206,14 +219,6 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
     final theme = themeProvider.currentLoveTheme;
     final hasTimelineItems = context.select<TimelineProvider, bool>((p) => p.timelineItems.isNotEmpty);
 
-    final List<Widget> pages = [
-      const HomeDashboard(),
-      const TimelineTab(),
-      const TogetherTab(),
-      const StudioTab(),
-      const SettingsTab(),
-    ];
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) => _handleBackInvoked(didPop, result),
@@ -266,19 +271,14 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
                     ),
                   ),
                 ),
-                // Screen Pages Content
+                // Screen Pages Content -- IndexedStack keeps every tab's
+                // widget subtree mounted (just visually hidden) so
+                // switching tabs no longer disposes and recreates their
+                // State (scroll position, in-progress edits, etc.).
                 Positioned.fill(
-                  child: PageTransitionSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    transitionBuilder: (child, primaryAnimation, secondaryAnimation) {
-                      return FadeThroughTransition(
-                        animation: primaryAnimation,
-                        secondaryAnimation: secondaryAnimation,
-                        fillColor: Colors.transparent,
-                        child: child,
-                      );
-                    },
-                    child: pages[_currentIndex],
+                  child: IndexedStack(
+                    index: _currentIndex,
+                    children: _pages,
                   ),
                 ),
                  Positioned(
@@ -317,7 +317,7 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
     );
   }
 
-  Widget _buildUnifiedFloatingBar(dynamic theme) {
+  Widget _buildUnifiedFloatingBar(LoveStoryTheme theme) {
     final double marginBot = _floatingBarMarginBottom;
 
     final isLight = Theme.of(context).brightness == Brightness.light;
@@ -329,7 +329,12 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
 
     return Consumer<TimelineProvider>(
       builder: (context, timelineProvider, child) {
-        final items = timelineProvider.timelineItems;
+        // The scrubber row's content and interaction logic are defined and
+        // owned by TimelineTab (the only tab that uses it); this shared
+        // shell just asks it for a widget to slot into its own capsule, so
+        // it doesn't need to know about RulerPickerScrubber at all.
+        final scrubberRow = _timelineTabKey.currentState?.buildFloatingScrubber(timelineProvider);
+        final showScrubber = _currentIndex == 1 && scrubberRow != null;
         return Container(
           padding: EdgeInsets.fromLTRB(20, 0, 20, marginBot),
           child: TweenAnimationBuilder<double>(
@@ -337,7 +342,7 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
             curve: Curves.easeInOutCubic,
             tween: Tween<double>(
               begin: 35.0,
-              end: _currentIndex == 1 && items.isNotEmpty ? 24.0 : 35.0,
+              end: showScrubber ? 24.0 : 35.0,
             ),
             builder: (context, radius, child) {
               return ClipRRect(
@@ -372,39 +377,14 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
                 ClipRect(
                   child: AnimatedAlign(
                     alignment: Alignment.topCenter,
-                    heightFactor: _currentIndex == 1 && items.isNotEmpty ? 1.0 : 0.0,
+                    heightFactor: showScrubber ? 1.0 : 0.0,
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOutCubic,
                     child: AnimatedOpacity(
-                      opacity: _currentIndex == 1 && items.isNotEmpty ? 1.0 : 0.0,
+                      opacity: showScrubber ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeInOutCubic,
-                      child: SizedBox(
-                        height: 78,
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: RulerPickerScrubber(
-                                items: items,
-                                selectedIndex: timelineProvider.currentScrubIndex,
-                                isAscending: timelineProvider.isAscending,
-                                hasBackground: false,
-                                onIndexChanged: (index) {
-                                  timelineProvider.setCurrentScrubIndex(index);
-                                },
-                              ),
-                            ),
-                            const Divider(
-                              color: Colors.white10,
-                              height: 1,
-                              thickness: 1,
-                              indent: 20,
-                              endIndent: 20,
-                            ),
-                            const SizedBox(height: 7),
-                          ],
-                        ),
-                      ),
+                      child: scrubberRow ?? const SizedBox(height: 78),
                     ),
                   ),
                 ),
@@ -464,7 +444,7 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
     IconData activeIcon,
     IconData inactiveIcon,
     String label,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final isSelected = _currentIndex == index;
     return GestureDetector(
@@ -563,7 +543,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
                 const SizedBox(width: 8),
                 Text(
                   'Latest Captured Memories',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: theme.textColor,
@@ -702,7 +682,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
   void _showEditTitleDialog(
     BuildContext context,
     String currentStoryTitle,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final controller = TextEditingController(text: currentStoryTitle);
     showDialog(
@@ -711,7 +691,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
         backgroundColor: theme.primaryColor,
         title: Text(
           'Edit Story Title',
-          style: AppTypography.sectionHeader(color: theme.textColor),
+          style: AppTypography.heading(color: theme.textColor),
         ),
         content: TextField(
           controller: controller,
@@ -739,6 +719,43 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
             },
             child: Text('Save', style: AppTypography.button(color: theme.accentColor)),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the scrubber row (ruler picker + divider) shown inside the
+  /// shared floating shell bar's capsule when this tab is active and has
+  /// items. Defined here since this tab is the only feature that uses
+  /// RulerPickerScrubber; `LoveStoryScreenState._buildUnifiedFloatingBar`
+  /// reaches this via a `GlobalKey` and slots it into its own capsule,
+  /// rather than knowing about the scrubber itself.
+  Widget? buildFloatingScrubber(TimelineProvider timelineProvider) {
+    final items = timelineProvider.timelineItems;
+    if (items.isEmpty) return null;
+    return SizedBox(
+      height: 78,
+      child: Column(
+        children: [
+          Expanded(
+            child: RulerPickerScrubber(
+              items: items,
+              selectedIndex: timelineProvider.currentScrubIndex,
+              isAscending: timelineProvider.isAscending,
+              hasBackground: false,
+              onIndexChanged: (index) {
+                timelineProvider.setCurrentScrubIndex(index);
+              },
+            ),
+          ),
+          const Divider(
+            color: Colors.white10,
+            height: 1,
+            thickness: 1,
+            indent: 20,
+            endIndent: 20,
+          ),
+          const SizedBox(height: 7),
         ],
       ),
     );
@@ -791,7 +808,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
                                 onTap: () => _showEditTitleDialog(context, storyTitle, theme),
                                 child: Text(
                                   storyTitle,
-                                  style: AppTypography.pageTitle(
+                                  style: AppTypography.display(
                                     fontWeight: FontWeight.bold,
                                     color: theme.textColor,
                                     fontSize: 24,
@@ -911,7 +928,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, dynamic theme) {
+  Widget _buildEmptyState(BuildContext context, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
@@ -933,7 +950,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
           Text(
             'Your story begins here.',
             textAlign: TextAlign.center,
-            style: AppTypography.sectionHeader(
+            style: AppTypography.heading(
               color: theme.textColor,
               fontSize: 26,
               fontWeight: FontWeight.bold,

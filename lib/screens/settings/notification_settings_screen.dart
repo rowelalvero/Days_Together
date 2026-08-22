@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/notification_preferences_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -36,7 +37,7 @@ class NotificationSettingsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'Notifications',
-          style: AppTypography.sectionHeader(
+          style: AppTypography.heading(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: theme.textColor,
@@ -282,7 +283,7 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, dynamic theme) {
+  Widget _buildSectionHeader(String title, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Text(
@@ -301,7 +302,7 @@ class NotificationSettingsScreen extends StatelessWidget {
     required String subtitle,
     required bool value,
     required void Function(bool)? onChanged,
-    required dynamic theme,
+    required LoveStoryTheme theme,
   }) {
     return SwitchListTile(
       title: Text(

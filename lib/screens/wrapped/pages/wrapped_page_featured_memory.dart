@@ -111,7 +111,7 @@ class WrappedPageFeaturedMemory extends StatelessWidget {
                   ),
                   child: Text(
                     data.featuredMemoryTitle!,
-                    style: AppTypography.sectionHeader(
+                    style: AppTypography.heading(
                       fontSize: 28,
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -175,7 +175,7 @@ class WrappedPageFeaturedMemory extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 'Your most beautiful memory',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 22,
                   color: Colors.white.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,

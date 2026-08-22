@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -15,7 +16,7 @@ class InsightsBanner extends StatefulWidget {
   final WorkspaceState workspace;
   final ProfileState profile;
   final PresenceState presence;
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const InsightsBanner({
     super.key,

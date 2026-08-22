@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:io';
 import 'dart:async';
 
@@ -734,7 +735,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  Widget _buildControlBar(dynamic theme) {
+  Widget _buildControlBar(LoveStoryTheme theme) {
     return GlassContainer(
       borderRadius: 20,
 
@@ -777,7 +778,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
     required bool isActive,
 
-    required dynamic theme,
+    required LoveStoryTheme theme,
 
     required VoidCallback onTap,
   }) {
@@ -810,7 +811,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  Widget _buildLicenseSelector(dynamic theme, RelationshipProvider rp) {
+  Widget _buildLicenseSelector(LoveStoryTheme theme, RelationshipProvider rp) {
     final myName = rp.yourName?.isNotEmpty == true ? rp.yourName! : "My";
 
     final partnerName = rp.partnerName?.isNotEmpty == true
@@ -875,7 +876,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
     required bool isActive,
 
-    required dynamic theme,
+    required LoveStoryTheme theme,
 
     required VoidCallback onTap,
   }) {
@@ -997,7 +998,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     });
   }
 
-  Widget _buildFirstTimeWelcomeScreen(dynamic theme) {
+  Widget _buildFirstTimeWelcomeScreen(LoveStoryTheme theme) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -1074,7 +1075,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                   const SizedBox(height: 40),
                   Text(
                     'No License Found',
-                    style: AppTypography.sectionHeader(fontSize: 26, fontWeight: FontWeight.bold, color: theme.textColor),
+                    style: AppTypography.heading(fontSize: 26, fontWeight: FontWeight.bold, color: theme.textColor),
                   ),
                   const SizedBox(height: 12),
                   Padding(
@@ -1119,13 +1120,13 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  Widget _buildWaitingForPartnerScreen(dynamic theme, RelationshipProvider rp) {
+  Widget _buildWaitingForPartnerScreen(LoveStoryTheme theme, RelationshipProvider rp) {
     final partnerJoined = rp.partnerId != null;
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.heading(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1165,7 +1166,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                     const SizedBox(height: 24),
                     Text(
                       partnerJoined ? 'Waiting for Partner' : 'Waiting for Partner to Join',
-                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textColor),
+                      style: AppTypography.heading(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textColor),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -1195,7 +1196,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  Widget _buildLoadingScreen(dynamic theme) {
+  Widget _buildLoadingScreen(LoveStoryTheme theme) {
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -1250,13 +1251,13 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  Widget _buildCreationForm(dynamic theme, RelationshipProvider rp) {
+  Widget _buildCreationForm(LoveStoryTheme theme, RelationshipProvider rp) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
           'License Application',
-          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.heading(fontWeight: FontWeight.bold, color: theme.textColor),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1334,7 +1335,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  List<Widget> _buildFormFields({required bool isYou, required dynamic theme}) {
+  List<Widget> _buildFormFields({required bool isYou, required LoveStoryTheme theme}) {
     final nameCtrl = isYou ? _createYourNameCtrl : _createPartnerNameCtrl;
     final phoneCtrl = isYou ? _createYourPhoneCtrl : _createPartnerPhoneCtrl;
     final addressCtrl = isYou ? _createYourAddressCtrl : _createPartnerAddressCtrl;
@@ -1520,7 +1521,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     ];
   }
 
-  InputDecoration _createInputDecoration(String hint, dynamic theme) {
+  InputDecoration _createInputDecoration(String hint, LoveStoryTheme theme) {
     return InputDecoration(
       hintText: hint,
       hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4)),
@@ -1546,7 +1547,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     String value,
     String current,
     ValueChanged<String> onChanged,
-    dynamic theme,
+    LoveStoryTheme theme,
   ) {
     final isSelected = current == value;
     return Expanded(
@@ -1573,7 +1574,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  Widget _createFieldLabel(String label, dynamic theme) {
+  Widget _createFieldLabel(String label, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6, left: 4),
       child: Text(
@@ -1624,7 +1625,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     }
   }
 
-  Widget _buildSignatureBox(bool isYou, dynamic theme) {
+  Widget _buildSignatureBox(bool isYou, LoveStoryTheme theme) {
     final signatureStr = isYou ? _createYourSignatureStr : _createPartnerSignatureStr;
     return GestureDetector(
       onTap: () async {
@@ -2172,7 +2173,7 @@ class _LicenseFront extends StatelessWidget {
                   children: [
                     Text(
                       holderName.toUpperCase(),
-                      style: AppTypography.sectionHeader(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 0.5),
+                      style: AppTypography.heading(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 0.5),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -2817,7 +2818,7 @@ class _WatermarkPainter extends CustomPainter {
 class _EditLicenseSheet extends ConsumerStatefulWidget {
   final RelationshipProvider rp;
 
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const _EditLicenseSheet({required this.rp, required this.theme});
 
@@ -3135,7 +3136,7 @@ class _EditLicenseSheetState extends ConsumerState<_EditLicenseSheet> {
           Text(
             'Edit ID Card Info',
 
-            style: AppTypography.sectionHeader(fontSize: 22, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+            style: AppTypography.heading(fontSize: 22, fontWeight: FontWeight.bold, color: widget.theme.textColor),
           ),
 
           const SizedBox(height: 10),
@@ -3908,7 +3909,7 @@ class SignatureDrawingDialog extends StatefulWidget {
 
   final String title;
 
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const SignatureDrawingDialog({
     super.key,
@@ -3949,7 +3950,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
         title: Text(
           widget.title,
 
-          style: AppTypography.sectionHeader(fontWeight: FontWeight.bold, color: widget.theme.textColor),
+          style: AppTypography.heading(fontWeight: FontWeight.bold, color: widget.theme.textColor),
         ),
 
         backgroundColor: Colors.transparent,
@@ -4088,7 +4089,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
 
 class _ExportStudioBottomSheet extends ConsumerStatefulWidget {
   final RelationshipProvider rp;
-  final dynamic theme;
+  final LoveStoryTheme theme;
   final bool showBoth;
   final bool isYourLicense;
   final bool myShowingFront;

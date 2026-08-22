@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -165,7 +166,7 @@ class _GenesisScreenState extends ConsumerState<GenesisScreen> {
     required IconData icon,
     required String label,
     required String value,
-    required dynamic theme,
+    required LoveStoryTheme theme,
     required VoidCallback onTap,
   }) {
     return GestureDetector(

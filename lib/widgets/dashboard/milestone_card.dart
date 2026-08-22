@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +9,7 @@ import 'package:days_together/services/date_helper.dart';
 class MilestoneCard extends StatefulWidget {
   final WorkspaceState workspace;
   final bool isPaired;
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const MilestoneCard({
     super.key,
@@ -233,7 +234,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   children: [
                     Text(
                       milestoneHeadingText,
-                      style: AppTypography.sectionHeader(fontSize: 20, fontWeight: FontWeight.w700, color: widget.theme.textColor),
+                      style: AppTypography.heading(fontSize: 20, fontWeight: FontWeight.w700, color: widget.theme.textColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -265,7 +266,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                             builder: (context, value, _) {
                               return Text(
                                 NumberFormat('#,###').format(value.toInt()),
-                                style: AppTypography.sectionHeader(fontSize: 24, fontWeight: FontWeight.w700, color: widget.theme.textColor.withValues(alpha: 0.9)),
+                                style: AppTypography.heading(fontSize: 24, fontWeight: FontWeight.w700, color: widget.theme.textColor.withValues(alpha: 0.9)),
                               );
                             },
                           ),

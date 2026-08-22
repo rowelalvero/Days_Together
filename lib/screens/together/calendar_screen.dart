@@ -77,7 +77,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     children: [
                       Text(
                         existingEvent == null ? '✨ New Event' : '📝 Edit Event',
-                        style: AppTypography.pageTitle(
+                        style: AppTypography.display(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: theme.textColor,
@@ -398,7 +398,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
           Text(
             DateFormat('MMMM yyyy').format(_focusedDay),
-            style: AppTypography.pageTitle(
+            style: AppTypography.display(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -421,7 +421,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar(dynamic theme, CalendarProvider provider) {
+  Widget _buildCalendar(LoveStoryTheme theme, CalendarProvider provider) {
     final relProvider = ref.watch(workspaceControllerProvider);
     final timelineProvider = context.watch<TimelineProvider>();
     final bucketProvider = context.watch<BucketListProvider>();
@@ -522,7 +522,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildEventList(dynamic theme, CalendarProvider provider) {
+  Widget _buildEventList(LoveStoryTheme theme, CalendarProvider provider) {
     final relProvider = ref.watch(workspaceControllerProvider);
     final timelineProvider = context.watch<TimelineProvider>();
     final bucketProvider = context.watch<BucketListProvider>();
@@ -553,7 +553,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           Text(
             DateFormat('MMMM dd, yyyy').format(_selectedDay),
-            style: AppTypography.sectionHeader(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
+            style: AppTypography.heading(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
           if (!hasAny)
@@ -673,7 +673,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildAnniversaryCard(dynamic theme, int years) {
+  Widget _buildAnniversaryCard(LoveStoryTheme theme, int years) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -715,7 +715,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildEventCard(CalendarEvent event, dynamic theme) {
+  Widget _buildEventCard(CalendarEvent event, LoveStoryTheme theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -770,7 +770,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  Color _getEventColor(CalendarEventType type, dynamic theme) {
+  Color _getEventColor(CalendarEventType type, LoveStoryTheme theme) {
     switch (type) {
       case CalendarEventType.anniversary: return Colors.pinkAccent;
       case CalendarEventType.birthday: return Colors.orangeAccent;

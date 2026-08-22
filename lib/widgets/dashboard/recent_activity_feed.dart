@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
@@ -26,7 +27,7 @@ import 'package:days_together/routing/routes.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 
 class RecentActivityFeed extends ConsumerStatefulWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const RecentActivityFeed({
     super.key,
@@ -319,7 +320,7 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
     );
   }
 
-  Widget _buildHeader(dynamic theme, int totalCount) {
+  Widget _buildHeader(LoveStoryTheme theme, int totalCount) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -363,7 +364,7 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
     );
   }
 
-  Widget _buildActivityRow(dynamic theme, LocalActivity activity, int index, int totalCount) {
+  Widget _buildActivityRow(LoveStoryTheme theme, LocalActivity activity, int index, int totalCount) {
     final featureColor = _featureColor(activity.route ?? '');
     final icon = activity.icon;
 

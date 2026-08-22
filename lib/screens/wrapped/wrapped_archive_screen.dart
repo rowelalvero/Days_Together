@@ -63,7 +63,7 @@ class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
                   const EdgeInsets.only(left: 20, bottom: 16, right: 20),
               title: Text(
                 '❤️ Wrapped Archive',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 20,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -159,7 +159,7 @@ class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
                       children: [
                         Text(
                           'Wrapped $year',
-                          style: AppTypography.sectionHeader(
+                          style: AppTypography.heading(
                             fontSize: 20,
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -213,7 +213,7 @@ class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
               const SizedBox(height: 24),
               Text(
                 'No archives yet',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 22,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,

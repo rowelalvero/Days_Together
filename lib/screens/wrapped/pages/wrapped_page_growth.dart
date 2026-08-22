@@ -108,7 +108,7 @@ class WrappedPageGrowth extends StatelessWidget {
                   WrappedAnimatedCounter(
                     endValue: u.value,
                     duration: Duration(milliseconds: 1200 + u.delay),
-                    style: AppTypography.mainCounter(
+                    style: AppTypography.display(
                       fontSize: 48,
                       color: Colors.white,
                       fontWeight: FontWeight.w800,

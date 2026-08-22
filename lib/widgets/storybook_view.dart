@@ -206,7 +206,7 @@ class _StorybookViewState extends State<StorybookView> {
                             item.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.pageTitle(
+                            style: AppTypography.display(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: cardTextColor,

@@ -67,7 +67,7 @@ class _WrappedPageLetterState extends State<WrappedPageLetter>
                 children: [
                   Text(
                     'A Letter',
-                    style: AppTypography.mainCounter(
+                    style: AppTypography.display(
                       fontSize: 40,
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -134,7 +134,7 @@ class _WrappedPageLetterState extends State<WrappedPageLetter>
                   const SizedBox(height: 4),
                   Text(
                     'Days Together ❤️',
-                    style: AppTypography.sectionHeader(
+                    style: AppTypography.heading(
                       fontSize: 22,
                       color: Colors.white.withValues(alpha: 0.85),
                       fontWeight: FontWeight.w700,

@@ -31,7 +31,7 @@ class WrappedPageStats extends StatelessWidget {
                   Opacity(opacity: v, child: child),
               child: Text(
                 'Your Year in Numbers',
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 28,
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -116,7 +116,7 @@ class _StatTile extends StatelessWidget {
           WrappedAnimatedCounter(
             endValue: stat.value,
             duration: Duration(milliseconds: 900 + index * 80),
-            style: AppTypography.mainCounter(
+            style: AppTypography.display(
               fontSize: 26,
               color: Colors.white,
               fontWeight: FontWeight.w800,

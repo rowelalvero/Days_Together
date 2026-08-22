@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
@@ -70,7 +71,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                     children: [
                       Text(
                         existingItem == null ? '✨ Add New Adventure' : '📝 Edit Adventure',
-                        style: AppTypography.cardTitle(
+                        style: AppTypography.title(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: theme.textColor,
@@ -340,7 +341,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, dynamic theme, BucketListProvider provider) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme, BucketListProvider provider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -375,7 +376,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildProgressCard(dynamic theme, BucketListProvider provider) {
+  Widget _buildProgressCard(LoveStoryTheme theme, BucketListProvider provider) {
     if (provider.totalItems == 0) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -441,7 +442,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildListView(BucketListProvider provider, dynamic theme) {
+  Widget _buildListView(BucketListProvider provider, LoveStoryTheme theme) {
     return Theme(
       data: ThemeData(
         canvasColor: Colors.transparent,
@@ -458,7 +459,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildListItem(BucketListItem item, dynamic theme, BucketListProvider provider) {
+  Widget _buildListItem(BucketListItem item, LoveStoryTheme theme, BucketListProvider provider) {
     return Container(
       key: ValueKey(item.id),
       margin: const EdgeInsets.only(bottom: 12),
@@ -542,7 +543,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                   context: context,
                   builder: (context) => AlertDialog(
                     backgroundColor: theme.primaryColor,
-                    title: Text('Delete Adventure?', style: AppTypography.cardTitle(color: theme.textColor)),
+                    title: Text('Delete Adventure?', style: AppTypography.title(color: theme.textColor)),
                     content: Text(
                       'Are you sure you want to remove this dream from your bucket list?',
                       style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
@@ -571,7 +572,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildEmptyState(dynamic theme) {
+  Widget _buildEmptyState(LoveStoryTheme theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -593,7 +594,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
             const SizedBox(height: 24),
             Text(
               'Dream big.',
-              style: AppTypography.pageTitle(
+              style: AppTypography.display(
                 color: theme.textColor,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,

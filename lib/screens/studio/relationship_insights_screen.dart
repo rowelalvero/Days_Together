@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
@@ -129,7 +130,7 @@ class _RelationshipInsightsScreenState
     );
   }
 
-  Widget _buildAppBar(BuildContext context, dynamic theme) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
@@ -169,7 +170,7 @@ class _RelationshipInsightsScreenState
     );
   }
 
-  Widget _buildInsightCard(String insight, dynamic theme, int index) {
+  Widget _buildInsightCard(String insight, LoveStoryTheme theme, int index) {
     // Pick different background overlays to represent premium charts/insights
     final icons = [
       Icons.favorite_rounded,

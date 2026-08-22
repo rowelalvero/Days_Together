@@ -40,7 +40,7 @@ class WrappedPageDays extends StatelessWidget {
                 endValue: data.totalDays.toDouble(),
                 duration: const Duration(milliseconds: 1800),
                 formatter: (v) => NumberFormat('#,###').format(v),
-                style: AppTypography.mainCounter(
+                style: AppTypography.display(
                   fontSize: 96,
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -82,7 +82,7 @@ class WrappedPageDays extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       DateFormat('MMMM d, y').format(data.startDate!),
-                      style: AppTypography.sectionHeader(
+                      style: AppTypography.heading(
                         fontSize: 20,
                         color: Colors.white.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w600,

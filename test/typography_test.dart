@@ -11,7 +11,7 @@ void main() {
   });
 
   test('AppTypography returns correct styles and overrides', () {
-    final titleStyle = AppTypography.pageTitle();
+    final titleStyle = AppTypography.display();
     expect(titleStyle, isNotNull);
     expect(titleStyle.fontSize, 28.0);
     expect(titleStyle.fontWeight, FontWeight.w700);

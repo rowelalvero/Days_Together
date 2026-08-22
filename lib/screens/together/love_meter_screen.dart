@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -94,7 +95,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, dynamic theme) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
@@ -129,7 +130,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
     );
   }
 
-  Widget _buildMoodLogger(dynamic theme, DailyMoodProvider provider) {
+  Widget _buildMoodLogger(LoveStoryTheme theme, DailyMoodProvider provider) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
@@ -143,7 +144,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
         children: [
           Text(
             'How is your mood today?',
-            style: AppTypography.sectionHeader(
+            style: AppTypography.heading(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: theme.textColor,
@@ -261,7 +262,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
     );
   }
 
-  Widget _buildTodayMoodSummary(DailyMood todayMood, dynamic theme) {
+  Widget _buildTodayMoodSummary(DailyMood todayMood, LoveStoryTheme theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
@@ -353,7 +354,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
   }
 
   Widget _buildSyncQuestionCard(
-      DailySyncQuestion? question, dynamic theme, DailyMoodProvider provider) {
+      DailySyncQuestion? question, LoveStoryTheme theme, DailyMoodProvider provider) {
     if (question == null) return const SizedBox.shrink();
 
     final hasAnswered = question.myAnswer != null;
@@ -539,7 +540,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
     );
   }
 
-  Widget _buildMoodChartCard(List<DailyMood> recentMoods, dynamic theme) {
+  Widget _buildMoodChartCard(List<DailyMood> recentMoods, LoveStoryTheme theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),

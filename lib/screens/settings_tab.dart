@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 import 'package:go_router/go_router.dart';
@@ -69,7 +70,7 @@ class SettingsTab extends ConsumerWidget {
             const SizedBox(width: 12),
             Text(
               'Log Out',
-              style: AppTypography.cardTitle(
+              style: AppTypography.title(
                 color: theme.textColor,
                 fontWeight: FontWeight.bold,
               ),
@@ -141,7 +142,7 @@ class SettingsTab extends ConsumerWidget {
           children: [
             Text(
               'Settings',
-              style: AppTypography.pageTitle(
+              style: AppTypography.display(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -211,7 +212,7 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildWrappedTile(dynamic theme, BuildContext context, WidgetRef ref) {
+  Widget _buildWrappedTile(LoveStoryTheme theme, BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () => _launchWrapped(context, ref),
       child: Container(
@@ -276,7 +277,7 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildWrappedArchiveTile(dynamic theme, BuildContext context) {
+  Widget _buildWrappedArchiveTile(LoveStoryTheme theme, BuildContext context) {
     return _buildModernTile(
       icon: Icons.history_rounded,
       title: 'Wrapped Archive',
@@ -289,7 +290,7 @@ class SettingsTab extends ConsumerWidget {
   Widget _buildLiquidProfileCard(
     CoupleSession session,
     ProfileState profile,
-    dynamic theme,
+    LoveStoryTheme theme,
     BuildContext context,
   ) {
     final partnerJoined = session.partnerId != null;
@@ -323,7 +324,7 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildMiniAvatar(String? path, String name, dynamic theme) {
+  Widget _buildMiniAvatar(String? path, String name, LoveStoryTheme theme) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -352,7 +353,7 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, dynamic theme) {
+  Widget _buildSectionHeader(String title, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 16),
       child: Text(
@@ -370,7 +371,7 @@ class SettingsTab extends ConsumerWidget {
     required IconData icon,
     required String title,
     required String subtitle,
-    required dynamic theme,
+    required LoveStoryTheme theme,
     required VoidCallback onTap,
   }) {
     return GlassContainer(
@@ -415,7 +416,7 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildPremiumGlassCard(WorkspaceState workspace, WidgetRef ref, dynamic theme) {
+  Widget _buildPremiumGlassCard(WorkspaceState workspace, WidgetRef ref, LoveStoryTheme theme) {
     return GlassContainer(
       borderRadius: 24,
       padding: const EdgeInsets.all(4),

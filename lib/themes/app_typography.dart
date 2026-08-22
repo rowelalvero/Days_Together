@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTypography {
-  static TextStyle mainCounter({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
+  /// Phase 7 of the architecture migration (design-system.md): replaces
+  /// `mainCounter` and `pageTitle`, which were byte-for-byte identical
+  /// (28pt, weight 700) -- one role, not two, per the design doc's own
+  /// typography-consolidation table.
+  static TextStyle display({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
     return GoogleFonts.spectral(
       fontSize: fontSize ?? 28.0,
       fontWeight: fontWeight ?? FontWeight.w700,
@@ -11,16 +15,9 @@ class AppTypography {
     );
   }
 
-  static TextStyle pageTitle({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
-    return GoogleFonts.spectral(
-      fontSize: fontSize ?? 28.0,
-      fontWeight: fontWeight ?? FontWeight.w700,
-      color: color,
-      height: height,
-    );
-  }
-
-  static TextStyle sectionHeader({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
+  /// Phase 7: renamed from `sectionHeader` (single source, defaults
+  /// unchanged -- see design-system.md's typography-consolidation table).
+  static TextStyle heading({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
     return GoogleFonts.spectral(
       fontSize: fontSize ?? 20.0,
       fontWeight: fontWeight ?? FontWeight.w700,
@@ -29,7 +26,9 @@ class AppTypography {
     );
   }
 
-  static TextStyle cardTitle({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
+  /// Phase 7: renamed from `cardTitle` (single source, defaults unchanged --
+  /// see design-system.md's typography-consolidation table).
+  static TextStyle title({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
     return GoogleFonts.spectral(
       fontSize: fontSize ?? 18.0,
       fontWeight: fontWeight ?? FontWeight.w700,
@@ -75,13 +74,11 @@ class AppTypography {
     );
   }
 
+  /// Phase 7: fixed to use an actual monospace font (was silently
+  /// rendering in Spectral, the serif body font) for its real call sites --
+  /// PIN/code entry and hex color input. Size/weight defaults unchanged.
   static TextStyle bodyMono({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
-    // Keep mono style but using Spectral for consistency as requested if possible, 
-    // but Spectral is not a mono font. 
-    // Usually "bodyMono" implies a technical/code style.
-    // However, the prompt says "Replace the current default font with Spectral across the entire application."
-    // I will use Spectral but keep the size/weight.
-    return GoogleFonts.spectral(
+    return GoogleFonts.robotoMono(
       fontSize: fontSize ?? 12.0,
       fontWeight: fontWeight ?? FontWeight.normal,
       color: color,
@@ -107,8 +104,11 @@ class AppTypography {
     );
   }
 
+  /// Phase 7: fixed to use an actual monospace font (was silently
+  /// rendering in Spectral) for its real call sites -- UID/CID debug text
+  /// and stylized uppercase labels. Size/weight defaults unchanged.
   static TextStyle captionMono({Color? color, double? fontSize, FontWeight? fontWeight, double? height}) {
-    return GoogleFonts.spectral(
+    return GoogleFonts.robotoMono(
       fontSize: fontSize ?? 9.0,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,

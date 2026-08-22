@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 
 class RelationshipStatistics extends ConsumerWidget {
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const RelationshipStatistics({
     super.key,

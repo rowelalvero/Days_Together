@@ -120,7 +120,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                               ).createShader(bounds),
                               child: Text(
                                 NumberFormat('#,###').format(value.toInt()),
-                                style: AppTypography.mainCounter(
+                                style: AppTypography.display(
                                   fontSize: 64,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
@@ -238,7 +238,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                 builder: (context, value, _) {
                   return Text(
                     '${value.toInt()}',
-                    style: AppTypography.sectionHeader(
+                    style: AppTypography.heading(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: theme.textColor,
@@ -312,7 +312,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     next.title,
-                    style: AppTypography.cardTitle(
+                    style: AppTypography.title(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: theme.textColor,
@@ -484,7 +484,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   label,
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -511,7 +511,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                 builder: (context, value, _) {
                   return Text(
                     '${value.toInt()}',
-                    style: AppTypography.sectionHeader(
+                    style: AppTypography.heading(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: theme.textColor,
@@ -579,7 +579,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               'Journey Fun Facts',
-              style: AppTypography.cardTitle(
+              style: AppTypography.title(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -620,7 +620,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                           builder: (context, value, _) {
                             return Text(
                               NumberFormat('#,###').format(value.toInt()),
-                              style: AppTypography.sectionHeader(
+                              style: AppTypography.heading(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 color: theme.textColor,
@@ -708,7 +708,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               'Milestones Achieved',
-              style: AppTypography.cardTitle(
+              style: AppTypography.title(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -847,7 +847,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               'How It All Started',
-              style: AppTypography.cardTitle(
+              style: AppTypography.title(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: theme.textColor,
@@ -982,7 +982,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   memory.title.isNotEmpty ? memory.title : 'Our First Day Together',
-                  style: AppTypography.cardTitle(
+                  style: AppTypography.title(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: theme.textColor,
@@ -1074,7 +1074,7 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
         children: [
           Text(
             val,
-            style: AppTypography.sectionHeader(
+            style: AppTypography.heading(
               fontSize: 20,
               fontWeight: FontWeight.w900,
               color: widget.theme.textColor,
@@ -1173,7 +1173,7 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
                   children: [
                     Text(
                       NumberFormat('#,###').format(_difference.inMinutes),
-                      style: AppTypography.sectionHeader(
+                      style: AppTypography.heading(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: widget.theme.textColor,
@@ -1201,7 +1201,7 @@ class _LiveStopwatchWidgetState extends State<_LiveStopwatchWidget>
                   children: [
                     Text(
                       NumberFormat('#,###').format(_difference.inSeconds),
-                      style: AppTypography.sectionHeader(
+                      style: AppTypography.heading(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: widget.theme.textColor,

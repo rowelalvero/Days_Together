@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -166,7 +167,7 @@ class _AvatarCreationScreenState extends ConsumerState<AvatarCreationScreen> {
     required String label,
     required TextEditingController controller,
     required String hint,
-    required dynamic theme,
+    required LoveStoryTheme theme,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

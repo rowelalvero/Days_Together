@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +11,7 @@ import 'package:days_together/routing/routes.dart';
 class StudioTab extends ConsumerWidget {
   const StudioTab({super.key});
 
-  void _showPremiumPaywall(BuildContext context, WidgetRef ref, dynamic theme) {
+  void _showPremiumPaywall(BuildContext context, WidgetRef ref, LoveStoryTheme theme) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -40,7 +41,7 @@ class StudioTab extends ConsumerWidget {
               const SizedBox(height: 24),
               Text(
                 '✨ Love Studio Premium',
-                style: AppTypography.sectionHeader(
+                style: AppTypography.heading(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: theme.textColor,
@@ -120,7 +121,7 @@ class StudioTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildFeatureBullet(IconData icon, String title, String desc, dynamic theme) {
+  Widget _buildFeatureBullet(IconData icon, String title, String desc, LoveStoryTheme theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -251,7 +252,7 @@ class StudioTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildPremiumBanner(BuildContext context, WidgetRef ref, dynamic theme) {
+  Widget _buildPremiumBanner(BuildContext context, WidgetRef ref, LoveStoryTheme theme) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -316,7 +317,7 @@ class StudioTab extends ConsumerWidget {
     required String desc,
     required bool isPremium,
     required bool isUnlocked,
-    required dynamic theme,
+    required LoveStoryTheme theme,
     required VoidCallback onTap,
   }) {
     return InkWell(

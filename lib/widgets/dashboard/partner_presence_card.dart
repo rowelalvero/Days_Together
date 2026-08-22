@@ -1,3 +1,4 @@
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
 import 'package:days_together/features/relationship/license_controller.dart';
@@ -11,7 +12,7 @@ import 'package:days_together/providers/love_chat_provider.dart';
 
 class PartnerPresenceCard extends ConsumerStatefulWidget {
   final CoupleSession relationshipProvider;
-  final dynamic theme;
+  final LoveStoryTheme theme;
 
   const PartnerPresenceCard({
     super.key,
