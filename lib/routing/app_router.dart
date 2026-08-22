@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/relationship_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/screens/love_story_screen.dart';
@@ -99,23 +98,23 @@ String? _routeForStage(SessionStage stage) {
 /// found (`main.dart`'s old `AppHome` switch, `notification_service.dart`,
 /// `avatar_creation_screen.dart`, `recover_relationship_screen.dart`).
 ///
-/// **Reads [RelationshipProvider] directly, not [CoupleSession].** Originally
-/// found while converting `join_couple_code_screen.dart`/
+/// **Reads [CoupleSession] directly.** Originally read `RelationshipProvider`
+/// instead, found while converting `join_couple_code_screen.dart`/
 /// `recover_relationship_screen.dart` (Phase 3): back then, `CoupleSession`
 /// mirrored `RelationshipProvider` via a `ChangeNotifierProxyProvider`, whose
 /// `update` callback only runs on the *next* frame (Flutter's
 /// `InheritedWidget` dependency system), not synchronously within
-/// `RelationshipProvider.notifyListeners()`. A screen doing `await
-/// provider.joinWithCode(code); if (mounted) context.push(Routes.avatar);`
-/// calls `context.push` -- and therefore this redirect -- *before* that next
-/// frame, so reading `CoupleSession` would have seen stale, pre-join values.
-/// Phase 6b-1 inverted the relationship (`CoupleSession` is now the real
-/// engine; `RelationshipProvider` is a pass-through facade subscribed to it
-/// via a plain synchronous `ChangeNotifier.addListener`, not a
-/// `ChangeNotifierProxyProvider`) but the conclusion still holds: reading
-/// `RelationshipProvider` here remains correct and lag-free, and is also now
-/// the *more* natural choice, being the object every existing write-method
-/// caller already awaits.
+/// `RelationshipProvider.notifyListeners()` -- so reading `CoupleSession`
+/// then would have seen stale, pre-join values immediately after an awaited
+/// write. Phase 6b-1 made `CoupleSession` the real engine and
+/// `RelationshipProvider` a pass-through facade over it (Phase 6b-4 switched
+/// this redirect to read the real engine directly, now that it *is* the
+/// engine): both objects update synchronously and identically today, so
+/// reading either is equally correct regardless of which one a calling
+/// screen awaited -- `CoupleSession` is simply the more direct, permanent
+/// choice, since it doesn't depend on `RelationshipProvider` continuing to
+/// exist (see Phase 8, which still has 3 files reading `RelationshipProvider`
+/// directly).
 ///
 /// **Simplification vs. ADR-007's original text:** the ADR called for a
 /// second, separate redirect clause guarding every couple-scoped route
@@ -142,16 +141,16 @@ String? _routeForStage(SessionStage stage) {
 String? _pendingLocation;
 
 String? appRedirect(BuildContext context, GoRouterState state) {
-  final rp = context.read<RelationshipProvider>();
+  final session = context.read<CoupleSession>();
 
   final stage = computeSessionStage(
-    isInitialized: rp.isInitialized,
-    userId: rp.userId,
-    coupleId: rp.coupleId,
-    isCreator: rp.isCreator,
-    isPaired: rp.isPaired,
-    onboardingCompleted: rp.onboardingCompleted,
-    startDate: rp.startDate,
+    isInitialized: session.isInitialized,
+    userId: session.userId,
+    coupleId: session.coupleId,
+    isCreator: session.isCreator,
+    isPaired: session.isPaired,
+    onboardingCompleted: session.onboardingCompleted,
+    startDate: session.startDate,
   );
 
   final pending = _pendingLocation;

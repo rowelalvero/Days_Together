@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
 
 // Providers & Models
-import 'package:days_together/providers/recent_activity_provider.dart';
+import 'package:days_together/features/dashboard/recent_activity_controller.dart';
 import 'package:days_together/models/local_activity_model.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
@@ -24,7 +25,7 @@ import 'package:days_together/routing/routes.dart';
 // constant instead of a screen import.
 import 'package:days_together/screens/love_story_screen.dart';
 
-class RecentActivityFeed extends StatefulWidget {
+class RecentActivityFeed extends ConsumerStatefulWidget {
   final dynamic theme;
 
   const RecentActivityFeed({
@@ -33,10 +34,10 @@ class RecentActivityFeed extends StatefulWidget {
   });
 
   @override
-  State<RecentActivityFeed> createState() => _RecentActivityFeedState();
+  ConsumerState<RecentActivityFeed> createState() => _RecentActivityFeedState();
 }
 
-class _RecentActivityFeedState extends State<RecentActivityFeed> {
+class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
   Timer? _relativeTimeTimer;
 
   @override
@@ -196,11 +197,11 @@ class _RecentActivityFeedState extends State<RecentActivityFeed> {
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme;
-    final activityProvider = Provider.of<RecentActivityProvider>(context);
-    final allActivities = activityProvider.activities;
+    final activityState = ref.watch(recentActivityControllerProvider);
+    final allActivities = activityState.activities;
     final displayActivities = allActivities.take(6).toList();
 
-    if (activityProvider.isLoading && allActivities.isEmpty) {
+    if (activityState.isLoading && allActivities.isEmpty) {
       return GlassContainer(
         padding: const EdgeInsets.all(20),
         borderRadius: 28,

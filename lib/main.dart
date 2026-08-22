@@ -11,7 +11,6 @@ import 'package:days_together/providers/vault_provider.dart';
 import 'package:days_together/providers/calendar_provider.dart';
 import 'package:days_together/providers/topic_cards_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/recent_activity_provider.dart';
 import 'package:days_together/providers/love_chat_provider.dart';
 import 'package:days_together/providers/notification_preferences_provider.dart';
 import 'package:days_together/providers/currently_provider.dart';
@@ -108,7 +107,7 @@ Widget buildAppRoot({required Widget child}) {
   );
 }
 
-/// Invalidates [licenseControllerProvider] whenever `RelationshipProvider`'s
+/// Invalidates [licenseControllerProvider] whenever `CoupleSession`'s
 /// identity fields clear (logout, account deletion, or a partner
 /// disconnect), so a signed-out user's cached license data can never leak
 /// into a second account signed into the same app session -- see
@@ -129,9 +128,9 @@ class _LicenseLifecycleBridgeState extends ConsumerState<_LicenseLifecycleBridge
 
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<RelationshipProvider>();
-    final userId = rp.userId;
-    final coupleId = rp.coupleId;
+    final session = context.watch<CoupleSession>();
+    final userId = session.userId;
+    final coupleId = session.coupleId;
 
     if (!_seeded) {
       // First build: record the starting identity without treating it as a
@@ -310,7 +309,6 @@ class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> 
 List<SingleChildWidget> buildAppProviders() {
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
-    ChangeNotifierProvider(create: (_) => RecentActivityProvider()),
     ChangeNotifierProvider(create: (_) => CoupleSession()),
     // A plain ChangeNotifierProvider, not a ChangeNotifierProxyProvider:
     // RelationshipProvider subscribes to the live CoupleSession directly via
@@ -397,13 +395,12 @@ class MyApp extends StatelessWidget {
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
 
     // Read (not watch) deliberately: this is the app's single,
-    // process-lifetime relationship instance -- ensureAppRouter only needs
-    // it once, to build the Listenable the router re-evaluates its redirect
-    // against on every change (see app_router.dart, which reads
-    // RelationshipProvider directly rather than through CoupleSession's
-    // one-frame-delayed mirror, for exactly this reactivity).
-    final relationshipProvider = context.read<RelationshipProvider>();
-    final router = ensureAppRouter(refreshListenable: relationshipProvider);
+    // process-lifetime session instance -- ensureAppRouter only needs it
+    // once, to build the Listenable the router re-evaluates its redirect
+    // against on every change (see app_router.dart's appRedirect, which
+    // reads this same CoupleSession instance directly).
+    final session = context.read<CoupleSession>();
+    final router = ensureAppRouter(refreshListenable: session);
 
     return MaterialApp.router(
       routerConfig: router,
