@@ -2,21 +2,23 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:days_together/widgets/safe_loading_dialog.dart';
 
-class RecoverRelationshipScreen extends StatefulWidget {
+class RecoverRelationshipScreen extends ConsumerStatefulWidget {
   const RecoverRelationshipScreen({super.key});
 
   @override
-  State<RecoverRelationshipScreen> createState() => _RecoverRelationshipScreenState();
+  ConsumerState<RecoverRelationshipScreen> createState() => _RecoverRelationshipScreenState();
 }
 
-class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
+class _RecoverRelationshipScreenState extends ConsumerState<RecoverRelationshipScreen> {
   final _codeController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -28,16 +30,16 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
     super.dispose();
   }
 
-  /// Waits for [provider.isInitialized] to become true, with a bounded timeout.
-  Future<bool> _waitForInitialization(RelationshipProvider provider) async {
+  /// Waits for [session.isInitialized] to become true, with a bounded timeout.
+  Future<bool> _waitForInitialization(CoupleSession session) async {
     const maxWait = Duration(seconds: 20);
     const pollInterval = Duration(milliseconds: 100);
     final deadline = DateTime.now().add(maxWait);
 
-    while (!provider.isInitialized && DateTime.now().isBefore(deadline)) {
+    while (!session.isInitialized && DateTime.now().isBefore(deadline)) {
       await Future.delayed(pollInterval);
     }
-    return provider.isInitialized;
+    return session.isInitialized;
   }
 
   Future<void> _handleRecover() async {
@@ -49,17 +51,17 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
     });
 
     final code = _codeController.text.trim();
-    final provider = context.read<RelationshipProvider>();
+    final session = context.read<CoupleSession>();
 
     try {
-      final success = await provider.recoverRelationship(code);
+      final success = await session.recoverRelationship(code);
       if (success) {
         if (mounted) {
           // Wait for workspace sync with a safe, bounded timeout
           final initialized = await SafeLoadingDialog.run<bool>(
             context: context,
             future: () async {
-              final ready = await _waitForInitialization(provider);
+              final ready = await _waitForInitialization(session);
               return ready;
             },
             timeoutSeconds: 25,
@@ -69,7 +71,7 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
 
           if (mounted && (initialized == true)) {
             // Deliberately NOT context.go(Routes.avatar): this branch is
-            // gated on provider.yourName, a signal computeSessionStage does
+            // gated on yourName, a signal computeSessionStage does
             // not consider at all (it looks at isCreator/isPaired/
             // startDate). A recovered workspace could plausibly still be
             // mid-genesis (creator, no startDate yet), in which case
@@ -79,7 +81,8 @@ class _RecoverRelationshipScreenState extends State<RecoverRelationshipScreen> {
             // doesn't anticipate. Left as plain Navigator calls (both
             // branches -- Navigator.pop is out of ADR-007's scope regardless)
             // to preserve the existing behavior exactly.
-            if (provider.yourName == null || provider.yourName!.trim().isEmpty) {
+            final yourName = ref.read(profileControllerProvider).yourName;
+            if (yourName == null || yourName.trim().isEmpty) {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => const AvatarCreationScreen()),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/widgets/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
@@ -68,11 +68,11 @@ class _PairingSelectionScreenState extends State<PairingSelectionScreen> {
                   onTap: () async {
                     if (_isNavigating) return;
                     _isNavigating = true;
-                    final provider = context.read<RelationshipProvider>();
+                    final session = context.read<CoupleSession>();
                     await SafeLoadingDialog.run<bool>(
                       context: context,
                       future: () async {
-                        await provider.createRelationshipWorkspace();
+                        await session.createRelationshipWorkspace();
                         return true;
                       },
                       timeoutSeconds: 15,

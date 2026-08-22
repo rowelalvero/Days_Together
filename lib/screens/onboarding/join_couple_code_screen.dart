@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:provider/provider.dart';
 
@@ -198,8 +198,8 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
       _errorMessage = null;
     });
     try {
-      final provider = context.read<RelationshipProvider>();
-      final success = await provider.joinWithCode(_fullCode);
+      final session = context.read<CoupleSession>();
+      final success = await session.joinWithCode(_fullCode);
       if (!mounted) return;
       if (success) {
         context.push(Routes.avatar);

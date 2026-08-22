@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-class GenesisScreen extends StatefulWidget {
+class GenesisScreen extends ConsumerStatefulWidget {
   const GenesisScreen({super.key});
 
   @override
-  State<GenesisScreen> createState() => _GenesisScreenState();
+  ConsumerState<GenesisScreen> createState() => _GenesisScreenState();
 }
 
-class _GenesisScreenState extends State<GenesisScreen> {
+class _GenesisScreenState extends ConsumerState<GenesisScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
 
@@ -129,9 +130,9 @@ class _GenesisScreenState extends State<GenesisScreen> {
                   height: 60,
                   child: ElevatedButton(
                     onPressed: () async {
-                      final provider = context.read<RelationshipProvider>();
-                      await provider.setStartDate(_selectedDate);
-                      await provider.setStartTime(_selectedTime);
+                      final workspace = ref.read(workspaceControllerProvider.notifier);
+                      await workspace.setStartDate(_selectedDate);
+                      await workspace.setStartTime(_selectedTime);
                       if (!context.mounted) return;
                       context.push(Routes.avatar);
                     },

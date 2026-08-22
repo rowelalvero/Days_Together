@@ -1,21 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/services/permission_service.dart';
 
-class AvatarCreationScreen extends StatefulWidget {
+class AvatarCreationScreen extends ConsumerStatefulWidget {
   const AvatarCreationScreen({super.key});
 
   @override
-  State<AvatarCreationScreen> createState() => _AvatarCreationScreenState();
+  ConsumerState<AvatarCreationScreen> createState() => _AvatarCreationScreenState();
 }
 
-class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
+class _AvatarCreationScreenState extends ConsumerState<AvatarCreationScreen> {
   final TextEditingController _yourNameController = TextEditingController();
   String? _avatarPath;
   bool _isSaving = false;
@@ -23,8 +25,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
   @override
   void initState() {
     super.initState();
-    final provider = context.read<RelationshipProvider>();
-    _yourNameController.text = provider.yourName ?? '';
+    _yourNameController.text = ref.read(profileControllerProvider).yourName ?? '';
   }
 
   @override
@@ -239,12 +240,13 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
 
     try {
       setState(() => _isSaving = true);
-      final provider = context.read<RelationshipProvider>();
-      await provider.setYourName(
+      final profile = ref.read(profileControllerProvider.notifier);
+      final session = context.read<CoupleSession>();
+      await profile.setYourName(
         _yourNameController.text.trim(),
       );
       if (_avatarPath != null) {
-        await provider.setAvatars(yourPath: _avatarPath);
+        await profile.setAvatars(yourPath: _avatarPath);
       }
       // No explicit navigation after this: completeOnboarding() flips
       // CoupleSession's stage to `ready`, which the router's single
@@ -254,7 +256,7 @@ class _AvatarCreationScreenState extends State<AvatarCreationScreen> {
       // (main.dart's old AppHome switch, notification_service.dart,
       // recover_relationship_screen.dart, and this screen), each hand-coded
       // separately; now there is exactly one.
-      await provider.completeOnboarding();
+      await session.completeOnboarding();
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);

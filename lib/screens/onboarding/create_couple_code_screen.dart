@@ -2,21 +2,23 @@ import 'dart:async';
 import 'package:days_together/screens/onboarding/genesis_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/widgets/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-class CreateCoupleCodeScreen extends StatefulWidget {
+class CreateCoupleCodeScreen extends ConsumerStatefulWidget {
   const CreateCoupleCodeScreen({super.key});
 
   @override
-  State<CreateCoupleCodeScreen> createState() => _CreateCoupleCodeScreenState();
+  ConsumerState<CreateCoupleCodeScreen> createState() => _CreateCoupleCodeScreenState();
 }
 
-class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
+class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
     with SingleTickerProviderStateMixin {
   late String _code;
   late AnimationController _animController;
@@ -28,18 +30,18 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
   @override
   void initState() {
     super.initState();
-    final provider = context.read<RelationshipProvider>();
-    _code = provider.coupleCode ?? provider.generateCoupleCode();
+    final workspace = ref.read(workspaceControllerProvider.notifier);
+    _code = ref.read(workspaceControllerProvider).coupleCode ?? workspace.generateCoupleCode();
     _animController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..forward();
 
     // Check/refresh active pairing code on open & schedule periodic checks
-    provider.refreshPairingCode();
+    workspace.refreshPairingCode();
     _rotationTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) {
-        context.read<RelationshipProvider>().refreshPairingCode();
+        ref.read(workspaceControllerProvider.notifier).refreshPairingCode();
       }
     });
   }
@@ -55,8 +57,8 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final provider = context.watch<RelationshipProvider>();
-    final codeToDisplay = provider.coupleCode ?? _code;
+    final workspace = ref.watch(workspaceControllerProvider);
+    final codeToDisplay = workspace.coupleCode ?? _code;
 
     return Scaffold(
       body: Container(
@@ -71,10 +73,10 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                 const SizedBox(height: 20),
                 IconButton(
                   onPressed: () async {
-                    final provider = context.read<RelationshipProvider>();
+                    final session = context.read<CoupleSession>();
                     await SafeLoadingDialog.run(
                       context: context,
-                      future: () => provider.unlinkPartner(),
+                      future: () => session.unlinkPartner(),
                       loadingMessage: 'Canceling workspace...',
                     );
                   },
@@ -210,7 +212,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                       ),
                       const SizedBox(height: 6),
                       SelectableText(
-                        provider.recoveryCode ?? '—',
+                        workspace.recoveryCode ?? '—',
                         style: AppTypography.body(
                           color: theme.accentColor,
                           fontWeight: FontWeight.bold,
@@ -231,7 +233,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                         height: 44,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(text: provider.recoveryCode ?? ''));
+                            Clipboard.setData(ClipboardData(text: workspace.recoveryCode ?? ''));
                             setState(() => _copiedRecovery = true);
                             Future.delayed(const Duration(seconds: 2), () {
                               if (mounted) setState(() => _copiedRecovery = false);
@@ -278,7 +280,7 @@ class _CreateCoupleCodeScreenState extends State<CreateCoupleCodeScreen>
                     onPressed: _savedRecoveryCode
                         ? () {
                             // Wipe recovery code from memory for security
-                            provider.clearRecoveryCode();
+                            ref.read(workspaceControllerProvider.notifier).clearRecoveryCode();
                             // Deliberately NOT context.push(Routes.genesis):
                             // this button has no isPaired gate, so a creator
                             // can reach it before their partner joins.

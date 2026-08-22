@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -34,11 +34,11 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    final provider = context.read<RelationshipProvider>();
+    final session = context.read<CoupleSession>();
 
     try {
       if (_isSignUp) {
-        await provider.signUpWithEmail(
+        await session.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
@@ -54,14 +54,14 @@ class _AuthScreenState extends State<AuthScreen> {
         }
       } else {
         // No explicit navigation after this: signing in flips
-        // RelationshipProvider.userId away from null, which the router's
+        // CoupleSession.userId away from null, which the router's
         // single redirect (app_router.dart) picks up via refreshListenable
         // and moves off Routes.auth (no longer a valid `unauthenticated`
         // location) to whatever stage comes next -- replacing the old
         // popUntil-to-root-and-let-AppHome-decide pattern this method's own
         // comment already described; that decision now lives in
         // appRedirect instead of AppHome.
-        await provider.signInWithEmail(
+        await session.signInWithEmail(
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
@@ -84,12 +84,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
-    final provider = context.read<RelationshipProvider>();
+    final session = context.read<CoupleSession>();
 
     try {
       // Same reasoning as _submit's email sign-in above: no explicit
       // navigation needed, the redirect handles the transition.
-      await provider.signInWithGoogle();
+      await session.signInWithGoogle();
     } catch (e) {
       if (e.toString() != 'Sign in aborted by user' && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

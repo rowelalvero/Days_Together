@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -52,7 +52,7 @@ class _LoadingScreenState extends State<LoadingScreen>
   void _startTimeout() {
     _timeoutTimer?.cancel();
     _timeoutTimer = Timer(_timeoutDuration, () {
-      if (mounted && !context.read<RelationshipProvider>().isInitialized) {
+      if (mounted && !context.read<CoupleSession>().isInitialized) {
         setState(() => _showRetry = true);
       }
     });
@@ -64,13 +64,13 @@ class _LoadingScreenState extends State<LoadingScreen>
       _isOffline = false;
     });
 
-    // Force re-initialization by reading the provider
-    // The provider's auth listener will re-fire on reconnect
-    final rp = context.read<RelationshipProvider>();
-    if (!rp.isInitialized) {
+    // Force re-initialization by reading the session
+    // The session's auth listener will re-fire on reconnect
+    final session = context.read<CoupleSession>();
+    if (!session.isInitialized) {
       // Mark as initialized to allow the user through if still stuck
       // The auth listener will correct state once connectivity returns
-      rp.forceInitialized();
+      session.forceInitialized();
     }
 
     _startTimeout();
