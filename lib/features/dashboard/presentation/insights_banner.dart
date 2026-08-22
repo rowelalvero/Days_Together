@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
+import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/features/relationship/profile_state.dart';
 import 'package:days_together/features/relationship/presence_state.dart';
 import 'package:days_together/services/date_helper.dart';
 
 class InsightsBanner extends StatefulWidget {
-  final TimelineProvider timelineProvider;
-  final BucketListProvider bucketProvider;
+  final TimelineState timelineProvider;
+  final BucketListState bucketProvider;
   final WorkspaceState workspace;
   final ProfileState profile;
   final PresenceState presence;
@@ -63,7 +63,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
   }
 
   void _generateInsights() {
-    final memCount = widget.timelineProvider.timelineItems.length;
+    final memCount = widget.timelineProvider.items.length;
     final bucketPercent = widget.bucketProvider.progress * 100;
     final years = DateHelper.relationshipPreciseAge(widget.workspace.startDate, widget.workspace.startTime)['years']!;
     final partnerName = widget.profile.partnerName ?? 'Partner';

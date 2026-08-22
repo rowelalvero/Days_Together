@@ -4,12 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/calendar_provider.dart';
+import 'package:days_together/features/calendar/calendar_controller.dart';
+import 'package:days_together/features/calendar/calendar_state.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/gift_reminder_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/models/vault_item_model.dart';
 import 'package:days_together/routing/routes.dart';
@@ -267,7 +268,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             padding: const EdgeInsets.only(right: 8),
                             child: OutlinedButton(
                               onPressed: () {
-                                context.read<CalendarProvider>().deleteEvent(existingEvent.id);
+                                ref.read(calendarControllerProvider.notifier).deleteEvent(existingEvent.id);
                                 Navigator.pop(context);
                               },
                               style: OutlinedButton.styleFrom(
@@ -294,9 +295,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 time: _selectedTime,
                               );
                               if (existingEvent == null) {
-                                context.read<CalendarProvider>().addEvent(event);
+                                ref.read(calendarControllerProvider.notifier).addEvent(event);
                               } else {
-                                context.read<CalendarProvider>().updateEvent(event);
+                                ref.read(calendarControllerProvider.notifier).updateEvent(event);
                               }
                               Navigator.pop(context);
                             }
@@ -355,7 +356,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final calendarProvider = context.watch<CalendarProvider>();
+    final calendarState = ref.watch(calendarControllerProvider);
 
     return Scaffold(
       body: Stack(
@@ -367,10 +368,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: Column(
               children: [
                 _buildHeader(context),
-                _buildCalendar(theme, calendarProvider),
+                _buildCalendar(theme, calendarState),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: _buildEventList(theme, calendarProvider),
+                  child: _buildEventList(theme, calendarState),
                 ),
               ],
             ),
@@ -421,12 +422,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar(LoveStoryTheme theme, CalendarProvider provider) {
+  Widget _buildCalendar(LoveStoryTheme theme, CalendarState calendar) {
     final relProvider = ref.watch(workspaceControllerProvider);
-    final timelineProvider = context.watch<TimelineProvider>();
-    final bucketProvider = context.watch<BucketListProvider>();
-    final giftProvider = context.watch<GiftReminderProvider>();
-    final vaultProvider = context.watch<VaultProvider>();
+    final timelineProvider = ref.watch(timelineControllerProvider);
+    final bucketProvider = ref.watch(bucketListControllerProvider);
+    final giftProvider = ref.watch(giftReminderControllerProvider);
+    final vaultProvider = ref.watch(vaultControllerProvider);
 
     final firstDayOfMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
     final lastDayOfMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0);
@@ -468,11 +469,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               final isToday = _isSameDay(date, DateTime.now());
               
               // Event checking
-              final calendarEvents = provider.getEventsForDay(date);
-              final hasTimeline = timelineProvider.timelineItems.any((i) => _isSameDay(i.date, date));
+              final calendarEvents = calendar.eventsForDay(date);
+              final hasTimeline = timelineProvider.items.any((i) => _isSameDay(i.date, date));
               final hasBucket = bucketProvider.items.any((i) => i.scheduledAt != null && _isSameDay(i.scheduledAt!, date));
               final hasGift = giftProvider.reminders.any((i) => _isSameDay(i.nextOccurrence, date));
-              final hasVault = vaultProvider.allItems.any((i) => _isSameDay(i.createdAt, date));
+              final hasVault = vaultProvider.visibleItems.any((i) => _isSameDay(i.createdAt, date));
               
               final startDate = relProvider.startDate;
               final isAnniversary = startDate != null && 
@@ -522,20 +523,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildEventList(LoveStoryTheme theme, CalendarProvider provider) {
+  Widget _buildEventList(LoveStoryTheme theme, CalendarState calendar) {
     final relProvider = ref.watch(workspaceControllerProvider);
-    final timelineProvider = context.watch<TimelineProvider>();
-    final bucketProvider = context.watch<BucketListProvider>();
-    final giftProvider = context.watch<GiftReminderProvider>();
-    final vaultProvider = context.watch<VaultProvider>();
+    final timelineProvider = ref.watch(timelineControllerProvider);
+    final bucketProvider = ref.watch(bucketListControllerProvider);
+    final giftProvider = ref.watch(giftReminderControllerProvider);
+    final vaultProvider = ref.watch(vaultControllerProvider);
 
-    final events = provider.getEventsForDay(_selectedDay);
+    final events = calendar.eventsForDay(_selectedDay);
     
     // Check for other types
-    final timelineItems = timelineProvider.timelineItems.where((i) => _isSameDay(i.date, _selectedDay)).toList();
+    final timelineItems = timelineProvider.items.where((i) => _isSameDay(i.date, _selectedDay)).toList();
     final bucketItems = bucketProvider.items.where((i) => i.scheduledAt != null && _isSameDay(i.scheduledAt!, _selectedDay)).toList();
     final giftItems = giftProvider.reminders.where((i) => _isSameDay(i.nextOccurrence, _selectedDay)).toList();
-    final vaultItems = vaultProvider.allItems.where((i) => _isSameDay(i.createdAt, _selectedDay)).toList();
+    final vaultItems = vaultProvider.visibleItems.where((i) => _isSameDay(i.createdAt, _selectedDay)).toList();
 
     // Check for anniversary
     final startDate = relProvider.startDate;

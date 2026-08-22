@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/onboarding/auth_screen.dart';
@@ -332,7 +333,9 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
         path: Routes.memoryPattern,
         builder: (context, state) {
           final itemId = state.pathParameters['itemId']!;
-          final items = context.read<TimelineProvider>().timelineItems;
+          final items = ProviderScope.containerOf(context, listen: false)
+              .read(timelineControllerProvider)
+              .items;
           TimelineItemData? item;
           try {
             item = items.firstWhere((i) => i.id == itemId);
@@ -340,7 +343,7 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
             item = null;
           }
           // The item may not be loaded yet (deep link arriving before
-          // TimelineProvider syncs) or may no longer exist (deleted since
+          // TimelineController syncs) or may no longer exist (deleted since
           // the notification was sent) -- fall back to the home timeline
           // tab rather than crashing, matching the try/catch discard the
           // old notification_service.dart call site used.

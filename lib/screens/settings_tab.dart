@@ -9,13 +9,13 @@ import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/profile_state.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
-import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
+import 'package:days_together/features/calendar/calendar_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -29,13 +29,13 @@ class SettingsTab extends ConsumerWidget {
     final year = DateTime.now().year;
     final workspace = ref.read(workspaceControllerProvider);
     final profile = ref.read(profileControllerProvider);
-    final tp = context.read<TimelineProvider>();
-    final np = context.read<NoteitProvider>();
-    final bp = context.read<BucketListProvider>();
-    final mp = context.read<DailyMoodProvider>();
-    final cp = context.read<CalendarProvider>();
-    final cap = context.read<TimeCapsuleProvider>();
-    final vp = context.read<VaultProvider>();
+    final tp = ref.read(timelineControllerProvider);
+    final np = ref.read(noteitControllerProvider);
+    final bp = ref.read(bucketListControllerProvider);
+    final mp = ref.read(dailyMoodControllerProvider);
+    final cp = ref.read(calendarControllerProvider);
+    final cap = ref.read(timeCapsuleControllerProvider);
+    final vp = ref.read(vaultControllerProvider);
 
     final data = WrappedService.aggregate(
       year: year,

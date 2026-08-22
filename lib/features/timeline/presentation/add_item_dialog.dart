@@ -1,22 +1,23 @@
 import 'dart:io';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 
-class AddItemDialog extends StatefulWidget {
+class AddItemDialog extends ConsumerStatefulWidget {
   const AddItemDialog({super.key});
 
   @override
-  State<AddItemDialog> createState() => _AddItemDialogState();
+  ConsumerState<AddItemDialog> createState() => _AddItemDialogState();
 }
 
-class _AddItemDialogState extends State<AddItemDialog> {
+class _AddItemDialogState extends ConsumerState<AddItemDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -378,7 +379,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
   }
 
   Future<void> _pickImage() async {
-    final path = await context.read<TimelineProvider>().pickImage(context);
+    final path = await ref.read(timelineControllerProvider.notifier).pickImage(context);
     if (path != null) setState(() => _imagePath = path);
   }
 
@@ -400,10 +401,10 @@ class _AddItemDialogState extends State<AddItemDialog> {
         imagePath: _imagePath,
         date: combinedDate,
         isImageCard: _isImageCard,
-        position: context.read<TimelineProvider>().timelineItems.length,
+        position: ref.read(timelineControllerProvider).items.length,
         mood: _selectedMood,
       );
-      await context.read<TimelineProvider>().addTimelineItem(newItem);
+      await ref.read(timelineControllerProvider.notifier).addTimelineItem(newItem);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() => _isSaving = false);

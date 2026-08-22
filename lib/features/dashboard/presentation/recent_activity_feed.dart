@@ -4,20 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/shared/glass_container.dart';
 
 // Providers & Models
 import 'package:days_together/features/dashboard/recent_activity_controller.dart';
 import 'package:days_together/models/local_activity_model.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/gift_reminder_provider.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/calendar/calendar_controller.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 
 import 'package:days_together/routing/routes.dart';
 // LoveStoryScreen.of(context)?.setIndex(...) below is tab-switching inside
@@ -119,22 +118,22 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
     switch (route) {
       case 'bucket_list':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<BucketListProvider>(context, listen: false);
-          exists = provider.items.any((i) => i.id == referenceId);
+          final bucketState = ref.read(bucketListControllerProvider);
+          exists = bucketState.items.any((i) => i.id == referenceId);
         }
         targetRoute = Routes.bucketList;
         break;
       case 'calendar':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<CalendarProvider>(context, listen: false);
-          exists = provider.events.any((e) => e.id == referenceId);
+          final calendarState = ref.read(calendarControllerProvider);
+          exists = calendarState.events.any((e) => e.id == referenceId);
         }
         targetRoute = Routes.calendar;
         break;
       case 'timeline':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<TimelineProvider>(context, listen: false);
-          exists = provider.timelineItems.any((i) => i.id == referenceId);
+          final timelineState = ref.read(timelineControllerProvider);
+          exists = timelineState.items.any((i) => i.id == referenceId);
         }
         if (exists) {
           LoveStoryScreen.of(context)?.setIndex(1); // Story/Timeline Tab
@@ -143,23 +142,23 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
         break;
       case 'time_capsule':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<TimeCapsuleProvider>(context, listen: false);
-          exists = provider.capsules.any((c) => c.id == referenceId);
+          final capsuleState = ref.read(timeCapsuleControllerProvider);
+          exists = capsuleState.capsules.any((c) => c.id == referenceId);
         }
         targetRoute = Routes.timeCapsule;
         break;
       case 'vault':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<VaultProvider>(context, listen: false);
-          exists = provider.items.any((i) => i.id == referenceId);
+          final vaultState = ref.read(vaultControllerProvider);
+          exists = vaultState.visibleItems.any((i) => i.id == referenceId);
         }
         targetRoute = Routes.vault;
         break;
       case 'love_notes':
       case 'doodle_notes':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<NoteitProvider>(context, listen: false);
-          exists = provider.notes.any((n) => n.id == referenceId);
+          final noteitState = ref.read(noteitControllerProvider);
+          exists = noteitState.visibleNotes.any((n) => n.id == referenceId);
         }
         targetRoute = Routes.notes;
         break;
@@ -168,8 +167,8 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
         break;
       case 'gifts':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final provider = Provider.of<GiftReminderProvider>(context, listen: false);
-          exists = provider.reminders.any((r) => r.id == referenceId);
+          final giftState = ref.read(giftReminderControllerProvider);
+          exists = giftState.reminders.any((r) => r.id == referenceId);
         }
         targetRoute = Routes.gifts;
         break;

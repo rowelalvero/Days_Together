@@ -1,25 +1,27 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
+import 'package:days_together/features/vault/vault_state.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 
-class VaultScreen extends StatelessWidget {
+class VaultScreen extends ConsumerWidget {
   const VaultScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final vault = context.watch<VaultProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vault = ref.watch(vaultControllerProvider);
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
 
     if (vault.isDecoyMode) {
       return _DecoyWeatherScreen(
-        onReset: () => vault.resetDecoy(),
+        onReset: () => ref.read(vaultControllerProvider.notifier).resetDecoy(),
       );
     }
 
@@ -36,16 +38,16 @@ class VaultScreen extends StatelessWidget {
 }
 
 // ── PIN SETUP ──
-class _SetPinScreen extends StatefulWidget {
+class _SetPinScreen extends ConsumerStatefulWidget {
   final LoveStoryTheme theme;
   final LinearGradient gradient;
   const _SetPinScreen({required this.theme, required this.gradient});
 
   @override
-  State<_SetPinScreen> createState() => _SetPinScreenState();
+  ConsumerState<_SetPinScreen> createState() => _SetPinScreenState();
 }
 
-class _SetPinScreenState extends State<_SetPinScreen> {
+class _SetPinScreenState extends ConsumerState<_SetPinScreen> {
   String _pin = '';
 
   @override
@@ -89,7 +91,7 @@ class _SetPinScreenState extends State<_SetPinScreen> {
                 onDigit: (d) {
                   if (_pin.length < 4) setState(() => _pin += d);
                   if (_pin.length == 4) {
-                    context.read<VaultProvider>().setPin(_pin);
+                    ref.read(vaultControllerProvider.notifier).setPin(_pin);
                   }
                 },
                 onDelete: () {
@@ -109,16 +111,16 @@ class _SetPinScreenState extends State<_SetPinScreen> {
 }
 
 // ── PIN ENTRY ──
-class _PinEntryScreen extends StatefulWidget {
+class _PinEntryScreen extends ConsumerStatefulWidget {
   final LoveStoryTheme theme;
   final LinearGradient gradient;
   const _PinEntryScreen({required this.theme, required this.gradient});
 
   @override
-  State<_PinEntryScreen> createState() => _PinEntryScreenState();
+  ConsumerState<_PinEntryScreen> createState() => _PinEntryScreenState();
 }
 
-class _PinEntryScreenState extends State<_PinEntryScreen> {
+class _PinEntryScreenState extends ConsumerState<_PinEntryScreen> {
   String _pin = '';
   bool _error = false;
 
@@ -170,7 +172,7 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
                     });
                   }
                   if (_pin.length == 4) {
-                    final success = await context.read<VaultProvider>().verifyPin(_pin);
+                    final success = await ref.read(vaultControllerProvider.notifier).verifyPin(_pin);
                     if (!success && mounted) {
                       setState(() {
                         _error = true;
@@ -196,14 +198,15 @@ class _PinEntryScreenState extends State<_PinEntryScreen> {
 }
 
 // ── VAULT CONTENT ──
-class _VaultContentScreen extends StatelessWidget {
+class _VaultContentScreen extends ConsumerWidget {
   final LoveStoryTheme theme;
   final LinearGradient gradient;
   const _VaultContentScreen({required this.theme, required this.gradient});
 
   @override
-  Widget build(BuildContext context) {
-    final vault = context.watch<VaultProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final vault = ref.watch(vaultControllerProvider);
+    final vaultNotifier = ref.read(vaultControllerProvider.notifier);
 
     return DefaultTabController(
       length: 2,
@@ -221,7 +224,7 @@ class _VaultContentScreen extends StatelessWidget {
                     children: [
                       IconButton(
                         onPressed: () {
-                          vault.lock();
+                          vaultNotifier.lock();
                           Navigator.pop(context);
                         },
                         icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
@@ -239,7 +242,7 @@ class _VaultContentScreen extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: () {
-                          vault.lock();
+                          vaultNotifier.lock();
                         },
                         icon: Icon(Icons.lock_rounded, color: theme.textColor, size: 20),
                       ),
@@ -258,8 +261,8 @@ class _VaultContentScreen extends StatelessWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _buildPhotosTab(context, vault),
-                      _buildLettersTab(context, vault),
+                      _buildPhotosTab(context, vault, vaultNotifier),
+                      _buildLettersTab(context, vault, vaultNotifier),
                     ],
                   ),
                 ),
@@ -271,7 +274,7 @@ class _VaultContentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPhotosTab(BuildContext context, VaultProvider vault) {
+  Widget _buildPhotosTab(BuildContext context, VaultState vault, VaultController vaultNotifier) {
     if (vault.photos.isEmpty) {
       return Center(
         child: Column(
@@ -282,7 +285,7 @@ class _VaultContentScreen extends StatelessWidget {
             Text('Nothing here yet.', style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.5))),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () => vault.addPhoto(context),
+              onPressed: () => vaultNotifier.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
               label: Text('Add Photo', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
@@ -322,7 +325,7 @@ class _VaultContentScreen extends StatelessWidget {
                         ],
                       ),
                     );
-                    if (confirmed == true) vault.deleteItem(item.id);
+                    if (confirmed == true) vaultNotifier.deleteItem(item.id);
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -348,7 +351,7 @@ class _VaultContentScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => vault.addPhoto(context),
+              onPressed: () => vaultNotifier.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
               label: Text('Add Photo', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
@@ -363,7 +366,7 @@ class _VaultContentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLettersTab(BuildContext context, VaultProvider vault) {
+  Widget _buildLettersTab(BuildContext context, VaultState vault, VaultController vaultNotifier) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -412,7 +415,7 @@ class _VaultContentScreen extends StatelessWidget {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                  onPressed: () => vault.deleteItem(letter.id),
+                                  onPressed: () => vaultNotifier.deleteItem(letter.id),
                                 ),
                               ],
                             ),
@@ -425,7 +428,7 @@ class _VaultContentScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showWriteLetterDialog(context, vault),
+              onPressed: () => _showWriteLetterDialog(context, vaultNotifier),
               icon: const Icon(Icons.edit_rounded),
               label: Text('Write a Letter', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
@@ -440,7 +443,7 @@ class _VaultContentScreen extends StatelessWidget {
     );
   }
 
-  void _showWriteLetterDialog(BuildContext context, VaultProvider vault) {
+  void _showWriteLetterDialog(BuildContext context, VaultController vaultNotifier) {
     final controller = TextEditingController();
     showModalBottomSheet(
       context: context,
@@ -489,7 +492,7 @@ class _VaultContentScreen extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () {
                   if (controller.text.trim().isNotEmpty) {
-                    vault.addLetter(controller.text.trim());
+                    vaultNotifier.addLetter(controller.text.trim());
                     Navigator.pop(ctx);
                   }
                 },

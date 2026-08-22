@@ -1,21 +1,22 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/models/daily_mood_model.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class LoveMeterScreen extends StatefulWidget {
+class LoveMeterScreen extends ConsumerStatefulWidget {
   const LoveMeterScreen({super.key});
 
   @override
-  State<LoveMeterScreen> createState() => _LoveMeterScreenState();
+  ConsumerState<LoveMeterScreen> createState() => _LoveMeterScreenState();
 }
 
-class _LoveMeterScreenState extends State<LoveMeterScreen> {
+class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
   double _currentMoodScore = 7.0;
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _answerController = TextEditingController();
@@ -24,8 +25,8 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
   @override
   void initState() {
     super.initState();
-    final moodProvider = context.read<DailyMoodProvider>();
-    final todayMood = moodProvider.todayMood;
+    final moodState = ref.read(dailyMoodControllerProvider);
+    final todayMood = moodState.todayMood;
     if (todayMood != null) {
       _currentMoodScore = todayMood.moodScore.toDouble();
       _noteController.text = todayMood.note ?? '';
@@ -59,9 +60,10 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final moodProvider = context.watch<DailyMoodProvider>();
-    final todayMood = moodProvider.todayMood;
-    final todayQuestion = moodProvider.todayQuestion;
+    final moodState = ref.watch(dailyMoodControllerProvider);
+    final moodNotifier = ref.read(dailyMoodControllerProvider.notifier);
+    final todayMood = moodState.todayMood;
+    final todayQuestion = moodState.todayQuestion;
 
     return Scaffold(
       body: Stack(
@@ -79,13 +81,13 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 children: [
                   _buildAppBar(context, theme),
                   if (todayMood == null || _isEditingMood)
-                    _buildMoodLogger(theme, moodProvider)
+                    _buildMoodLogger(theme, moodNotifier)
                   else
                     _buildTodayMoodSummary(todayMood, theme),
                   const SizedBox(height: 24),
-                  _buildSyncQuestionCard(todayQuestion, theme, moodProvider),
+                  _buildSyncQuestionCard(todayQuestion, theme, moodNotifier),
                   const SizedBox(height: 24),
-                  _buildMoodChartCard(moodProvider.recentMoods, theme),
+                  _buildMoodChartCard(moodState.recentMoods, theme),
                 ],
               ),
             ),
@@ -130,7 +132,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
     );
   }
 
-  Widget _buildMoodLogger(LoveStoryTheme theme, DailyMoodProvider provider) {
+  Widget _buildMoodLogger(LoveStoryTheme theme, DailyMoodController notifier) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
@@ -234,7 +236,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
             child: ElevatedButton(
               onPressed: () async {
                 final noteText = _noteController.text.trim();
-                await provider.logMood(
+                await notifier.logMood(
                   _currentMoodScore.toInt(),
                   note: noteText.isEmpty ? null : noteText,
                 );
@@ -354,7 +356,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
   }
 
   Widget _buildSyncQuestionCard(
-      DailySyncQuestion? question, LoveStoryTheme theme, DailyMoodProvider provider) {
+      DailySyncQuestion? question, LoveStoryTheme theme, DailyMoodController notifier) {
     if (question == null) return const SizedBox.shrink();
 
     final hasAnswered = question.myAnswer != null;
@@ -430,7 +432,7 @@ class _LoveMeterScreenState extends State<LoveMeterScreen> {
                 onPressed: () async {
                   final text = _answerController.text.trim();
                   if (text.isNotEmpty) {
-                    await provider.answerDailyQuestion(text);
+                    await notifier.answerDailyQuestion(text);
                     if (mounted) {
                       _answerController.clear();
                     }

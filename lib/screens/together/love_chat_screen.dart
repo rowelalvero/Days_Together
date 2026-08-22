@@ -10,8 +10,8 @@ import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
@@ -40,10 +40,10 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     super.dispose();
   }
 
-  void _sendMessage(LoveChatProvider provider, String senderName) {
+  void _sendMessage(LoveChatController notifier, String senderName) {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    provider.sendMessage(text, senderName);
+    notifier.sendMessage(text, senderName);
     _messageController.clear();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,14 +63,15 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     final theme = themeProvider.currentLoveTheme;
     final profile = ref.watch(profileControllerProvider);
     final session = context.watch<CoupleSession>();
-    final provider = context.watch<LoveChatProvider>();
-    context.watch<NoteitProvider>();
+    final chatState = ref.watch(loveChatControllerProvider);
+    final chatNotifier = ref.read(loveChatControllerProvider.notifier);
+    ref.watch(noteitControllerProvider);
 
     final yourName = profile.yourName ?? 'Me';
     final partnerName = profile.partnerName ?? 'Partner';
     final partnerJoined = session.partnerId != null;
 
-    final messages = provider.messages;
+    final messages = chatState.messages;
 
     return Scaffold(
       body: Container(
@@ -125,7 +126,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                             isFirstInGroup,
                             isLastInGroup,
                             theme,
-                            provider,
+                            chatNotifier,
                           );
                         },
                       ),
@@ -133,7 +134,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
               Divider(color: theme.textColor.withValues(alpha: 0.1), height: 1),
 
               // Input Box
-              _buildInputRow(provider, theme, yourName),
+              _buildInputRow(chatNotifier, theme, yourName),
             ],
           ),
         ),
@@ -211,7 +212,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     bool isFirstInGroup,
     bool isLastInGroup,
     LoveStoryTheme theme,
-    LoveChatProvider provider,
+    LoveChatController notifier,
   ) {
     final isRevealed = _revealedMessageIds.contains(message.id);
 
@@ -229,9 +230,9 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
           scrapbookItem = NoteitItem.fromJson(jsonDecode(payload));
         } else {
           final noteId = payload.trim();
-          final noteitProvider = context.read<NoteitProvider>();
+          final noteitState = ref.read(noteitControllerProvider);
           try {
-            scrapbookItem = noteitProvider.notes.firstWhere((n) => n.id == noteId);
+            scrapbookItem = noteitState.visibleNotes.firstWhere((n) => n.id == noteId);
           } catch (_) {
             scrapbookItem = NoteitItem(
               id: noteId,
@@ -528,7 +529,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                 });
               }
             },
-            onLongPress: () => _showActions(context, message, provider),
+            onLongPress: () => _showActions(context, message, notifier),
             child: bubbleContent,
           ),
 
@@ -554,7 +555,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  Widget _buildInputRow(LoveChatProvider provider, LoveStoryTheme theme, String yourName) {
+  Widget _buildInputRow(LoveChatController notifier, LoveStoryTheme theme, String yourName) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Row(
@@ -573,13 +574,13 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                   hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 14),
                   border: InputBorder.none,
                 ),
-                onSubmitted: (_) => _sendMessage(provider, yourName),
+                onSubmitted: (_) => _sendMessage(notifier, yourName),
               ),
             ),
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => _sendMessage(provider, yourName),
+            onTap: () => _sendMessage(notifier, yourName),
             child: CircleAvatar(
               radius: 22,
               backgroundColor: theme.accentColor,
@@ -591,7 +592,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  void _showActions(BuildContext context, LoveChatMessage message, LoveChatProvider provider) {
+  void _showActions(BuildContext context, LoveChatMessage message, LoveChatController notifier) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -611,7 +612,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                   style: AppTypography.body(color: Colors.redAccent),
                 ),
                 onTap: () {
-                  provider.deleteMessage(message.id);
+                  notifier.deleteMessage(message.id);
                   Navigator.pop(ctx);
                 },
               ),

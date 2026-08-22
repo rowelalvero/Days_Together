@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -67,7 +67,7 @@ class NoteitSyncManager {
 
   NoteitSyncManager._internal();
 
-  NoteitProvider? _provider;
+  NoteitController? _provider;
   List<NoteitSyncTask> _queue = [];
   bool _isSyncing = false;
   Timer? _backoffTimer;
@@ -76,7 +76,7 @@ class NoteitSyncManager {
   bool get hasPendingItems => _queue.isNotEmpty;
   List<NoteitSyncTask> get queue => List.unmodifiable(_queue);
 
-  void initialize(NoteitProvider provider) {
+  void initialize(NoteitController provider) {
     _provider = provider;
     _loadQueue();
     _startConnectivityCheck();
@@ -153,7 +153,7 @@ class NoteitSyncManager {
 
     try {
       final coupleId = _provider?.coupleId;
-      final userId = _provider?.userId;
+      final userId = _provider?.sessionUserId;
 
       if (coupleId == null || userId == null) {
         _isSyncing = false;

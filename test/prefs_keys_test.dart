@@ -29,16 +29,16 @@ void main() {
       // longer in this list. Add a file here each time a further extraction
       // moves another group's literals to a new owner. The item-14
       // Definition-of-Done fix added timelineIsAscending and
-      // vaultPinFallback, owned by timeline_controller.dart/timeline_
-      // provider.dart and vault_controller.dart/vault_provider.dart
-      // respectively.
+      // vaultPinFallback, originally owned by both timeline_controller.dart/
+      // timeline_provider.dart and vault_controller.dart/vault_provider.dart
+      // -- the item-3 gap-fix (Phase 1) later deleted timeline_provider.dart
+      // and vault_provider.dart outright once their Riverpod controllers
+      // fully superseded them, so only the two controller files remain here.
       final sources = [
         'lib/providers/couple_session.dart',
         'lib/features/relationship/license_controller.dart',
         'lib/features/timeline/timeline_controller.dart',
-        'lib/providers/timeline_provider.dart',
         'lib/features/vault/vault_controller.dart',
-        'lib/providers/vault_provider.dart',
       ].map((path) => File(path).readAsStringSync()).toList();
 
       // Recover the value -> constant-name mapping directly from

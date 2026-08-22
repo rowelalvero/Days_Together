@@ -133,6 +133,58 @@ void main() {
     });
   });
 
+  group('Item 3 gap-fix Phase 1 -- the 12 retired domain providers are gone; everything depends on their Riverpod controllers', () {
+    test('no lib/ file has a live code reference to any of the 12 retired provider class names', () {
+      // The 12 domain providers (TimelineProvider, BucketListProvider,
+      // TimeCapsuleProvider, DailyMoodProvider, GiftReminderProvider,
+      // VaultProvider, CalendarProvider, TopicCardsProvider, NoteitProvider,
+      // LoveChatProvider, CurrentlyProvider, NotificationPreferencesProvider)
+      // each had a complete, faithful Riverpod port under lib/features/<name>/
+      // before their UI call sites were ever converted -- once every
+      // context.watch<X>()/context.read<X>() site was flipped to
+      // ref.watch/ref.read on the corresponding *ControllerProvider, the old
+      // lib/providers/*.dart files and their main.dart registrations were
+      // deleted outright (see migration-roadmap.md's "Corrected on
+      // implementation" note for item 3). Comment lines are skipped
+      // deliberately -- several files' doc comments accurately narrate these
+      // providers' history (e.g. "Riverpod port of TimelineProvider"), which
+      // is legitimate documentation, not a regression -- this rule only
+      // catches an actual reintroduced import/type/constructor reference.
+      const retiredProviderNames = [
+        'TimelineProvider',
+        'BucketListProvider',
+        'TimeCapsuleProvider',
+        'DailyMoodProvider',
+        'GiftReminderProvider',
+        'VaultProvider',
+        'CalendarProvider',
+        'TopicCardsProvider',
+        'NoteitProvider',
+        'LoveChatProvider',
+        'CurrentlyProvider',
+        'NotificationPreferencesProvider',
+      ];
+      final violations = <String>[];
+      for (final file in _dartFilesUnder('lib')) {
+        for (final rawLine in file.readAsLinesSync()) {
+          final line = rawLine.trim();
+          if (line.startsWith('//')) continue;
+          for (final name in retiredProviderNames) {
+            if (line.contains(name)) {
+              violations.add('${file.path}: $name');
+              break;
+            }
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'A retired provider class name was referenced but it was deleted (see migration-roadmap.md item 3): $violations',
+      );
+    });
+  });
+
   group('Migration Phase 3 -- go_router owns screen-level navigation (ADR-007)', () {
     test('lib/navigator_key.dart no longer exists', () {
       expect(File('lib/navigator_key.dart').existsSync(), isFalse);

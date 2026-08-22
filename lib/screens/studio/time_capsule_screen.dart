@@ -1,20 +1,22 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_state.dart';
 import 'package:days_together/models/time_capsule_model.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class TimeCapsuleScreen extends StatefulWidget {
+class TimeCapsuleScreen extends ConsumerStatefulWidget {
   const TimeCapsuleScreen({super.key});
 
   @override
-  State<TimeCapsuleScreen> createState() => _TimeCapsuleScreenState();
+  ConsumerState<TimeCapsuleScreen> createState() => _TimeCapsuleScreenState();
 }
 
-class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
+class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen> {
   final TextEditingController _messageController = TextEditingController();
   DateTime? _selectedDate;
 
@@ -176,7 +178,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                         onPressed: () {
                           if (_messageController.text.trim().isNotEmpty &&
                               _selectedDate != null) {
-                            context.read<TimeCapsuleProvider>().createCapsule(
+                            ref.read(timeCapsuleControllerProvider.notifier).createCapsule(
                               _messageController.text.trim(),
                               _selectedDate!,
                             );
@@ -221,10 +223,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     BuildContext context,
     TimeCapsule capsule,
     LoveStoryTheme theme,
-    TimeCapsuleProvider provider,
+    TimeCapsuleController notifier,
   ) {
     if (!capsule.isOpened && capsule.canOpen) {
-      provider.openCapsule(capsule.id);
+      notifier.openCapsule(capsule.id);
     }
 
     showDialog(
@@ -286,7 +288,8 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final provider = context.watch<TimeCapsuleProvider>();
+    final capsuleState = ref.watch(timeCapsuleControllerProvider);
+    final capsuleNotifier = ref.read(timeCapsuleControllerProvider.notifier);
 
     return Scaffold(
       body: Stack(
@@ -301,11 +304,11 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
               children: [
                 _buildAppBar(context, theme),
                 Expanded(
-                  child: provider.isLoading
+                  child: capsuleState.isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : provider.capsules.isEmpty
+                      : capsuleState.capsules.isEmpty
                       ? _buildEmptyState(theme)
-                      : _buildCapsuleLists(provider, theme),
+                      : _buildCapsuleLists(capsuleState, capsuleNotifier, theme),
                 ),
               ],
             ),
@@ -360,10 +363,10 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildCapsuleLists(TimeCapsuleProvider provider, LoveStoryTheme theme) {
-    final openable = provider.openableCapsules;
-    final locked = provider.lockedCapsules;
-    final opened = provider.openedCapsules;
+  Widget _buildCapsuleLists(TimeCapsuleState state, TimeCapsuleController notifier, LoveStoryTheme theme) {
+    final openable = state.openableCapsules;
+    final locked = state.lockedCapsules;
+    final opened = state.openedCapsules;
 
     return ListView(
       physics: const BouncingScrollPhysics(),
@@ -372,19 +375,19 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
         if (openable.isNotEmpty) ...[
           _buildSectionHeader('🔓 Ready to Open', theme),
           const SizedBox(height: 8),
-          ...openable.map((c) => _buildCapsuleCard(c, theme, provider, true)),
+          ...openable.map((c) => _buildCapsuleCard(c, theme, notifier, true)),
           const SizedBox(height: 20),
         ],
         if (locked.isNotEmpty) ...[
           _buildSectionHeader('🔒 Sealed & Waiting', theme),
           const SizedBox(height: 8),
-          ...locked.map((c) => _buildCapsuleCard(c, theme, provider, false)),
+          ...locked.map((c) => _buildCapsuleCard(c, theme, notifier, false)),
           const SizedBox(height: 20),
         ],
         if (opened.isNotEmpty) ...[
           _buildSectionHeader('📖 Opened Memories', theme),
           const SizedBox(height: 8),
-          ...opened.map((c) => _buildCapsuleCard(c, theme, provider, false)),
+          ...opened.map((c) => _buildCapsuleCard(c, theme, notifier, false)),
           const SizedBox(height: 20),
         ],
       ],
@@ -404,7 +407,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
   Widget _buildCapsuleCard(
     TimeCapsule capsule,
     LoveStoryTheme theme,
-    TimeCapsuleProvider provider,
+    TimeCapsuleController notifier,
     bool isOpenable,
   ) {
     final formattedOpenDate = DateFormat(
@@ -488,7 +491,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                   size: 16,
                 ),
                 onPressed: () =>
-                    _showCapsuleDetailDialog(context, capsule, theme, provider),
+                    _showCapsuleDetailDialog(context, capsule, theme, notifier),
               )
             else
               Icon(
@@ -528,7 +531,7 @@ class _TimeCapsuleScreenState extends State<TimeCapsuleScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          provider.deleteCapsule(capsule.id);
+                          notifier.deleteCapsule(capsule.id);
                           Navigator.pop(context);
                         },
                         child: Text(

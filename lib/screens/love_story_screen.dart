@@ -2,12 +2,13 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/screens/settings_tab.dart';
 import 'package:days_together/screens/studio_tab.dart';
 import 'package:days_together/screens/together_tab.dart';
@@ -26,25 +27,24 @@ import 'package:days_together/features/dashboard/presentation/currently_card.dar
 import 'package:days_together/features/dashboard/presentation/recent_activity_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ConsumerState, ConsumerStatefulWidget;
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer, Provider;
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 
-class LoveStoryScreen extends StatefulWidget {
+class LoveStoryScreen extends ConsumerStatefulWidget {
   final int initialIndex;
   const LoveStoryScreen({super.key, this.initialIndex = 0});
 
   @override
-  State<LoveStoryScreen> createState() => LoveStoryScreenState();
+  ConsumerState<LoveStoryScreen> createState() => LoveStoryScreenState();
 
   static LoveStoryScreenState? of(BuildContext context) {
     return context.findAncestorStateOfType<LoveStoryScreenState>();
   }
 }
 
-class LoveStoryScreenState extends State<LoveStoryScreen> {
+class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
   int _currentIndex = 0;
   DateTime? _lastBackPressTime;
 
@@ -217,7 +217,7 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final hasTimelineItems = context.select<TimelineProvider, bool>((p) => p.timelineItems.isNotEmpty);
+    final hasTimelineItems = ref.watch(timelineControllerProvider.select((s) => s.items.isNotEmpty));
 
     return PopScope(
       canPop: false,
@@ -327,15 +327,17 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
         : Colors.white.withValues(alpha: 0.2);
     final double opacity = 0.15;
 
-    return Consumer<TimelineProvider>(
-      builder: (context, timelineProvider, child) {
-        // The scrubber row's content and interaction logic are defined and
-        // owned by TimelineTab (the only tab that uses it); this shared
-        // shell just asks it for a widget to slot into its own capsule, so
-        // it doesn't need to know about RulerPickerScrubber at all.
-        final scrubberRow = _timelineTabKey.currentState?.buildFloatingScrubber(timelineProvider);
-        final showScrubber = _currentIndex == 1 && scrubberRow != null;
-        return Container(
+    final timelineState = ref.watch(timelineControllerProvider);
+    // The scrubber row's content and interaction logic are defined and
+    // owned by TimelineTab (the only tab that uses it); this shared
+    // shell just asks it for a widget to slot into its own capsule, so
+    // it doesn't need to know about RulerPickerScrubber at all.
+    final scrubberRow = _timelineTabKey.currentState?.buildFloatingScrubber(
+      timelineState,
+      ref.read(timelineControllerProvider.notifier),
+    );
+    final showScrubber = _currentIndex == 1 && scrubberRow != null;
+    return Container(
           padding: EdgeInsets.fromLTRB(20, 0, 20, marginBot),
           child: TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 350),
@@ -435,8 +437,6 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
             ),
           ),
         );
-      },
-    );
   }
 
   Widget _buildNavItem(
@@ -511,7 +511,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
     final workspace = ref.watch(workspaceControllerProvider);
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);
-    final tp = context.watch<TimelineProvider>();
+    final tp = ref.watch(timelineControllerProvider);
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
 
@@ -528,7 +528,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
             const SizedBox(height: 16),
             InsightsBanner(
               timelineProvider: tp,
-              bucketProvider: context.watch<BucketListProvider>(),
+              bucketProvider: ref.watch(bucketListControllerProvider),
               workspace: workspace,
               profile: profile,
               presence: presence,
@@ -587,7 +587,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
   late PageController _pageController;
   late ScrollController _scrollController;
   bool _isManualListScrolling = false;
-  TimelineProvider? _timelineProvider;
+  late final ProviderSubscription<TimelineState> _timelineSubscription;
 
   void _onTimelineScrollNotification(ScrollNotification notification, int itemsCount) {
     if (itemsCount == 0) return;
@@ -601,10 +601,10 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
         int targetIndex = (_scrollController.offset / 230.0).round();
         targetIndex = targetIndex.clamp(0, itemsCount - 1);
 
-        final provider = Provider.of<TimelineProvider>(context, listen: false);
-        if (targetIndex != provider.currentScrubIndex) {
+        final state = ref.read(timelineControllerProvider);
+        if (targetIndex != state.currentScrubIndex) {
           HapticFeedback.selectionClick();
-          provider.setCurrentScrubIndex(targetIndex);
+          ref.read(timelineControllerProvider.notifier).setCurrentScrubIndex(targetIndex);
         }
       }
     } else if (notification is ScrollEndNotification) {
@@ -613,8 +613,8 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
         if (_scrollController.hasClients) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted && !_isManualListScrolling) {
-              final provider = Provider.of<TimelineProvider>(context, listen: false);
-              final targetOffset = provider.currentScrubIndex * 230.0;
+              final state = ref.read(timelineControllerProvider);
+              final targetOffset = state.currentScrubIndex * 230.0;
               _scrollController.animateTo(
                 targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
                 duration: const Duration(milliseconds: 300),
@@ -630,33 +630,26 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
   @override
   void initState() {
     super.initState();
-    final initialIndex = Provider.of<TimelineProvider>(context, listen: false).currentScrubIndex;
+    final initialIndex = ref.read(timelineControllerProvider).currentScrubIndex;
     _pageController = PageController(initialPage: initialIndex);
     _scrollController = ScrollController();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final provider = Provider.of<TimelineProvider>(context, listen: false);
-    if (_timelineProvider != provider) {
-      _timelineProvider?.removeListener(_onProviderIndexChanged);
-      _timelineProvider = provider;
-      _timelineProvider?.addListener(_onProviderIndexChanged);
-    }
+    _timelineSubscription = ref.listenManual(
+      timelineControllerProvider,
+      (previous, next) => _onProviderIndexChanged(next),
+    );
   }
 
   @override
   void dispose() {
-    _timelineProvider?.removeListener(_onProviderIndexChanged);
+    _timelineSubscription.close();
     _pageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _onProviderIndexChanged() {
+  void _onProviderIndexChanged(TimelineState next) {
     if (!mounted) return;
-    final newIndex = _timelineProvider?.currentScrubIndex ?? 0;
+    final newIndex = next.currentScrubIndex;
     if (_isStorybookMode) {
       if (_pageController.hasClients && _pageController.page?.round() != newIndex) {
         _pageController.animateToPage(
@@ -730,8 +723,11 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
   /// RulerPickerScrubber; `LoveStoryScreenState._buildUnifiedFloatingBar`
   /// reaches this via a `GlobalKey` and slots it into its own capsule,
   /// rather than knowing about the scrubber itself.
-  Widget? buildFloatingScrubber(TimelineProvider timelineProvider) {
-    final items = timelineProvider.timelineItems;
+  Widget? buildFloatingScrubber(
+    TimelineState timelineState,
+    TimelineController timelineController,
+  ) {
+    final items = timelineState.items;
     if (items.isEmpty) return null;
     return SizedBox(
       height: 78,
@@ -740,11 +736,11 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
           Expanded(
             child: RulerPickerScrubber(
               items: items,
-              selectedIndex: timelineProvider.currentScrubIndex,
-              isAscending: timelineProvider.isAscending,
+              selectedIndex: timelineState.currentScrubIndex,
+              isAscending: timelineState.isAscending,
               hasBackground: false,
               onIndexChanged: (index) {
-                timelineProvider.setCurrentScrubIndex(index);
+                timelineController.setCurrentScrubIndex(index);
               },
             ),
           ),
@@ -763,12 +759,13 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
 
   @override
   Widget build(BuildContext context) {
-    final timelineProvider = context.watch<TimelineProvider>();
+    final timelineState = ref.watch(timelineControllerProvider);
+    final timelineController = ref.read(timelineControllerProvider.notifier);
     final storyTitle = ref.watch(workspaceControllerProvider).storyTitle;
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final items = timelineProvider.timelineItems;
-    final currentScrubIndex = timelineProvider.currentScrubIndex;
+    final items = timelineState.items;
+    final currentScrubIndex = timelineState.currentScrubIndex;
 
     return Stack(
       children: [
@@ -782,7 +779,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
                       onPageChanged: (index) {
                         if (index != currentScrubIndex) {
                           HapticFeedback.selectionClick();
-                          timelineProvider.setCurrentScrubIndex(index);
+                          timelineController.setCurrentScrubIndex(index);
                         }
                       },
                     )
@@ -879,15 +876,15 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
                           heroTag: 'timelineSortToggle',
                           onPressed: () {
                             HapticFeedback.selectionClick();
-                            timelineProvider.toggleSortOrder();
+                            timelineController.toggleSortOrder();
                           },
                           backgroundColor: theme.accentColor,
                           foregroundColor: Colors.white,
-                          tooltip: timelineProvider.isAscending
+                          tooltip: timelineState.isAscending
                               ? 'Sort: Oldest to Newest'
                               : 'Sort: Newest to Oldest',
                           child: Icon(
-                            timelineProvider.isAscending
+                            timelineState.isAscending
                                 ? Icons.arrow_upward_rounded
                                 : Icons.arrow_downward_rounded,
                           ),

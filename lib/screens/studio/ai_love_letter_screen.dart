@@ -1,30 +1,31 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/services/ai_service.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class AILoveLetterScreen extends StatefulWidget {
+class AILoveLetterScreen extends ConsumerStatefulWidget {
   const AILoveLetterScreen({super.key});
 
   @override
-  State<AILoveLetterScreen> createState() => _AILoveLetterScreenState();
+  ConsumerState<AILoveLetterScreen> createState() => _AILoveLetterScreenState();
 }
 
-class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
+class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
   String? _selectedMemoryId;
   bool _isGenerating = false;
   String? _generatedLetter;
 
   void _generateLetter(LoveStoryTheme theme) async {
-    final timelineProvider = context.read<TimelineProvider>();
-    if (_selectedMemoryId == null && timelineProvider.timelineItems.isNotEmpty) {
-      _selectedMemoryId = timelineProvider.timelineItems.first.id;
+    final timelineProvider = ref.read(timelineControllerProvider);
+    if (_selectedMemoryId == null && timelineProvider.items.isNotEmpty) {
+      _selectedMemoryId = timelineProvider.items.first.id;
     }
 
     if (_selectedMemoryId == null) {
@@ -34,7 +35,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       return;
     }
 
-    final selectedMemory = timelineProvider.timelineItems.firstWhere((item) => item.id == _selectedMemoryId);
+    final selectedMemory = timelineProvider.items.firstWhere((item) => item.id == _selectedMemoryId);
 
     setState(() {
       _isGenerating = true;
@@ -68,9 +69,10 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
 
   void _saveToVault(BuildContext context, LoveStoryTheme theme) async {
     if (_generatedLetter == null) return;
-    final vault = context.read<VaultProvider>();
+    final vaultState = ref.read(vaultControllerProvider);
+    final vault = ref.read(vaultControllerProvider.notifier);
 
-    if (!vault.hasPin) {
+    if (!vaultState.hasPin) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -91,7 +93,7 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
       return;
     }
 
-    if (!vault.isUnlocked) {
+    if (!vaultState.isUnlocked) {
       // Show pin verification dialog
       final pinController = TextEditingController();
       showDialog(
@@ -163,8 +165,8 @@ class _AILoveLetterScreenState extends State<AILoveLetterScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final timelineProvider = context.watch<TimelineProvider>();
-    final memories = timelineProvider.timelineItems;
+    final timelineProvider = ref.watch(timelineControllerProvider);
+    final memories = timelineProvider.items;
 
     return Scaffold(
       body: Stack(

@@ -1,12 +1,13 @@
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/timeline/presentation/memory_notes_section.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
@@ -16,16 +17,16 @@ import 'package:intl/intl.dart';
 const AssetImage _kTimelineFallbackImage =
     AssetImage('assets/images/app_icon.png');
 
-class MemoryDetailScreen extends StatefulWidget {
+class MemoryDetailScreen extends ConsumerStatefulWidget {
   final TimelineItemData item;
 
   const MemoryDetailScreen({super.key, required this.item});
 
   @override
-  State<MemoryDetailScreen> createState() => _MemoryDetailScreenState();
+  ConsumerState<MemoryDetailScreen> createState() => _MemoryDetailScreenState();
 }
 
-class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
+class _MemoryDetailScreenState extends ConsumerState<MemoryDetailScreen> {
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -48,8 +49,8 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final timelineProvider = context.watch<TimelineProvider>();
-    final currentItem = timelineProvider.timelineItems.firstWhere(
+    final timelineProvider = ref.watch(timelineControllerProvider);
+    final currentItem = timelineProvider.items.firstWhere(
       (i) => i.id == widget.item.id,
       orElse: () => widget.item,
     );
@@ -232,16 +233,16 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
 
 }
 
-class EditItemDialog extends StatefulWidget {
+class EditItemDialog extends ConsumerStatefulWidget {
   final TimelineItemData item;
 
   const EditItemDialog({super.key, required this.item});
 
   @override
-  State<EditItemDialog> createState() => _EditItemDialogState();
+  ConsumerState<EditItemDialog> createState() => _EditItemDialogState();
 }
 
-class _EditItemDialogState extends State<EditItemDialog> {
+class _EditItemDialogState extends ConsumerState<EditItemDialog> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _locationController;
@@ -532,7 +533,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
             ),
           );
           if (confirmed == true && context.mounted) {
-            await context.read<TimelineProvider>().deleteTimelineItem(widget.item.id);
+            await ref.read(timelineControllerProvider.notifier).deleteTimelineItem(widget.item.id);
             if (context.mounted) {
               Navigator.pop(context); // Pop the Edit dialog
               Navigator.pop(context); // Pop the Detail screen
@@ -546,7 +547,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
   }
 
   Future<void> _changeImage() async {
-    final path = await context.read<TimelineProvider>().pickImage(context);
+    final path = await ref.read(timelineControllerProvider.notifier).pickImage(context);
     if (path != null) setState(() => _newImagePath = path);
   }
 
@@ -568,7 +569,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
       mood: _selectedMood,
       date: combinedDate,
     );
-    await context.read<TimelineProvider>().updateTimelineItem(widget.item.id, updated);
+    await ref.read(timelineControllerProvider.notifier).updateTimelineItem(widget.item.id, updated);
     if (mounted) Navigator.pop(context);
   }
 }

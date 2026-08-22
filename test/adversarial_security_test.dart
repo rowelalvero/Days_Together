@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/services/relationship_lifecycle_manager.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/providers/couple_session.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -90,27 +91,49 @@ void main() {
         ]),
       );
 
-      final chatProvider = LoveChatProvider();
-      final timelineProvider = TimelineProvider();
-
+      // Migration note: LoveChatProvider/TimelineProvider (plain `provider`-
+      // package ChangeNotifiers registered with RelationshipLifecycleManager)
+      // were retired in favor of LoveChatController/TimelineController
+      // (Riverpod NotifierProviders with SupabaseLifecycleNotifier). The new
+      // architecture doesn't route logout through RelationshipLifecycleManager
+      // at all -- main.dart's `_DomainProvidersBridge` pushes an explicit
+      // `updateSession(session)` call on every CoupleSession change, and
+      // SupabaseLifecycleNotifier.updateSession detects the credentials-
+      // cleared transition and calls purgeCache() itself (see
+      // supabase_lifecycle_notifier.dart). Exercising the real
+      // paired-to-unpaired updateSession transition isn't reachable in a
+      // plain unit test (it needs a real Supabase-backed userId -- see
+      // notification_preferences_controller_test.dart's identical note), so
+      // this test calls purgeCache() directly, exactly like this repo's
+      // other controller tests (love_chat_controller_test.dart,
+      // timeline_controller_test.dart) already do -- that is the established
+      // equivalent of "the app is telling this feature to purge on logout"
+      // for the new architecture.
+      final container = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+      );
+      addTearDown(container.dispose);
+      container.listen(loveChatControllerProvider, (prev, next) {});
+      container.listen(timelineControllerProvider, (prev, next) {});
       await Future.delayed(Duration.zero);
 
-      expect(chatProvider.messages.length, 1);
-      expect(chatProvider.messages.first.content, 'Secret User A Note');
+      final chatState = container.read(loveChatControllerProvider);
+      expect(chatState.messages.length, 1);
+      expect(chatState.messages.first.content, 'Secret User A Note');
 
-      // 2. User A logs out -> RelationshipLifecycleManager handles logout
-      await RelationshipLifecycleManager.instance.handleLogout();
+      // 2. User A logs out -> each feature's purgeCache() runs (the
+      // Riverpod-native equivalent of the old RelationshipLifecycleManager
+      // onLogout() broadcast).
+      await container.read(loveChatControllerProvider.notifier).purgeCache();
+      await container.read(timelineControllerProvider.notifier).purgeCache();
 
-      expect(chatProvider.messages, isEmpty);
-      expect(timelineProvider.timelineItems, isEmpty);
+      expect(container.read(loveChatControllerProvider).messages, isEmpty);
+      expect(container.read(timelineControllerProvider).items, isEmpty);
 
       // Verify SharedPreferences is completely purged on disk
       expect(prefs.getString('love_chat_messages'), isNull);
       final timelineString = prefs.getString('timeline_items');
       expect(timelineString == null || timelineString == '[]', isTrue);
-
-      chatProvider.dispose();
-      timelineProvider.dispose();
     });
   });
 }

@@ -1,20 +1,22 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/gift_reminder_provider.dart';
+import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
+import 'package:days_together/features/gift_reminders/gift_reminder_state.dart';
 import 'package:days_together/models/gift_reminder_model.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class GiftRemindersScreen extends StatefulWidget {
+class GiftRemindersScreen extends ConsumerStatefulWidget {
   const GiftRemindersScreen({super.key});
 
   @override
-  State<GiftRemindersScreen> createState() => _GiftRemindersScreenState();
+  ConsumerState<GiftRemindersScreen> createState() => _GiftRemindersScreenState();
 }
 
-class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
+class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
   final TextEditingController _titleController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -295,13 +297,13 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                             );
 
                             if (existingReminder == null) {
-                              context.read<GiftReminderProvider>().addReminder(
+                              ref.read(giftReminderControllerProvider.notifier).addReminder(
                                 _titleController.text.trim(),
                                 combinedDate,
                               );
                             } else {
-                              context
-                                  .read<GiftReminderProvider>()
+                              ref
+                                  .read(giftReminderControllerProvider.notifier)
                                   .updateReminder(
                                     existingReminder.id,
                                     title: _titleController.text.trim(),
@@ -344,7 +346,8 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final giftProvider = context.watch<GiftReminderProvider>();
+    final giftState = ref.watch(giftReminderControllerProvider);
+    final giftNotifier = ref.read(giftReminderControllerProvider.notifier);
 
     return Scaffold(
       body: Stack(
@@ -359,11 +362,11 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
               children: [
                 _buildAppBar(context),
                 Expanded(
-                  child: giftProvider.isLoading
+                  child: giftState.isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : giftProvider.reminders.isEmpty
+                      : giftState.reminders.isEmpty
                       ? _buildEmptyState(theme)
-                      : _buildListView(giftProvider, theme),
+                      : _buildListView(giftState, giftNotifier, theme),
                 ),
               ],
             ),
@@ -418,14 +421,14 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
     );
   }
 
-  Widget _buildListView(GiftReminderProvider provider, LoveStoryTheme theme) {
-    final sortedList = provider.upcomingReminders;
+  Widget _buildListView(GiftReminderState state, GiftReminderController notifier, LoveStoryTheme theme) {
+    final sortedList = state.upcomingReminders;
     return ListView.builder(
       itemCount: sortedList.length,
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 96),
       itemBuilder: (context, index) {
         final reminder = sortedList[index];
-        return _buildReminderCard(reminder, theme, provider);
+        return _buildReminderCard(reminder, theme, notifier);
       },
     );
   }
@@ -433,7 +436,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
   Widget _buildReminderCard(
     GiftReminder reminder,
     LoveStoryTheme theme,
-    GiftReminderProvider provider,
+    GiftReminderController notifier,
   ) {
     final dateStr = DateFormat('MMMM dd').format(reminder.date);
     final daysLeft = reminder.daysUntil;
@@ -518,7 +521,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                   value: reminder.isEnabled,
                   activeTrackColor: theme.accentColor,
                   onChanged: (_) {
-                    provider.toggleReminder(reminder.id);
+                    notifier.toggleReminder(reminder.id);
                   },
                 ),
               ],
@@ -604,7 +607,7 @@ class _GiftRemindersScreenState extends State<GiftRemindersScreen> {
                               ),
                               TextButton(
                                 onPressed: () {
-                                  provider.deleteReminder(reminder.id);
+                                  notifier.deleteReminder(reminder.id);
                                   Navigator.pop(context);
                                 },
                                 child: Text(

@@ -1,13 +1,13 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/features/relationship/profile_state.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
-import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
+import 'package:days_together/features/scrapbook/noteit_state.dart';
+import 'package:days_together/features/bucket_list/bucket_list_state.dart';
+import 'package:days_together/features/mood/daily_mood_state.dart';
+import 'package:days_together/features/calendar/calendar_state.dart';
+import 'package:days_together/features/love_studio/time_capsule_state.dart';
+import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'wrapped_data.dart';
@@ -65,13 +65,13 @@ class WrappedService {
     required int year,
     required WorkspaceState workspace,
     required ProfileState profile,
-    required TimelineProvider tp,
-    required NoteitProvider np,
-    required BucketListProvider bp,
-    required DailyMoodProvider mp,
-    required CalendarProvider cp,
-    required TimeCapsuleProvider cap,
-    required VaultProvider vp,
+    required TimelineState tp,
+    required NoteitState np,
+    required BucketListState bp,
+    required DailyMoodState mp,
+    required CalendarState cp,
+    required TimeCapsuleState cap,
+    required VaultState vp,
   }) {
     final now = DateTime.now();
     final startDate = workspace.startDate;
@@ -83,7 +83,7 @@ class WrappedService {
         : DateHelper.relationshipTotalDays(startDate);
 
     // ── Memories ──────────────────────────────────────────────────────────────
-    final allMemories = tp.timelineItems;
+    final allMemories = tp.items;
     final memoriesThisYear =
         allMemories.where((m) => m.date.year == year).toList();
 
@@ -109,7 +109,7 @@ class WrappedService {
     }
 
     // ── Notes ─────────────────────────────────────────────────────────────────
-    final allNotes = np.notes;
+    final allNotes = np.visibleNotes;
     final notesThisYear =
         allNotes.where((n) => n.createdAt.year == year).toList();
     final textNotes = notesThisYear
@@ -256,7 +256,7 @@ class WrappedService {
       capsulesCreated: capCreated,
       capsulesOpened: capOpened,
       upcomingCapsules: capUpcoming,
-      totalPhotos: vp.allItems.length,
+      totalPhotos: vp.visibleItems.length,
       totalCapsules: allCapsules.length,
       milestonesAchievedThisYear: achievedThisYear,
       letterTemplateIndex: year % 4,

@@ -1,22 +1,23 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/topic_cards_provider.dart';
+import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
 import 'package:days_together/models/topic_card_model.dart';
 import 'package:days_together/shared/glass_container.dart';
 
-class TopicCardsScreen extends StatefulWidget {
+class TopicCardsScreen extends ConsumerStatefulWidget {
   const TopicCardsScreen({super.key});
 
   @override
-  State<TopicCardsScreen> createState() => _TopicCardsScreenState();
+  ConsumerState<TopicCardsScreen> createState() => _TopicCardsScreenState();
 }
 
-class _TopicCardsScreenState extends State<TopicCardsScreen>
+class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
     with SingleTickerProviderStateMixin {
   // Swipe animation controller
   late AnimationController _swipeController;
@@ -71,13 +72,13 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
 
   void _onHorizontalDragEnd(
     DragEndDetails details,
-    TopicCardsProvider provider,
+    TopicCardsController notifier,
   ) {
     final threshold = 120.0;
     if (_dragOffset.dx > threshold) {
       // Swipe Right -> Go to next question (or previous, depending on preference)
       _animateSwipe(endOffset: const Offset(600, 50), rotation: 0.15).then((_) {
-        provider.previousCard();
+        notifier.previousCard();
         _resetCardPosition();
       });
     } else if (_dragOffset.dx < -threshold) {
@@ -85,7 +86,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
       _animateSwipe(endOffset: const Offset(-600, 50), rotation: -0.15).then((
         _,
       ) {
-        provider.nextCard();
+        notifier.nextCard();
         _resetCardPosition();
       });
     } else {
@@ -156,7 +157,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
   void _showAddCardDialog(
     BuildContext context,
     LoveStoryTheme theme,
-    TopicCardsProvider provider,
+    TopicCardsController notifier,
   ) {
     final formKey = GlobalKey<FormState>();
     final questionController = TextEditingController();
@@ -309,7 +310,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         child: ElevatedButton(
                           onPressed: () {
                             if (formKey.currentState!.validate()) {
-                              provider.addCustomCard(
+                              notifier.addCustomCard(
                                 questionController.text.trim(),
                                 selectedCategory,
                               );
@@ -356,9 +357,10 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final cardsProvider = context.watch<TopicCardsProvider>();
-    final activeDeck = cardsProvider.activeDeck;
-    final activeIndex = cardsProvider.currentIndex;
+    final cardsState = ref.watch(topicCardsControllerProvider);
+    final cardsNotifier = ref.read(topicCardsControllerProvider.notifier);
+    final activeDeck = cardsState.activeDeck;
+    final activeIndex = cardsState.currentIndex;
 
     final isDeckEmpty = activeDeck.isEmpty;
 
@@ -385,7 +387,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
               Icons.add_circle_outline_rounded,
               color: theme.textColor,
             ),
-            onPressed: () => _showAddCardDialog(context, theme, cardsProvider),
+            onPressed: () => _showAddCardDialog(context, theme, cardsNotifier),
           ),
         ],
       ),
@@ -406,12 +408,12 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                   itemCount: _categories.length,
                   itemBuilder: (ctx, i) {
                     final cat = _categories[i];
-                    final isSelected = cardsProvider.activeCategory == cat;
+                    final isSelected = cardsState.activeCategory == cat;
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
                       child: InkWell(
                         onTap: () {
-                          cardsProvider.setCategory(cat);
+                          cardsNotifier.setCategory(cat);
                           setState(() {
                             _isFlipped = false;
                             _flipRotation = 0.0;
@@ -457,12 +459,12 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
               // Main deck view area
               Expanded(
                 child: isDeckEmpty
-                    ? Center(child: _buildEmptyState(theme, cardsProvider))
+                    ? Center(child: _buildEmptyState(theme, cardsState.activeCategory, cardsNotifier))
                     : _buildCardDeck(
                         activeDeck,
                         activeIndex,
                         theme,
-                        cardsProvider,
+                        cardsNotifier,
                       ),
               ),
 
@@ -485,7 +487,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         iconColor: theme.textColor,
                         theme: theme,
                         onPressed: () {
-                          cardsProvider.previousCard();
+                          cardsNotifier.previousCard();
                           setState(() {
                             _isFlipped = false;
                             _flipRotation = 0.0;
@@ -500,7 +502,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         iconColor: theme.textColor,
                         theme: theme,
                         onPressed: () {
-                          cardsProvider.shuffleDeck();
+                          cardsNotifier.shuffleDeck();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Deck Shuffled! 🎲'),
@@ -517,7 +519,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                         iconColor: Colors.white,
                         theme: theme,
                         onPressed: () {
-                          cardsProvider.nextCard();
+                          cardsNotifier.nextCard();
                           setState(() {
                             _isFlipped = false;
                             _flipRotation = 0.0;
@@ -535,8 +537,8 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
     );
   }
 
-  Widget _buildEmptyState(LoveStoryTheme theme, TopicCardsProvider provider) {
-    final isFav = provider.activeCategory == 'Favorites';
+  Widget _buildEmptyState(LoveStoryTheme theme, String activeCategory, TopicCardsController notifier) {
+    final isFav = activeCategory == 'Favorites';
     return GlassContainer(
       borderRadius: 24,
       opacity: 0.08,
@@ -585,7 +587,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
           const SizedBox(height: 28),
           if (!isFav)
             ElevatedButton.icon(
-              onPressed: () => _showAddCardDialog(context, theme, provider),
+              onPressed: () => _showAddCardDialog(context, theme, notifier),
               icon: const Icon(Icons.add),
               label: const Text('Create Custom Card'),
               style: ElevatedButton.styleFrom(
@@ -605,7 +607,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
     List<TopicCard> deck,
     int index,
     LoveStoryTheme theme,
-    TopicCardsProvider provider,
+    TopicCardsController notifier,
   ) {
     final double cardWidth = 300;
     final double cardHeight = 440;
@@ -658,7 +660,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
               child: GestureDetector(
                 onHorizontalDragUpdate: _onHorizontalDragUpdate,
                 onHorizontalDragEnd: (details) =>
-                    _onHorizontalDragEnd(details, provider),
+                    _onHorizontalDragEnd(details, notifier),
                 onTap: _toggleFlip,
                 child: Transform.translate(
                   offset: _dragOffset,
@@ -678,7 +680,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                             ..rotateY(angle),
                           alignment: Alignment.center,
                           child: isBack
-                              ? _buildCardBack(theme, deck[index], provider)
+                              ? _buildCardBack(theme, deck[index], notifier)
                               : _buildCardFront(theme, deck[index]),
                         );
                       },
@@ -839,7 +841,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
   Widget _buildCardBack(
     LoveStoryTheme theme,
     TopicCard card,
-    TopicCardsProvider provider,
+    TopicCardsController notifier,
   ) {
     return Transform(
       // We flip Y axis of the content so it reads correctly when Y-rotated 180 degrees
@@ -936,7 +938,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                                   ),
                                   onPressed: () {
                                     Navigator.pop(ctx);
-                                    provider.deleteCard(card.id);
+                                    notifier.deleteCard(card.id);
                                   },
                                 ),
                               ],
@@ -990,7 +992,7 @@ class _TopicCardsScreenState extends State<TopicCardsScreen>
                             : theme.textColor.withValues(alpha: 0.6),
                       ),
                       onPressed: () {
-                        provider.toggleLikeCard(card.id);
+                        notifier.toggleLikeCard(card.id);
                       },
                     ),
                   ],

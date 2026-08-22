@@ -7,12 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/shared/storage_image.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
-  final TimelineProvider timelineProvider;
+  final TimelineState timelineProvider;
   final LoveStoryTheme theme;
 
   const MemoryHighlightCarousel({
@@ -43,7 +43,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final items = widget.timelineProvider.timelineItems;
+    final items = widget.timelineProvider.items;
     final theme = widget.theme;
 
     if (items.isEmpty) {

@@ -1,23 +1,24 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class TogetherTab extends StatelessWidget {
+class TogetherTab extends ConsumerWidget {
   const TogetherTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final bucketList = context.watch<BucketListProvider>();
-    final dailyMood = context.watch<DailyMoodProvider>();
+    final bucketList = ref.watch(bucketListControllerProvider);
+    final dailyMood = ref.watch(dailyMoodControllerProvider);
 
     return SafeArea(
       bottom: false,

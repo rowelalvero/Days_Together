@@ -1,15 +1,16 @@
 import 'package:days_together/themes/theme_manager.dart';
-import 'package:days_together/providers/notification_preferences_provider.dart';
+import 'package:days_together/features/settings/notification_preferences_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
-class NotificationSettingsScreen extends StatelessWidget {
+class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
 
-  Future<void> _selectTime(BuildContext context, NotificationPreferencesProvider provider, String key, String currentTime) async {
+  Future<void> _selectTime(BuildContext context, NotificationPreferencesController notifier, String key, String currentTime) async {
     final parts = currentTime.split(':');
     final initialHour = parts.isNotEmpty ? int.tryParse(parts[0]) ?? 0 : 0;
     final initialMin = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
@@ -22,16 +23,17 @@ class NotificationSettingsScreen extends StatelessWidget {
     if (picked != null) {
       final hourStr = picked.hour.toString().padLeft(2, '0');
       final minStr = picked.minute.toString().padLeft(2, '0');
-      await provider.updatePreference(key, '$hourStr:$minStr');
+      await notifier.updatePreference(key, '$hourStr:$minStr');
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final provider = context.watch<NotificationPreferencesProvider>();
-    final prefs = provider.preferences;
+    final state = ref.watch(notificationPreferencesControllerProvider);
+    final notifier = ref.read(notificationPreferencesControllerProvider.notifier);
+    final prefs = state.preferences;
 
     return Scaffold(
       appBar: AppBar(
@@ -54,7 +56,7 @@ class NotificationSettingsScreen extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(gradient: themeProvider.currentGradient),
-        child: prefs == null || provider.isLoading
+        child: prefs == null || state.isLoading
             ? const Center(child: CircularProgressIndicator())
             : SafeArea(
                 child: SingleChildScrollView(
@@ -74,7 +76,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Mute All Notifications',
                               subtitle: 'Silence all notifications temporarily',
                               value: prefs.muteAll,
-                              onChanged: (_) => provider.togglePreference('mute_all'),
+                              onChanged: (_) => notifier.togglePreference('mute_all'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -82,7 +84,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Play Sound',
                               subtitle: 'Play alert sound on arrival',
                               value: prefs.soundEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('sound_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('sound_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -90,7 +92,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Vibrate',
                               subtitle: 'Haptic feedback on alerts',
                               value: prefs.vibrationEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('vibration_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('vibration_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -98,7 +100,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'App Badge Count',
                               subtitle: 'Show unread message badge count',
                               value: prefs.badgeCountEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('badge_count_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('badge_count_enabled'),
                               theme: theme,
                             ),
                           ],
@@ -118,7 +120,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Enable Quiet Hours',
                               subtitle: 'Silence alerts during specific hours',
                               value: prefs.quietHoursEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('quiet_hours_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('quiet_hours_enabled'),
                               theme: theme,
                             ),
                             if (prefs.quietHoursEnabled && !prefs.muteAll) ...[
@@ -136,7 +138,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                                     color: theme.accentColor,
                                   ),
                                 ),
-                                onTap: () => _selectTime(context, provider, 'quiet_hours_start', prefs.quietHoursStart),
+                                onTap: () => _selectTime(context, notifier, 'quiet_hours_start', prefs.quietHoursStart),
                               ),
                               const Divider(height: 1),
                               ListTile(
@@ -152,7 +154,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                                     color: theme.accentColor,
                                   ),
                                 ),
-                                onTap: () => _selectTime(context, provider, 'quiet_hours_end', prefs.quietHoursEnd),
+                                onTap: () => _selectTime(context, notifier, 'quiet_hours_end', prefs.quietHoursEnd),
                               ),
                             ],
                           ],
@@ -172,7 +174,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Chat',
                               subtitle: 'Private messaging notes',
                               value: prefs.chatEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('chat_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('chat_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -180,7 +182,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Bucket List',
                               subtitle: 'Completed, updated, or added items',
                               value: prefs.bucketListEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('bucket_list_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('bucket_list_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -188,7 +190,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Love Meter',
                               subtitle: 'Mood updates and feeling shares',
                               value: prefs.loveMeterEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('love_meter_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('love_meter_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -196,7 +198,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Daily Prompt',
                               subtitle: 'Sync prompt completed alerts',
                               value: prefs.dailyPromptEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('daily_prompt_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('daily_prompt_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -204,7 +206,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Scrapbook',
                               subtitle: 'New shared drawings, text & photos',
                               value: prefs.doodleNotesEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('doodle_notes_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('doodle_notes_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -212,7 +214,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Timeline',
                               subtitle: 'New memory additions and comments',
                               value: prefs.timelineEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('timeline_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('timeline_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -220,7 +222,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Time Capsule',
                               subtitle: 'Lock and ready-to-open alerts',
                               value: prefs.timeCapsuleEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('time_capsule_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('time_capsule_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -228,7 +230,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Calendar',
                               subtitle: 'Events, anniversaries, and reminders',
                               value: prefs.calendarEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('calendar_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('calendar_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -236,7 +238,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Love Notes',
                               subtitle: 'Voice, photo, or handwritten notes',
                               value: prefs.loveNotesEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('love_notes_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('love_notes_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -244,7 +246,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Vault',
                               subtitle: 'Secure uploads (details kept private)',
                               value: prefs.vaultEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('vault_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('vault_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -252,7 +254,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Gifts',
                               subtitle: 'Gifts ideas and reminders',
                               value: prefs.giftsEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('gifts_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('gifts_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -260,7 +262,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Relationship',
                               subtitle: 'License or profile changes',
                               value: prefs.relationshipEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('relationship_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('relationship_enabled'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -268,7 +270,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               title: 'Memories',
                               subtitle: 'Shared album updates',
                               value: prefs.memoriesEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => provider.togglePreference('memories_enabled'),
+                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('memories_enabled'),
                               theme: theme,
                             ),
                           ],

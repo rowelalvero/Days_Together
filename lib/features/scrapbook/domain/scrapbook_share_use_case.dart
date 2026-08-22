@@ -2,8 +2,8 @@ import 'package:days_together/core/errors/app_failure.dart';
 import 'package:days_together/core/scrapbook_ref.dart';
 import 'package:days_together/features/scrapbook/data/noteit_draft_store.dart';
 import 'package:days_together/models/noteit_model.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
 
 /// The outcome of [ScrapbookShareUseCase.share]. Sealed so callers must
 /// handle all three cases -- in particular, so a chat-mirror failure can't
@@ -54,8 +54,8 @@ class ScrapbookShareChatMirrorFailed extends ScrapbookShareResult {
 class ScrapbookShareUseCase {
   const ScrapbookShareUseCase(this._noteitProvider, this._chatProvider, this._draftStore);
 
-  final NoteitProvider _noteitProvider;
-  final LoveChatProvider _chatProvider;
+  final NoteitController _noteitProvider;
+  final LoveChatController _chatProvider;
   final NoteitDraftStore _draftStore;
 
   /// [canvasJson] and [localImagePath] are the already-rendered/serialized

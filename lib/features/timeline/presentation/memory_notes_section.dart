@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -60,7 +60,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     }
   }
 
-  void _submitNote(TimelineProvider provider, String authorName) async {
+  void _submitNote(TimelineController provider, String authorName) async {
     final text = _noteController.text.trim();
     if (text.isEmpty) return;
 
@@ -94,9 +94,10 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
     final profile = ref.watch(profileControllerProvider);
-    final tp = context.watch<TimelineProvider>();
+    final tpState = ref.watch(timelineControllerProvider);
+    final tp = ref.read(timelineControllerProvider.notifier);
 
-    final currentItem = tp.timelineItems.firstWhere(
+    final currentItem = tpState.items.firstWhere(
       (i) => i.id == widget.item.id,
       orElse: () => widget.item,
     );
@@ -208,7 +209,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     String authorName,
     String? avatarPath,
     LoveStoryTheme theme,
-    TimelineProvider provider,
+    TimelineController provider,
   ) {
     final isDark = theme.isDark;
 
@@ -415,7 +416,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     );
   }
 
-  Widget _buildComposer(TimelineProvider provider, String yourName, LoveStoryTheme theme) {
+  Widget _buildComposer(TimelineController provider, String yourName, LoveStoryTheme theme) {
     final isDark = theme.isDark;
     final composerBgColor = isDark
         ? Colors.white.withValues(alpha: 0.03)
@@ -492,7 +493,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
   void _showNoteActions(
     BuildContext context,
     CommentData note,
-    TimelineProvider provider,
+    TimelineController provider,
     LoveStoryTheme theme,
   ) {
     showModalBottomSheet(

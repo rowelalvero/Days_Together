@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,10 +14,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
@@ -29,14 +31,14 @@ import 'package:days_together/shared/storage_image.dart';
 import 'package:days_together/features/scrapbook/data/noteit_draft_store.dart';
 import 'package:days_together/features/scrapbook/domain/scrapbook_share_use_case.dart';
 
-class NoteitScreen extends StatefulWidget {
+class NoteitScreen extends ConsumerStatefulWidget {
   const NoteitScreen({super.key});
 
   @override
-  State<NoteitScreen> createState() => _NoteitScreenState();
+  ConsumerState<NoteitScreen> createState() => _NoteitScreenState();
 }
 
-class _NoteitScreenState extends State<NoteitScreen>
+class _NoteitScreenState extends ConsumerState<NoteitScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
@@ -594,11 +596,11 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   Future<void> _sendCanvas(
-    NoteitProvider provider,
+    NoteitController notifier,
     LoveStoryTheme theme,
   ) async {
     final rp = context.read<CoupleSession>();
-    final chatProvider = context.read<LoveChatProvider>();
+    final chatProvider = ref.read(loveChatControllerProvider.notifier);
 
     if (_controller.drawables.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -637,7 +639,7 @@ class _NoteitScreenState extends State<NoteitScreen>
 
       // 3-6: create the note, mirror it into love chat, clear the draft --
       // see ScrapbookShareUseCase for why this is no longer inlined here.
-      final useCase = ScrapbookShareUseCase(provider, chatProvider, _draftStore);
+      final useCase = ScrapbookShareUseCase(notifier, chatProvider, _draftStore);
       final result = await useCase.share(
         canvasJson: jsonStr,
         localImagePath: file.path,
@@ -715,7 +717,8 @@ class _NoteitScreenState extends State<NoteitScreen>
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final provider = context.watch<NoteitProvider>();
+    final noteitState = ref.watch(noteitControllerProvider);
+    final noteitNotifier = ref.read(noteitControllerProvider.notifier);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -786,8 +789,8 @@ class _NoteitScreenState extends State<NoteitScreen>
             physics:
                 const NeverScrollableScrollPhysics(), // Prevent conflict with panning
             children: [
-              _buildCanvasWorkspace(theme, provider),
-              _buildHistoryLog(theme, provider),
+              _buildCanvasWorkspace(theme, noteitNotifier),
+              _buildHistoryLog(theme, noteitState, noteitNotifier),
             ],
           ),
         ),
@@ -795,7 +798,7 @@ class _NoteitScreenState extends State<NoteitScreen>
     );
   }
 
-  Widget _buildCanvasWorkspace(LoveStoryTheme theme, NoteitProvider provider) {
+  Widget _buildCanvasWorkspace(LoveStoryTheme theme, NoteitController notifier) {
     final selectedObj = _controller.value.selectedObjectDrawable;
     if (selectedObj != _lastSelectedObj) {
       _lastSelectedObj = selectedObj;
@@ -1033,7 +1036,7 @@ class _NoteitScreenState extends State<NoteitScreen>
               child: FloatingActionButton.extended(
                 onPressed: _isSaving
                     ? null
-                    : () => _sendCanvas(provider, theme),
+                    : () => _sendCanvas(notifier, theme),
                 backgroundColor: theme.accentColor,
                 elevation: 4,
                 icon: _isSaving
@@ -2256,8 +2259,8 @@ class _NoteitScreenState extends State<NoteitScreen>
   }
 
   // 5. HISTORY LOG
-  Widget _buildHistoryLog(LoveStoryTheme theme, NoteitProvider provider) {
-    final list = provider.notes;
+  Widget _buildHistoryLog(LoveStoryTheme theme, NoteitState state, NoteitController notifier) {
+    final list = state.visibleNotes;
     if (list.isEmpty) {
       return Center(
         child: Column(
@@ -2323,7 +2326,7 @@ class _NoteitScreenState extends State<NoteitScreen>
                     ),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      provider.deleteNote(item.id);
+                      notifier.deleteNote(item.id);
                     },
                   ),
                 ],

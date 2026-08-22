@@ -71,6 +71,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     if (state.coupleId != coupleId) {
       state = state.copyWith(coupleId: coupleId);
     }
+    if (session.coupleId != null && session.userId != null) {
+      NoteitSyncManager.instance.initialize(this);
+    }
   }
 
   Future<void> _loadFromCache() async {

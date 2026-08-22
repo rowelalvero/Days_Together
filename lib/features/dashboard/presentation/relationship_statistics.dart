@@ -1,13 +1,12 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 
@@ -21,17 +20,17 @@ class RelationshipStatistics extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final timeline = context.watch<TimelineProvider>();
-    final bucket = context.watch<BucketListProvider>();
-    final noteit = context.watch<NoteitProvider>();
-    final vault = context.watch<VaultProvider>();
-    final capsule = context.watch<TimeCapsuleProvider>();
+    final timeline = ref.watch(timelineControllerProvider);
+    final bucket = ref.watch(bucketListControllerProvider);
+    final noteit = ref.watch(noteitControllerProvider);
+    final vault = ref.watch(vaultControllerProvider);
+    final capsule = ref.watch(timeCapsuleControllerProvider);
     final workspace = ref.watch(workspaceControllerProvider);
 
-    final totalMemories = timeline.timelineItems.length;
+    final totalMemories = timeline.items.length;
     final bucketStats = '${bucket.completedItems}/${bucket.totalItems}';
-    final totalNotes = noteit.notes.length;
-    final totalVaultItems = vault.allItems.length;
+    final totalNotes = noteit.visibleNotes.length;
+    final totalVaultItems = vault.visibleItems.length;
     final totalCapsules = capsule.capsules.length;
 
     // Calculate timeline years from start date

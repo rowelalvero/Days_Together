@@ -9,7 +9,8 @@ import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
-import 'package:days_together/providers/currently_provider.dart';
+import 'package:days_together/features/currently/currently_controller.dart';
+import 'package:days_together/features/currently/currently_state.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
@@ -78,14 +79,14 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     super.dispose();
   }
 
-  void _triggerTap(CurrentlyProvider provider) {
-    if (provider.state == LoveTapState.sent || provider.state == LoveTapState.mutual) return;
+  void _triggerTap(CurrentlyState state, CurrentlyController notifier) {
+    if (state.state == LoveTapState.sent || state.state == LoveTapState.mutual) return;
 
     HapticFeedback.mediumImpact();
     _heartController.forward(from: 0.0);
 
-    provider.sendLoveTap().then((_) {
-      if (provider.state == LoveTapState.mutual) {
+    notifier.sendLoveTap().then((_) {
+      if (ref.read(currentlyControllerProvider).state == LoveTapState.mutual) {
         _celebrationController.forward(from: 0.0);
       }
     });
@@ -220,7 +221,8 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     final session = context.watch<CoupleSession>();
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);
-    final currently = context.watch<CurrentlyProvider>();
+    final currently = ref.watch(currentlyControllerProvider);
+    final currentlyNotifier = ref.read(currentlyControllerProvider.notifier);
 
     final partnerJoined = session.partnerId != null;
     final isOnline = presence.isPartnerOnline;
@@ -323,7 +325,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                       ),
                     ),
                     // Love Tap Button
-                    _buildLoveTapButton(currently, theme),
+                    _buildLoveTapButton(currently, currentlyNotifier, theme),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -444,7 +446,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     );
   }
 
-  Widget _buildLoveTapButton(CurrentlyProvider currently, LoveStoryTheme theme) {
+  Widget _buildLoveTapButton(CurrentlyState currently, CurrentlyController notifier, LoveStoryTheme theme) {
     String label = 'Love Tap';
     IconData icon = Icons.favorite_border_rounded;
     Color buttonColor = theme.textColor.withValues(alpha: 0.06);
@@ -536,7 +538,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
         ),
       ),
       child: GestureDetector(
-        onTap: active ? () => _triggerTap(currently) : null,
+        onTap: active ? () => _triggerTap(currently, notifier) : null,
         child: buttonContent,
       ),
     );

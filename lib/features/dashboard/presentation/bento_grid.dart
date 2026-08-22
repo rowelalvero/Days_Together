@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' as rp;
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:days_together/services/date_helper.dart';
@@ -14,15 +15,20 @@ import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/storage_image.dart';
 
 // Providers
-import 'package:days_together/providers/noteit_provider.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
-import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
+import 'package:days_together/features/calendar/calendar_controller.dart';
+import 'package:days_together/features/calendar/calendar_state.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
+import 'package:days_together/features/mood/daily_mood_state.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:days_together/features/vault/vault_controller.dart';
+import 'package:days_together/features/vault/vault_state.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
+import 'package:days_together/features/chat/love_chat_state.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/core/scrapbook_ref.dart';
 
@@ -63,8 +69,9 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildSharedCalendarBentoCard(BuildContext context) {
-    return Consumer<CalendarProvider>(
-      builder: (context, calendar, child) {
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final calendar = ref.watch(calendarControllerProvider);
         final count = calendar.events.length;
 
         return InkWell(
@@ -181,8 +188,11 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildDailyMoodBentoCard(BuildContext context) {
-    return Consumer2<CoupleSession, DailyMoodProvider>(
-      builder: (context, relationship, dailyMood, child) {
+    return Consumer<CoupleSession>(
+      builder: (context, relationship, child) {
+        return rp.Consumer(
+          builder: (context, ref, child) {
+        final dailyMood = ref.watch(dailyMoodControllerProvider);
         final isPaired = relationship.isPaired;
         final myToday = dailyMood.todayMood;
 
@@ -299,13 +309,18 @@ class BentoGrid extends StatelessWidget {
             ),
           ),
         );
+          },
+        );
       },
     );
   }
 
   Widget _buildEmotionalMapBentoCard(BuildContext context) {
-    return Consumer2<CoupleSession, DailyMoodProvider>(
-      builder: (context, relationship, dailyMood, child) {
+    return Consumer<CoupleSession>(
+      builder: (context, relationship, child) {
+        return rp.Consumer(
+          builder: (context, ref, child) {
+        final dailyMood = ref.watch(dailyMoodControllerProvider);
         final isPaired = relationship.isPaired;
 
         return InkWell(
@@ -462,13 +477,16 @@ class BentoGrid extends StatelessWidget {
             ),
           ),
         );
+          },
+        );
       },
     );
   }
 
   Widget _buildSecretVaultBentoCard(BuildContext context) {
-    return Consumer<VaultProvider>(
-      builder: (context, vault, child) {
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final vault = ref.watch(vaultControllerProvider);
         final isUnlocked = vault.isUnlocked;
 
         return InkWell(
@@ -585,8 +603,9 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildLoveChatBentoCard(BuildContext context) {
-    return Consumer<LoveChatProvider>(
-      builder: (context, chat, child) {
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final chat = ref.watch(loveChatControllerProvider);
         final messages = chat.messages;
         final latest = messages.isNotEmpty ? messages.first : null;
 
@@ -713,7 +732,7 @@ class BentoGrid extends StatelessWidget {
 
   Widget _buildCalendarContent(
     BuildContext context,
-    CalendarProvider calendar,
+    CalendarState calendar,
   ) {
     final events = calendar.events.toList();
 
@@ -844,7 +863,7 @@ class BentoGrid extends StatelessWidget {
   Widget _buildMoodContent(
     BuildContext context,
     CoupleSession relationship,
-    DailyMoodProvider dailyMood,
+    DailyMoodState dailyMood,
   ) {
     final isPaired = relationship.isPaired;
     final myToday = dailyMood.todayMood;
@@ -937,7 +956,7 @@ class BentoGrid extends StatelessWidget {
 
   Widget _buildEmotionalMapContent(
     BuildContext context,
-    DailyMoodProvider dailyMood,
+    DailyMoodState dailyMood,
   ) {
     final recent = dailyMood.recentMoods;
     final partnerRecent = dailyMood.partnerRecentMoods;
@@ -1179,8 +1198,9 @@ class BentoGrid extends StatelessWidget {
 
   // DAILY SYNC PREVIEW CONTENT
   Widget _buildDailySyncBentoCard(BuildContext context) {
-    return Consumer<DailyMoodProvider>(
-      builder: (context, dailyMood, child) {
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final dailyMood = ref.watch(dailyMoodControllerProvider);
         final question = dailyMood.todayQuestion;
 
         final hasQuestion = question != null;
@@ -1411,9 +1431,9 @@ class BentoGrid extends StatelessWidget {
 
   // BUCKET LIST PREVIEW CONTENT
   Widget _buildBucketListBentoCard(BuildContext context) {
-    return Consumer<BucketListProvider>(
-      builder: (context, bucketProvider, child) {
-        final items = bucketProvider.items;
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final items = ref.watch(bucketListControllerProvider).items;
 
         final completedItems = items.where((i) => i.isCompleted).toList();
         final uncompletedItems = items.where((i) => !i.isCompleted).toList();
@@ -1661,9 +1681,9 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildTimeCapsuleBentoCard(BuildContext context) {
-    return Consumer<TimeCapsuleProvider>(
-      builder: (context, capsuleProvider, child) {
-        final lockedCapsules = capsuleProvider.lockedCapsules;
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final lockedCapsules = ref.watch(timeCapsuleControllerProvider).lockedCapsules;
         final hasCapsules = lockedCapsules.isNotEmpty;
 
         final latestLockedMessage = hasCapsules
@@ -1898,9 +1918,9 @@ class BentoGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildVaultContent(BuildContext context, VaultProvider vault) {
+  Widget _buildVaultContent(BuildContext context, VaultState vault) {
     final isUnlocked = vault.isUnlocked;
-    final count = vault.allItems.length;
+    final count = vault.visibleItems.length;
 
     return Row(
       children: [
@@ -1938,7 +1958,7 @@ class BentoGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildLoveChatContent(BuildContext context, LoveChatProvider chat) {
+  Widget _buildLoveChatContent(BuildContext context, LoveChatState chat) {
     final messages = chat.messages;
 
     if (messages.isEmpty) {
@@ -2041,9 +2061,10 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<NoteitProvider>(
-      builder: (context, noteit, child) {
-        final notes = noteit.notes;
+    return rp.Consumer(
+      builder: (context, ref, child) {
+        final noteit = ref.watch(noteitControllerProvider);
+        final notes = noteit.visibleNotes;
         final latest = notes.isNotEmpty ? notes.first : null;
 
         String footerText = 'No shared notes';
@@ -2167,8 +2188,8 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
     );
   }
 
-  Widget _buildNoteItContent(BuildContext context, NoteitProvider noteit) {
-    final notes = noteit.notes;
+  Widget _buildNoteItContent(BuildContext context, NoteitState noteit) {
+    final notes = noteit.visibleNotes;
 
     if (notes.isEmpty) {
       return Text(

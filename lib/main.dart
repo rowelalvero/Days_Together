@@ -1,18 +1,6 @@
 import 'dart:ui';
-import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
-import 'package:days_together/providers/gift_reminder_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
-import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/topic_cards_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/notification_preferences_provider.dart';
-import 'package:days_together/providers/currently_provider.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
@@ -299,63 +287,26 @@ class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> 
 ///
 /// `CoupleSession` is the real engine (Phase 6b-1 of the architecture
 /// migration, "make CoupleSession real"): it owns the Supabase auth listener
-/// and every field it drives. The 12 domain feature providers depend on it
-/// directly, unchanged since Phase 1. `RelationshipProvider`, the facade
-/// that used to sit in front of it for UI files not yet converted, was
-/// deleted once item 4 of the Definition-of-Done sweep converted the last
-/// remaining readers directly to `CoupleSession`.
+/// and every field it drives. `RelationshipProvider`, the facade that used
+/// to sit in front of it for UI files not yet converted, was deleted once
+/// item 4 of the Definition-of-Done sweep converted the last remaining
+/// readers directly to `CoupleSession`.
+///
+/// Only `ThemeProvider` and `CoupleSession` itself remain registered here as
+/// plain `provider`-package `ChangeNotifier`s -- the 12 domain feature
+/// providers (`TimelineProvider`, `BucketListProvider`, etc.) were deleted
+/// once their Riverpod ports (`TimelineController`, `BucketListController`,
+/// etc., under `lib/features/`) fully superseded them (item 3 gap-fix, Phase
+/// 1 -- see docs/architecture/migration-roadmap.md's "Corrected on
+/// implementation" note for item 3). Those controllers get their session
+/// updates from [_DomainProvidersBridge] below, not from a
+/// `ChangeNotifierProxyProvider` here. `provider` stays in `pubspec.yaml`
+/// regardless, since `ThemeProvider` and `CoupleSession`'s core are still
+/// unconverted (fronts 3 and 4 of that same gap-fix, not yet scheduled).
 List<SingleChildWidget> buildAppProviders() {
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => CoupleSession()),
-    ChangeNotifierProxyProvider<CoupleSession, TimelineProvider>(
-      create: (_) => TimelineProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, BucketListProvider>(
-      create: (_) => BucketListProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, TimeCapsuleProvider>(
-      create: (_) => TimeCapsuleProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, DailyMoodProvider>(
-      create: (_) => DailyMoodProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, GiftReminderProvider>(
-      create: (_) => GiftReminderProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, VaultProvider>(
-      create: (_) => VaultProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, CalendarProvider>(
-      create: (_) => CalendarProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, TopicCardsProvider>(
-      create: (_) => TopicCardsProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, NoteitProvider>(
-      create: (_) => NoteitProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, LoveChatProvider>(
-      create: (_) => LoveChatProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, CurrentlyProvider>(
-      create: (_) => CurrentlyProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
-    ChangeNotifierProxyProvider<CoupleSession, NotificationPreferencesProvider>(
-      create: (_) => NotificationPreferencesProvider(),
-      update: (_, session, provider) => provider!..updateSession(session),
-    ),
   ];
 }
 

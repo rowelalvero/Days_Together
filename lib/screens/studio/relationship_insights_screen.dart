@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/services/ai_service.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -72,14 +72,14 @@ class _RelationshipInsightsScreenState
     final theme = themeProvider.currentLoveTheme;
 
     final workspace = ref.watch(workspaceControllerProvider);
-    final tp = context.watch<TimelineProvider>();
-    final bp = context.watch<BucketListProvider>();
-    final dp = context.watch<DailyMoodProvider>();
+    final tp = ref.watch(timelineControllerProvider);
+    final bp = ref.watch(bucketListControllerProvider);
+    final dp = ref.watch(dailyMoodControllerProvider);
 
     final commonMood = _getCommonMood(dp.moods);
     final insights = AIService.generateInsights(
       totalDays: DateHelper.relationshipTotalDays(workspace.startDate),
-      totalMemories: tp.timelineItems.length,
+      totalMemories: tp.items.length,
       commonMood: commonMood,
       totalBucketItems: bp.totalItems,
       completedBucketItems: bp.completedItems,

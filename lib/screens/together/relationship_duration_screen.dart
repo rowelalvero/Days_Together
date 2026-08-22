@@ -13,7 +13,8 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
-import 'package:days_together/providers/timeline_provider.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/models/timeline_model.dart';
@@ -28,7 +29,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
     final workspace = ref.watch(workspaceControllerProvider);
-    final tp = context.watch<TimelineProvider>();
+    final tp = ref.watch(timelineControllerProvider);
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
 
     final startDate = workspace.startDate ?? DateTime.now();
@@ -809,8 +810,8 @@ class RelationshipDurationScreen extends ConsumerWidget {
   }
 
   // Memories Highlight Section
-  Widget _buildMemoriesHighlight(TimelineProvider tp, LoveStoryTheme theme) {
-    final memories = tp.timelineItems;
+  Widget _buildMemoriesHighlight(TimelineState tp, LoveStoryTheme theme) {
+    final memories = tp.items;
     TimelineItemData? firstMemory;
 
     if (memories.isNotEmpty) {

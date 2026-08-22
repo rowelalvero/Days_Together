@@ -1,22 +1,24 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/bucket_list_provider.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/models/bucket_list_model.dart';
 import 'package:confetti/confetti.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 import 'package:intl/intl.dart';
 
-class BucketListScreen extends StatefulWidget {
+class BucketListScreen extends ConsumerStatefulWidget {
   const BucketListScreen({super.key});
 
   @override
-  State<BucketListScreen> createState() => _BucketListScreenState();
+  ConsumerState<BucketListScreen> createState() => _BucketListScreenState();
 }
 
-class _BucketListScreenState extends State<BucketListScreen> {
+class _BucketListScreenState extends ConsumerState<BucketListScreen> {
   late ConfettiController _confettiController;
   final TextEditingController _textController = TextEditingController();
   DateTime? _selectedDate;
@@ -256,12 +258,12 @@ class _BucketListScreenState extends State<BucketListScreen> {
                           }
 
                           if (existingItem == null) {
-                            context.read<BucketListProvider>().addItem(
+                            ref.read(bucketListControllerProvider.notifier).addItem(
                                   _textController.text.trim(),
                                   scheduledAt: scheduledAt,
                                 );
                           } else {
-                            context.read<BucketListProvider>().updateItem(
+                            ref.read(bucketListControllerProvider.notifier).updateItem(
                                   existingItem.id,
                                   title: _textController.text.trim(),
                                   scheduledAt: scheduledAt,
@@ -297,7 +299,8 @@ class _BucketListScreenState extends State<BucketListScreen> {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final bucketProvider = context.watch<BucketListProvider>();
+    final bucketState = ref.watch(bucketListControllerProvider);
+    final bucketNotifier = ref.read(bucketListControllerProvider.notifier);
 
     return Scaffold(
       body: Stack(
@@ -310,14 +313,14 @@ class _BucketListScreenState extends State<BucketListScreen> {
           SafeArea(
             child: Column(
               children: [
-                _buildAppBar(context, theme, bucketProvider),
-                _buildProgressCard(theme, bucketProvider),
+                _buildAppBar(context, theme, bucketState),
+                _buildProgressCard(theme, bucketState),
                 Expanded(
-                  child: bucketProvider.isLoading
+                  child: bucketState.isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : bucketProvider.items.isEmpty
+                      : bucketState.items.isEmpty
                           ? _buildEmptyState(theme)
-                          : _buildListView(bucketProvider, theme),
+                          : _buildListView(bucketState, bucketNotifier, theme),
                 ),
               ],
             ),
@@ -341,7 +344,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme, BucketListProvider provider) {
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme, BucketListState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -376,7 +379,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildProgressCard(LoveStoryTheme theme, BucketListProvider provider) {
+  Widget _buildProgressCard(LoveStoryTheme theme, BucketListState provider) {
     if (provider.totalItems == 0) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -442,24 +445,24 @@ class _BucketListScreenState extends State<BucketListScreen> {
     );
   }
 
-  Widget _buildListView(BucketListProvider provider, LoveStoryTheme theme) {
+  Widget _buildListView(BucketListState state, BucketListController notifier, LoveStoryTheme theme) {
     return Theme(
       data: ThemeData(
         canvasColor: Colors.transparent,
       ),
       child: ReorderableListView.builder(
-        itemCount: provider.items.length,
+        itemCount: state.items.length,
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
-        onReorder: provider.reorderItems,
+        onReorder: notifier.reorderItems,
         itemBuilder: (context, index) {
-          final item = provider.items[index];
-          return _buildListItem(item, theme, provider);
+          final item = state.items[index];
+          return _buildListItem(item, theme, notifier);
         },
       ),
     );
   }
 
-  Widget _buildListItem(BucketListItem item, LoveStoryTheme theme, BucketListProvider provider) {
+  Widget _buildListItem(BucketListItem item, LoveStoryTheme theme, BucketListController notifier) {
     return Container(
       key: ValueKey(item.id),
       margin: const EdgeInsets.only(bottom: 12),
@@ -476,7 +479,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: GestureDetector(
           onTap: () {
-            provider.toggleItem(item.id);
+            notifier.toggleItem(item.id);
             if (!item.isCompleted) {
               _confettiController.play();
             }
@@ -555,7 +558,7 @@ class _BucketListScreenState extends State<BucketListScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          provider.deleteItem(item.id);
+                          notifier.deleteItem(item.id);
                           Navigator.pop(context);
                         },
                         child: Text('Delete', style: AppTypography.button(color: theme.accentColor)),

@@ -8,7 +8,7 @@ import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/storage_image.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
 
 class PartnerPresenceCard extends ConsumerStatefulWidget {
   final CoupleSession relationshipProvider;
@@ -49,7 +49,7 @@ class _PartnerPresenceCardState extends ConsumerState<PartnerPresenceCard>
     });
     // Append heart chat message in provider
     final session = context.read<CoupleSession>();
-    context.read<LoveChatProvider>().sendMessage('Sent a Heartbeat Tap 💓', session.yourName ?? 'Partner');
+    ref.read(loveChatControllerProvider.notifier).sendMessage('Sent a Heartbeat Tap 💓', session.yourName ?? 'Partner');
     
     // Floating animation trigger
     showDialog(
