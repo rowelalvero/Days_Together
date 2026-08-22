@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/screens/settings_tab.dart';
 import 'package:days_together/screens/studio_tab.dart';
@@ -22,6 +25,8 @@ import 'package:days_together/widgets/dashboard/currently_card.dart';
 import 'package:days_together/widgets/dashboard/recent_activity_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget;
 import 'package:provider/provider.dart';
 import 'package:animations/animations.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -56,8 +61,8 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rp = context.read<RelationshipProvider>();
-      rp.addListener(_checkPartnerDeletedNotice);
+      final session = context.read<CoupleSession>();
+      session.addListener(_checkPartnerDeletedNotice);
       _checkPartnerDeletedNotice();
     });
   }
@@ -65,16 +70,16 @@ class LoveStoryScreenState extends State<LoveStoryScreen> {
   @override
   void dispose() {
     try {
-      context.read<RelationshipProvider>().removeListener(_checkPartnerDeletedNotice);
+      context.read<CoupleSession>().removeListener(_checkPartnerDeletedNotice);
     } catch (_) {}
     super.dispose();
   }
 
   void _checkPartnerDeletedNotice() {
     if (!mounted) return;
-    final rp = context.read<RelationshipProvider>();
-    if (rp.showPartnerDeletedNotice) {
-      rp.clearPartnerDeletedNotice();
+    final session = context.read<CoupleSession>();
+    if (session.showPartnerDeletedNotice) {
+      session.clearPartnerDeletedNotice();
       _showPartnerDeletedDialog();
     }
   }
@@ -512,17 +517,20 @@ class AnimatedFabLocation extends FloatingActionButtonLocation {
 // HOME DASHBOARD
 // ──────────────────────────────────────────────
 
-class HomeDashboard extends StatefulWidget {
+class HomeDashboard extends ConsumerStatefulWidget {
   const HomeDashboard({super.key});
 
   @override
-  State<HomeDashboard> createState() => _HomeDashboardState();
+  ConsumerState<HomeDashboard> createState() => _HomeDashboardState();
 }
 
-class _HomeDashboardState extends State<HomeDashboard> {
+class _HomeDashboardState extends ConsumerState<HomeDashboard> {
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<RelationshipProvider>();
+    final session = context.watch<CoupleSession>();
+    final workspace = ref.watch(workspaceControllerProvider);
+    final profile = ref.watch(profileControllerProvider);
+    final presence = ref.watch(presenceControllerProvider);
     final tp = context.watch<TimelineProvider>();
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
@@ -534,18 +542,20 @@ class _HomeDashboardState extends State<HomeDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DetailedDaysCounter(relationshipProvider: rp, theme: theme),
+            DetailedDaysCounter(workspace: workspace, theme: theme),
             const SizedBox(height: 16),
             const CurrentlyCard(),
             const SizedBox(height: 16),
             InsightsBanner(
               timelineProvider: tp,
               bucketProvider: context.watch<BucketListProvider>(),
-              relationshipProvider: rp,
+              workspace: workspace,
+              profile: profile,
+              presence: presence,
               theme: theme,
             ),
             const SizedBox(height: 16),
-            MilestoneCard(relationshipProvider: rp, theme: theme),
+            MilestoneCard(workspace: workspace, isPaired: session.isPaired, theme: theme),
             const SizedBox(height: 24),
             Row(
               children: [
@@ -585,14 +595,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
 // TIMELINE TAB
 // ──────────────────────────────────────────────
 
-class TimelineTab extends StatefulWidget {
+class TimelineTab extends ConsumerStatefulWidget {
   const TimelineTab({super.key});
 
   @override
-  State<TimelineTab> createState() => _TimelineTabState();
+  ConsumerState<TimelineTab> createState() => _TimelineTabState();
 }
 
-class _TimelineTabState extends State<TimelineTab> {
+class _TimelineTabState extends ConsumerState<TimelineTab> {
   bool _isStorybookMode = false;
   late PageController _pageController;
   late ScrollController _scrollController;
@@ -691,10 +701,10 @@ class _TimelineTabState extends State<TimelineTab> {
 
   void _showEditTitleDialog(
     BuildContext context,
-    RelationshipProvider rp,
+    String currentStoryTitle,
     dynamic theme,
   ) {
-    final controller = TextEditingController(text: rp.storyTitle);
+    final controller = TextEditingController(text: currentStoryTitle);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -724,7 +734,7 @@ class _TimelineTabState extends State<TimelineTab> {
           ),
           TextButton(
             onPressed: () {
-              rp.setStoryTitle(controller.text.trim());
+              ref.read(workspaceControllerProvider.notifier).setStoryTitle(controller.text.trim());
               Navigator.pop(context);
             },
             child: Text('Save', style: AppTypography.button(color: theme.accentColor)),
@@ -737,7 +747,7 @@ class _TimelineTabState extends State<TimelineTab> {
   @override
   Widget build(BuildContext context) {
     final timelineProvider = context.watch<TimelineProvider>();
-    final rp = context.watch<RelationshipProvider>();
+    final storyTitle = ref.watch(workspaceControllerProvider).storyTitle;
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
     final items = timelineProvider.timelineItems;
@@ -778,9 +788,9 @@ class _TimelineTabState extends State<TimelineTab> {
                               centerTitle: true,
                               collapseMode: CollapseMode.parallax,
                               title: GestureDetector(
-                                onTap: () => _showEditTitleDialog(context, rp, theme),
+                                onTap: () => _showEditTitleDialog(context, storyTitle, theme),
                                 child: Text(
-                                  rp.storyTitle,
+                                  storyTitle,
                                   style: AppTypography.pageTitle(
                                     fontWeight: FontWeight.bold,
                                     color: theme.textColor,

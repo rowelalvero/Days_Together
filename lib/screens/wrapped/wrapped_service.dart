@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
+import 'package:days_together/features/relationship/profile_state.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
@@ -62,7 +63,8 @@ class WrappedService {
   /// Call this once before navigating to [WrappedScreen].
   static WrappedData aggregate({
     required int year,
-    required RelationshipProvider rp,
+    required WorkspaceState workspace,
+    required ProfileState profile,
     required TimelineProvider tp,
     required NoteitProvider np,
     required BucketListProvider bp,
@@ -72,13 +74,13 @@ class WrappedService {
     required VaultProvider vp,
   }) {
     final now = DateTime.now();
-    final startDate = rp.startDate;
+    final startDate = workspace.startDate;
     final age = startDate != null
         ? DateHelper.getPreciseAge(startDate, now)
         : <String, int>{'years': 0, 'months': 0, 'days': 0};
     final computedTotalDays = startDate != null
         ? DateHelper.calendarDaysBetween(startDate, now)
-        : rp.totalDays;
+        : DateHelper.relationshipTotalDays(startDate);
 
     // ── Memories ──────────────────────────────────────────────────────────────
     final allMemories = tp.timelineItems;
@@ -221,10 +223,10 @@ class WrappedService {
 
     return WrappedData(
       year: year,
-      yourName: rp.yourName ?? 'You',
-      partnerName: rp.partnerName,
-      yourAvatarUrl: rp.yourAvatarPath,
-      partnerAvatarUrl: rp.partnerAvatarPath,
+      yourName: profile.yourName ?? 'You',
+      partnerName: profile.partnerName,
+      yourAvatarUrl: profile.yourAvatarPath,
+      partnerAvatarUrl: profile.partnerAvatarPath,
       totalDays: computedTotalDays,
       durationYears: age['years'] ?? 0,
       durationMonths: age['months'] ?? 0,

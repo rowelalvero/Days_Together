@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/profile_state.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/noteit_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
@@ -16,12 +21,13 @@ import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/cached_avatar.dart';
 import 'package:days_together/screens/wrapped/wrapped_service.dart';
 
-class SettingsTab extends StatelessWidget {
+class SettingsTab extends ConsumerWidget {
   const SettingsTab({super.key});
 
-  Future<void> _launchWrapped(BuildContext context) async {
+  Future<void> _launchWrapped(BuildContext context, WidgetRef ref) async {
     final year = DateTime.now().year;
-    final rp = context.read<RelationshipProvider>();
+    final workspace = ref.read(workspaceControllerProvider);
+    final profile = ref.read(profileControllerProvider);
     final tp = context.read<TimelineProvider>();
     final np = context.read<NoteitProvider>();
     final bp = context.read<BucketListProvider>();
@@ -32,7 +38,8 @@ class SettingsTab extends StatelessWidget {
 
     final data = WrappedService.aggregate(
       year: year,
-      rp: rp,
+      workspace: workspace,
+      profile: profile,
       tp: tp,
       np: np,
       bp: bp,
@@ -46,7 +53,7 @@ class SettingsTab extends StatelessWidget {
     context.push(Routes.wrapped, extra: data);
   }
 
-  void _showLogoutConfirmation(BuildContext context, RelationshipProvider rp) {
+  void _showLogoutConfirmation(BuildContext context, CoupleSession session) {
     final theme = Provider.of<ThemeProvider>(
       context,
       listen: false,
@@ -98,7 +105,7 @@ class SettingsTab extends StatelessWidget {
               // old pushAndRemoveUntil(AppHome())/popUntil two-strategies
               // split ADR-007 found (this screen previously also imported
               // main.dart just to reach AppHome, a layering violation).
-              await rp.logout();
+              await session.logout();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
@@ -118,10 +125,12 @@ class SettingsTab extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final session = context.watch<CoupleSession>();
+    final profile = ref.watch(profileControllerProvider);
+    final workspace = ref.watch(workspaceControllerProvider);
 
     return SafeArea(
       bottom: false,
@@ -139,7 +148,7 @@ class SettingsTab extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            _buildLiquidProfileCard(rp, theme, context),
+            _buildLiquidProfileCard(session, profile, theme, context),
             const SizedBox(height: 40),
             _buildSectionHeader('Experience', theme),
             _buildModernTile(
@@ -158,7 +167,7 @@ class SettingsTab extends StatelessWidget {
               onTap: () => context.push(Routes.notificationSettings),
             ),
             const SizedBox(height: 12),
-            _buildWrappedTile(theme, context),
+            _buildWrappedTile(theme, context, ref),
             const SizedBox(height: 8),
             _buildWrappedArchiveTile(theme, context),
             const SizedBox(height: 32),
@@ -166,21 +175,21 @@ class SettingsTab extends StatelessWidget {
             _buildModernTile(
               icon: Icons.favorite_outline_rounded,
               title: 'Relationship Profile',
-              subtitle: rp.partnerId != null
+              subtitle: session.partnerId != null
                   ? 'Connected with partner'
                   : 'Waiting for connection',
               theme: theme,
               onTap: () => context.push(Routes.profile),
             ),
             const SizedBox(height: 12),
-            _buildPremiumGlassCard(rp, theme),
+            _buildPremiumGlassCard(workspace, ref, theme),
             const SizedBox(height: 12),
             _buildModernTile(
               icon: Icons.logout_rounded,
               title: 'Log Out',
               subtitle: 'Sign out of this session',
               theme: theme,
-              onTap: () => _showLogoutConfirmation(context, rp),
+              onTap: () => _showLogoutConfirmation(context, session),
             ),
             const SizedBox(height: 48),
             Center(
@@ -202,9 +211,9 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildWrappedTile(dynamic theme, BuildContext context) {
+  Widget _buildWrappedTile(dynamic theme, BuildContext context, WidgetRef ref) {
     return GestureDetector(
-      onTap: () => _launchWrapped(context),
+      onTap: () => _launchWrapped(context, ref),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
@@ -278,11 +287,12 @@ class SettingsTab extends StatelessWidget {
   }
 
   Widget _buildLiquidProfileCard(
-    RelationshipProvider provider,
+    CoupleSession session,
+    ProfileState profile,
     dynamic theme,
     BuildContext context,
   ) {
-    final partnerJoined = provider.partnerId != null;
+    final partnerJoined = session.partnerId != null;
 
     return GlassContainer(
       padding: const EdgeInsets.all(24),
@@ -294,15 +304,15 @@ class SettingsTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildMiniAvatar(
-                provider.yourAvatarPath,
-                provider.yourName ?? 'You',
+                profile.yourAvatarPath,
+                profile.yourName ?? 'You',
                 theme,
               ),
               Icon(Icons.favorite_rounded, color: theme.accentColor, size: 28),
               _buildMiniAvatar(
-                partnerJoined ? provider.partnerAvatarPath : null,
+                partnerJoined ? profile.partnerAvatarPath : null,
                 partnerJoined
-                    ? (provider.partnerName ?? 'Partner')
+                    ? (profile.partnerName ?? 'Partner')
                     : 'Waiting...',
                 theme,
               ),
@@ -405,7 +415,7 @@ class SettingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumGlassCard(RelationshipProvider provider, dynamic theme) {
+  Widget _buildPremiumGlassCard(WorkspaceState workspace, WidgetRef ref, dynamic theme) {
     return GlassContainer(
       borderRadius: 24,
       padding: const EdgeInsets.all(4),
@@ -441,8 +451,8 @@ class SettingsTab extends StatelessWidget {
           ),
         ),
         trailing: Switch.adaptive(
-          value: provider.isPremium,
-          onChanged: (val) => provider.setPremium(val),
+          value: workspace.isPremium,
+          onChanged: (val) => ref.read(workspaceControllerProvider.notifier).setPremium(val),
           activeTrackColor: Colors.amber,
         ),
       ),

@@ -4,19 +4,26 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
+import 'package:days_together/features/relationship/profile_state.dart';
+import 'package:days_together/features/relationship/presence_state.dart';
+import 'package:days_together/services/date_helper.dart';
 
 class InsightsBanner extends StatefulWidget {
   final TimelineProvider timelineProvider;
   final BucketListProvider bucketProvider;
-  final RelationshipProvider relationshipProvider;
+  final WorkspaceState workspace;
+  final ProfileState profile;
+  final PresenceState presence;
   final dynamic theme;
 
   const InsightsBanner({
     super.key,
     required this.timelineProvider,
     required this.bucketProvider,
-    required this.relationshipProvider,
+    required this.workspace,
+    required this.profile,
+    required this.presence,
     required this.theme,
   });
 
@@ -57,9 +64,9 @@ class _InsightsBannerState extends State<InsightsBanner> {
   void _generateInsights() {
     final memCount = widget.timelineProvider.timelineItems.length;
     final bucketPercent = widget.bucketProvider.progress * 100;
-    final years = widget.relationshipProvider.years;
-    final partnerName = widget.relationshipProvider.partnerName ?? 'Partner';
-    final isOnline = widget.relationshipProvider.isPartnerOnline;
+    final years = DateHelper.relationshipPreciseAge(widget.workspace.startDate, widget.workspace.startTime)['years']!;
+    final partnerName = widget.profile.partnerName ?? 'Partner';
+    final isOnline = widget.presence.isPartnerOnline;
 
     _insights = [
       '💖 You created $memCount memories together.',

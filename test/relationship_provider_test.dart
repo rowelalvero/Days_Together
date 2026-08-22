@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/services/storage_url_service.dart';
 
 void main() {
@@ -344,6 +345,28 @@ void main() {
       provider.forceInitialized();
       expect(session.isInitialized, true);
       expect(provider.isInitialized, true);
+    });
+
+    test('17. duration/milestone getters delegate correctly to DateHelper (Phase 6b-3)', () async {
+      SharedPreferences.setMockInitialValues({
+        'relationship_start_date': DateTime(2022, 6, 15).toIso8601String(),
+        'relationship_start_hour': 9,
+        'relationship_start_minute': 30,
+      });
+
+      final session = CoupleSession();
+      final provider = RelationshipProvider(session);
+      await Future.delayed(Duration.zero);
+
+      expect(provider.startDateTime, DateHelper.relationshipStartDateTime(session.startDate, session.startTime));
+      expect(provider.totalDays, DateHelper.relationshipTotalDays(session.startDate));
+      expect(provider.preciseAge, DateHelper.relationshipPreciseAge(session.startDate, session.startTime));
+      expect(provider.totalMonths, DateHelper.relationshipTotalMonths(session.startDate));
+      expect(provider.relationshipAge, DateHelper.relationshipAgeLabel(session.startDate, session.startTime));
+      expect(
+        provider.nextMilestones.map((m) => m.title),
+        DateHelper.nextRelationshipMilestones(session.startDate, session.startTime).map((m) => m.title),
+      );
     });
   });
 }

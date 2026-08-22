@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/widgets/glass_container.dart';
 import 'package:days_together/widgets/app_avatar.dart';
@@ -20,7 +21,7 @@ class RelationshipProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final rp = context.watch<CoupleSession>();
     final partnerJoined = rp.partnerId != null;
 
     return Scaffold(
@@ -72,7 +73,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthDebugInfo(RelationshipProvider rp, dynamic theme) {
+  Widget _buildAuthDebugInfo(CoupleSession rp, dynamic theme) {
     return Center(
       child: Opacity(
         opacity: 0.3,
@@ -115,7 +116,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   Widget _buildHeaderSection(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     final partnerJoined = rp.partnerId != null;
@@ -279,7 +280,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   Widget _buildInfoCard(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     final start = rp.startDate;
@@ -289,7 +290,7 @@ class RelationshipProfileScreen extends StatelessWidget {
     final formattedTime = rp.startTime != null
         ? rp.startTime!.format(context)
         : '12:00 AM';
-    final ageStr = rp.relationshipAge;
+    final ageStr = DateHelper.relationshipAgeLabel(rp.startDate, rp.startTime);
 
     return Column(
       children: [
@@ -395,7 +396,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   Future<void> _editDate(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) async {
     final date = await showDatePicker(
@@ -418,7 +419,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   Future<void> _editTime(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) async {
     final time = await showTimePicker(
@@ -441,7 +442,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
     Widget _buildRegenerateRecoveryCodeButton(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     return Container(
@@ -473,7 +474,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   void _showRegenerateRecoveryCodeDialog(
     BuildContext profileContext,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     showDialog(
@@ -589,7 +590,7 @@ class RelationshipProfileScreen extends StatelessWidget {
 
   void _showNewRecoveryCodeDialog(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     bool saved = false;
@@ -766,7 +767,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   Widget _buildUnlinkButton(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     final partnerJoined = rp.partnerId != null;
@@ -801,7 +802,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   Widget _buildDeleteAccountButton(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     return Container(
@@ -832,7 +833,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   void _showDeleteAccountConfirmation(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     showDialog(
@@ -912,7 +913,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
                           // No explicit navigation after this: deleteAccount()
                           // ends in logout(wipeAll: true), which clears
-                          // RelationshipProvider's identity fields -- the
+                          // CoupleSession's identity fields -- the
                           // router's single redirect (app_router.dart) picks
                           // that up via refreshListenable and recomputes the
                           // correct destination, replacing the old
@@ -956,7 +957,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   void _showUnlinkConfirmation(
     BuildContext profileContext,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     final partnerJoined = rp.partnerId != null;
@@ -1065,7 +1066,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   void _editProfileDialog(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
   ) {
     final yourController = TextEditingController(text: rp.yourName);
@@ -1164,7 +1165,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   Widget _buildAvatarRow(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     dynamic theme,
     bool isYou,
   ) {
@@ -1226,7 +1227,7 @@ Widget _buildDangerZoneDivider(dynamic theme) {
 
   Future<void> _pickAvatar(
     BuildContext context,
-    RelationshipProvider rp,
+    CoupleSession rp,
     bool isYou,
   ) async {
     final hasPermission = await PermissionService().requestPhotosPermission(
@@ -1342,7 +1343,7 @@ class _StatTile extends StatelessWidget {
 }
 
 class PairingOptionsSection extends StatefulWidget {
-  final RelationshipProvider rp;
+  final CoupleSession rp;
   final dynamic theme;
 
   const PairingOptionsSection({

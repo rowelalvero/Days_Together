@@ -10,7 +10,8 @@ import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/services/date_helper.dart';
@@ -25,12 +26,12 @@ class RelationshipDurationScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<RelationshipProvider>();
+    final workspace = ref.watch(workspaceControllerProvider);
     final tp = context.watch<TimelineProvider>();
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
 
-    final startDate = rp.startDate ?? DateTime.now();
-    final totalDays = rp.totalDays;
+    final startDate = workspace.startDate ?? DateTime.now();
+    final totalDays = DateHelper.relationshipTotalDays(workspace.startDate);
 
     return Scaffold(
       body: Container(
@@ -169,23 +170,30 @@ class RelationshipDurationScreen extends ConsumerWidget {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   // 1. Duration Breakdown
-                  _buildDurationBreakdown(rp, theme),
+                  _buildDurationBreakdown(workspace, theme),
                   const SizedBox(height: 16),
 
                   // 2. Live Stopwatch Counter
-                  _LiveStopwatchWidget(startDate: rp.startDateTime, theme: theme),
+                  _LiveStopwatchWidget(
+                    startDate: DateHelper.relationshipStartDateTime(workspace.startDate, workspace.startTime),
+                    theme: theme,
+                  ),
                   const SizedBox(height: 16),
 
                   // 3. Next Milestone Progress
-                  _buildMilestoneProgress(rp, theme),
+                  _buildMilestoneProgress(workspace, theme),
                   const SizedBox(height: 16),
 
                   // 4. Anniversary Countdown
-                  _buildAnniversaryCountdown(startDate, rp.years, theme),
+                  _buildAnniversaryCountdown(
+                    startDate,
+                    DateHelper.relationshipPreciseAge(workspace.startDate, workspace.startTime)['years']!,
+                    theme,
+                  ),
                   const SizedBox(height: 16),
 
                   // 5. Fun Statistics Grid
-                  _buildFunStatistics(startDate, rp, license, theme),
+                  _buildFunStatistics(startDate, workspace, license, theme),
                   const SizedBox(height: 24),
 
                   // 6. Milestone Achieved Timeline
@@ -205,8 +213,8 @@ class RelationshipDurationScreen extends ConsumerWidget {
   }
 
   // Duration Breakdown Bento Grids
-  Widget _buildDurationBreakdown(RelationshipProvider rp, LoveStoryTheme theme) {
-    final age = rp.preciseAge;
+  Widget _buildDurationBreakdown(WorkspaceState workspace, LoveStoryTheme theme) {
+    final age = DateHelper.relationshipPreciseAge(workspace.startDate, workspace.startTime);
     final years = age['years'] ?? 0;
     final months = age['months'] ?? 0;
     final days = age['days'] ?? 0;
@@ -265,8 +273,8 @@ class RelationshipDurationScreen extends ConsumerWidget {
   }
 
   // Next Milestone Progress
-  Widget _buildMilestoneProgress(RelationshipProvider rp, LoveStoryTheme theme) {
-    final milestones = rp.nextMilestones;
+  Widget _buildMilestoneProgress(WorkspaceState workspace, LoveStoryTheme theme) {
+    final milestones = DateHelper.nextRelationshipMilestones(workspace.startDate, workspace.startTime);
     if (milestones.isEmpty) return const SizedBox.shrink();
 
     final next = milestones.first;
@@ -277,7 +285,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
       target = int.tryParse(numMatch.group(0)!) ?? 100;
     }
 
-    final currentDays = rp.totalDays;
+    final currentDays = DateHelper.relationshipTotalDays(workspace.startDate);
     final progress = next.progress;
     final percent = (progress * 100).round();
 
@@ -529,13 +537,13 @@ class RelationshipDurationScreen extends ConsumerWidget {
   // Fun Statistics Section
   Widget _buildFunStatistics(
     DateTime startDate,
-    RelationshipProvider rp,
+    WorkspaceState workspace,
     LicenseDetails license,
     LoveStoryTheme theme,
   ) {
     final today = DateTime.now();
 
-    final totalDays = rp.totalDays;
+    final totalDays = DateHelper.relationshipTotalDays(workspace.startDate);
     final weekends = DateHelper.countWeekendDays(startDate, today);
     final valentines = DateHelper.countOccurrencesOfDate(startDate, today, 2, 14);
     final christmases = DateHelper.countOccurrencesOfDate(startDate, today, 12, 25);
@@ -555,7 +563,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
       _FunStatItem('🌅', 'Sunrises Together', '$totalDays'),
       _FunStatItem('🌙', 'Nights Shared', '$totalDays'),
       _FunStatItem('🗓', 'Weekend Days Shared', '$weekends'),
-      _FunStatItem('📆', 'Months Shared', '${rp.totalMonths}'),
+      _FunStatItem('📆', 'Months Shared', '${DateHelper.relationshipTotalMonths(workspace.startDate)}'),
       if (birthdays > 0) _FunStatItem('🎂', 'Birthdays Celebrated', '$birthdays'),
       _FunStatItem('💘', 'Valentine\'s Days', '$valentines'),
       _FunStatItem('🎄', 'Christmases Spent', '$christmases'),

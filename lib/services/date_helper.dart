@@ -1,4 +1,19 @@
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:intl/intl.dart';
+
+/// A single upcoming relationship milestone (a round day-count or an
+/// anniversary), as computed by [DateHelper.nextRelationshipMilestones].
+class MilestoneInfo {
+  final String title;
+  final int daysUntil;
+  final double progress; // 0.0 to 1.0
+
+  const MilestoneInfo({
+    required this.title,
+    required this.daysUntil,
+    required this.progress,
+  });
+}
 
 class DateHelper {
   /// Check if a year is a leap year.
@@ -200,5 +215,160 @@ class DateHelper {
 
     // Formatted date for older entries (using locale)
     return DateFormat.yMMMd().format(localDateTime);
+  }
+
+  // ---- Relationship duration/milestone math (Phase 6b-3 of the
+  // architecture migration) ----
+  //
+  // Extracted from RelationshipProvider, where it lived as a set of
+  // instance getters reading _startDate/_startTime directly. ADR-009 called
+  // for this to become plain functions "during Phase 5"; that never
+  // happened until now (Phase 6b-1's investigation found it stranded and
+  // still blocking full RelationshipProvider retirement). Every function
+  // below is a pure, parameterized equivalent of its original getter, so
+  // any caller holding a couple's startDate/startTime (WorkspaceController,
+  // now, rather than RelationshipProvider) can compute the same values
+  // without depending on RelationshipProvider at all.
+
+  /// Combines a relationship's start date and start time into a single
+  /// `DateTime`, defaulting the time-of-day to midnight when unset and the
+  /// whole thing to "now" when there is no start date yet (matching
+  /// RelationshipProvider's original `startDateTime` getter).
+  static DateTime relationshipStartDateTime(DateTime? startDate, TimeOfDay? startTime) {
+    if (startDate == null) return DateTime.now();
+    return DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+      startTime?.hour ?? 0,
+      startTime?.minute ?? 0,
+    );
+  }
+
+  /// Calendar days elapsed since [startDate], or 0 if there is none yet.
+  static int relationshipTotalDays(DateTime? startDate) {
+    if (startDate == null) return 0;
+    return calendarDaysBetween(startDate, DateTime.now());
+  }
+
+  /// Precise years/months/days/hours/minutes/seconds elapsed since
+  /// [startDate]/[startTime], or all zeros if there is no start date yet.
+  static Map<String, int> relationshipPreciseAge(DateTime? startDate, TimeOfDay? startTime) {
+    if (startDate == null) {
+      return {
+        'years': 0,
+        'months': 0,
+        'days': 0,
+        'hours': 0,
+        'minutes': 0,
+        'seconds': 0,
+      };
+    }
+    return getPreciseAge(relationshipStartDateTime(startDate, startTime), DateTime.now());
+  }
+
+  /// Whole calendar months elapsed since [startDate], or 0 if there is none
+  /// yet.
+  static int relationshipTotalMonths(DateTime? startDate) {
+    if (startDate == null) return 0;
+    final now = DateTime.now();
+    return (now.year - startDate.year) * 12 + now.month - startDate.month;
+  }
+
+  /// A human-readable "X Years, Y Months, Z Days" label, matching
+  /// RelationshipProvider's original `relationshipAge` getter (always
+  /// includes a days component, even if 0; years/months only when nonzero).
+  static String relationshipAgeLabel(DateTime? startDate, TimeOfDay? startTime) {
+    final age = relationshipPreciseAge(startDate, startTime);
+    final parts = <String>[];
+    if (age['years']! > 0) {
+      parts.add("${age['years']} Year${age['years']! > 1 ? 's' : ''}");
+    }
+    if (age['months']! > 0) {
+      parts.add("${age['months']} Month${age['months']! > 1 ? 's' : ''}");
+    }
+    parts.add("${age['days']} Day${age['days']! > 1 ? 's' : ''}");
+    return parts.join(', ');
+  }
+
+  static String _ordinal(int n) {
+    if (n >= 11 && n <= 13) return '${n}th';
+    switch (n % 10) {
+      case 1:
+        return '${n}st';
+      case 2:
+        return '${n}nd';
+      case 3:
+        return '${n}rd';
+      default:
+        return '${n}th';
+    }
+  }
+
+  /// The next up to 5 upcoming milestones (round day-counts and
+  /// anniversaries) for a relationship starting at [startDate]/[startTime],
+  /// nearest first. Returns an empty list if there is no start date yet.
+  static List<MilestoneInfo> nextRelationshipMilestones(DateTime? startDate, TimeOfDay? startTime) {
+    if (startDate == null) return [];
+    final milestones = <MilestoneInfo>[];
+    final days = relationshipTotalDays(startDate);
+
+    for (final target in [
+      100,
+      200,
+      365,
+      500,
+      730,
+      1000,
+      1500,
+      2000,
+      2500,
+      3000,
+    ]) {
+      if (days < target) {
+        final daysUntil = target - days;
+        int prev = 0;
+        for (final p in [0, 100, 200, 365, 500, 730, 1000, 1500, 2000, 2500]) {
+          if (p < target && p <= days) prev = p;
+        }
+        final progress = (days - prev) / (target - prev);
+        String label;
+        if (target == 365) {
+          label = '1st Anniversary';
+        } else if (target == 730) {
+          label = '2nd Anniversary';
+        } else {
+          label = '$target Days';
+        }
+        milestones.add(
+          MilestoneInfo(
+            title: label,
+            daysUntil: daysUntil,
+            progress: progress.clamp(0.0, 1.0),
+          ),
+        );
+        if (milestones.length >= 5) break;
+      }
+    }
+
+    if (milestones.length < 5) {
+      final years = relationshipPreciseAge(startDate, startTime)['years']!;
+      final nextYear = years + 1;
+      final anniversaryDate = getAnniversaryDate(startDate, nextYear);
+      final daysUntilAnniversary = daysUntil(anniversaryDate);
+      if (daysUntilAnniversary > 0) {
+        final ordinal = _ordinal(nextYear);
+        milestones.add(
+          MilestoneInfo(
+            title: '$ordinal Anniversary',
+            daysUntil: daysUntilAnniversary,
+            progress: 1.0 - (daysUntilAnniversary / 365.0).clamp(0.0, 1.0),
+          ),
+        );
+      }
+    }
+
+    milestones.sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
+    return milestones.take(5).toList();
   }
 }

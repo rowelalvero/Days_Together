@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/services/date_helper.dart';
 
 class MilestoneCard extends StatefulWidget {
-  final RelationshipProvider relationshipProvider;
+  final WorkspaceState workspace;
+  final bool isPaired;
   final dynamic theme;
 
   const MilestoneCard({
     super.key,
-    required this.relationshipProvider,
+    required this.workspace,
+    required this.isPaired,
     required this.theme,
   });
 
@@ -41,11 +43,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
 
   @override
   Widget build(BuildContext context) {
-    final rawMilestones = widget.relationshipProvider.nextMilestones;
-    final startDate = widget.relationshipProvider.startDate;
-    final daysTogether = widget.relationshipProvider.totalDays;
+    final rawMilestones = DateHelper.nextRelationshipMilestones(widget.workspace.startDate, widget.workspace.startTime);
+    final startDate = widget.workspace.startDate;
+    final daysTogether = DateHelper.relationshipTotalDays(widget.workspace.startDate);
 
-    final isPaired = widget.relationshipProvider.isPaired;
+    final isPaired = widget.isPaired;
     // Ensure we always have milestones to show, fallback to mock data if empty and paired
     final milestones = rawMilestones.isNotEmpty
         ? rawMilestones

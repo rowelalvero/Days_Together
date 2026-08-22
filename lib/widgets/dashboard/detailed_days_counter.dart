@@ -5,15 +5,16 @@ import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/widgets/glass_container.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
+import 'package:days_together/services/date_helper.dart';
 
 class DetailedDaysCounter extends StatefulWidget {
-  final RelationshipProvider relationshipProvider;
+  final WorkspaceState workspace;
   final dynamic theme;
 
   const DetailedDaysCounter({
     super.key,
-    required this.relationshipProvider,
+    required this.workspace,
     required this.theme,
   });
 
@@ -40,10 +41,10 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
 
   @override
   Widget build(BuildContext context) {
-    final rp = widget.relationshipProvider;
-    final age = rp.preciseAge;
-    final totalDays = rp.totalDays;
-    final startDate = rp.startDate ?? DateTime.now();
+    final workspace = widget.workspace;
+    final age = DateHelper.relationshipPreciseAge(workspace.startDate, workspace.startTime);
+    final totalDays = DateHelper.relationshipTotalDays(workspace.startDate);
+    final startDate = workspace.startDate ?? DateTime.now();
 
     return InkWell(
       onTap: () {

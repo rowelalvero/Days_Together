@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/providers/timeline_provider.dart';
 import 'package:days_together/providers/bucket_list_provider.dart';
 import 'package:days_together/providers/daily_mood_provider.dart';
 import 'package:days_together/services/ai_service.dart';
+import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class RelationshipInsightsScreen extends StatefulWidget {
+class RelationshipInsightsScreen extends ConsumerStatefulWidget {
   const RelationshipInsightsScreen({super.key});
 
   @override
-  State<RelationshipInsightsScreen> createState() =>
+  ConsumerState<RelationshipInsightsScreen> createState() =>
       _RelationshipInsightsScreenState();
 }
 
 class _RelationshipInsightsScreenState
-    extends State<RelationshipInsightsScreen> {
+    extends ConsumerState<RelationshipInsightsScreen> {
   bool _isRefreshing = false;
 
   void _refreshInsights() async {
@@ -68,14 +70,14 @@ class _RelationshipInsightsScreenState
     final themeProvider = context.watch<ThemeProvider>();
     final theme = themeProvider.currentLoveTheme;
 
-    final rp = context.watch<RelationshipProvider>();
+    final workspace = ref.watch(workspaceControllerProvider);
     final tp = context.watch<TimelineProvider>();
     final bp = context.watch<BucketListProvider>();
     final dp = context.watch<DailyMoodProvider>();
 
     final commonMood = _getCommonMood(dp.moods);
     final insights = AIService.generateInsights(
-      totalDays: rp.totalDays,
+      totalDays: DateHelper.relationshipTotalDays(workspace.startDate),
       totalMemories: tp.timelineItems.length,
       commonMood: commonMood,
       totalBucketItems: bp.totalItems,
