@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
@@ -10,7 +10,7 @@ import 'package:days_together/themes/theme_manager.dart';
 /// license setup. Extracted out of
 /// `RelationshipLicenseScreenState._buildWaitingForPartnerScreen`
 /// (Migration Phase 8).
-class WaitingForPartnerScreen extends StatelessWidget {
+class WaitingForPartnerScreen extends ConsumerWidget {
   const WaitingForPartnerScreen({
     super.key,
     required this.theme,
@@ -21,7 +21,7 @@ class WaitingForPartnerScreen extends StatelessWidget {
   final bool partnerJoined;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -39,7 +39,7 @@ class WaitingForPartnerScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: context.watch<ThemeProvider>().currentGradient),
+        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
         child: SafeArea(
           child: Center(
             child: Padding(

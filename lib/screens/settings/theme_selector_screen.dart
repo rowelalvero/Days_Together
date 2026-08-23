@@ -1,17 +1,17 @@
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/models/app_settings.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
 
-class ThemeSelectorScreen extends StatelessWidget {
+class ThemeSelectorScreen extends ConsumerWidget {
   const ThemeSelectorScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final availableThemes = ThemeManager.themes.keys.toList()
       ..add(ThemeType.custom);
@@ -64,7 +64,7 @@ class ThemeSelectorScreen extends StatelessWidget {
                       theme: previewTheme,
                       isSelected: isSelected,
                       parentTheme: theme,
-                      onTap: () => themeProvider.changeTheme(themeType),
+                      onTap: () => ref.read(themeControllerProvider.notifier).changeTheme(themeType),
                     );
                   },
                 ),
@@ -227,16 +227,16 @@ class _ThemeCard extends StatelessWidget {
 // ──────────────────────────────────────
 // CUSTOM THEME DESIGNER
 // ──────────────────────────────────────
-class _CustomThemeDesigner extends StatefulWidget {
+class _CustomThemeDesigner extends ConsumerStatefulWidget {
   final LoveStoryTheme parentTheme;
 
   const _CustomThemeDesigner({required this.parentTheme});
 
   @override
-  State<_CustomThemeDesigner> createState() => _CustomThemeDesignerState();
+  ConsumerState<_CustomThemeDesigner> createState() => _CustomThemeDesignerState();
 }
 
-class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
+class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
   String _activeSlot = 'primary';
   final TextEditingController _hexController = TextEditingController();
 
@@ -265,19 +265,20 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
     }
   }
 
-  void _applyColor(ThemeProvider provider, int colorValue) {
+  void _applyColor(WidgetRef ref, int colorValue) {
+    final notifier = ref.read(themeControllerProvider.notifier);
     switch (_activeSlot) {
       case 'primary':
-        provider.setCustomColor(primary: colorValue);
+        notifier.setCustomColor(primary: colorValue);
         break;
       case 'secondary':
-        provider.setCustomColor(secondary: colorValue);
+        notifier.setCustomColor(secondary: colorValue);
         break;
       case 'background':
-        provider.setCustomColor(background: colorValue);
+        notifier.setCustomColor(background: colorValue);
         break;
       case 'accent':
-        provider.setCustomColor(accent: colorValue);
+        notifier.setCustomColor(accent: colorValue);
         break;
     }
   }
@@ -290,8 +291,8 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final settings = themeProvider.settings;
+    final themeState = ref.watch(themeControllerProvider);
+    final settings = themeState.settings;
     final theme = widget.parentTheme;
 
     return Column(
@@ -306,17 +307,17 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
         // Color Palette
         _buildSectionLabel('Pick a Color', theme),
         const SizedBox(height: 8),
-        _buildColorPalette(themeProvider, settings),
+        _buildColorPalette(ref, settings),
         const SizedBox(height: 24),
 
         // Hex Input
-        _buildHexInput(themeProvider, theme),
+        _buildHexInput(ref, theme),
         const SizedBox(height: 32),
 
         // Dark / Light toggle
         _buildSectionLabel('Mode', theme),
         const SizedBox(height: 8),
-        _buildDarkLightToggle(themeProvider, settings, theme),
+        _buildDarkLightToggle(ref, settings, theme),
         const SizedBox(height: 32),
       ],
     );
@@ -397,7 +398,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
     );
   }
 
-  Widget _buildColorPalette(ThemeProvider provider, AppSettings settings) {
+  Widget _buildColorPalette(WidgetRef ref, AppSettings settings) {
     final activeColor = _getActiveColor(settings);
 
     return Wrap(
@@ -406,7 +407,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
       children: _paletteColors.map((colorValue) {
         final isSelected = activeColor == colorValue;
         return GestureDetector(
-          onTap: () => _applyColor(provider, colorValue),
+          onTap: () => _applyColor(ref, colorValue),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: 42,
@@ -439,7 +440,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
     );
   }
 
-  Widget _buildHexInput(ThemeProvider provider, LoveStoryTheme theme) {
+  Widget _buildHexInput(WidgetRef ref, LoveStoryTheme theme) {
     return GlassContainer(
       borderRadius: 18,
       opacity: 0.06,
@@ -477,7 +478,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
                 if (hex.length == 6) {
                   final colorInt = int.tryParse('FF$hex', radix: 16);
                   if (colorInt != null) {
-                    _applyColor(provider, colorInt);
+                    _applyColor(ref, colorInt);
                     _hexController.clear();
                   }
                 }
@@ -490,7 +491,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
               if (hex.length == 6) {
                 final colorInt = int.tryParse('FF$hex', radix: 16);
                 if (colorInt != null) {
-                  _applyColor(provider, colorInt);
+                  _applyColor(ref, colorInt);
                   _hexController.clear();
                 }
               }
@@ -506,7 +507,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
   }
 
   Widget _buildDarkLightToggle(
-    ThemeProvider provider,
+    WidgetRef ref,
     AppSettings settings,
     LoveStoryTheme theme,
   ) {
@@ -522,7 +523,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
               icon: Icons.dark_mode_rounded,
               isSelected: settings.customIsDark,
               theme: theme,
-              onTap: () => provider.setCustomIsDark(true),
+              onTap: () => ref.read(themeControllerProvider.notifier).setCustomIsDark(true),
             ),
           ),
           const SizedBox(width: 8),
@@ -532,7 +533,7 @@ class _CustomThemeDesignerState extends State<_CustomThemeDesigner> {
               icon: Icons.light_mode_rounded,
               isSelected: !settings.customIsDark,
               theme: theme,
-              onTap: () => provider.setCustomIsDark(false),
+              onTap: () => ref.read(themeControllerProvider.notifier).setCustomIsDark(false),
             ),
           ),
         ],

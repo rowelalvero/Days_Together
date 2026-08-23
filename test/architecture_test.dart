@@ -185,6 +185,41 @@ void main() {
     });
   });
 
+  group('Item 3 gap-fix Phase 2 -- ThemeProvider is gone; everything depends on ThemeController', () {
+    test('no lib/ file has a live code reference to ThemeProvider', () {
+      // ThemeProvider (lib/providers/theme_provider.dart) was device-local,
+      // not couple-scoped, so it needed a Riverpod controller built from
+      // scratch (ThemeController/ThemeState under lib/features/theme/)
+      // rather than swapping onto an already-existing port, unlike the 12
+      // providers in Phase 1 above. Once every context.watch<ThemeProvider>()/
+      // context.read<ThemeProvider>()/Provider.of<ThemeProvider>() site was
+      // flipped to ref.watch/ref.read on themeControllerProvider, the old
+      // lib/providers/theme_provider.dart file and its main.dart registration
+      // were deleted outright (see migration-roadmap.md's "Corrected on
+      // implementation" note for item 3). Comment lines are skipped
+      // deliberately -- theme_state.dart/theme_controller.dart's own doc
+      // comments accurately narrate this port's history (e.g. "Riverpod port
+      // of ThemeProvider"), which is legitimate documentation, not a
+      // regression -- this rule only catches an actual reintroduced
+      // import/type/constructor reference.
+      final violations = <String>[];
+      for (final file in _dartFilesUnder('lib')) {
+        for (final rawLine in file.readAsLinesSync()) {
+          final line = rawLine.trim();
+          if (line.startsWith('//')) continue;
+          if (line.contains('ThemeProvider')) {
+            violations.add(file.path);
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'ThemeProvider was referenced but it was deleted (see migration-roadmap.md item 3): $violations',
+      );
+    });
+  });
+
   group('Migration Phase 3 -- go_router owns screen-level navigation (ADR-007)', () {
     test('lib/navigator_key.dart no longer exists', () {
       expect(File('lib/navigator_key.dart').existsSync(), isFalse);

@@ -1,9 +1,8 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_state.dart';
 import 'package:days_together/models/gift_reminder_model.dart';
@@ -42,8 +41,8 @@ class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final themeProvider = context.watch<ThemeProvider>();
-        final theme = themeProvider.currentLoveTheme;
+        final themeState = ref.watch(themeControllerProvider);
+        final theme = themeState.currentLoveTheme;
 
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -344,8 +343,8 @@ class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final giftState = ref.watch(giftReminderControllerProvider);
     final giftNotifier = ref.read(giftReminderControllerProvider.notifier);
 
@@ -355,7 +354,7 @@ class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+            decoration: BoxDecoration(gradient: themeState.currentGradient),
           ),
           SafeArea(
             child: Column(
@@ -382,7 +381,7 @@ class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
   }
 
   Widget _buildAppBar(BuildContext context) {
-    final theme = context.watch<ThemeProvider>().currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(

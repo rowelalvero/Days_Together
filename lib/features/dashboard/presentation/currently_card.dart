@@ -11,7 +11,7 @@ import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/features/currently/currently_controller.dart';
 import 'package:days_together/features/currently/currently_state.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 
@@ -93,7 +93,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
   }
 
   void _showEditActivitySheet(BuildContext context) {
-    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    final theme = ref.read(themeControllerProvider).currentLoveTheme;
     final controller = TextEditingController(text: ref.read(presenceControllerProvider).yourActivity);
 
     showModalBottomSheet(
@@ -217,7 +217,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.watch<ThemeProvider>().currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
     final session = context.watch<CoupleSession>();
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);

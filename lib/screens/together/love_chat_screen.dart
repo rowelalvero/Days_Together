@@ -15,7 +15,7 @@ import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/storage_image.dart';
@@ -59,7 +59,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final profile = ref.watch(profileControllerProvider);
     final session = context.watch<CoupleSession>();

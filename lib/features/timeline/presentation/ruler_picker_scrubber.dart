@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 
-class RulerPickerScrubber extends StatefulWidget {
+class RulerPickerScrubber extends ConsumerStatefulWidget {
   final List<TimelineItemData> items;
   final int selectedIndex;
   final ValueChanged<int> onIndexChanged;
@@ -23,10 +23,10 @@ class RulerPickerScrubber extends StatefulWidget {
   });
 
   @override
-  State<RulerPickerScrubber> createState() => _RulerPickerScrubberState();
+  ConsumerState<RulerPickerScrubber> createState() => _RulerPickerScrubberState();
 }
 
-class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
+class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
   late ScrollController _scrollController;
   final double _tickWidth = 32.0;
   bool _isManualScrolling = false;
@@ -140,7 +140,7 @@ class _RulerPickerScrubberState extends State<RulerPickerScrubber> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
     final chronoItems = _chronoItems;

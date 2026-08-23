@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/timeline/presentation/memory_notes_section.dart';
@@ -13,7 +13,7 @@ import 'package:days_together/shared/storage_image.dart';
 const AssetImage _kStorybookFallbackImage =
     AssetImage('assets/images/app_icon.png');
 
-class StorybookView extends StatefulWidget {
+class StorybookView extends ConsumerStatefulWidget {
   final List<TimelineItemData> items;
   final PageController pageController;
   final ValueChanged<int> onPageChanged;
@@ -26,10 +26,10 @@ class StorybookView extends StatefulWidget {
   });
 
   @override
-  State<StorybookView> createState() => _StorybookViewState();
+  ConsumerState<StorybookView> createState() => _StorybookViewState();
 }
 
-class _StorybookViewState extends State<StorybookView> {
+class _StorybookViewState extends ConsumerState<StorybookView> {
   double _currentPageValue = 0.0;
 
   @override
@@ -62,7 +62,7 @@ class _StorybookViewState extends State<StorybookView> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
     if (widget.items.isEmpty) {

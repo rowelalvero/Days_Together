@@ -1,7 +1,7 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'dart:async';
 import 'dart:ui';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/providers/couple_session.dart';
@@ -98,7 +98,7 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
   }
 
   void _showPartnerDeletedDialog() {
-    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    final theme = ref.read(themeControllerProvider).currentLoveTheme;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -167,7 +167,7 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
       _lastBackPressTime = now;
       HapticFeedback.vibrate();
 
-      final themeProvider = context.read<ThemeProvider>();
+      final themeProvider = ref.read(themeControllerProvider);
       final theme = themeProvider.currentLoveTheme;
 
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -215,7 +215,7 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final hasTimelineItems = ref.watch(timelineControllerProvider.select((s) => s.items.isNotEmpty));
 
@@ -512,7 +512,7 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);
     final tp = ref.watch(timelineControllerProvider);
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
     return SafeArea(
@@ -762,7 +762,7 @@ class _TimelineTabState extends ConsumerState<TimelineTab> {
     final timelineState = ref.watch(timelineControllerProvider);
     final timelineController = ref.read(timelineControllerProvider.notifier);
     final storyTitle = ref.watch(workspaceControllerProvider).storyTitle;
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final items = timelineState.items;
     final currentScrubIndex = timelineState.currentScrubIndex;

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
@@ -56,7 +56,7 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final workspace = ref.watch(workspaceControllerProvider);
     final codeToDisplay = workspace.coupleCode ?? _code;

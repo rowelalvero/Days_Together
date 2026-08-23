@@ -1,8 +1,7 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/models/bucket_list_model.dart';
@@ -46,8 +45,8 @@ class _BucketListScreenState extends ConsumerState<BucketListScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final themeProvider = context.watch<ThemeProvider>();
-        final theme = themeProvider.currentLoveTheme;
+        final themeState = ref.watch(themeControllerProvider);
+        final theme = themeState.currentLoveTheme;
 
         return StatefulBuilder(builder: (context, setModalState) {
           return Padding(
@@ -297,8 +296,8 @@ class _BucketListScreenState extends ConsumerState<BucketListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final bucketState = ref.watch(bucketListControllerProvider);
     final bucketNotifier = ref.read(bucketListControllerProvider.notifier);
 
@@ -308,7 +307,7 @@ class _BucketListScreenState extends ConsumerState<BucketListScreen> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+            decoration: BoxDecoration(gradient: themeState.currentGradient),
           ),
           SafeArea(
             child: Column(

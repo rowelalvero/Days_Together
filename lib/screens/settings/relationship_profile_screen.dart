@@ -1,13 +1,14 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/date_helper.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/relationship/presentation/profile/delete_account_confirmation_dialog.dart';
 import 'package:days_together/features/relationship/presentation/profile/edit_profile_dialog.dart';
@@ -15,12 +16,12 @@ import 'package:days_together/features/relationship/presentation/profile/regener
 import 'package:days_together/features/relationship/presentation/profile/unlink_confirmation_dialog.dart';
 import 'package:days_together/shared/cached_avatar.dart';
 
-class RelationshipProfileScreen extends StatelessWidget {
+class RelationshipProfileScreen extends ConsumerWidget {
   const RelationshipProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final rp = context.watch<CoupleSession>();
     final partnerJoined = rp.partnerId != null;

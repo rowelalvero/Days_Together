@@ -2,9 +2,8 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/services/ai_service.dart';
@@ -163,7 +162,7 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final timelineProvider = ref.watch(timelineControllerProvider);
     final memories = timelineProvider.items;

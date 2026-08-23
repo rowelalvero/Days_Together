@@ -13,7 +13,7 @@ import 'package:flutter_painter_v2/flutter_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/models/noteit_model.dart';
@@ -715,8 +715,8 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final noteitState = ref.watch(noteitControllerProvider);
     final noteitNotifier = ref.read(noteitControllerProvider.notifier);
 
@@ -782,7 +782,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+        decoration: BoxDecoration(gradient: themeState.currentGradient),
         child: SafeArea(
           child: TabBarView(
             controller: _tabController,
@@ -2017,7 +2017,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
 
   Widget _buildToolbarButton(IconData icon, String mode, String tooltip) {
     final isSelected = _activeMode == mode;
-    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    final theme = ref.read(themeControllerProvider).currentLoveTheme;
 
     return Tooltip(
       message: tooltip,
@@ -2232,7 +2232,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
     Color previewColor,
   ) {
     final isSelected = _bgType == type;
-    final theme = context.read<ThemeProvider>().currentLoveTheme;
+    final theme = ref.read(themeControllerProvider).currentLoveTheme;
 
     return OutlinedButton(
       onPressed: () {

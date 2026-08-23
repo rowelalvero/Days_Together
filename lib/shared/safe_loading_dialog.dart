@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/theme_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 
 /// A production-safe loading dialog that wraps any async [Future] with:
 ///
@@ -110,7 +110,7 @@ class SafeLoadingDialog {
   }
 }
 
-class _SafeLoadingDialogContent extends StatefulWidget {
+class _SafeLoadingDialogContent extends ConsumerStatefulWidget {
   final Future<void> Function() future;
   final String loadingMessage;
   final int cancelDelaySeconds;
@@ -126,11 +126,11 @@ class _SafeLoadingDialogContent extends StatefulWidget {
   });
 
   @override
-  State<_SafeLoadingDialogContent> createState() =>
+  ConsumerState<_SafeLoadingDialogContent> createState() =>
       _SafeLoadingDialogContentState();
 }
 
-class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
+class _SafeLoadingDialogContentState extends ConsumerState<_SafeLoadingDialogContent> {
   bool _showCancel = false;
   Timer? _cancelTimer;
 
@@ -163,8 +163,8 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final indicatorColor = widget.indicatorColor ?? theme.accentColor;
 
     return PopScope(

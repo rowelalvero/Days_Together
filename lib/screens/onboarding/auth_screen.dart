@@ -1,18 +1,19 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:provider/provider.dart';
 
-class AuthScreen extends StatefulWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -44,7 +45,7 @@ class _AuthScreenState extends State<AuthScreen> {
           _passwordController.text.trim(),
         );
         if (mounted) {
-          final theme = context.read<ThemeProvider>().currentLoveTheme;
+          final theme = ref.read(themeControllerProvider).currentLoveTheme;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Verification link sent! Please check your email to activate your account.'),
@@ -109,15 +110,15 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
 
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          gradient: themeProvider.currentGradient,
+          gradient: themeState.currentGradient,
         ),
         child: SafeArea(
           child: SingleChildScrollView(

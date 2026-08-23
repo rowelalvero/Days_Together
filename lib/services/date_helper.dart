@@ -178,8 +178,12 @@ class DateHelper {
   /// Longer relative-time label used for activity feeds: fully-spelled-out
   /// "X minute(s)/hour(s) ago" for today, "Yesterday", then a locale-aware
   /// "MMM d, y" date for anything older.
-  static String formatRelativeTimeLong(DateTime dateTime) {
-    final now = DateTime.now();
+  ///
+  /// [now] is injectable purely for deterministic testing (defaults to the
+  /// real wall clock); no production call site passes it, so behavior is
+  /// unchanged there.
+  static String formatRelativeTimeLong(DateTime dateTime, {DateTime? now}) {
+    now ??= DateTime.now();
     final localDateTime = dateTime.toLocal();
     final localNow = now.toLocal();
 

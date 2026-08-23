@@ -20,7 +20,7 @@ import 'package:days_together/features/relationship/presentation/license/license
 import 'package:days_together/features/relationship/presentation/license/waiting_for_partner_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -164,9 +164,9 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
       _isYourLicense = true;
     }
 
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeState = ref.watch(themeControllerProvider);
 
-    final theme = themeProvider.currentLoveTheme;
+    final theme = themeState.currentLoveTheme;
 
     final isFirstTime = license.yourDateIssued == null;
 
@@ -218,7 +218,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
         height: double.infinity,
 
-        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+        decoration: BoxDecoration(gradient: themeState.currentGradient),
 
         child: SafeArea(
           child: SingleChildScrollView(
@@ -569,7 +569,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: context.watch<ThemeProvider>().currentGradient),
+        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -707,7 +707,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
-        final theme = context.read<ThemeProvider>().currentLoveTheme;
+        final theme = ref.read(themeControllerProvider).currentLoveTheme;
         final isDark = theme.isDark;
         return Theme(
           data: Theme.of(context).copyWith(

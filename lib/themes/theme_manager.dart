@@ -179,10 +179,10 @@ class LoveStorySemantic {
 /// The app's design-token bundle (Phase 7 of the architecture migration).
 /// A `ThemeExtension<LoveStoryTheme>` -- Flutter's own mechanism for
 /// app-specific theme tokens -- so `Theme.of(context).extension<LoveStoryTheme>()`
-/// works as a typed accessor alongside the existing `ThemeProvider`-based
-/// `context.watch<ThemeProvider>().currentLoveTheme` access pattern; the two
-/// compose (see design-system.md's "Material 3 / Google Fonts configuration"
-/// section) rather than one replacing the other in this phase.
+/// works as a typed accessor alongside the existing `ThemeController`-based
+/// `ref.watch(themeControllerProvider).currentLoveTheme` access pattern; the
+/// two compose (see design-system.md's "Material 3 / Google Fonts
+/// configuration" section) rather than one replacing the other in this phase.
 ///
 /// The original 8 fields (`name` through `isDark`) are unchanged -- this is
 /// a pure token *addition*, not a redesign; no color, gradient, or typeface

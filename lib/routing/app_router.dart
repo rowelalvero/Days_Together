@@ -235,8 +235,8 @@ GoRouter get appRouter {
 }
 
 /// Builds the router on first call and reuses it on every subsequent call,
-/// so `MyApp.build` (which runs on every `ThemeProvider` change, not just
-/// once) can call this unconditionally without recreating the router --
+/// so `MyApp.build` (which runs on every `themeControllerProvider` change,
+/// not just once) can call this unconditionally without recreating the router --
 /// `MaterialApp.router` requires the exact same `GoRouter` instance across
 /// rebuilds.
 GoRouter ensureAppRouter({required Listenable refreshListenable}) {

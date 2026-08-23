@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:intl/intl.dart';
 
@@ -41,7 +40,7 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
     return Scaffold(

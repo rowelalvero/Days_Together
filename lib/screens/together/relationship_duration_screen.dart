@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/license_controller.dart';
@@ -15,7 +14,7 @@ import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/services/storage_url_service.dart';
@@ -26,7 +25,7 @@ class RelationshipDurationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final workspace = ref.watch(workspaceControllerProvider);
     final tp = ref.watch(timelineControllerProvider);

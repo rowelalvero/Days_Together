@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/relationship/presentation/license/painters/watermark_painter.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
@@ -10,7 +10,7 @@ import 'package:days_together/themes/theme_manager.dart';
 /// Extracted out of
 /// `RelationshipLicenseScreenState._buildFirstTimeWelcomeScreen`
 /// (Migration Phase 8).
-class FirstTimeLicenseWelcomeScreen extends StatelessWidget {
+class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
   const FirstTimeLicenseWelcomeScreen({
     super.key,
     required this.theme,
@@ -21,7 +21,7 @@ class FirstTimeLicenseWelcomeScreen extends StatelessWidget {
   final VoidCallback onCreatePressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -40,7 +40,7 @@ class FirstTimeLicenseWelcomeScreen extends StatelessWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: context.watch<ThemeProvider>().currentGradient),
+        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(

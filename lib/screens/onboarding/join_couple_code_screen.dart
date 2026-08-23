@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:provider/provider.dart';
 
-class JoinCoupleCodeScreen extends StatefulWidget {
+class JoinCoupleCodeScreen extends ConsumerStatefulWidget {
   const JoinCoupleCodeScreen({super.key});
 
   @override
-  State<JoinCoupleCodeScreen> createState() => _JoinCoupleCodeScreenState();
+  ConsumerState<JoinCoupleCodeScreen> createState() => _JoinCoupleCodeScreenState();
 }
 
-class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
+class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
@@ -36,7 +37,7 @@ class _JoinCoupleCodeScreenState extends State<JoinCoupleCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
     return Scaffold(

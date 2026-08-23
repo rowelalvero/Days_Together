@@ -1,11 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/themes/theme_manager.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
 import 'package:days_together/models/topic_card_model.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -355,7 +354,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final cardsState = ref.watch(topicCardsControllerProvider);
     final cardsNotifier = ref.read(topicCardsControllerProvider.notifier);

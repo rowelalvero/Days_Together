@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
 import 'package:provider/provider.dart';
 
-class PairingSelectionScreen extends StatefulWidget {
+class PairingSelectionScreen extends ConsumerStatefulWidget {
   const PairingSelectionScreen({super.key});
 
   @override
-  State<PairingSelectionScreen> createState() => _PairingSelectionScreenState();
+  ConsumerState<PairingSelectionScreen> createState() => _PairingSelectionScreenState();
 }
 
-class _PairingSelectionScreenState extends State<PairingSelectionScreen> {
+class _PairingSelectionScreenState extends ConsumerState<PairingSelectionScreen> {
   bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
     return Scaffold(

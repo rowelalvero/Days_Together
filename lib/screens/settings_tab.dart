@@ -16,7 +16,7 @@ import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:days_together/features/vault/vault_controller.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/cached_avatar.dart';
@@ -54,11 +54,8 @@ class SettingsTab extends ConsumerWidget {
     context.push(Routes.wrapped, extra: data);
   }
 
-  void _showLogoutConfirmation(BuildContext context, CoupleSession session) {
-    final theme = Provider.of<ThemeProvider>(
-      context,
-      listen: false,
-    ).currentLoveTheme;
+  void _showLogoutConfirmation(BuildContext context, WidgetRef ref, CoupleSession session) {
+    final theme = ref.read(themeControllerProvider).currentLoveTheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -127,8 +124,7 @@ class SettingsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
     final session = context.watch<CoupleSession>();
     final profile = ref.watch(profileControllerProvider);
     final workspace = ref.watch(workspaceControllerProvider);
@@ -190,7 +186,7 @@ class SettingsTab extends ConsumerWidget {
               title: 'Log Out',
               subtitle: 'Sign out of this session',
               theme: theme,
-              onTap: () => _showLogoutConfirmation(context, session),
+              onTap: () => _showLogoutConfirmation(context, ref, session),
             ),
             const SizedBox(height: 48),
             Center(

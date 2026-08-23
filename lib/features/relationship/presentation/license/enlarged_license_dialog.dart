@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, Wid
 import 'package:provider/provider.dart';
 
 import 'package:days_together/features/relationship/presentation/license/flippable_license_preview.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/theme_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 /// A pinch-to-zoom, tap-to-flip enlarged view of one partner's license
@@ -62,7 +62,7 @@ class EnlargedLicenseDialog extends ConsumerWidget {
           const SizedBox(height: 20),
           Text(
             '💡 Pinch to zoom • Tap card to flip',
-            style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w500, color: context.watch<ThemeProvider>().currentLoveTheme.textColor.withValues(alpha: 0.7)),
+            style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.w500, color: ref.watch(themeControllerProvider).currentLoveTheme.textColor.withValues(alpha: 0.7)),
           ),
         ],
       ),

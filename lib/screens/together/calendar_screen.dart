@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/calendar/calendar_state.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
@@ -51,8 +50,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final themeProvider = context.watch<ThemeProvider>();
-        final theme = themeProvider.currentLoveTheme;
+        final themeState = ref.watch(themeControllerProvider);
+        final theme = themeState.currentLoveTheme;
 
         return StatefulBuilder(builder: (context, setModalState) {
           return Padding(
@@ -354,15 +353,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final calendarState = ref.watch(calendarControllerProvider);
 
     return Scaffold(
       body: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+            decoration: BoxDecoration(gradient: themeState.currentGradient),
           ),
           SafeArea(
             child: Column(
@@ -387,7 +386,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final theme = context.watch<ThemeProvider>().currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
@@ -622,7 +621,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    final theme = context.watch<ThemeProvider>().currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(

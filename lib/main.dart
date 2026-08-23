@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
@@ -20,7 +20,7 @@ import 'package:days_together/features/settings/notification_preferences_control
 import 'package:days_together/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ConsumerStatefulWidget, ConsumerState, ProviderScope;
+    show ConsumerStatefulWidget, ConsumerState, ConsumerWidget, WidgetRef, ProviderScope;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -292,20 +292,21 @@ class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> 
 /// item 4 of the Definition-of-Done sweep converted the last remaining
 /// readers directly to `CoupleSession`.
 ///
-/// Only `ThemeProvider` and `CoupleSession` itself remain registered here as
-/// plain `provider`-package `ChangeNotifier`s -- the 12 domain feature
-/// providers (`TimelineProvider`, `BucketListProvider`, etc.) were deleted
-/// once their Riverpod ports (`TimelineController`, `BucketListController`,
-/// etc., under `lib/features/`) fully superseded them (item 3 gap-fix, Phase
-/// 1 -- see docs/architecture/migration-roadmap.md's "Corrected on
-/// implementation" note for item 3). Those controllers get their session
-/// updates from [_DomainProvidersBridge] below, not from a
-/// `ChangeNotifierProxyProvider` here. `provider` stays in `pubspec.yaml`
-/// regardless, since `ThemeProvider` and `CoupleSession`'s core are still
-/// unconverted (fronts 3 and 4 of that same gap-fix, not yet scheduled).
+/// Only `CoupleSession` itself remains registered here as a plain
+/// `provider`-package `ChangeNotifier` -- the 12 domain feature providers
+/// (`TimelineProvider`, `BucketListProvider`, etc.) were deleted once their
+/// Riverpod ports (`TimelineController`, `BucketListController`, etc., under
+/// `lib/features/`) fully superseded them (item 3 gap-fix, Phase 1), and
+/// `ThemeProvider` was deleted the same way once `ThemeController`
+/// (`lib/features/theme/`) superseded it (item 3 gap-fix, Phase 2 -- see
+/// docs/architecture/migration-roadmap.md's "Corrected on implementation"
+/// notes for item 3). Those controllers get their session updates from
+/// [_DomainProvidersBridge] below, not from a `ChangeNotifierProxyProvider`
+/// here. `provider` stays in `pubspec.yaml` regardless, since `CoupleSession`'s
+/// core is still unconverted (front 4 of that same gap-fix, not yet
+/// scheduled).
 List<SingleChildWidget> buildAppProviders() {
   return [
-    ChangeNotifierProvider(create: (_) => ThemeProvider()),
     ChangeNotifierProvider(create: (_) => CoupleSession()),
   ];
 }
@@ -317,7 +318,7 @@ List<SingleChildWidget> buildAppProviders() {
 /// `appRedirect`/route table, which is also what `notification_service.dart`
 /// and every screen-to-screen push now goes through instead of constructing
 /// `MaterialPageRoute`s by hand.
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   TextTheme _resolveTextTheme(Brightness brightness) {
@@ -330,9 +331,9 @@ class MyApp extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final theme = themeProvider.currentLoveTheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
 
     // Read (not watch) deliberately: this is the app's single,

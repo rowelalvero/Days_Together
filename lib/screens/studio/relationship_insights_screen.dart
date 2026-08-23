@@ -1,8 +1,7 @@
 import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
-import 'package:days_together/providers/theme_provider.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
@@ -35,8 +34,8 @@ class _RelationshipInsightsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('✨ Insights updated successfully!'),
-          backgroundColor: context
-              .read<ThemeProvider>()
+          backgroundColor: ref
+              .read(themeControllerProvider)
               .currentLoveTheme
               .accentColor,
         ),
@@ -68,8 +67,8 @@ class _RelationshipInsightsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final theme = themeProvider.currentLoveTheme;
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
 
     final workspace = ref.watch(workspaceControllerProvider);
     final tp = ref.watch(timelineControllerProvider);
@@ -91,7 +90,7 @@ class _RelationshipInsightsScreenState
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+            decoration: BoxDecoration(gradient: themeState.currentGradient),
           ),
           SafeArea(
             child: Column(

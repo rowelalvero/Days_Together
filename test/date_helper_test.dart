@@ -130,17 +130,24 @@ void main() {
   });
 
   group('DateHelper.formatRelativeTimeLong', () {
+    // Pinned to a fixed noon reference (via the injectable `now` param)
+    // rather than real DateTime.now(): subtracting up to an hour from a
+    // wall-clock "now" flakes whenever the suite happens to run in the
+    // first hour after local midnight, since that pushes the target
+    // instant onto the previous calendar day and the same-day branch
+    // below is never reached. Noon leaves a full day of headroom.
+    final fixedNow = DateTime(2024, 1, 15, 12, 0, 0);
+
     test('shows "Just now" then spelled-out minutes/hours today', () {
-      final now = DateTime.now();
-      expect(DateHelper.formatRelativeTimeLong(now.subtract(const Duration(seconds: 5))), 'Just now');
-      expect(DateHelper.formatRelativeTimeLong(now.subtract(const Duration(minutes: 1))), '1 minute ago');
-      expect(DateHelper.formatRelativeTimeLong(now.subtract(const Duration(minutes: 5))), '5 minutes ago');
-      expect(DateHelper.formatRelativeTimeLong(now.subtract(const Duration(hours: 1))), '1 hour ago');
+      expect(DateHelper.formatRelativeTimeLong(fixedNow.subtract(const Duration(seconds: 5)), now: fixedNow), 'Just now');
+      expect(DateHelper.formatRelativeTimeLong(fixedNow.subtract(const Duration(minutes: 1)), now: fixedNow), '1 minute ago');
+      expect(DateHelper.formatRelativeTimeLong(fixedNow.subtract(const Duration(minutes: 5)), now: fixedNow), '5 minutes ago');
+      expect(DateHelper.formatRelativeTimeLong(fixedNow.subtract(const Duration(hours: 1)), now: fixedNow), '1 hour ago');
     });
 
     test('shows "Yesterday" for the previous calendar day', () {
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      expect(DateHelper.formatRelativeTimeLong(yesterday), 'Yesterday');
+      final yesterday = fixedNow.subtract(const Duration(days: 1));
+      expect(DateHelper.formatRelativeTimeLong(yesterday, now: fixedNow), 'Yesterday');
     });
   });
 
