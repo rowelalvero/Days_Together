@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
-import 'package:provider/provider.dart';
 
 import 'package:days_together/features/relationship/presentation/license/flippable_license_preview.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 /// A pinch-to-zoom, tap-to-flip enlarged view of one partner's license
@@ -18,7 +18,8 @@ class EnlargedLicenseDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rp = context.read<CoupleSession>();
+    final profileState = ref.watch(profileControllerProvider);
+    final workspaceState = ref.watch(workspaceControllerProvider);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -53,7 +54,8 @@ class EnlargedLicenseDialog extends ConsumerWidget {
                 aspectRatio: 85.60 / 53.98,
                 child: FlippableLicensePreview(
                   isYourLicense: isYourLicense,
-                  rp: rp,
+                  profileState: profileState,
+                  workspaceState: workspaceState,
                   onAvatarTap: () {},
                 ),
               ),

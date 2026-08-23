@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as rp;
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -29,7 +28,7 @@ import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/core/scrapbook_ref.dart';
 
 // Screens
@@ -188,12 +187,10 @@ class BentoGrid extends StatelessWidget {
   }
 
   Widget _buildDailyMoodBentoCard(BuildContext context) {
-    return Consumer<CoupleSession>(
-      builder: (context, relationship, child) {
-        return rp.Consumer(
-          builder: (context, ref, child) {
+    return rp.Consumer(
+      builder: (context, ref, child) {
         final dailyMood = ref.watch(dailyMoodControllerProvider);
-        final isPaired = relationship.isPaired;
+        final isPaired = ref.watch(sessionControllerProvider).isPaired;
         final myToday = dailyMood.todayMood;
 
         String statusText = myToday != null
@@ -266,7 +263,7 @@ class BentoGrid extends StatelessWidget {
                     color: theme.textColor.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: _buildMoodContent(context, relationship, dailyMood),
+                  child: _buildMoodContent(context, isPaired, dailyMood),
                 ),
                 const SizedBox(height: 14),
                 Row(
@@ -309,19 +306,15 @@ class BentoGrid extends StatelessWidget {
             ),
           ),
         );
-          },
-        );
       },
     );
   }
 
   Widget _buildEmotionalMapBentoCard(BuildContext context) {
-    return Consumer<CoupleSession>(
-      builder: (context, relationship, child) {
-        return rp.Consumer(
-          builder: (context, ref, child) {
+    return rp.Consumer(
+      builder: (context, ref, child) {
         final dailyMood = ref.watch(dailyMoodControllerProvider);
-        final isPaired = relationship.isPaired;
+        final isPaired = ref.watch(sessionControllerProvider).isPaired;
 
         return InkWell(
           onTap: () => context.push(Routes.loveMeter),
@@ -476,8 +469,6 @@ class BentoGrid extends StatelessWidget {
               ],
             ),
           ),
-        );
-          },
         );
       },
     );
@@ -862,10 +853,9 @@ class BentoGrid extends StatelessWidget {
 
   Widget _buildMoodContent(
     BuildContext context,
-    CoupleSession relationship,
+    bool isPaired,
     DailyMoodState dailyMood,
   ) {
-    final isPaired = relationship.isPaired;
     final myToday = dailyMood.todayMood;
     final partnerToday = isPaired ? dailyMood.partnerTodayMood : null;
 

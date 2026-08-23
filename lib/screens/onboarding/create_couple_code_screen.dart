@@ -6,10 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
-import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 class CreateCoupleCodeScreen extends ConsumerStatefulWidget {
@@ -74,7 +73,7 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
                 const SizedBox(height: 20),
                 IconButton(
                   onPressed: () async {
-                    final session = context.read<CoupleSession>();
+                    final session = ref.read(sessionControllerProvider.notifier);
                     await SafeLoadingDialog.run(
                       context: context,
                       future: () => session.unlinkPartner(),
@@ -190,7 +189,35 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final newCode = await ref
+                          .read(workspaceControllerProvider.notifier)
+                          .refreshPairingCode(forceRotate: true);
+                      if (mounted && newCode != null) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('✨ Generated a fresh connection code!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.refresh_rounded, size: 18, color: theme.accentColor),
+                    label: Text(
+                      'Generate New Code',
+                      style: AppTypography.body(
+                        fontSize: 14,
+                        color: theme.accentColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 // Recovery Code Section
                 Container(
                   width: double.infinity,

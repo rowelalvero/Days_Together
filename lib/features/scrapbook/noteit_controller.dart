@@ -138,6 +138,7 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     try {
       final List<dynamic> res =
           await Supabase.instance.client.from('love_notes').select().eq('couple_id', coupleId!);
+      if (!ref.mounted) return;
       final filteredList = res.where((data) => data['type'] != 'chat').toList();
       final parsed = filteredList.map((data) => NoteitItem.fromSupabase(data, sessionUserId!)).toList();
 
@@ -152,7 +153,6 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
       }
 
       final merged = mergedMap.values.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      if (!ref.mounted) return;
       state = state.copyWith(notes: merged, isLoading: false);
       await _persistLocalOnly();
     } catch (e) {

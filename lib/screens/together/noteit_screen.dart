@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -19,7 +18,7 @@ import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
@@ -599,7 +598,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
     NoteitController notifier,
     LoveStoryTheme theme,
   ) async {
-    final rp = context.read<CoupleSession>();
+    final rp = ref.read(profileControllerProvider);
     final chatProvider = ref.read(loveChatControllerProvider.notifier);
 
     if (_controller.drawables.isEmpty) {

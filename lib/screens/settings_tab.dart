@@ -2,9 +2,9 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/features/relationship/session_state.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
@@ -54,7 +54,7 @@ class SettingsTab extends ConsumerWidget {
     context.push(Routes.wrapped, extra: data);
   }
 
-  void _showLogoutConfirmation(BuildContext context, WidgetRef ref, CoupleSession session) {
+  void _showLogoutConfirmation(BuildContext context, WidgetRef ref) {
     final theme = ref.read(themeControllerProvider).currentLoveTheme;
     showDialog(
       context: context,
@@ -103,7 +103,7 @@ class SettingsTab extends ConsumerWidget {
               // old pushAndRemoveUntil(AppHome())/popUntil two-strategies
               // split ADR-007 found (this screen previously also imported
               // main.dart just to reach AppHome, a layering violation).
-              await session.logout();
+              await ref.read(sessionControllerProvider.notifier).logout();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
@@ -125,7 +125,7 @@ class SettingsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(themeControllerProvider).currentLoveTheme;
-    final session = context.watch<CoupleSession>();
+    final session = ref.watch(sessionControllerProvider);
     final profile = ref.watch(profileControllerProvider);
     final workspace = ref.watch(workspaceControllerProvider);
 
@@ -186,7 +186,7 @@ class SettingsTab extends ConsumerWidget {
               title: 'Log Out',
               subtitle: 'Sign out of this session',
               theme: theme,
-              onTap: () => _showLogoutConfirmation(context, ref, session),
+              onTap: () => _showLogoutConfirmation(context, ref),
             ),
             const SizedBox(height: 48),
             Center(
@@ -284,7 +284,7 @@ class SettingsTab extends ConsumerWidget {
   }
 
   Widget _buildLiquidProfileCard(
-    CoupleSession session,
+    SessionState session,
     ProfileState profile,
     LoveStoryTheme theme,
     BuildContext context,

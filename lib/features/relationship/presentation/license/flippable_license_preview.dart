@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, Wid
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/flippable_license_card.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_state.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/services/date_helper.dart';
 
 /// Renders either partner's [FlippableLicenseCard], resolving
@@ -20,7 +21,8 @@ class FlippableLicensePreview extends ConsumerWidget {
     super.key,
     this.cardKey,
     required this.isYourLicense,
-    required this.rp,
+    required this.profileState,
+    required this.workspaceState,
     required this.onAvatarTap,
   });
 
@@ -31,14 +33,15 @@ class FlippableLicensePreview extends ConsumerWidget {
   final Key? cardKey;
 
   final bool isYourLicense;
-  final CoupleSession rp;
+  final ProfileState profileState;
+  final WorkspaceState workspaceState;
   final VoidCallback onAvatarTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
-    final myName = rp.yourName ?? 'You';
-    final partnerName = rp.partnerName ?? 'Partner';
+    final myName = profileState.yourName ?? 'You';
+    final partnerName = profileState.partnerName ?? 'Partner';
     final myPhone = license.yourPhone?.isNotEmpty == true
         ? license.yourPhone!
         : 'Not provided';
@@ -51,7 +54,7 @@ class FlippableLicensePreview extends ConsumerWidget {
         key: cardKey,
         holderName: myName,
         holderGender: license.yourGender,
-        holderAvatar: rp.yourAvatarPath,
+        holderAvatar: profileState.yourAvatarPath,
         holderBirthdate: license.yourBirthdate,
         holderAddress: license.yourAddress,
         holderNationality: (license.yourNationality ?? 'Love Land'),
@@ -62,7 +65,7 @@ class FlippableLicensePreview extends ConsumerWidget {
         holderConditions: (license.yourConditions ?? 'Madly in Love'),
         holderDateIssued: license.yourDateIssued,
         holderSignature: license.yourSignature,
-        startDate: rp.startDate,
+        startDate: workspaceState.startDate,
         calculatedAge: DateHelper.calculateAge(license.yourBirthdate),
         isYourLicense: true,
         onAvatarTap: onAvatarTap,
@@ -75,7 +78,7 @@ class FlippableLicensePreview extends ConsumerWidget {
         key: cardKey,
         holderName: partnerName,
         holderGender: license.partnerGender,
-        holderAvatar: rp.partnerAvatarPath,
+        holderAvatar: profileState.partnerAvatarPath,
         holderBirthdate: license.partnerBirthdate,
         holderAddress: license.partnerAddress,
         holderNationality: (license.partnerNationality ?? 'Love Land'),
@@ -86,7 +89,7 @@ class FlippableLicensePreview extends ConsumerWidget {
         holderConditions: (license.partnerConditions ?? 'Madly in Love'),
         holderDateIssued: license.partnerDateIssued,
         holderSignature: license.partnerSignature,
-        startDate: rp.startDate,
+        startDate: workspaceState.startDate,
         calculatedAge: DateHelper.calculateAge(license.partnerBirthdate),
         isYourLicense: false,
         onAvatarTap: onAvatarTap,

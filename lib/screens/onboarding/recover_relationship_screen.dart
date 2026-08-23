@@ -3,10 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
@@ -30,16 +29,17 @@ class _RecoverRelationshipScreenState extends ConsumerState<RecoverRelationshipS
     super.dispose();
   }
 
-  /// Waits for [session.isInitialized] to become true, with a bounded timeout.
-  Future<bool> _waitForInitialization(CoupleSession session) async {
+  /// Waits for [SessionState.isInitialized] to become true, with a bounded timeout.
+  Future<bool> _waitForInitialization() async {
     const maxWait = Duration(seconds: 20);
     const pollInterval = Duration(milliseconds: 100);
     final deadline = DateTime.now().add(maxWait);
 
-    while (!session.isInitialized && DateTime.now().isBefore(deadline)) {
+    while (!ref.read(sessionControllerProvider).isInitialized &&
+        DateTime.now().isBefore(deadline)) {
       await Future.delayed(pollInterval);
     }
-    return session.isInitialized;
+    return ref.read(sessionControllerProvider).isInitialized;
   }
 
   Future<void> _handleRecover() async {
@@ -51,7 +51,7 @@ class _RecoverRelationshipScreenState extends ConsumerState<RecoverRelationshipS
     });
 
     final code = _codeController.text.trim();
-    final session = context.read<CoupleSession>();
+    final session = ref.read(sessionControllerProvider.notifier);
 
     try {
       final success = await session.recoverRelationship(code);
@@ -61,7 +61,7 @@ class _RecoverRelationshipScreenState extends ConsumerState<RecoverRelationshipS
           final initialized = await SafeLoadingDialog.run<bool>(
             context: context,
             future: () async {
-              final ready = await _waitForInitialization(session);
+              final ready = await _waitForInitialization();
               return ready;
             },
             timeoutSeconds: 25,

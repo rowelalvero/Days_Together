@@ -35,6 +35,40 @@ class GlassContainer extends StatelessWidget {
         ? Colors.black.withValues(alpha: 0.08)
         : Colors.white.withValues(alpha: 0.2);
 
+    final decoration = BoxDecoration(
+      color: overlayColor.withValues(alpha: opacity),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border:
+          border ??
+          Border.all(
+            color: borderColor,
+            width: 1.5,
+          ),
+      gradient:
+          gradient ??
+          LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              overlayColor.withValues(alpha: opacity * 1.5),
+              overlayColor.withValues(alpha: opacity * 0.7),
+            ],
+          ),
+    );
+
+    // Fast-path: simulated glass (zero GPU saveLayer overhead)
+    if (blur <= 0.0) {
+      return Container(
+        width: width,
+        height: height,
+        margin: margin,
+        padding: padding,
+        decoration: decoration,
+        child: child,
+      );
+    }
+
+    // Live blur path for high-end rendering when explicitly requested
     return Container(
       width: width,
       height: height,
@@ -45,26 +79,7 @@ class GlassContainer extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: Container(
             padding: padding,
-            decoration: BoxDecoration(
-              color: overlayColor.withValues(alpha: opacity),
-              borderRadius: BorderRadius.circular(borderRadius),
-              border:
-                  border ??
-                  Border.all(
-                    color: borderColor,
-                    width: 1.5,
-                  ),
-              gradient:
-                  gradient ??
-                  LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      overlayColor.withValues(alpha: opacity * 2),
-                      overlayColor.withValues(alpha: opacity),
-                    ],
-                  ),
-            ),
+            decoration: decoration,
             child: child,
           ),
         ),

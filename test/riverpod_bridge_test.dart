@@ -1,18 +1,24 @@
-// Validates Phase 2 of the architecture migration (ADR-002): hosting
-// Riverpod's ProviderScope around the existing Provider tree, with
-// coupleSessionProvider bridged to the live CoupleSession instance. Per
-// docs/architecture/migration-roadmap.md's Phase 2 validation requirement --
-// "one new test asserting override identity" -- this pumps buildAppRoot()
-// (the exact production wiring, factored out of main.dart's runApp) around
-// a plain probe widget rather than MyApp, deliberately avoiding the
-// GoogleFonts-in-tests gap documented in test/couple_session_test.dart's
-// Phase 1 history: this test only needs to prove the bridge wires to the
-// same object, not that any themed screen renders.
+// Validates that buildAppRoot() (the exact production widget-tree wiring,
+// factored out of main.dart's runApp) exposes a working coupleSessionProvider.
+//
+// This test previously validated Phase 2 of the architecture migration
+// (ADR-002): a `provider`-package Provider tree bridged into a second,
+// nested Riverpod ProviderScope via coupleSessionProvider.overrideWithValue,
+// asserting both containers resolved to the identical CoupleSession
+// instance. That whole two-container strangler bridge was retired in Item 3
+// gap-fix Phase 3 (front 4 of the architecture migration's `provider`-
+// removal item): coupleSessionProvider now constructs the single
+// CoupleSession instance itself, so there is only ever one container and
+// nothing left to compare identity across. This file instead confirms the
+// single remaining, actually load-bearing property: reading
+// coupleSessionProvider through the production widget tree returns a live,
+// stable CoupleSession -- the same instance on every read, not reconstructed
+// per call (which would silently break every hub/domain controller's
+// `dependencies: [coupleSessionProvider]` wiring).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/main.dart';
 import 'package:days_together/providers/couple_session.dart';
@@ -25,7 +31,7 @@ void main() {
   });
 
   testWidgets(
-    'coupleSessionProvider resolves to the same CoupleSession instance the Provider tree holds',
+    'coupleSessionProvider resolves to a live, stable CoupleSession instance through the production widget tree',
     (tester) async {
       late BuildContext probeContext;
 
@@ -41,15 +47,16 @@ void main() {
       );
       await tester.pump();
 
-      final fromProviderTree = probeContext.read<CoupleSession>();
-      final fromRiverpod =
-          ProviderScope.containerOf(probeContext).read(coupleSessionProvider);
+      final container = ProviderScope.containerOf(probeContext);
+      final first = container.read(coupleSessionProvider);
+      final second = container.read(coupleSessionProvider);
 
       expect(
-        identical(fromProviderTree, fromRiverpod),
+        identical(first, second),
         isTrue,
-        reason: 'the nested ProviderScope override must expose the exact '
-            'same CoupleSession instance the Provider tree created, not a copy',
+        reason: 'coupleSessionProvider must return the same CoupleSession '
+            'instance on every read within the same container -- a plain '
+            'Provider constructs its value exactly once and caches it.',
       );
     },
   );

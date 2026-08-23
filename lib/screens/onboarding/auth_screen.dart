@@ -2,9 +2,8 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:provider/provider.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -36,7 +35,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    final session = context.read<CoupleSession>();
+    final session = ref.read(sessionControllerProvider.notifier);
 
     try {
       if (_isSignUp) {
@@ -86,7 +85,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
-    final session = context.read<CoupleSession>();
+    final session = ref.read(sessionControllerProvider.notifier);
 
     try {
       // Same reasoning as _submit's email sign-in above: no explicit

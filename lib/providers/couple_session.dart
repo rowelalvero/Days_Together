@@ -477,7 +477,7 @@ class CoupleSession extends ChangeNotifier {
                 }
 
                 if (_coupleId != null) {
-                  if (coupleIdChanged) {
+                  if (coupleIdChanged || _coupleSub == null) {
                     _cancelActiveSubscriptions();
                     _partnerActivity = null;
                     _syncLocalDetailsToCloud();
@@ -1407,21 +1407,28 @@ class CoupleSession extends ChangeNotifier {
   }
 }
 
-/// The Riverpod-side handle onto the single live [CoupleSession] instance
-/// the Provider tree owns -- the strangler bridge's "Provider -> Riverpod"
-/// direction (Phase 2 of the architecture migration, ADR-002).
+/// The single, process-lifetime [CoupleSession] instance -- Item 3 gap-fix
+/// Phase 3 (front 4 of the architecture migration's `provider`-removal item)
+/// made this provider construct the instance itself, retiring the Phase 2
+/// strangler bridge (ADR-002) that used to feed it a `provider`-package
+/// `ChangeNotifierProvider`'s instance via `overrideWithValue` inside a
+/// nested `ProviderScope`. `CoupleSession`'s class, constructor, and
+/// `ChangeNotifier` nature are unchanged by this -- its ~1400 lines of
+/// Supabase auth/realtime/presence logic don't need to change at all; only
+/// who constructs it changed.
 ///
-/// This provider's own body is never actually read: `main.dart` overrides it
-/// with the live instance via `overrideWithValue` inside a nested
-/// `ProviderScope`, wrapped around a `Consumer<CoupleSession>` that reads the
-/// same object the Provider tree already holds -- one instance, two
-/// containers, so Riverpod-side code (starting with Phase 5's extracted
-/// controllers) and untouched Provider-side screens can never observe
-/// diverging state. See docs/architecture/state-management.md, "The
-/// strangler bridge."
+/// Deliberately a plain `Provider<CoupleSession>`, not a `Notifier`/
+/// `AsyncNotifier`: every one of the 5 hub controllers and all 12 domain
+/// controllers reads individual mirrored fields from their own Riverpod
+/// state, never from this provider's value directly (its value never
+/// changes identity, so watching it for field-level reactivity wouldn't
+/// work -- see `main.dart`'s `_CoupleSessionBridge`, which pushes changes
+/// into those controllers via `CoupleSession.addListener`, not via this
+/// provider). Keeping this a plain `Provider` also means every existing
+/// `coupleSessionProvider.overrideWithValue(CoupleSession(...))` call across
+/// this repo's test suite keeps working unchanged.
 final coupleSessionProvider = Provider<CoupleSession>((ref) {
-  throw UnimplementedError(
-    'coupleSessionProvider must be overridden with the live CoupleSession '
-    'instance -- see main.dart\'s nested ProviderScope.',
-  );
+  final session = CoupleSession();
+  ref.onDispose(session.dispose);
+  return session;
 });

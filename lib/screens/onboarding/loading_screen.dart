@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
-import 'package:provider/provider.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class LoadingScreen extends ConsumerStatefulWidget {
@@ -53,7 +52,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
   void _startTimeout() {
     _timeoutTimer?.cancel();
     _timeoutTimer = Timer(_timeoutDuration, () {
-      if (mounted && !context.read<CoupleSession>().isInitialized) {
+      if (mounted && !ref.read(sessionControllerProvider).isInitialized) {
         setState(() => _showRetry = true);
       }
     });
@@ -67,11 +66,11 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
 
     // Force re-initialization by reading the session
     // The session's auth listener will re-fire on reconnect
-    final session = context.read<CoupleSession>();
+    final session = ref.read(sessionControllerProvider);
     if (!session.isInitialized) {
       // Mark as initialized to allow the user through if still stuck
       // The auth listener will correct state once connectivity returns
-      session.forceInitialized();
+      ref.read(sessionControllerProvider.notifier).forceInitialized();
     }
 
     _startTimeout();

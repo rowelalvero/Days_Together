@@ -40,7 +40,7 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
     _coupleId = session.coupleId;
     _userId = session.userId;
     if (_coupleId != null && _userId != null) {
-      _runSyncInitialData();
+      Future.microtask(_runSyncInitialData);
     }
     return const NotificationPreferencesState();
   }
@@ -71,6 +71,7 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
   }
 
   Future<void> purgeCache() async {
+    if (!ref.mounted) return;
     state = const NotificationPreferencesState();
   }
 
@@ -81,6 +82,7 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
   }
 
   Future<void> _loadPreferences(String userId) async {
+    if (!ref.mounted) return;
     state = state.copyWith(isLoading: true);
 
     try {

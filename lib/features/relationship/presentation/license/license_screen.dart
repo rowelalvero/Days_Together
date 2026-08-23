@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
-import 'package:provider/provider.dart';
 
 import 'package:days_together/features/relationship/data/signature_codec.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
@@ -20,6 +19,9 @@ import 'package:days_together/features/relationship/presentation/license/license
 import 'package:days_together/features/relationship/presentation/license/waiting_for_partner_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
 import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -105,7 +107,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     }
   }
 
-  Future<void> _pickAvatar(CoupleSession rp, bool isYou) async {
+  Future<void> _pickAvatar(bool isYou) async {
     final hasPermission = await PermissionService().requestPhotosPermission(context);
     if (!hasPermission) return;
 
@@ -118,10 +120,11 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
     if (pickedFile != null) {
       try {
+        final profile = ref.read(profileControllerProvider.notifier);
         if (isYou) {
-          await rp.setAvatars(yourPath: pickedFile.path);
+          await profile.setAvatars(yourPath: pickedFile.path);
         } else {
-          await rp.setAvatars(partnerPath: pickedFile.path);
+          await profile.setAvatars(partnerPath: pickedFile.path);
         }
 
         if (mounted) {
@@ -155,9 +158,19 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
   @override
   Widget build(BuildContext context) {
-    final rp = context.watch<CoupleSession>();
+    // Instance handle only -- never dereferenced for a field directly in
+    // this build method, just threaded into several downstream widgets
+    // (EditLicenseSheet et al.) that call mutation methods on it. Those
+    // "prop-drilled" widgets depend only on CoupleSession's public method
+    // surface, not on it being reactively watched, so a plain `ref.read`
+    // (not `ref.watch`) is correct here -- this widget's own rebuild-on-
+    // change needs are covered by sessionControllerProvider/
+    // licenseControllerProvider above, which are properly watched.
+    final rp = ref.read(coupleSessionProvider);
+    final profileState = ref.watch(profileControllerProvider);
+    final workspaceState = ref.watch(workspaceControllerProvider);
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
-    final partnerJoined = rp.partnerId != null;
+    final partnerJoined = ref.watch(sessionControllerProvider).partnerId != null;
 
     if (!partnerJoined) {
       _showBoth = false;
@@ -179,7 +192,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
         );
       }
       if (_isCreating) {
-        return _buildCreationForm(theme, rp);
+        return _buildCreationForm(theme);
       }
       return FirstTimeLicenseWelcomeScreen(
         theme: theme,
@@ -307,15 +320,17 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                               FlippableLicensePreview(
                                 cardKey: _myCardKey,
                                 isYourLicense: true,
-                                rp: rp,
-                                onAvatarTap: () => _pickAvatar(rp, true),
+                                profileState: profileState,
+                                workspaceState: workspaceState,
+                                onAvatarTap: () => _pickAvatar(true),
                               ),
                               const SizedBox(height: 20),
                               FlippableLicensePreview(
                                 cardKey: _partnerCardKey,
                                 isYourLicense: false,
-                                rp: rp,
-                                onAvatarTap: () => _pickAvatar(rp, false),
+                                profileState: profileState,
+                                workspaceState: workspaceState,
+                                onAvatarTap: () => _pickAvatar(false),
                               ),
                             ],
                           )
@@ -323,14 +338,16 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                         ? FlippableLicensePreview(
                             cardKey: _myCardKey,
                             isYourLicense: true,
-                            rp: rp,
-                            onAvatarTap: () => _pickAvatar(rp, true),
+                            profileState: profileState,
+                            workspaceState: workspaceState,
+                            onAvatarTap: () => _pickAvatar(true),
                           )
                         : FlippableLicensePreview(
                             cardKey: _partnerCardKey,
                             isYourLicense: false,
-                            rp: rp,
-                            onAvatarTap: () => _pickAvatar(rp, false),
+                            profileState: profileState,
+                            workspaceState: workspaceState,
+                            onAvatarTap: () => _pickAvatar(false),
                           ),
                   ),
                 ),
@@ -497,7 +514,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     super.dispose();
   }
 
-  void _startLoadingAnimation(CoupleSession rp) {
+  void _startLoadingAnimation() {
     setState(() {
       _isLoading = true;
       _loadingStep = 0;
@@ -512,19 +529,19 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
         timer.cancel();
         Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
-            _saveFirstTimeDetails(rp);
+            _saveFirstTimeDetails();
           }
         });
       }
     });
   }
 
-  void _saveFirstTimeDetails(CoupleSession rp) {
+  void _saveFirstTimeDetails() {
     final now = DateTime.now();
     // Split across the two controllers that used to be one updateLicense
     // call: yourName is ProfileController's field (untouched by this
     // extraction), the rest are LicenseController's.
-    rp.setYourName(_createYourNameCtrl.text.trim());
+    ref.read(profileControllerProvider.notifier).setYourName(_createYourNameCtrl.text.trim());
     ref.read(licenseControllerProvider.notifier).updateFields(
       yourGender: _createYourGender,
       yourPhone: _createYourPhoneCtrl.text.trim(),
@@ -546,7 +563,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     });
   }
 
-  Widget _buildCreationForm(LoveStoryTheme theme, CoupleSession rp) {
+  Widget _buildCreationForm(LoveStoryTheme theme) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -606,7 +623,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                         );
                         return;
                       }
-                      _startLoadingAnimation(rp);
+                      _startLoadingAnimation();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.accentColor,

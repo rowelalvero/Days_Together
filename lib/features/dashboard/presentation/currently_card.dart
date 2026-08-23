@@ -3,10 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/features/currently/currently_controller.dart';
@@ -218,7 +217,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(themeControllerProvider).currentLoveTheme;
-    final session = context.watch<CoupleSession>();
+    final session = ref.watch(sessionControllerProvider);
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);
     final currently = ref.watch(currentlyControllerProvider);

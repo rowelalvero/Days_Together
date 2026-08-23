@@ -72,6 +72,20 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
   /// teardown on dispose and, if a couple is already known at creation time
   /// (the common case -- domain screens are only reachable once paired),
   /// kicks off the initial sync and subscription immediately.
+  ///
+  /// [initRealtime] itself is deferred to a microtask, not called
+  /// synchronously here: `build()` hasn't returned its initial `state` value
+  /// yet at this point, and at least one override ([TopicCardsController]'s)
+  /// writes `state` as the first thing it does. Writing (or reading) `state`
+  /// before `build()` has returned throws Riverpod's "Tried to read the
+  /// state of an uninitialized provider" -- found via a manual on-device
+  /// smoke test reproducing it on the very first screen shown right after
+  /// creating a workspace, since that's exactly when a domain controller can
+  /// first build with `coupleId`/`userId` already known synchronously. A
+  /// microtask runs strictly after the current synchronous call stack
+  /// (including `build()`'s own return) completes, so `state` is always
+  /// safe to touch by the time `initRealtime()` actually runs -- with
+  /// negligible added latency, well before the next frame.
   void initSessionLifecycle() {
     ref.onDispose(disposeRealtime);
     final session = ref.read(coupleSessionProvider);
@@ -79,7 +93,11 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
     _userId = session.userId;
     if (_coupleId != null && _userId != null) {
       _runSyncInitialData();
-      if (session.isSupabaseAvailable) initRealtime();
+      if (session.isSupabaseAvailable) {
+        Future.microtask(() {
+          if (ref.mounted) initRealtime();
+        });
+      }
     }
   }
 

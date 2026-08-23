@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/routing/routes.dart';
-import 'package:provider/provider.dart';
 
 class JoinCoupleCodeScreen extends ConsumerStatefulWidget {
   const JoinCoupleCodeScreen({super.key});
@@ -199,7 +198,7 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
       _errorMessage = null;
     });
     try {
-      final session = context.read<CoupleSession>();
+      final session = ref.read(sessionControllerProvider.notifier);
       final success = await session.joinWithCode(_fullCode);
       if (!mounted) return;
       if (success) {

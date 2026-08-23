@@ -2,11 +2,16 @@ import 'package:days_together/themes/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/features/relationship/session_state.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/profile_state.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -23,8 +28,22 @@ class RelationshipProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
-    final rp = context.watch<CoupleSession>();
-    final partnerJoined = rp.partnerId != null;
+    // Instance handle only -- never dereferenced for a field directly in
+    // this build method, just threaded into several downstream dialogs
+    // (EditProfileDialog, RegenerateRecoveryCodeDialog,
+    // UnlinkConfirmationDialog, DeleteAccountConfirmationDialog -- all out of
+    // this conversion's scope) that call mutation methods on it. Those
+    // "prop-drilled" widgets depend only on CoupleSession's public method
+    // surface, not on it being reactively watched, so a plain `ref.read`
+    // (not `ref.watch`/`context.watch`) is correct here -- this widget's own
+    // rebuild-on-change needs are covered by sessionControllerProvider/
+    // profileControllerProvider/workspaceControllerProvider above, which are
+    // properly watched.
+    final rp = ref.read(coupleSessionProvider);
+    final sessionState = ref.watch(sessionControllerProvider);
+    final profileState = ref.watch(profileControllerProvider);
+    final workspaceState = ref.watch(workspaceControllerProvider);
+    final partnerJoined = sessionState.partnerId != null;
 
     return Scaffold(
       body: Container(
@@ -45,12 +64,12 @@ class RelationshipProfileScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeaderSection(context, rp, theme),
+                      _buildHeaderSection(context, rp, sessionState, profileState, theme),
                       const SizedBox(height: 32),
-                      _buildInfoCard(context, rp, theme),
+                      _buildInfoCard(context, ref, workspaceState, profileState, theme),
                       const SizedBox(height: 32),
-                      if (!partnerJoined && rp.coupleCode != null) ...[
-                        PairingOptionsSection(rp: rp, theme: theme),
+                      if (!partnerJoined && workspaceState.coupleCode != null) ...[
+                        PairingOptionsSection(theme: theme),
                         const SizedBox(height: 32),
                       ],
                       const SizedBox(height: 16),
@@ -58,11 +77,11 @@ class RelationshipProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       _buildDangerZoneDivider(theme),
                       const SizedBox(height: 20),
-                      _buildUnlinkButton(context, rp, theme),
+                      _buildUnlinkButton(context, rp, sessionState, theme),
                       if (partnerJoined) const SizedBox(height: 16),
                       _buildDeleteAccountButton(context, rp, theme),
                       const SizedBox(height: 24),
-                      _buildAuthDebugInfo(rp, theme),
+                      _buildAuthDebugInfo(sessionState, theme),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -75,12 +94,12 @@ class RelationshipProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAuthDebugInfo(CoupleSession rp, LoveStoryTheme theme) {
+  Widget _buildAuthDebugInfo(SessionState sessionState, LoveStoryTheme theme) {
     return Center(
       child: Opacity(
         opacity: 0.3,
         child: Text(
-          'UID: ${rp.userId?.substring(0, 8) ?? "None"} • CID: ${rp.coupleId?.substring(0, 8) ?? "None"}',
+          'UID: ${sessionState.userId?.substring(0, 8) ?? "None"} • CID: ${sessionState.coupleId?.substring(0, 8) ?? "None"}',
           style: AppTypography.captionMono(
             fontSize: 10,
             color: theme.textColor,
@@ -119,9 +138,11 @@ class RelationshipProfileScreen extends ConsumerWidget {
   Widget _buildHeaderSection(
     BuildContext context,
     CoupleSession rp,
+    SessionState sessionState,
+    ProfileState profileState,
     LoveStoryTheme theme,
   ) {
-    final partnerJoined = rp.partnerId != null;
+    final partnerJoined = sessionState.partnerId != null;
     return GlassContainer(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
@@ -132,8 +153,8 @@ class RelationshipProfileScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildAvatarWidget(
-                rp.yourAvatarPath,
-                rp.yourName ?? 'You',
+                profileState.yourAvatarPath,
+                profileState.yourName ?? 'You',
                 theme,
               ),
               Container(
@@ -151,8 +172,8 @@ class RelationshipProfileScreen extends ConsumerWidget {
               ),
               if (partnerJoined)
                 _buildAvatarWidget(
-                  rp.partnerAvatarPath,
-                  rp.partnerName ?? 'Partner',
+                  profileState.partnerAvatarPath,
+                  profileState.partnerName ?? 'Partner',
                   theme,
                 )
               else
@@ -162,7 +183,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
           const SizedBox(height: 32),
           if (partnerJoined) ...[
             Text(
-              '${rp.yourName ?? 'You'} & ${rp.partnerName ?? 'Partner'}',
+              '${profileState.yourName ?? 'You'} & ${profileState.partnerName ?? 'Partner'}',
               style: AppTypography.cormorant(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -188,7 +209,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
             ),
           ] else ...[
             Text(
-              rp.yourName ?? 'You',
+              profileState.yourName ?? 'You',
               style: AppTypography.heading(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -288,17 +309,19 @@ class RelationshipProfileScreen extends ConsumerWidget {
 
   Widget _buildInfoCard(
     BuildContext context,
-    CoupleSession rp,
+    WidgetRef ref,
+    WorkspaceState workspaceState,
+    ProfileState profileState,
     LoveStoryTheme theme,
   ) {
-    final start = rp.startDate;
+    final start = workspaceState.startDate;
     final formattedStart = start != null
         ? DateFormat('MMMM dd, yyyy').format(start)
         : 'Not Set';
-    final formattedTime = rp.startTime != null
-        ? rp.startTime!.format(context)
+    final formattedTime = workspaceState.startTime != null
+        ? workspaceState.startTime!.format(context)
         : '12:00 AM';
-    final ageStr = DateHelper.relationshipAgeLabel(rp.startDate, rp.startTime);
+    final ageStr = DateHelper.relationshipAgeLabel(workspaceState.startDate, workspaceState.startTime);
 
     return Column(
       children: [
@@ -311,14 +334,14 @@ class RelationshipProfileScreen extends ConsumerWidget {
               label: 'Anniversary',
               value: formattedStart,
               theme: theme,
-              onTap: () => _editDate(context, rp, theme),
+              onTap: () => _editDate(context, ref, workspaceState, theme),
             ),
             _StatTile(
               icon: Icons.access_time_rounded,
               label: 'Time',
               value: formattedTime,
               theme: theme,
-              onTap: () => _editTime(context, rp, theme),
+              onTap: () => _editTime(context, ref, workspaceState, theme),
             ),
           ],
         ),
@@ -344,16 +367,16 @@ class RelationshipProfileScreen extends ConsumerWidget {
             _StatTile(
               icon: Icons.person_pin_rounded,
               label: 'Your Join Date',
-              value: rp.yourJoinDate != null
-                  ? DateFormat('MMM dd, yyyy').format(rp.yourJoinDate!)
+              value: profileState.yourJoinDate != null
+                  ? DateFormat('MMM dd, yyyy').format(profileState.yourJoinDate!)
                   : '...',
               theme: theme,
             ),
             _StatTile(
               icon: Icons.people_outline_rounded,
               label: 'Partner Join Date',
-              value: rp.partnerJoinDate != null
-                  ? DateFormat('MMM dd, yyyy').format(rp.partnerJoinDate!)
+              value: profileState.partnerJoinDate != null
+                  ? DateFormat('MMM dd, yyyy').format(profileState.partnerJoinDate!)
                   : 'Waiting...',
               theme: theme,
             ),
@@ -404,12 +427,13 @@ class RelationshipProfileScreen extends ConsumerWidget {
 
   Future<void> _editDate(
     BuildContext context,
-    CoupleSession rp,
+    WidgetRef ref,
+    WorkspaceState workspaceState,
     LoveStoryTheme theme,
   ) async {
     final date = await showDatePicker(
       context: context,
-      initialDate: rp.startDate ?? DateTime.now(),
+      initialDate: workspaceState.startDate ?? DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
@@ -422,17 +446,20 @@ class RelationshipProfileScreen extends ConsumerWidget {
         child: child!,
       ),
     );
-    if (date != null) await rp.setStartDate(date);
+    if (date != null) {
+      await ref.read(workspaceControllerProvider.notifier).setStartDate(date);
+    }
   }
 
   Future<void> _editTime(
     BuildContext context,
-    CoupleSession rp,
+    WidgetRef ref,
+    WorkspaceState workspaceState,
     LoveStoryTheme theme,
   ) async {
     final time = await showTimePicker(
       context: context,
-      initialTime: rp.startTime ?? TimeOfDay.now(),
+      initialTime: workspaceState.startTime ?? TimeOfDay.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: ColorScheme.fromSeed(
@@ -443,7 +470,9 @@ class RelationshipProfileScreen extends ConsumerWidget {
         child: child!,
       ),
     );
-    if (time != null) await rp.setStartTime(time);
+    if (time != null) {
+      await ref.read(workspaceControllerProvider.notifier).setStartTime(time);
+    }
   }
 
 
@@ -524,9 +553,10 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
   Widget _buildUnlinkButton(
     BuildContext context,
     CoupleSession rp,
+    SessionState sessionState,
     LoveStoryTheme theme,
   ) {
-    final partnerJoined = rp.partnerId != null;
+    final partnerJoined = sessionState.partnerId != null;
     if (!partnerJoined) {
       return const SizedBox.shrink();
     }
@@ -662,21 +692,19 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class PairingOptionsSection extends StatefulWidget {
-  final CoupleSession rp;
+class PairingOptionsSection extends ConsumerStatefulWidget {
   final LoveStoryTheme theme;
 
   const PairingOptionsSection({
     super.key,
-    required this.rp,
     required this.theme,
   });
 
   @override
-  State<PairingOptionsSection> createState() => _PairingOptionsSectionState();
+  ConsumerState<PairingOptionsSection> createState() => _PairingOptionsSectionState();
 }
 
-class _PairingOptionsSectionState extends State<PairingOptionsSection> {
+class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
   final TextEditingController _controller = TextEditingController();
   bool _isLinking = false;
   String? _errorMessage;
@@ -702,7 +730,7 @@ class _PairingOptionsSectionState extends State<PairingOptionsSection> {
     });
 
     try {
-      final success = await widget.rp.joinWithCode(code);
+      final success = await ref.read(sessionControllerProvider.notifier).joinWithCode(code);
       if (!mounted) return;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -730,7 +758,7 @@ class _PairingOptionsSectionState extends State<PairingOptionsSection> {
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme;
-    final code = widget.rp.coupleCode ?? '';
+    final code = ref.watch(workspaceControllerProvider).coupleCode ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

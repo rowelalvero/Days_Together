@@ -5,6 +5,7 @@ import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
@@ -22,8 +23,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerStatefulWidget, ConsumerState, ConsumerWidget, WidgetRef, ProviderScope;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:provider/single_child_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/app_config.dart';
 import 'package:days_together/services/notification_service.dart';
@@ -37,11 +36,13 @@ void main() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('Captured FlutterError: ${details.exception}');
+    debugPrintStack(stackTrace: details.stack, label: 'FlutterError stack');
   };
 
   // Handle platform errors
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     debugPrint('Captured PlatformDispatcher error: $error');
+    debugPrintStack(stackTrace: stack, label: 'PlatformDispatcher stack');
     return true;
   };
 
@@ -63,64 +64,120 @@ Future<void> _initializeApp() async {
   runApp(buildAppRoot(child: const MyApp()));
 }
 
-/// The app's full widget root: the outer `ProviderScope` every Riverpod
-/// provider needs somewhere above it, [buildAppProviders]'s Provider tree,
-/// and the nested `ProviderScope` that bridges the live `CoupleSession`
-/// instance onto [coupleSessionProvider] -- the "Provider -> Riverpod"
-/// direction of the strangler bridge (Phase 2 of the architecture migration,
-/// ADR-002; see docs/architecture/state-management.md). Factored out of
-/// [runApp] so `test/riverpod_bridge_test.dart` can pump the exact
-/// production wiring around a probe widget of its choosing instead of a
-/// hand-maintained duplicate that could drift.
+/// The app's full widget root: a single `ProviderScope` -- the entire
+/// `provider`-package tree (`MultiProvider`/`ChangeNotifierProvider`/the
+/// nested `ProviderScope` + `Consumer<CoupleSession>` strangler bridge from
+/// Phase 2, ADR-002) is gone as of Item 3 gap-fix Phase 3 (front 4 of the
+/// architecture migration's `provider`-removal item): [coupleSessionProvider]
+/// now constructs the single, process-lifetime `CoupleSession` instance
+/// itself (see `couple_session.dart`), so there is no second container to
+/// bridge into. Factored out of [runApp] so `test/riverpod_bridge_test.dart`
+/// can pump the exact production wiring around a probe widget of its
+/// choosing instead of a hand-maintained duplicate that could drift.
 Widget buildAppRoot({required Widget child}) {
   return ProviderScope(
-    child: MultiProvider(
-      providers: buildAppProviders(),
-      child: Consumer<CoupleSession>(
-        builder: (context, session, _) => ProviderScope(
-          overrides: [coupleSessionProvider.overrideWithValue(session)],
-          child: _LicenseLifecycleBridge(
-            child: _ProfileControllerBridge(
-              child: _WorkspaceControllerBridge(
-                child: _PresenceControllerBridge(
-                  child: _DomainProvidersBridge(child: child),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
+    child: _CoupleSessionBridge(child: child),
   );
 }
 
-/// Invalidates [licenseControllerProvider] whenever `CoupleSession`'s
-/// identity fields clear (logout, account deletion, or a partner
-/// disconnect), so a signed-out user's cached license data can never leak
-/// into a second account signed into the same app session -- see
-/// `license_controller.dart`'s doc comment on why a default (non-
-/// `autoDispose`) `AsyncNotifierProvider` needs this hook at all.
-class _LicenseLifecycleBridge extends ConsumerStatefulWidget {
+/// The single bridge from `CoupleSession`'s raw `ChangeNotifier` world into
+/// every Riverpod hub/domain controller (Item 3 gap-fix, Phase 3, front 4 of
+/// the architecture migration's `provider`-removal item). Replaces the 5
+/// separate `provider`-package bridge widgets this migration built up over
+/// Phases 5/6a/6b-1 (`_LicenseLifecycleBridge`, `_ProfileControllerBridge`,
+/// `_WorkspaceControllerBridge`, `_PresenceControllerBridge`,
+/// `_DomainProvidersBridge`) -- those each independently subscribed to
+/// `CoupleSession` via `context.watch<CoupleSession>()`, so a single
+/// `notifyListeners()` call triggered 5 separate widget rebuilds, each
+/// scheduling its own `postFrameCallback`. Now that `provider` is gone
+/// entirely, this registers exactly one `CoupleSession.addListener` in
+/// `initState` and pushes into every controller from one place, preserving
+/// the old bridges' combined behavior and ordering exactly:
+///
+/// 1. `_LicenseLifecycleBridge`'s identity-cleared-invalidate check
+///    (logout/unlink/account deletion invalidates [licenseControllerProvider]
+///    so a signed-out user's cached license data can never leak into a
+///    second account signed into the same app session).
+/// 2. `profileControllerProvider`/`workspaceControllerProvider`/
+///    `presenceControllerProvider`/`sessionControllerProvider`'s
+///    `updateFromSession` mirrors (Phase 5/6b-1's four-plus-one hub
+///    controllers).
+/// 3. All 12 domain controllers' `SupabaseLifecycleNotifier.updateSession`
+///    (Phase 6a) -- REST sync/cache-purge still runs unconditionally on
+///    every session change regardless of which screen is open, exactly as
+///    before, since `ref.read(x.notifier)` creates an `autoDispose`
+///    controller on demand even with no active watcher.
+///
+/// The identity-diff bookkeeping (`_lastUserId`/`_lastCoupleId`/`_seeded`)
+/// runs synchronously in [_onSessionChanged] (cheap, pure `State` fields,
+/// not a Riverpod mutation); the actual provider-affecting calls stay
+/// deferred to a `postFrameCallback`, matching the old bridges' reasoning
+/// for using one at all (avoiding "modify a provider during build" -- moot
+/// here since `_onSessionChanged` runs from a raw `ChangeNotifier` callback,
+/// not from inside a widget's `build()`, but kept anyway as the
+/// conservative, behavior-preserving choice for this migration's riskiest
+/// rewrite).
+class _CoupleSessionBridge extends ConsumerStatefulWidget {
   final Widget child;
-  const _LicenseLifecycleBridge({required this.child});
+  const _CoupleSessionBridge({required this.child});
 
   @override
-  ConsumerState<_LicenseLifecycleBridge> createState() => _LicenseLifecycleBridgeState();
+  ConsumerState<_CoupleSessionBridge> createState() => _CoupleSessionBridgeState();
 }
 
-class _LicenseLifecycleBridgeState extends ConsumerState<_LicenseLifecycleBridge> {
+class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
+  // Cached rather than re-read via `ref.read(coupleSessionProvider)` on every
+  // use: `ref` is unsafe to touch inside `dispose()` (Riverpod asserts on
+  // it, since the widget may already be deactivated by then) and a
+  // postFrameCallback can likewise fire after unmount -- a plain field
+  // holding the instance itself has no such lifecycle restriction.
+  late final CoupleSession _session;
   String? _lastUserId;
   String? _lastCoupleId;
   bool _seeded = false;
+  // Coalesces every notifyListeners() firing that happens before the next
+  // frame into a single push. CoupleSession methods commonly call
+  // notifyListeners() 2-3 times per logical operation (start/success/
+  // finally); the old 5-separate-bridge-widget design coalesced these for
+  // free via Flutter's own widget-rebuild batching (multiple
+  // context.watch<CoupleSession>()-driven rebuilds requested before the next
+  // frame collapse into one). A single addListener callback has no such
+  // batching, so without this flag every one of those 2-3 calls would
+  // independently schedule its own postFrameCallback, multiplying how many
+  // concurrent in-flight `updateSession()` calls run against the 12
+  // autoDispose domain controllers and increasing the odds one gets disposed
+  // by Riverpod while still awaiting a network call mid-`syncInitialData()`
+  // -- which poisons that controller into a cached error state visible the
+  // next time any screen actually watches it (found via a manual on-device
+  // smoke test: BentoGrid/TogetherTab throwing "Tried to use a provider that
+  // is in error state" after creating a workspace).
+  bool _updateScheduled = false;
+  bool _pendingInvalidateLicense = false;
 
   @override
-  Widget build(BuildContext context) {
-    final session = context.watch<CoupleSession>();
+  void initState() {
+    super.initState();
+    _session = ref.read(coupleSessionProvider);
+    _session.addListener(_onSessionChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _onSessionChanged();
+    });
+  }
+
+  @override
+  void dispose() {
+    _session.removeListener(_onSessionChanged);
+    super.dispose();
+  }
+
+  void _onSessionChanged() {
+    final session = _session;
     final userId = session.userId;
     final coupleId = session.coupleId;
 
     if (!_seeded) {
-      // First build: record the starting identity without treating it as a
+      // First call: record the starting identity without treating it as a
       // transition (there is nothing to invalidate on cold start).
       _seeded = true;
       _lastUserId = userId;
@@ -131,140 +188,24 @@ class _LicenseLifecycleBridgeState extends ConsumerState<_LicenseLifecycleBridge
       _lastUserId = userId;
       _lastCoupleId = coupleId;
       if (identityCleared) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.invalidate(licenseControllerProvider);
-        });
+        _pendingInvalidateLicense = true;
       }
     }
 
-    return widget.child;
-  }
-}
-
-/// Mirrors `CoupleSession`'s 6 profile fields (name, avatar path, join
-/// date) into [profileControllerProvider] on every `CoupleSession` change,
-/// so Riverpod consumers can read them without holding a `provider`
-/// package `context.watch`. Watches `CoupleSession` directly, not
-/// `RelationshipProvider`, since Phase 6b-1 made `CoupleSession` the real
-/// owner of these fields (`RelationshipProvider` is now just a
-/// pass-through facade over it) -- reading the hub directly removes a
-/// layer of indirection. Deliberately does not invalidate/reset on
-/// logout/disconnect the way [_LicenseLifecycleBridge] does: since this is
-/// a pure mirror, the next `updateFromSession` call (e.g. with all-null
-/// fields after a logout) already overwrites any stale state, so there is
-/// nothing extra to clear.
-class _ProfileControllerBridge extends ConsumerStatefulWidget {
-  final Widget child;
-  const _ProfileControllerBridge({required this.child});
-
-  @override
-  ConsumerState<_ProfileControllerBridge> createState() => _ProfileControllerBridgeState();
-}
-
-class _ProfileControllerBridgeState extends ConsumerState<_ProfileControllerBridge> {
-  @override
-  Widget build(BuildContext context) {
-    final session = context.watch<CoupleSession>();
+    if (_updateScheduled) return;
+    _updateScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateScheduled = false;
       if (!mounted) return;
+      final shouldInvalidateLicense = _pendingInvalidateLicense;
+      _pendingInvalidateLicense = false;
+      if (shouldInvalidateLicense) {
+        ref.invalidate(licenseControllerProvider);
+      }
       ref.read(profileControllerProvider.notifier).updateFromSession(session);
-    });
-    return widget.child;
-  }
-}
-
-/// Mirrors `CoupleSession`'s 7 workspace fields (pairing code, story title,
-/// start date/time, premium flag, status, recovery code) into
-/// [workspaceControllerProvider] on every `CoupleSession` change. Watches
-/// `CoupleSession` directly, not `RelationshipProvider`, since Phase 6b-1
-/// unit 3 made `WorkspaceController` real -- see `workspace_controller.dart`'s
-/// doc comment. Same shape as [_ProfileControllerBridge]: no
-/// invalidate-on-logout hook needed, since the next `updateFromSession` call
-/// already overwrites stale state with the post-logout/disconnect values.
-class _WorkspaceControllerBridge extends ConsumerStatefulWidget {
-  final Widget child;
-  const _WorkspaceControllerBridge({required this.child});
-
-  @override
-  ConsumerState<_WorkspaceControllerBridge> createState() => _WorkspaceControllerBridgeState();
-}
-
-class _WorkspaceControllerBridgeState extends ConsumerState<_WorkspaceControllerBridge> {
-  @override
-  Widget build(BuildContext context) {
-    final session = context.watch<CoupleSession>();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
       ref.read(workspaceControllerProvider.notifier).updateFromSession(session);
-    });
-    return widget.child;
-  }
-}
-
-/// Mirrors `CoupleSession`'s 3 presence fields (`isPartnerOnline`,
-/// `yourActivity`, `partnerActivity`) into [presenceControllerProvider] on
-/// every `CoupleSession` change. Watches `CoupleSession` directly, not
-/// `RelationshipProvider`, since Phase 6b-1 unit 4 made `PresenceController`
-/// real -- see `presence_controller.dart`'s doc comment. Same shape as
-/// [_ProfileControllerBridge]/[_WorkspaceControllerBridge]: no
-/// invalidate-on-logout hook needed, since the next `updateFromSession` call
-/// already overwrites stale state with the post-logout/disconnect values.
-class _PresenceControllerBridge extends ConsumerStatefulWidget {
-  final Widget child;
-  const _PresenceControllerBridge({required this.child});
-
-  @override
-  ConsumerState<_PresenceControllerBridge> createState() => _PresenceControllerBridgeState();
-}
-
-class _PresenceControllerBridgeState extends ConsumerState<_PresenceControllerBridge> {
-  @override
-  Widget build(BuildContext context) {
-    final session = context.watch<CoupleSession>();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
       ref.read(presenceControllerProvider.notifier).updateFromSession(session);
-    });
-    return widget.child;
-  }
-}
-
-/// Pushes every `CoupleSession` change into each ported domain provider's
-/// [SupabaseLifecycleNotifier.updateSession] -- the Riverpod-native
-/// equivalent of the old `ChangeNotifierProxyProvider<CoupleSession,
-/// X>.update: (_, session, provider) => provider!..updateSession(session)`
-/// chain (Phase 6a of the architecture migration). Watches `CoupleSession`
-/// directly (not `RelationshipProvider`, unlike the Phase 5 bridges above)
-/// since that's what the old domain providers watched too, and it's what
-/// `coupleSessionProvider`'s Riverpod-side bridge exposes.
-///
-/// Each provider here is `autoDispose`: calling `ref.read(x.notifier)` on
-/// one with no active widget watcher still creates it, runs its update, and
-/// lets Riverpod dispose it again shortly after -- so REST sync/cache-purge
-/// still happens for every provider on every session change regardless of
-/// which screen is open (matching the old behavior, where all 12 providers
-/// lived for the whole app session), while realtime subscriptions are only
-/// ever held open while some widget is actually watching, exactly like the
-/// old `hasListeners`-gated `initRealtime()`.
-///
-/// New domain providers are added to this single bridge as they're ported;
-/// it is not one bridge per provider like the Phase 5 mirrors, since these
-/// all react to the identical `CoupleSession` trigger with no per-provider
-/// divergence in when they should update.
-class _DomainProvidersBridge extends ConsumerStatefulWidget {
-  final Widget child;
-  const _DomainProvidersBridge({required this.child});
-
-  @override
-  ConsumerState<_DomainProvidersBridge> createState() => _DomainProvidersBridgeState();
-}
-
-class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> {
-  @override
-  Widget build(BuildContext context) {
-    final session = context.watch<CoupleSession>();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      ref.read(sessionControllerProvider.notifier).updateFromSession(session);
       ref.read(bucketListControllerProvider.notifier).updateSession(session);
       ref.read(giftReminderControllerProvider.notifier).updateSession(session);
       ref.read(calendarControllerProvider.notifier).updateSession(session);
@@ -278,37 +219,10 @@ class _DomainProvidersBridgeState extends ConsumerState<_DomainProvidersBridge> 
       ref.read(currentlyControllerProvider.notifier).updateSession(session);
       ref.read(notificationPreferencesControllerProvider.notifier).updateSession(session);
     });
-    return widget.child;
   }
-}
 
-/// The app's full provider tree, factored out of [runApp] so it has a single
-/// source of truth rather than a hand-maintained duplicate that could drift.
-///
-/// `CoupleSession` is the real engine (Phase 6b-1 of the architecture
-/// migration, "make CoupleSession real"): it owns the Supabase auth listener
-/// and every field it drives. `RelationshipProvider`, the facade that used
-/// to sit in front of it for UI files not yet converted, was deleted once
-/// item 4 of the Definition-of-Done sweep converted the last remaining
-/// readers directly to `CoupleSession`.
-///
-/// Only `CoupleSession` itself remains registered here as a plain
-/// `provider`-package `ChangeNotifier` -- the 12 domain feature providers
-/// (`TimelineProvider`, `BucketListProvider`, etc.) were deleted once their
-/// Riverpod ports (`TimelineController`, `BucketListController`, etc., under
-/// `lib/features/`) fully superseded them (item 3 gap-fix, Phase 1), and
-/// `ThemeProvider` was deleted the same way once `ThemeController`
-/// (`lib/features/theme/`) superseded it (item 3 gap-fix, Phase 2 -- see
-/// docs/architecture/migration-roadmap.md's "Corrected on implementation"
-/// notes for item 3). Those controllers get their session updates from
-/// [_DomainProvidersBridge] below, not from a `ChangeNotifierProxyProvider`
-/// here. `provider` stays in `pubspec.yaml` regardless, since `CoupleSession`'s
-/// core is still unconverted (front 4 of that same gap-fix, not yet
-/// scheduled).
-List<SingleChildWidget> buildAppProviders() {
-  return [
-    ChangeNotifierProvider(create: (_) => CoupleSession()),
-  ];
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// The app's top-level widget. Navigation is now entirely `go_router`'s
@@ -339,9 +253,14 @@ class MyApp extends ConsumerWidget {
     // Read (not watch) deliberately: this is the app's single,
     // process-lifetime session instance -- ensureAppRouter only needs it
     // once, to build the Listenable the router re-evaluates its redirect
-    // against on every change (see app_router.dart's appRedirect, which
-    // reads this same CoupleSession instance directly).
-    final session = context.read<CoupleSession>();
+    // against on every change. `CoupleSession` stays a real ChangeNotifier
+    // (its ~1400 lines of Supabase auth/realtime logic are unchanged by the
+    // provider-removal migration -- only who constructs/reads it changed),
+    // so it remains a valid `Listenable` reached via Riverpod instead of
+    // `provider`. `app_router.dart`'s `appRedirect` reads the same session's
+    // mirrored fields via `sessionControllerProvider`/`workspaceControllerProvider`
+    // instead of this raw instance, for real Riverpod reactivity.
+    final session = ref.read(coupleSessionProvider);
     final router = ensureAppRouter(refreshListenable: session);
 
     return MaterialApp.router(

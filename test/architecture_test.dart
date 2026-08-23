@@ -220,6 +220,48 @@ void main() {
     });
   });
 
+  group('Item 3 gap-fix Phase 3 -- the provider package is fully removed (item 3 closed)', () {
+    // Front 4, the last of item 3's four fronts: CoupleSession's core moved
+    // off the `provider` package (its ChangeNotifier nature is unchanged --
+    // only who constructs/reads it did, via coupleSessionProvider
+    // constructing the instance itself instead of a provider-package
+    // ChangeNotifierProvider feeding it in). See migration-roadmap.md's
+    // "Corrected on implementation" note for item 3, Phase 3.
+    test('no lib/ or test/ file imports package:provider/', () {
+      // Matches only an actual `import '...package:provider/...';`
+      // statement, not this file's own doc comments/reason strings that
+      // mention the package name in prose (this test's own source is walked
+      // like any other file under test/).
+      final importPattern = RegExp(r'''^import\s+['"]package:provider/''');
+      final violations = <String>[];
+      for (final dir in ['lib', 'test']) {
+        for (final file in _dartFilesUnder(dir)) {
+          for (final rawLine in file.readAsLinesSync()) {
+            final line = rawLine.trim();
+            if (importPattern.hasMatch(line)) {
+              violations.add(file.path);
+            }
+          }
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'A file still imports package:provider/, but the provider package was fully removed (see migration-roadmap.md item 3): $violations',
+      );
+    });
+
+    test('pubspec.yaml no longer lists provider as a dependency', () {
+      final content = File('pubspec.yaml').readAsStringSync();
+      final hasProviderDependency = RegExp(r'^\s*provider:\s', multiLine: true).hasMatch(content);
+      expect(
+        hasProviderDependency,
+        isFalse,
+        reason: 'pubspec.yaml still lists the provider package, but it was fully removed (see migration-roadmap.md item 3)',
+      );
+    });
+  });
+
   group('Migration Phase 3 -- go_router owns screen-level navigation (ADR-007)', () {
     test('lib/navigator_key.dart no longer exists', () {
       expect(File('lib/navigator_key.dart').existsSync(), isFalse);

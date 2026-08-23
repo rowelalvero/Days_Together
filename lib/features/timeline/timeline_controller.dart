@@ -141,9 +141,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           .eq('couple_id', coupleId!)
           .order('date', ascending: false)
           .limit(100);
+      if (!ref.mounted) return;
       final parsed = _sorted(res.map((data) => _parseItem(data)).toList(), state.isAscending);
 
-      if (!ref.mounted) return;
       state = state.copyWith(items: parsed, isLoading: false);
       await _repository.saveTimelineItems(state.items);
     } catch (e) {

@@ -26,6 +26,8 @@ class StorageImageBuilder extends StatefulWidget {
     required this.storageRef,
     required this.builder,
     this.localPath,
+    this.maxWidth,
+    this.maxHeight,
   });
 
   /// One of the [StorageBuckets] constants.
@@ -37,6 +39,10 @@ class StorageImageBuilder extends StatefulWidget {
 
   /// Optional on-device file to prefer over anything remote.
   final String? localPath;
+
+  /// Optional decoding constraints to prevent decoding huge bitmaps into memory.
+  final int? maxWidth;
+  final int? maxHeight;
 
   final Widget Function(BuildContext context, ImageProvider? image) builder;
 
@@ -100,7 +106,12 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
     final cached = StorageUrlService.instance
         .resolveCached(bucket: widget.bucket, ref: ref);
     if (cached != null) {
-      _image = CachedNetworkImageProvider(cached, cacheKey: _cacheKey);
+      _image = CachedNetworkImageProvider(
+        cached,
+        cacheKey: _cacheKey,
+        maxWidth: widget.maxWidth,
+        maxHeight: widget.maxHeight,
+      );
       return;
     }
 
@@ -113,7 +124,12 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
       if (!mounted) return;
       if (url != null) {
         setState(() {
-          _image = CachedNetworkImageProvider(url, cacheKey: _cacheKey);
+          _image = CachedNetworkImageProvider(
+            url,
+            cacheKey: _cacheKey,
+            maxWidth: widget.maxWidth,
+            maxHeight: widget.maxHeight,
+          );
           _resolving = false;
         });
         return;
@@ -163,6 +179,8 @@ class StorageImage extends StatelessWidget {
     this.borderRadius,
     this.placeholder,
     this.errorWidget,
+    this.maxWidth,
+    this.maxHeight,
   });
 
   final String bucket;
@@ -172,6 +190,8 @@ class StorageImage extends StatelessWidget {
   final double? width;
   final double? height;
   final BorderRadius? borderRadius;
+  final int? maxWidth;
+  final int? maxHeight;
 
   /// Shown while resolving. Defaults to a neutral surface block.
   final WidgetBuilder? placeholder;
@@ -181,10 +201,15 @@ class StorageImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveMaxWidth = maxWidth ?? (width != null && width!.isFinite ? (width! * 2.5).toInt() : 800);
+    final effectiveMaxHeight = maxHeight ?? (height != null && height!.isFinite ? (height! * 2.5).toInt() : null);
+
     return StorageImageBuilder(
       bucket: bucket,
       storageRef: storageRef,
       localPath: localPath,
+      maxWidth: effectiveMaxWidth,
+      maxHeight: effectiveMaxHeight,
       builder: (context, image) {
         final Widget child;
         if (image == null) {

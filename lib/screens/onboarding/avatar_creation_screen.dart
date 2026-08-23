@@ -6,9 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
-import 'package:provider/provider.dart';
 import 'package:days_together/services/permission_service.dart';
 
 class AvatarCreationScreen extends ConsumerStatefulWidget {
@@ -242,7 +241,7 @@ class _AvatarCreationScreenState extends ConsumerState<AvatarCreationScreen> {
     try {
       setState(() => _isSaving = true);
       final profile = ref.read(profileControllerProvider.notifier);
-      final session = context.read<CoupleSession>();
+      final session = ref.read(sessionControllerProvider.notifier);
       await profile.setYourName(
         _yourNameController.text.trim(),
       );

@@ -4,7 +4,8 @@ import 'dart:ui';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/features/relationship/session_state.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
@@ -28,7 +29,6 @@ import 'package:days_together/features/dashboard/presentation/recent_activity_fe
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer, Provider;
-import 'package:provider/provider.dart';
 import 'package:days_together/themes/app_typography.dart';
 
 
@@ -47,6 +47,7 @@ class LoveStoryScreen extends ConsumerStatefulWidget {
 class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
   int _currentIndex = 0;
   DateTime? _lastBackPressTime;
+  ProviderSubscription<SessionState>? _sessionSubscription;
 
   // Hoisted so each tab's widget identity is stable across LoveStoryScreen
   // rebuilds; combined with IndexedStack below, this keeps every tab's
@@ -74,25 +75,24 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
     super.initState();
     _currentIndex = widget.initialIndex;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final session = context.read<CoupleSession>();
-      session.addListener(_checkPartnerDeletedNotice);
-      _checkPartnerDeletedNotice();
+      if (!mounted) return;
+      _sessionSubscription = ref.listenManual(sessionControllerProvider, (previous, next) {
+        _checkPartnerDeletedNotice(next);
+      });
+      _checkPartnerDeletedNotice(ref.read(sessionControllerProvider));
     });
   }
 
   @override
   void dispose() {
-    try {
-      context.read<CoupleSession>().removeListener(_checkPartnerDeletedNotice);
-    } catch (_) {}
+    _sessionSubscription?.close();
     super.dispose();
   }
 
-  void _checkPartnerDeletedNotice() {
+  void _checkPartnerDeletedNotice(SessionState state) {
     if (!mounted) return;
-    final session = context.read<CoupleSession>();
-    if (session.showPartnerDeletedNotice) {
-      session.clearPartnerDeletedNotice();
+    if (state.showPartnerDeletedNotice) {
+      ref.read(sessionControllerProvider.notifier).clearPartnerDeletedNotice();
       _showPartnerDeletedDialog();
     }
   }
@@ -507,7 +507,7 @@ class HomeDashboard extends ConsumerStatefulWidget {
 class _HomeDashboardState extends ConsumerState<HomeDashboard> {
   @override
   Widget build(BuildContext context) {
-    final session = context.watch<CoupleSession>();
+    final session = ref.watch(sessionControllerProvider);
     final workspace = ref.watch(workspaceControllerProvider);
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);

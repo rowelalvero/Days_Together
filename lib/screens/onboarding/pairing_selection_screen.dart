@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/routing/routes.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
-import 'package:provider/provider.dart';
 
 class PairingSelectionScreen extends ConsumerStatefulWidget {
   const PairingSelectionScreen({super.key});
@@ -35,7 +35,18 @@ class _PairingSelectionScreenState extends ConsumerState<PairingSelectionScreen>
               children: [
                 const SizedBox(height: 20),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  // This screen is only ever reached via appRedirect's
+                  // stage-based redirect (SessionStage.needsCouple), never
+                  // pushed from another screen -- there is nothing beneath
+                  // it in the Navigator stack for Navigator.pop(context) to
+                  // return to, which left the screen rendering blank. The
+                  // sensible "back" action here is logging out: nothing
+                  // relationship-scoped has been created yet at this stage,
+                  // so it cleanly returns to the true starting point instead
+                  // of popping into an empty stack.
+                  onPressed: () {
+                    ref.read(sessionControllerProvider.notifier).logout();
+                  },
                   icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
                     color: theme.textColor,
@@ -69,11 +80,11 @@ class _PairingSelectionScreenState extends ConsumerState<PairingSelectionScreen>
                   onTap: () async {
                     if (_isNavigating) return;
                     _isNavigating = true;
-                    final session = context.read<CoupleSession>();
+                    final workspaceNotifier = ref.read(workspaceControllerProvider.notifier);
                     await SafeLoadingDialog.run<bool>(
                       context: context,
                       future: () async {
-                        await session.createRelationshipWorkspace();
+                        await workspaceNotifier.createRelationshipWorkspace();
                         return true;
                       },
                       timeoutSeconds: 15,

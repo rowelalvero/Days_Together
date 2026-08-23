@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/providers/couple_session.dart'
+    show SessionStage, computeSessionStage, coupleSessionProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/routing/routes.dart';
@@ -99,24 +99,21 @@ String? _routeForStage(SessionStage stage) {
 /// found (`main.dart`'s old `AppHome` switch, `notification_service.dart`,
 /// `avatar_creation_screen.dart`, `recover_relationship_screen.dart`).
 ///
-/// **Reads [CoupleSession] directly.** Originally read `RelationshipProvider`
-/// instead, found while converting `join_couple_code_screen.dart`/
-/// `recover_relationship_screen.dart` (Phase 3): back then, `CoupleSession`
-/// mirrored `RelationshipProvider` via a `ChangeNotifierProxyProvider`, whose
-/// `update` callback only runs on the *next* frame (Flutter's
-/// `InheritedWidget` dependency system), not synchronously within
-/// `RelationshipProvider.notifyListeners()` -- so reading `CoupleSession`
-/// then would have seen stale, pre-join values immediately after an awaited
-/// write. Phase 6b-1 made `CoupleSession` the real engine and
-/// `RelationshipProvider` a pass-through facade over it (Phase 6b-4 switched
-/// this redirect to read the real engine directly, now that it *is* the
-/// engine): both objects update synchronously and identically today, so
-/// reading either is equally correct regardless of which one a calling
-/// screen awaited -- `CoupleSession` is simply the more direct, permanent
-/// choice, since it doesn't depend on `RelationshipProvider` continuing to
-/// exist -- which it no longer does, having been deleted once item 4 of the
-/// Definition-of-Done sweep converted its last remaining readers directly
-/// to `CoupleSession`.
+/// **Reads [SessionController]/[WorkspaceController] via
+/// `ProviderScope.containerOf`, not `CoupleSession` directly** (Item 3
+/// gap-fix Phase 3, front 4 of the architecture migration's
+/// `provider`-removal item). This function is a top-level function, not a
+/// widget, so there is no `WidgetRef` in scope -- `ProviderScope.containerOf
+/// (context, listen: false)` is the established pattern for reading Riverpod
+/// state from a raw `BuildContext` outside a `ConsumerWidget`, already used
+/// once elsewhere in this migration (an `app_router.dart` `GoRoute` builder
+/// callback). Both hub controllers mirror `CoupleSession`'s fields
+/// synchronously on every change (via `main.dart`'s session bridge), so this
+/// reads exactly as current as reading `CoupleSession` itself would.
+/// Originally read `RelationshipProvider`, then `CoupleSession` directly once
+/// `RelationshipProvider` was deleted (item 4 of the Definition-of-Done
+/// sweep) -- see git history for that migration's reasoning, no longer
+/// relevant now that neither `provider`-package object is read here at all.
 ///
 /// **Simplification vs. ADR-007's original text:** the ADR called for a
 /// second, separate redirect clause guarding every couple-scoped route
@@ -143,7 +140,20 @@ String? _routeForStage(SessionStage stage) {
 String? _pendingLocation;
 
 String? appRedirect(BuildContext context, GoRouterState state) {
-  final session = context.read<CoupleSession>();
+  final container = ProviderScope.containerOf(context, listen: false);
+  // Reads the raw CoupleSession instance, not sessionControllerProvider/
+  // workspaceControllerProvider: this function is GoRouter's
+  // refreshListenable callback, invoked synchronously the instant
+  // CoupleSession.notifyListeners() fires. The hub controllers only learn
+  // about that same change one frame later, via main.dart's
+  // _CoupleSessionBridge deferring its push to a postFrameCallback -- reading
+  // them here would race that deferral and could compute a stage against
+  // stale data with nothing left to re-trigger the redirect once the mirror
+  // catches up (GoRouter only re-evaluates on its own Listenable firing
+  // again, not on a Riverpod provider changing). CoupleSession itself has no
+  // such delay: it's the exact same object GoRouter is already listening to,
+  // so reading it directly is always as fresh as the redirect call itself.
+  final session = container.read(coupleSessionProvider);
 
   final stage = computeSessionStage(
     isInitialized: session.isInitialized,
