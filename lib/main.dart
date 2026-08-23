@@ -134,6 +134,7 @@ class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
   late final CoupleSession _session;
   String? _lastUserId;
   String? _lastCoupleId;
+  int? _lastPartnerProfileVersion;
   bool _seeded = false;
   // Coalesces every notifyListeners() firing that happens before the next
   // frame into a single push. CoupleSession methods commonly call
@@ -182,6 +183,7 @@ class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
       _seeded = true;
       _lastUserId = userId;
       _lastCoupleId = coupleId;
+      _lastPartnerProfileVersion = session.partnerProfileVersion;
     } else if (userId != _lastUserId || coupleId != _lastCoupleId) {
       final identityCleared =
           (_lastUserId != null && userId == null) || (_lastCoupleId != null && coupleId == null);
@@ -190,6 +192,18 @@ class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
       if (identityCleared) {
         _pendingInvalidateLicense = true;
       }
+    }
+
+    // The partner's Relationship License fields (gender..signature) are
+    // mirrored into SharedPreferences by CoupleSession._applyPartnerUserFields
+    // but LicenseController only reads those on its own build() -- it has no
+    // live subscription of its own. Bumping this version whenever a field
+    // actually changed (not on every unrelated presence/activity ping) is
+    // what lets a completed license actually appear without the user
+    // needing to leave and re-enter the License screen.
+    if (session.partnerProfileVersion != _lastPartnerProfileVersion) {
+      _lastPartnerProfileVersion = session.partnerProfileVersion;
+      _pendingInvalidateLicense = true;
     }
 
     if (_updateScheduled) return;

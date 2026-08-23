@@ -187,6 +187,14 @@ class CoupleSession extends ChangeNotifier {
   // _wrapCoupleKeyForPartnerIfHeld.
   StreamSubscription? _keyExchangeSub;
   String? _lastWrappedForPartnerId;
+  // Bumped whenever _applyPartnerUserFields actually changes one of the 12
+  // Relationship License fields mirrored from the partner's `users` row.
+  // main.dart's _CoupleSessionBridge diffs this (like _lastUserId) to decide
+  // when to invalidate licenseControllerProvider -- cheap enough to check on
+  // every session change without unconditionally invalidating (and
+  // thrashing) License on every unrelated presence/activity ping.
+  int _partnerProfileVersion = 0;
+  int get partnerProfileVersion => _partnerProfileVersion;
   String? _coupleId;
   String? _userId;
   String? _partnerId;
@@ -608,21 +616,7 @@ class CoupleSession extends ChangeNotifier {
           if (pDataList.isNotEmpty) {
             final pData = pDataList.first;
             _partnerActivity = pData['current_activity'] as String?;
-
-            final partnerDisplayName = pData['display_name'] as String?;
-            if (partnerDisplayName != null && partnerDisplayName.isNotEmpty) {
-              _partnerName = partnerDisplayName;
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString(PrefsKeys.partnerName, partnerDisplayName);
-            }
-
-            final partnerAvatar = pData['avatar_url'] as String?;
-            if (partnerAvatar != null && partnerAvatar.isNotEmpty) {
-              _partnerAvatarPath = partnerAvatar;
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString(PrefsKeys.partnerAvatarPath, partnerAvatar);
-            }
-
+            await _applyPartnerUserFields(pData);
             notifyListeners();
           }
         });
@@ -642,24 +636,64 @@ class CoupleSession extends ChangeNotifier {
               await prefs.setString(PrefsKeys.partnerJoinDate, pCreated);
             }
 
-            final partnerDisplayName = pData['display_name'] as String?;
-            if (partnerDisplayName != null && partnerDisplayName.isNotEmpty) {
-              _partnerName = partnerDisplayName;
-              await prefs.setString(PrefsKeys.partnerName, partnerDisplayName);
-            }
-
-            final partnerAvatar = pData['avatar_url'] as String?;
-            if (partnerAvatar != null && partnerAvatar.isNotEmpty) {
-              _partnerAvatarPath = partnerAvatar;
-              await prefs.setString(PrefsKeys.partnerAvatarPath, partnerAvatar);
-            }
-
+            await _applyPartnerUserFields(pData);
             notifyListeners();
           }
         })
         .catchError((error) {
           debugPrint('Error loading partner profile details: $error');
         });
+  }
+
+  /// Mirrors the partner's own `users` row fields into this device's local
+  /// state/SharedPreferences -- the same pattern `display_name`/`avatar_url`
+  /// already used, extended to the 12 Relationship License fields
+  /// (`gender` through `signature`). Without this, `LicenseController`
+  /// (which reads `PrefsKeys.partner*` purely from local prefs, with no
+  /// Supabase read path of its own) never learns what the partner entered
+  /// for themselves -- the License screen would show "Waiting for Partner"
+  /// forever even after both sides filled in their details, since each
+  /// side's own submission never reaches the other's local cache.
+  ///
+  /// Only writes when a field is present (matches the existing
+  /// display_name/avatar_url behavior): clearing a field on one device does
+  /// not propagate as a clear on the partner's, only a fresh value does.
+  Future<void> _applyPartnerUserFields(Map<String, dynamic> pData) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final partnerDisplayName = pData['display_name'] as String?;
+    if (partnerDisplayName != null && partnerDisplayName.isNotEmpty) {
+      _partnerName = partnerDisplayName;
+      await prefs.setString(PrefsKeys.partnerName, partnerDisplayName);
+    }
+
+    final partnerAvatar = pData['avatar_url'] as String?;
+    if (partnerAvatar != null && partnerAvatar.isNotEmpty) {
+      _partnerAvatarPath = partnerAvatar;
+      await prefs.setString(PrefsKeys.partnerAvatarPath, partnerAvatar);
+    }
+
+    Future<void> mirror(String column, String prefsKey) async {
+      final value = pData[column] as String?;
+      if (value == null) return;
+      if (prefs.getString(prefsKey) != value) {
+        _partnerProfileVersion++;
+      }
+      await prefs.setString(prefsKey, value);
+    }
+
+    await mirror('gender', PrefsKeys.partnerGender);
+    await mirror('phone', PrefsKeys.partnerPhone);
+    await mirror('birthdate', PrefsKeys.partnerBirthdate);
+    await mirror('address', PrefsKeys.partnerAddress);
+    await mirror('nationality', PrefsKeys.partnerNationality);
+    await mirror('weight', PrefsKeys.partnerWeight);
+    await mirror('height', PrefsKeys.partnerHeight);
+    await mirror('blood_type', PrefsKeys.partnerBloodType);
+    await mirror('eye_color', PrefsKeys.partnerEyeColor);
+    await mirror('conditions', PrefsKeys.partnerConditions);
+    await mirror('date_issued', PrefsKeys.partnerDateIssued);
+    await mirror('signature', PrefsKeys.partnerSignature);
   }
 
   /// Watches `couple_key_exchanges` for a row wrapped for this device -- the
