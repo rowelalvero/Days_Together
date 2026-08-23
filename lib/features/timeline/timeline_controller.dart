@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show BuildContext;
@@ -14,11 +13,13 @@ import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/services/encrypted_storage_service.dart';
 import 'package:days_together/services/local_persistence_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/shared/storage_image.dart' show evictStorageImageCache;
 
 /// Riverpod port of `TimelineProvider` (Phase 6a of the architecture
 /// migration -- the widest UI consumer surface of the 12, 18 files).
@@ -261,9 +262,11 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           final file = File(item.imagePath!);
           if (await file.exists()) {
             final storagePath = 'couples/$coupleId/timeline/${item.id}.jpg';
-            await Supabase.instance.client.storage
-                .from(StorageBuckets.timeline)
-                .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
+            await EncryptedStorageService.instance.encryptAndUpload(
+              bucket: StorageBuckets.timeline,
+              storagePath: storagePath,
+              plaintext: await file.readAsBytes(),
+            );
             imageRef = storagePath;
           }
         }
@@ -368,16 +371,16 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           final file = File(updatedItem.imagePath!);
           if (await file.exists()) {
             final storagePath = 'couples/$coupleId/timeline/${updatedItem.id}.jpg';
-            await Supabase.instance.client.storage
-                .from(StorageBuckets.timeline)
-                .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
+            await EncryptedStorageService.instance.encryptAndUpload(
+              bucket: StorageBuckets.timeline,
+              storagePath: storagePath,
+              plaintext: await file.readAsBytes(),
+            );
             imageRef = storagePath;
             // The object is overwritten in place (same path, upsert), so any
             // signed URL and cached bytes for it are now stale.
             await StorageUrlService.instance.evict(bucket: StorageBuckets.timeline, ref: storagePath);
-            await CachedNetworkImage.evictFromCache(
-              StorageUrlService.cacheKeyFor(bucket: StorageBuckets.timeline, ref: storagePath),
-            );
+            await evictStorageImageCache(bucket: StorageBuckets.timeline, ref: storagePath);
           }
         }
 

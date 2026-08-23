@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/services/encrypted_storage_service.dart';
 
 /// A service to encapsulate user profile, registry metadata, and avatar storage actions.
 class ProfileService {
@@ -62,6 +63,10 @@ class ProfileService {
   /// The buckets are private, so a durable public URL does not exist. Callers
   /// persist this path and render it through `StorageImage`, which mints a
   /// short-lived signed URL on demand.
+  ///
+  /// The upload is end-to-end encrypted via [EncryptedStorageService]: what
+  /// lands in the bucket is AES-256-GCM ciphertext under the couple's shared
+  /// photo key, not the plaintext image.
   Future<String> uploadAvatar({
     required String bucketName,
     required String filePath,
@@ -72,23 +77,11 @@ class ProfileService {
       throw Exception('Avatar image file does not exist at $filePath');
     }
 
-    final lowerPath = filePath.toLowerCase();
-    String mimeType = 'image/jpeg';
-    if (lowerPath.endsWith('.png')) {
-      mimeType = 'image/png';
-    } else if (lowerPath.endsWith('.gif')) {
-      mimeType = 'image/gif';
-    } else if (lowerPath.endsWith('.webp')) {
-      mimeType = 'image/webp';
-    }
-
-    await Supabase.instance.client.storage
-        .from(bucketName)
-        .upload(
-          storagePath,
-          file,
-          fileOptions: FileOptions(upsert: true, contentType: mimeType),
-        );
+    await EncryptedStorageService.instance.encryptAndUpload(
+      bucket: bucketName,
+      storagePath: storagePath,
+      plaintext: await file.readAsBytes(),
+    );
 
     return storagePath;
   }

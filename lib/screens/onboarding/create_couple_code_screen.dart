@@ -65,8 +65,15 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
         width: double.infinity,
         decoration: BoxDecoration(gradient: themeProvider.currentGradient),
         child: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 30),
+            // A plain Column (with a trailing Spacer) overflowed on shorter
+            // screens -- this screen has a lot of stacked content (code
+            // display, copy/share row, generate-new-code button, recovery
+            // code panel, checkbox, continue button) and nothing here
+            // scales down, so on a Redmi 8 the bottom of that content --
+            // including the "Generate New Code" button -- was getting
+            // clipped off-screen instead of just being scrollable.
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -281,7 +288,7 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
                     ],
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 24),
                 Row(
                   children: [
                     Checkbox(

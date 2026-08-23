@@ -304,14 +304,29 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
         path: Routes.wrapped,
         // Preserves settings_tab.dart's/wrapped_archive_screen.dart's original
         // fade transition -- see the Routes.auth route above for why.
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: WrappedScreen(data: state.extra as WrappedData),
-          transitionDuration: const Duration(milliseconds: 600),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
+        pageBuilder: (context, state) {
+          // `extra` is only ever passed in-memory by the two callers above
+          // (settings_tab.dart, wrapped_archive_screen.dart), both of which
+          // pass a real WrappedData -- but it is not JSON-serializable, so
+          // it cannot survive Android reaping this process while Wrapped is
+          // the foreground route: on relaunch, GoRouter's restored
+          // RouteInformation hands this builder back a plain
+          // `Map<String, dynamic>` (or null) instead, which `as WrappedData`
+          // would crash on. There is no data to regenerate a summary from at
+          // this point, so land on the archive list instead of crashing.
+          final extra = state.extra;
+          final child = extra is WrappedData
+              ? WrappedScreen(data: extra)
+              : const WrappedArchiveScreen();
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: child,
+            transitionDuration: const Duration(milliseconds: 600),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
       ),
       GoRoute(
         path: Routes.duration,

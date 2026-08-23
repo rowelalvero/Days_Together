@@ -36,10 +36,10 @@ dependencies:
   supabase_flutter: ^2.6.0
   google_sign_in: ^6.2.1
   permission_handler: ^11.3.1
-  cached_network_image: ^3.4.1
-  # Already pulled in transitively by cached_network_image; declared explicitly
-  # because StorageImage reads the disk cache directly to render images offline
-  # when a signed URL cannot be minted.
+  # StorageImage fetches bytes itself (to decrypt them -- see E2EE photo
+  # encryption) via its own CacheManager subclass, so it no longer goes
+  # through cached_network_image at all; that package was dropped entirely
+  # once this became the last thing depending on it.
   flutter_cache_manager: ^3.4.1
   flutter_secure_storage: ^9.0.0
   flutter_launcher_icons: ^0.13.1
@@ -49,6 +49,9 @@ dependencies:
   home_widget: ^0.7.0
   flutter_riverpod: ^3.3.2
   go_router: ^17.5.0
+  # X25519/AES-GCM/HKDF for end-to-end photo encryption -- KeyManagementService
+  # and PhotoEncryptionService are the only two files that import this.
+  cryptography: ^2.7.0
 
 dev_dependencies:
   flutter_test:

@@ -25,9 +25,14 @@ class FakeCoupleService implements CoupleService {
   Map<String, dynamic>? recoverWithCodeResponse;
   Map<String, dynamic>? regenerateRecoveryCodeResponse;
 
+  String? lastCreateWorkspacePublicKey;
+  String? lastJoinPublicKey;
+  String? lastRecoverPublicKey;
+
   @override
-  Future<Map<String, dynamic>> createRelationshipWorkspace() async {
+  Future<Map<String, dynamic>> createRelationshipWorkspace({String? publicKey}) async {
     createWorkspaceCallCount++;
+    lastCreateWorkspacePublicKey = publicKey;
     if (createWorkspaceError != null) throw createWorkspaceError!;
     return createWorkspaceResponse ??
         {
@@ -43,15 +48,17 @@ class FakeCoupleService implements CoupleService {
   }
 
   @override
-  Future<Map<String, dynamic>> joinWithCode(String code) async {
+  Future<Map<String, dynamic>> joinWithCode(String code, {String? publicKey}) async {
     joinWithCodeCallCount++;
     lastJoinCode = code;
+    lastJoinPublicKey = publicKey;
     if (joinWithCodeError != null) throw joinWithCodeError!;
     return joinWithCodeResponse ?? {'success': false, 'error': 'not configured'};
   }
 
   @override
-  Future<Map<String, dynamic>> recoverWithCode(String code) async {
+  Future<Map<String, dynamic>> recoverWithCode(String code, {String? publicKey}) async {
+    lastRecoverPublicKey = publicKey;
     return recoverWithCodeResponse ?? {'success': false, 'error': 'not configured'};
   }
 

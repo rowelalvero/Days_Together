@@ -15,6 +15,7 @@ import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/models/vault_item_model.dart';
+import 'package:days_together/services/encrypted_storage_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
@@ -326,11 +327,12 @@ class VaultController extends Notifier<VaultState>
 
       if (coupleId != null) {
         try {
-          final file = File(picked.path);
           final storagePath = 'couples/$coupleId/vault_photos/$photoId.jpg';
-          await Supabase.instance.client.storage
-              .from(StorageBuckets.vaultPhotos)
-              .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
+          await EncryptedStorageService.instance.encryptAndUpload(
+            bucket: StorageBuckets.vaultPhotos,
+            storagePath: storagePath,
+            plaintext: await File(picked.path).readAsBytes(),
+          );
 
           await Supabase.instance.client.from('vault_items').upsert({
             'id': photoId,

@@ -7,6 +7,9 @@ class AuthService {
   /// The singleton instance of the AuthService.
   static final AuthService instance = AuthService._();
 
+  /// The currently signed-in user's id, or null if nobody is signed in.
+  String? get currentUserId => Supabase.instance.client.auth.currentUser?.id;
+
   /// Signs up a new user using email and password.
   Future<AuthResponse> signUpWithEmail(String email, String password) {
     return Supabase.instance.client.auth.signUp(email: email, password: password);

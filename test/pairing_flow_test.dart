@@ -21,20 +21,31 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptography/cryptography.dart';
 import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/services/key_management_service.dart';
 
 import 'fake_couple_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() {
+  // createRelationshipWorkspace/joinWithCode/recoverRelationship all touch
+  // KeyManagementService for E2EE photo encryption's key exchange (posting a
+  // public key, and -- for create -- minting/storing the couple photo key).
+  // KeyManagementService.withKeyPair bypasses FlutterSecureStorage entirely
+  // (no platform channel in a plain unit test), matching the same constraint
+  // vault_controller_test.dart documents for the Vault PIN.
+  late KeyManagementService fakeKeyManagementService;
+
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (MethodCall methodCall) async => '.',
     );
+    fakeKeyManagementService = KeyManagementService.withKeyPair(await X25519().newKeyPair());
   });
 
   group('CoupleSession.createRelationshipWorkspace', () {
@@ -45,7 +56,7 @@ void main() {
         'pairing_code': 'ABC123',
         'recovery_code': 'REC-XYZ',
       };
-      final session = CoupleSession(coupleService: fake);
+      final session = CoupleSession(coupleService: fake, keyManagementService: fakeKeyManagementService);
       await Future.delayed(Duration.zero);
 
       final stageBefore = computeSessionStage(
@@ -90,7 +101,7 @@ void main() {
     test('a failure rethrows and leaves _isGeneratingCode reset for the next attempt', () async {
       final fake = FakeCoupleService();
       fake.createWorkspaceError = Exception('rpc unreachable');
-      final session = CoupleSession(coupleService: fake);
+      final session = CoupleSession(coupleService: fake, keyManagementService: fakeKeyManagementService);
       await Future.delayed(Duration.zero);
 
       await expectLater(
@@ -119,7 +130,7 @@ void main() {
         'pairing_code': 'GHI789',
         'recovery_code': 'REC-3',
       };
-      final session = CoupleSession(coupleService: fake);
+      final session = CoupleSession(coupleService: fake, keyManagementService: fakeKeyManagementService);
       await Future.delayed(Duration.zero);
 
       // CoupleSession.createRelationshipWorkspace sets its in-flight guard
@@ -137,7 +148,7 @@ void main() {
   group('CoupleSession.joinWithCode', () {
     test('rejects a malformed code without calling the service at all', () async {
       final fake = FakeCoupleService();
-      final session = CoupleSession(coupleService: fake);
+      final session = CoupleSession(coupleService: fake, keyManagementService: fakeKeyManagementService);
       await Future.delayed(Duration.zero);
 
       final result = await session.joinWithCode('TOOSHORT-NOT-6-CHARS');
@@ -150,7 +161,7 @@ void main() {
 
     test('an empty code is rejected the same way', () async {
       final fake = FakeCoupleService();
-      final session = CoupleSession(coupleService: fake);
+      final session = CoupleSession(coupleService: fake, keyManagementService: fakeKeyManagementService);
       await Future.delayed(Duration.zero);
 
       final result = await session.joinWithCode('');
@@ -161,7 +172,7 @@ void main() {
 
     test('re-entrant calls while a join is already in flight are no-ops', () async {
       final fake = FakeCoupleService();
-      final session = CoupleSession(coupleService: fake);
+      final session = CoupleSession(coupleService: fake, keyManagementService: fakeKeyManagementService);
       await Future.delayed(Duration.zero);
 
       // Offline (no Supabase), both calls return false regardless of

@@ -28,8 +28,14 @@ class _PairingSelectionScreenState extends ConsumerState<PairingSelectionScreen>
         width: double.infinity,
         decoration: BoxDecoration(gradient: themeProvider.currentGradient),
         child: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 30),
+            // A plain Column with Spacers overflowed on shorter screens (the
+            // fixed-height back button + heading + 3 cards don't always fit
+            // even with both Spacers shrunk to zero -- e.g. a Redmi 8).
+            // Spacer requires bounded height from its Flex parent, which a
+            // scrollable's unbounded height can't provide, so the two
+            // Spacers below are replaced with fixed gaps.
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -52,7 +58,7 @@ class _PairingSelectionScreenState extends ConsumerState<PairingSelectionScreen>
                     color: theme.textColor,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 40),
                 Text(
                   'How would you like to\nbegin your story?',
                   style: AppTypography.cormorant(
@@ -125,7 +131,7 @@ class _PairingSelectionScreenState extends ConsumerState<PairingSelectionScreen>
                     });
                   },
                 ),
-                const Spacer(flex: 2),
+                const SizedBox(height: 40),
               ],
             ),
           ),

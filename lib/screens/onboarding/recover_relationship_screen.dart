@@ -30,15 +30,27 @@ class _RecoverRelationshipScreenState extends ConsumerState<RecoverRelationshipS
   }
 
   /// Waits for [SessionState.isInitialized] to become true, with a bounded timeout.
+  ///
+  /// Polls across `await Future.delayed` gaps, so `mounted` must be
+  /// re-checked before every `ref.read`: if this screen gets popped mid-poll
+  /// (e.g. the recovery flow navigates away for an unrelated reason), the
+  /// very next `ref.read` after that would otherwise throw Riverpod's "ref
+  /// used after unmount" StateError instead of just returning false to the
+  /// caller. `ConsumerState.ref` (a `WidgetRef`) ties its safety directly to
+  /// `context.mounted` -- unlike a `Notifier`'s own `Ref`, which additionally
+  /// exposes `ref.mounted` for the same purpose, `WidgetRef` has no such
+  /// getter, so this State's own `mounted` is the correct check here.
   Future<bool> _waitForInitialization() async {
     const maxWait = Duration(seconds: 20);
     const pollInterval = Duration(milliseconds: 100);
     final deadline = DateTime.now().add(maxWait);
 
-    while (!ref.read(sessionControllerProvider).isInitialized &&
+    while (mounted &&
+        !ref.read(sessionControllerProvider).isInitialized &&
         DateTime.now().isBefore(deadline)) {
       await Future.delayed(pollInterval);
     }
+    if (!mounted) return false;
     return ref.read(sessionControllerProvider).isInitialized;
   }
 

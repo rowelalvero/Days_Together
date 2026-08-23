@@ -9,9 +9,14 @@ class CoupleService {
 
   /// Creates a new relationship workspace.
   /// Returns a map containing 'couple_id', 'pairing_code', and 'recovery_code'.
-  Future<Map<String, dynamic>> createRelationshipWorkspace() async {
+  ///
+  /// [publicKey] is this device's base64 X25519 public key, posted for E2EE
+  /// photo encryption's key exchange (see KeyManagementService). Optional so
+  /// a not-yet-rebuilt client still works -- the RPC param defaults to NULL.
+  Future<Map<String, dynamic>> createRelationshipWorkspace({String? publicKey}) async {
     final response = await Supabase.instance.client.rpc(
       'create_relationship_workspace',
+      params: publicKey != null ? {'p_public_key': publicKey} : {},
     );
     return Map<String, dynamic>.from(response);
   }
@@ -26,19 +31,27 @@ class CoupleService {
   }
 
   /// Attempts to join a workspace using a 6-digit invitation code via Database RPC.
-  Future<Map<String, dynamic>> joinWithCode(String code) async {
+  ///
+  /// [publicKey] -- see [createRelationshipWorkspace].
+  Future<Map<String, dynamic>> joinWithCode(String code, {String? publicKey}) async {
+    final params = <String, dynamic>{'p_pairing_code': code};
+    if (publicKey != null) params['p_public_key'] = publicKey;
     final response = await Supabase.instance.client.rpc(
       'join_relationship_with_code',
-      params: {'p_pairing_code': code},
+      params: params,
     );
     return Map<String, dynamic>.from(response);
   }
 
   /// Reconnects a user to a workspace using a recovery code.
-  Future<Map<String, dynamic>> recoverWithCode(String code) async {
+  ///
+  /// [publicKey] -- see [createRelationshipWorkspace].
+  Future<Map<String, dynamic>> recoverWithCode(String code, {String? publicKey}) async {
+    final params = <String, dynamic>{'p_recovery_code': code};
+    if (publicKey != null) params['p_public_key'] = publicKey;
     final response = await Supabase.instance.client.rpc(
       'recover_relationship_with_code',
-      params: {'p_recovery_code': code},
+      params: params,
     );
     return Map<String, dynamic>.from(response);
   }

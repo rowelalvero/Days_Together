@@ -265,7 +265,7 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       routerConfig: router,
-      title: 'Our Love Story',
+      title: 'Days Together',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Spectral',

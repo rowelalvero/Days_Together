@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/services/encrypted_storage_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -267,13 +268,11 @@ class NoteitSyncManager {
         }
 
         final storagePath = 'couples/$coupleId/love_notes/${task.id}.jpg';
-        await Supabase.instance.client.storage
-            .from(StorageBuckets.loveNotes)
-            .upload(
-              storagePath,
-              file,
-              fileOptions: const FileOptions(upsert: true), // Idempotency
-            );
+        await EncryptedStorageService.instance.encryptAndUpload(
+          bucket: StorageBuckets.loveNotes,
+          storagePath: storagePath,
+          plaintext: await file.readAsBytes(),
+        );
 
         imageRef = storagePath;
       }

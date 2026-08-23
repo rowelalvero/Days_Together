@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/themes/theme_manager.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 
 /// A production-safe loading dialog that wraps any async [Future] with:
@@ -36,6 +37,18 @@ class SafeLoadingDialog {
     // Ensure we have a valid context
     if (!context.mounted) return null;
 
+    // Resolved once, up front, as a plain snapshot rather than a live
+    // ref.watch subscription: [future] commonly mutates app-wide session
+    // state (e.g. CoupleSession.createRelationshipWorkspace), which can
+    // trigger a GoRouter redirect that tears down the *entire* route stack
+    // -- including this dialog -- while it's still up. A ConsumerState
+    // dialog watching a provider mid-teardown can throw Riverpod's "ref
+    // used after unmount" StateError; a plain, ref-free dialog widget
+    // cannot, regardless of what happens to the navigation stack around it.
+    final theme = ProviderScope.containerOf(context, listen: false)
+        .read(themeControllerProvider)
+        .currentLoveTheme;
+
     T? result;
     bool dismissed = false;
     bool timedOut = false;
@@ -55,6 +68,7 @@ class SafeLoadingDialog {
       barrierDismissible: false,
       builder: (dialogContext) {
         return _SafeLoadingDialogContent(
+          theme: theme,
           future: () async {
             try {
               result = await future().timeout(
@@ -110,7 +124,8 @@ class SafeLoadingDialog {
   }
 }
 
-class _SafeLoadingDialogContent extends ConsumerStatefulWidget {
+class _SafeLoadingDialogContent extends StatefulWidget {
+  final LoveStoryTheme theme;
   final Future<void> Function() future;
   final String loadingMessage;
   final int cancelDelaySeconds;
@@ -118,6 +133,7 @@ class _SafeLoadingDialogContent extends ConsumerStatefulWidget {
   final VoidCallback onCancel;
 
   const _SafeLoadingDialogContent({
+    required this.theme,
     required this.future,
     required this.loadingMessage,
     required this.cancelDelaySeconds,
@@ -126,11 +142,11 @@ class _SafeLoadingDialogContent extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_SafeLoadingDialogContent> createState() =>
+  State<_SafeLoadingDialogContent> createState() =>
       _SafeLoadingDialogContentState();
 }
 
-class _SafeLoadingDialogContentState extends ConsumerState<_SafeLoadingDialogContent> {
+class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
   bool _showCancel = false;
   Timer? _cancelTimer;
 
@@ -163,8 +179,7 @@ class _SafeLoadingDialogContentState extends ConsumerState<_SafeLoadingDialogCon
 
   @override
   Widget build(BuildContext context) {
-    final themeState = ref.watch(themeControllerProvider);
-    final theme = themeState.currentLoveTheme;
+    final theme = widget.theme;
     final indicatorColor = widget.indicatorColor ?? theme.accentColor;
 
     return PopScope(

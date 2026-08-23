@@ -247,8 +247,8 @@ class StorageUrlService {
   }
 
   /// Drops the in-memory signed URL for [ref]. Callers that overwrite an object
-  /// at the same path should also evict the `cached_network_image` entry using
-  /// [cacheKeyFor].
+  /// at the same path should also evict its cached image bytes via
+  /// `evictStorageImageCache` (lib/shared/storage_image.dart).
   Future<void> evict({required String bucket, required String? ref}) async {
     final path = pathFrom(ref, bucket: bucket);
     if (path == null) return;
