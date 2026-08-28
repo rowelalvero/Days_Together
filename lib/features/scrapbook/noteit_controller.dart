@@ -129,7 +129,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('NoteitController.purgeCache error: $e');
+    }
   }
 
   @override
@@ -404,7 +406,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
           try {
             final storagePath = 'couples/$coupleId/love_notes/$id.jpg';
             await Supabase.instance.client.storage.from('love-notes').remove([storagePath]);
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('NoteitController.deleteNote storage remove error: $e');
+          }
         }
       } catch (e) {
         debugPrint('NoteitController.deleteNote Supabase error: $e');

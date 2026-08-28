@@ -73,7 +73,9 @@ class DailyMoodController extends Notifier<DailyMoodState> with SupabaseLifecycl
       await prefs.remove(_moodKey);
       await prefs.remove(_partnerMoodKey);
       await prefs.remove(_questionKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('DailyMoodController.purgeCache error: $e');
+    }
   }
 
   @override

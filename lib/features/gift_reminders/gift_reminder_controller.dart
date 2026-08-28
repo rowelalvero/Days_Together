@@ -60,7 +60,9 @@ class GiftReminderController extends Notifier<GiftReminderState>
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('GiftReminderController.purgeCache error: $e');
+    }
   }
 
   @override

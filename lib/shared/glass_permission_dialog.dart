@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/features/theme/theme_controller.dart';
 
-class GlassPermissionDialog extends ConsumerWidget {
+class GlassPermissionDialog extends StatelessWidget {
   final String title;
   final String rationale;
   final IconData icon;
+  final Color? accentColor;
 
   const GlassPermissionDialog({
     super.key,
     required this.title,
     required this.rationale,
     required this.icon,
+    this.accentColor,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeProvider = ref.watch(themeControllerProvider);
-    final theme = themeProvider.currentLoveTheme;
+  Widget build(BuildContext context) {
+    final effectiveAccentColor = accentColor ?? Theme.of(context).colorScheme.primary;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -38,7 +37,7 @@ class GlassPermissionDialog extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: theme.accentColor, size: 40),
+              child: Icon(icon, color: effectiveAccentColor, size: 40),
             ),
             const SizedBox(height: 20),
             Text(
@@ -80,7 +79,7 @@ class GlassPermissionDialog extends ConsumerWidget {
                       Navigator.pop(context, true);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.accentColor,
+                      backgroundColor: effectiveAccentColor,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(

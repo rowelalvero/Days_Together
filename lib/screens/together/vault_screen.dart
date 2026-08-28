@@ -443,7 +443,6 @@ class _VaultContentScreen extends ConsumerWidget {
   }
 
   void _showWriteLetterDialog(BuildContext context, VaultController vaultNotifier) {
-    final controller = TextEditingController();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -451,60 +450,98 @@ class _VaultContentScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '💌 Write a Love Letter',
-              style: AppTypography.title(
-                color: theme.textColor,
-                fontSize: 20,
+      builder: (ctx) => _WriteLetterBottomSheet(
+        theme: theme,
+        vaultNotifier: vaultNotifier,
+      ),
+    );
+  }
+}
+
+class _WriteLetterBottomSheet extends StatefulWidget {
+  final dynamic theme;
+  final VaultController vaultNotifier;
+
+  const _WriteLetterBottomSheet({
+    required this.theme,
+    required this.vaultNotifier,
+  });
+
+  @override
+  State<_WriteLetterBottomSheet> createState() => _WriteLetterBottomSheetState();
+}
+
+class _WriteLetterBottomSheetState extends State<_WriteLetterBottomSheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = widget.theme;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '💌 Write a Love Letter',
+            style: AppTypography.title(
+              color: theme.textColor,
+              fontSize: 20,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            maxLines: 8,
+            style: AppTypography.lora(color: theme.textColor),
+            decoration: InputDecoration(
+              hintText: 'Dear love...',
+              hintStyle: AppTypography.lora(color: theme.textColor.withValues(alpha: 0.3)),
+              filled: true,
+              fillColor: theme.textColor.withValues(alpha: 0.05),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              maxLines: 8,
-              style: AppTypography.lora(color: theme.textColor),
-              decoration: InputDecoration(
-                hintText: 'Dear love...',
-                hintStyle: AppTypography.lora(color: theme.textColor.withValues(alpha: 0.3)),
-                filled: true,
-                fillColor: theme.textColor.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
-                ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                if (_controller.text.trim().isNotEmpty) {
+                  widget.vaultNotifier.addLetter(_controller.text.trim());
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.accentColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
+              child: Text('Save Letter', style: AppTypography.button(color: Colors.white, fontSize: 14)),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (controller.text.trim().isNotEmpty) {
-                    vaultNotifier.addLetter(controller.text.trim());
-                    Navigator.pop(ctx);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.accentColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text('Save Letter', style: AppTypography.button(color: Colors.white, fontSize: 14)),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

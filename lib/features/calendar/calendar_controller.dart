@@ -53,7 +53,9 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('CalendarController.purgeCache error: $e');
+    }
   }
 
   CalendarEvent _parseEvent(Map<String, dynamic> data) {

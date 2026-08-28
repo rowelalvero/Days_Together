@@ -120,7 +120,9 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('LoveChatController.purgeCache error: $e');
+    }
   }
 
   @override

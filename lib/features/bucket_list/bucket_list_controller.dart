@@ -67,7 +67,9 @@ class BucketListController extends Notifier<BucketListState>
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('BucketListController.purgeCache error: $e');
+    }
   }
 
   @override

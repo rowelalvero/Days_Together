@@ -175,7 +175,9 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
         if (selfData.isNotEmpty) {
           try {
             await UserRepository.instance.updateUser(session.userId!, selfData);
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('LicenseController.updateFields updateUser error: $e');
+          }
         }
       }
 
@@ -200,7 +202,9 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
         if (partnerData.isNotEmpty) {
           try {
             await UserRepository.instance.updatePartnerProfile(session.partnerId!, partnerData);
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('LicenseController.updateFields updatePartnerProfile error: $e');
+          }
         }
       }
     }

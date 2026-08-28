@@ -104,7 +104,9 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
       await prefs.remove(_customCardsKey);
       await prefs.remove(_likedCardIdsKey);
       await prefs.remove(_pendingLikesKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('TopicCardsController.purgeCache error: $e');
+    }
   }
 
   @override

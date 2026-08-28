@@ -54,7 +54,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
       final isAscending = prefs.getBool(PrefsKeys.timelineIsAscending) ?? true;
       if (!ref.mounted) return;
       state = state.copyWith(isAscending: isAscending);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('TimelineController._loadSortOrder error: $e');
+    }
   }
 
   List<TimelineItemData> _sorted(List<TimelineItemData> items, bool ascending) {
@@ -88,7 +90,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(PrefsKeys.timelineIsAscending, nextAscending);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('TimelineController.toggleSortOrder error: $e');
+    }
     await _persistLocalOnly();
   }
 
@@ -97,7 +101,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     state = state.copyWith(items: [], isLoading: false);
     try {
       await _repository.saveTimelineItems([]);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('TimelineController.purgeCache error: $e');
+    }
   }
 
   TimelineItemData _parseItem(Map<String, dynamic> data) {
@@ -112,7 +118,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           if (decoded is List) {
             parsedComments = decoded.map((c) => CommentData.fromJson(c as Map<String, dynamic>)).toList();
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('TimelineController._parseItem comments decode error: $e');
+        }
       }
     }
     return TimelineItemData(
@@ -499,7 +507,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
         try {
           final storagePath = 'couples/$coupleId/timeline/$id.jpg';
           await Supabase.instance.client.storage.from('timeline').remove([storagePath]);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('TimelineController.deleteTimelineItem storage remove error: $e');
+        }
 
         final currentRemaining = List<TimelineItemData>.from(state.items);
         for (var i = 0; i < currentRemaining.length; i++) {

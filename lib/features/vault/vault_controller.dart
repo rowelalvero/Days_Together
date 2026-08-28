@@ -85,7 +85,9 @@ class VaultController extends Notifier<VaultState>
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_storageKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('VaultController.purgeCache error: $e');
+    }
   }
 
   VaultItem _parseItem(Map<String, dynamic> data, {String? imagePath}) {
@@ -441,7 +443,9 @@ class VaultController extends Notifier<VaultState>
           try {
             final storagePath = 'couples/$coupleId/vault_photos/$id.jpg';
             await Supabase.instance.client.storage.from('vault-photos').remove([storagePath]);
-          } catch (_) {}
+          } catch (e) {
+            debugPrint('VaultController.deleteItem storage remove error: $e');
+          }
         }
       } catch (e) {
         debugPrint('VaultController.deleteItem Supabase error: $e');

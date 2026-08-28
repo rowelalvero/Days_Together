@@ -442,4 +442,21 @@ void main() {
       );
     });
   });
+
+  group('Architecture Rule 12 -- shared/ and core/ must not depend on features/', () {
+    test('no file under lib/shared/ or lib/core/ imports from lib/features/', () {
+      final violations = <String>[];
+      for (final file in [..._dartFilesUnder('lib/shared'), ..._dartFilesUnder('lib/core')]) {
+        final content = file.readAsStringSync();
+        if (content.contains("package:days_together/features/") || content.contains("../features/")) {
+          violations.add(file.path.replaceAll('\\', '/'));
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'Files under shared/ or core/ importing from features/ (Architecture Rule 12): $violations',
+      );
+    });
+  });
 }

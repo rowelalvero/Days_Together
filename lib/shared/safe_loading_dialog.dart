@@ -1,9 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
-import 'package:days_together/features/theme/theme_controller.dart';
 
 /// A production-safe loading dialog that wraps any async [Future] with:
 ///
@@ -37,18 +34,6 @@ class SafeLoadingDialog {
     // Ensure we have a valid context
     if (!context.mounted) return null;
 
-    // Resolved once, up front, as a plain snapshot rather than a live
-    // ref.watch subscription: [future] commonly mutates app-wide session
-    // state (e.g. CoupleSession.createRelationshipWorkspace), which can
-    // trigger a GoRouter redirect that tears down the *entire* route stack
-    // -- including this dialog -- while it's still up. A ConsumerState
-    // dialog watching a provider mid-teardown can throw Riverpod's "ref
-    // used after unmount" StateError; a plain, ref-free dialog widget
-    // cannot, regardless of what happens to the navigation stack around it.
-    final theme = ProviderScope.containerOf(context, listen: false)
-        .read(themeControllerProvider)
-        .currentLoveTheme;
-
     T? result;
     bool dismissed = false;
     bool timedOut = false;
@@ -68,7 +53,6 @@ class SafeLoadingDialog {
       barrierDismissible: false,
       builder: (dialogContext) {
         return _SafeLoadingDialogContent(
-          theme: theme,
           future: () async {
             try {
               result = await future().timeout(
@@ -125,7 +109,6 @@ class SafeLoadingDialog {
 }
 
 class _SafeLoadingDialogContent extends StatefulWidget {
-  final LoveStoryTheme theme;
   final Future<void> Function() future;
   final String loadingMessage;
   final int cancelDelaySeconds;
@@ -133,7 +116,6 @@ class _SafeLoadingDialogContent extends StatefulWidget {
   final VoidCallback onCancel;
 
   const _SafeLoadingDialogContent({
-    required this.theme,
     required this.future,
     required this.loadingMessage,
     required this.cancelDelaySeconds,
@@ -179,8 +161,10 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = widget.theme;
-    final indicatorColor = widget.indicatorColor ?? theme.accentColor;
+    final themeData = Theme.of(context);
+    final isDark = themeData.brightness == Brightness.dark;
+    final effectiveIndicatorColor = widget.indicatorColor ?? themeData.colorScheme.primary;
+    final textColor = themeData.colorScheme.onSurface;
 
     return PopScope(
       canPop: false,
@@ -189,7 +173,7 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
           margin: const EdgeInsets.symmetric(horizontal: 48),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
           decoration: BoxDecoration(
-            color: theme.isDark
+            color: isDark
                 ? Colors.grey.shade900.withValues(alpha: 0.95)
                 : Colors.white.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(24),
@@ -209,14 +193,14 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
                 height: 36,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  color: indicatorColor,
+                  color: effectiveIndicatorColor,
                 ),
               ),
               const SizedBox(height: 20),
               Text(
                 widget.loadingMessage,
                 style: AppTypography.body(
-                  color: theme.textColor.withValues(alpha: 0.7),
+                  color: textColor.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
@@ -230,7 +214,7 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
                         child: TextButton(
                           onPressed: widget.onCancel,
                           style: TextButton.styleFrom(
-                            foregroundColor: theme.textColor.withValues(alpha: 0.4),
+                            foregroundColor: textColor.withValues(alpha: 0.4),
                           ),
                           child: Text(
                             'Cancel',

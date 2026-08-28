@@ -93,60 +93,13 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
     }
 
     if (!vaultState.isUnlocked) {
-      // Show pin verification dialog
-      final pinController = TextEditingController();
       showDialog(
         context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            backgroundColor: theme.primaryColor,
-            title: Text('Enter Vault PIN', style: AppTypography.title(color: theme.textColor)),
-            content: TextField(
-              controller: pinController,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 4,
-              style: AppTypography.bodyMono(color: theme.textColor, fontSize: 24).copyWith(letterSpacing: 16),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                counterText: '',
-                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.38))),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.accentColor)),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final correct = await vault.verifyPin(pinController.text);
-                  if (!context.mounted) return;
-                  if (correct) {
-                    await vault.addLetter(_generatedLetter!);
-                    if (!context.mounted) return;
-                    Navigator.pop(dialogContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('🔒 Saved securely to your Secret Vault!'),
-                        backgroundColor: Colors.pinkAccent,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Incorrect PIN. Please try again.'),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
-                },
-                child: Text('Unlock & Save', style: AppTypography.button(color: theme.accentColor)),
-              ),
-            ],
-          );
-        },
+        builder: (dialogContext) => _PinPromptDialog(
+          theme: theme,
+          vault: vault,
+          generatedLetter: _generatedLetter!,
+        ),
       );
     } else {
       await vault.addLetter(_generatedLetter!);
@@ -406,6 +359,90 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PinPromptDialog extends StatefulWidget {
+  final dynamic theme;
+  final dynamic vault;
+  final String generatedLetter;
+
+  const _PinPromptDialog({
+    required this.theme,
+    required this.vault,
+    required this.generatedLetter,
+  });
+
+  @override
+  State<_PinPromptDialog> createState() => _PinPromptDialogState();
+}
+
+class _PinPromptDialogState extends State<_PinPromptDialog> {
+  late final TextEditingController _pinController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pinController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = widget.theme;
+    return AlertDialog(
+      backgroundColor: theme.primaryColor,
+      title: Text('Enter Vault PIN', style: AppTypography.title(color: theme.textColor)),
+      content: TextField(
+        controller: _pinController,
+        keyboardType: TextInputType.number,
+        obscureText: true,
+        maxLength: 4,
+        style: AppTypography.bodyMono(color: theme.textColor, fontSize: 24).copyWith(letterSpacing: 16),
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          counterText: '',
+          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.38))),
+          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.accentColor)),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
+        ),
+        TextButton(
+          onPressed: () async {
+            final correct = await widget.vault.verifyPin(_pinController.text);
+            if (!mounted) return;
+            if (correct) {
+              await widget.vault.addLetter(widget.generatedLetter);
+              if (!mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🔒 Saved securely to your Secret Vault!'),
+                  backgroundColor: Colors.pinkAccent,
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Incorrect PIN. Please try again.'),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }
+          },
+          child: Text('Unlock & Save', style: AppTypography.button(color: theme.accentColor)),
+        ),
+      ],
     );
   }
 }

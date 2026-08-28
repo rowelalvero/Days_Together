@@ -229,7 +229,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
           scrapbookItem = NoteitItem.fromJson(jsonDecode(payload));
         } else {
           final noteId = payload.trim();
-          final noteitState = ref.read(noteitControllerProvider);
+          final noteitState = ref.watch(noteitControllerProvider);
           try {
             scrapbookItem = noteitState.visibleNotes.firstWhere((n) => n.id == noteId);
           } catch (_) {

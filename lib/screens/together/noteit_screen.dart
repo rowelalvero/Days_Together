@@ -2016,7 +2016,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
 
   Widget _buildToolbarButton(IconData icon, String mode, String tooltip) {
     final isSelected = _activeMode == mode;
-    final theme = ref.read(themeControllerProvider).currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
 
     return Tooltip(
       message: tooltip,
@@ -2231,7 +2231,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
     Color previewColor,
   ) {
     final isSelected = _bgType == type;
-    final theme = ref.read(themeControllerProvider).currentLoveTheme;
+    final theme = ref.watch(themeControllerProvider).currentLoveTheme;
 
     return OutlinedButton(
       onPressed: () {
