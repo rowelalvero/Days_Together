@@ -246,7 +246,30 @@ class _AvatarCreationScreenState extends ConsumerState<AvatarCreationScreen> {
         _yourNameController.text.trim(),
       );
       if (_avatarPath != null) {
-        await profile.setAvatars(yourPath: _avatarPath);
+        // The avatar upload is encrypted with the couple photo key, which the
+        // *joining* partner does not hold until the key exchange lands. Wait
+        // briefly for it (this returns immediately once the key is present,
+        // and never throws on timeout), then treat a failed upload as
+        // non-fatal.
+        await session.waitForCoupleKey();
+        try {
+          await profile.setAvatars(yourPath: _avatarPath);
+        } catch (e) {
+          // Onboarding must not be held hostage by a photo upload: letting
+          // this propagate skipped completeOnboarding() below and stranded
+          // the joining partner on this screen with no way forward. The
+          // local path is already set, and StorageImage prefers it over
+          // anything remote, so the avatar still displays on this device
+          // while it syncs later.
+          debugPrint('Avatar upload deferred during onboarding: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("We'll finish syncing your photo in a moment."),
+              ),
+            );
+          }
+        }
       }
       // No explicit navigation after this: completeOnboarding() flips
       // CoupleSession's stage to `ready`, which the router's single

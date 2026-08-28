@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/routing/app_router.dart';
 import 'package:days_together/routing/routes.dart';
+import 'package:days_together/services/notification_service.dart';
 
 void main() {
   group('computeRedirectTarget -- loading', () {
@@ -176,6 +177,76 @@ void main() {
           pendingLocation: Routes.home,
         ),
         Routes.home,
+      );
+    });
+  });
+
+  // Regression: a notification tap that launched the app from terminated is
+  // resolved inside NotificationService.init(), which main.dart awaits
+  // *before* runApp -- so there is no GoRouter yet. Reading `appRouter` there
+  // threw, and because that throw happened inside _initializeApp's single
+  // try/catch it also skipped HomeWidgetService.initialize() and the FCM
+  // token-refresh registration. The payload is now queued and replayed
+  // through the same pending-deep-link path a link arriving mid-hydration
+  // already used.
+  group('cold-start notification deep link', () {
+    setUp(resetPendingDeepLinkForTest);
+    tearDown(resetPendingDeepLinkForTest);
+
+    test('the router is not ready before ensureAppRouter has built it', () {
+      expect(appRouterIsReady, isFalse);
+    });
+
+    test('a payload arriving before the router exists is queued, not thrown', () {
+      expect(
+        () => NotificationService().handleNotificationPayloadForTest(
+          {'feature': 'chat'},
+        ),
+        returnsNormally,
+      );
+      expect(pendingDeepLinkForTest, Routes.chat);
+    });
+
+    test('an item-scoped payload queues the item route', () {
+      NotificationService().handleNotificationPayloadForTest(
+        {'feature': 'memories', 'item_id': 'memory-42'},
+      );
+      expect(pendingDeepLinkForTest, Routes.memory('memory-42'));
+    });
+
+    test('an unrecognized feature queues nothing', () {
+      NotificationService().handleNotificationPayloadForTest(
+        {'feature': 'not_a_feature'},
+      );
+      expect(pendingDeepLinkForTest, isNull);
+    });
+
+    test('a payload with no feature queues nothing', () {
+      NotificationService().handleNotificationPayloadForTest({'item_id': 'x'});
+      expect(pendingDeepLinkForTest, isNull);
+    });
+
+    test('the queued link is what the redirect replays once the stage resolves', () {
+      NotificationService().handleNotificationPayloadForTest({'feature': 'vault'});
+
+      // Still loading: hold at /loading, keeping the queued link.
+      expect(
+        computeRedirectTarget(
+          stage: SessionStage.loading,
+          here: Routes.loading,
+          pendingLocation: pendingDeepLinkForTest,
+        ),
+        isNull,
+      );
+
+      // Hydration finished as `ready` -- the deep link is honored.
+      expect(
+        computeRedirectTarget(
+          stage: SessionStage.ready,
+          here: Routes.loading,
+          pendingLocation: pendingDeepLinkForTest,
+        ),
+        Routes.vault,
       );
     });
   });

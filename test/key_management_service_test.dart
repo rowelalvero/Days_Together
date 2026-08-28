@@ -179,5 +179,103 @@ void main() {
       expect(await service.loadCoupleKey('user-alice'), keyForAlice);
       expect(await service.loadCoupleKey('user-bob'), keyForBob);
     });
+
+    // Regression: leaving a relationship used to leave the couple photo key
+    // in secure storage, so the *next* pairing's
+    // _wrapCoupleKeyForPartnerIfHeld pushed the previous relationship's key
+    // to the new partner and the two devices permanently disagreed about
+    // which key the couple's photos were encrypted under.
+    test('clearCoupleKey removes the key and its couple tag', () async {
+      final service = KeyManagementService.instance;
+      final key = Uint8List.fromList(List.filled(32, 7));
+
+      await service.storeCoupleKey('user-alice', key, coupleId: 'couple-1');
+      expect(await service.loadCoupleKey('user-alice'), key);
+
+      await service.clearCoupleKey('user-alice');
+
+      expect(await service.loadCoupleKey('user-alice'), isNull);
+      // The tag is gone too, so a later store for a different couple cannot
+      // be mistaken for the old one.
+      expect(backing.keys.where((k) => k.contains('couple_photo_key')), isEmpty);
+    });
+
+    test('clearCoupleKey leaves another user\'s key untouched', () async {
+      final service = KeyManagementService.instance;
+      final keyForBob = Uint8List.fromList(List.filled(32, 2));
+
+      await service.storeCoupleKey('user-alice', Uint8List.fromList(List.filled(32, 1)));
+      await service.storeCoupleKey('user-bob', keyForBob);
+
+      await service.clearCoupleKey('user-alice');
+
+      expect(await service.loadCoupleKey('user-alice'), isNull);
+      expect(await service.loadCoupleKey('user-bob'), keyForBob);
+    });
+
+    test('clearAllKeysForUser also removes the X25519 private key', () async {
+      final service = KeyManagementService.instance;
+
+      final publicKey = await service.getOrCreatePublicKeyBase64('user-alice');
+      await service.storeCoupleKey('user-alice', Uint8List.fromList(List.filled(32, 3)));
+
+      await service.clearAllKeysForUser('user-alice');
+
+      expect(await service.loadCoupleKey('user-alice'), isNull);
+      expect(backing.keys.where((k) => k.contains('user-alice')), isEmpty);
+      // The in-memory keypair cache is busted too, so the next call mints a
+      // genuinely fresh identity rather than resurrecting the deleted one.
+      expect(await service.getOrCreatePublicKeyBase64('user-alice'), isNot(publicKey));
+    });
+
+    group('purgeCoupleKeyIfForDifferentCouple', () {
+      test('drops a key belonging to a previous relationship', () async {
+        final service = KeyManagementService.instance;
+        await service.storeCoupleKey(
+          'user-alice',
+          Uint8List.fromList(List.filled(32, 9)),
+          coupleId: 'couple-old',
+        );
+
+        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-new');
+
+        expect(await service.loadCoupleKey('user-alice'), isNull);
+      });
+
+      test('keeps a key belonging to the current relationship', () async {
+        final service = KeyManagementService.instance;
+        final key = Uint8List.fromList(List.filled(32, 9));
+        await service.storeCoupleKey('user-alice', key, coupleId: 'couple-1');
+
+        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-1');
+
+        expect(await service.loadCoupleKey('user-alice'), key);
+      });
+
+      test('adopts an untagged key rather than discarding it', () async {
+        // A key stored before tagging existed. Discarding it would break
+        // photo decryption for every already-paired user on upgrade.
+        final service = KeyManagementService.instance;
+        final key = Uint8List.fromList(List.filled(32, 9));
+        await service.storeCoupleKey('user-alice', key);
+
+        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-1');
+        expect(await service.loadCoupleKey('user-alice'), key);
+
+        // ...and it is tagged from then on, so a later relationship change is
+        // still caught.
+        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-2');
+        expect(await service.loadCoupleKey('user-alice'), isNull);
+      });
+
+      test('is a no-op when no key is stored', () async {
+        final service = KeyManagementService.instance;
+
+        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-1');
+
+        expect(await service.loadCoupleKey('user-alice'), isNull);
+        expect(backing.keys.where((k) => k.contains('couple_photo_key')), isEmpty);
+      });
+    });
   });
 }

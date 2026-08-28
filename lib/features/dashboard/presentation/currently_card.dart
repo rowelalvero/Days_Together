@@ -271,7 +271,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                           child: StorageImageBuilder(
                             bucket: StorageBuckets.avatars,
                             storageRef: partnerJoined ? profile.partnerAvatarPath : null,
-                            builder: (context, image) => CircleAvatar(
+                            builder: (context, image, _, _) => CircleAvatar(
                               radius: 24,
                               backgroundColor: theme.textColor.withValues(alpha: 0.1),
                               foregroundImage: image,

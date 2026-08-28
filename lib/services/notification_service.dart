@@ -202,40 +202,61 @@ class NotificationService {
   /// -- a real, previously-unaddressed gap ADR-007 calls out explicitly (a
   /// deep link arriving mid-hydration is now deferred and replayed, not
   /// lost).
+  ///
+  /// On a *cold start* (the app was terminated and a notification tap
+  /// launched it), [init] resolves `getInitialMessage()` before `runApp` has
+  /// run, so there is no router yet -- reading [appRouter] would throw and
+  /// take the rest of app initialization down with it. That case hands the
+  /// location to [queueDeepLink] instead, which replays it through the very
+  /// same pending-deep-link path once hydration finishes.
+  /// Test-only seam onto [_handleNotificationPayload]: the real entry points
+  /// are all Firebase Messaging streams, which need a platform channel a
+  /// plain `flutter test` does not have.
+  @visibleForTesting
+  void handleNotificationPayloadForTest(Map<String, dynamic> data) =>
+      _handleNotificationPayload(data);
+
   void _handleNotificationPayload(Map<String, dynamic> data) {
+    final target = _targetForPayload(data);
+    if (target == null) return;
+
+    if (!appRouterIsReady) {
+      queueDeepLink(target.location);
+      return;
+    }
+    if (target.replace) {
+      appRouter.go(target.location);
+    } else {
+      appRouter.push(target.location);
+    }
+  }
+
+  /// The payload -> route mapping, kept pure so [_handleNotificationPayload]
+  /// can decide between navigating now and queueing for replay.
+  ///
+  /// `replace` distinguishes the one target that is a *tab of the home shell*
+  /// rather than a screen pushed on top of it -- pushing that would stack a
+  /// second home over the first.
+  ({String location, bool replace})? _targetForPayload(Map<String, dynamic> data) {
     final feature = data['feature'] as String?;
     final itemId = data['item_id'] as String?;
-    if (feature == null) return;
+    if (feature == null) return null;
 
-    switch (feature) {
-      case 'chat':
-        appRouter.push(Routes.chat);
-      case 'bucket_list':
-        appRouter.push(Routes.bucketList);
-      case 'love_meter':
-      case 'daily_prompt':
-        appRouter.push(Routes.loveMeter);
-      case 'doodle_notes':
-        appRouter.push(Routes.notes);
-      case 'timeline':
-      case 'memories':
-        if (itemId != null) {
-          appRouter.push(Routes.memory(itemId));
-        } else {
-          appRouter.go(Routes.homeTab(1));
-        }
-      case 'time_capsule':
-        appRouter.push(Routes.timeCapsule);
-      case 'calendar':
-        appRouter.push(Routes.calendar);
-      case 'vault':
-        appRouter.push(Routes.vault);
-      case 'topic_cards':
-        appRouter.push(Routes.topicCards);
-      case 'relationship':
-        appRouter.push(Routes.license);
-      case 'gifts':
-        appRouter.push(Routes.gifts);
-    }
+    return switch (feature) {
+      'chat' => (location: Routes.chat, replace: false),
+      'bucket_list' => (location: Routes.bucketList, replace: false),
+      'love_meter' || 'daily_prompt' => (location: Routes.loveMeter, replace: false),
+      'doodle_notes' => (location: Routes.notes, replace: false),
+      'timeline' || 'memories' => itemId != null
+          ? (location: Routes.memory(itemId), replace: false)
+          : (location: Routes.homeTab(1), replace: true),
+      'time_capsule' => (location: Routes.timeCapsule, replace: false),
+      'calendar' => (location: Routes.calendar, replace: false),
+      'vault' => (location: Routes.vault, replace: false),
+      'topic_cards' => (location: Routes.topicCards, replace: false),
+      'relationship' => (location: Routes.license, replace: false),
+      'gifts' => (location: Routes.gifts, replace: false),
+      _ => null,
+    };
   }
 }

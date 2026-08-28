@@ -166,7 +166,7 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
               bucket: StorageBuckets.timeline,
               storageRef: item.networkImageUrl,
               localPath: item.imagePath,
-              builder: (context, image) => Image(
+              builder: (context, image, _, _) => Image(
                 image: image ?? const AssetImage('assets/images/app_icon.png'),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(

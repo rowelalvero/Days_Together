@@ -69,7 +69,7 @@ class CachedAvatar extends StatelessWidget {
         child: StorageImageBuilder(
           bucket: StorageBuckets.avatars,
           storageRef: path,
-          builder: (context, image) {
+          builder: (context, image, _, _) {
             if (image == null) return _placeholder(bgColor, fallbackIconSize);
             return Image(
               image: image,

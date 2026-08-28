@@ -228,7 +228,7 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
                 bucket: StorageBuckets.timeline,
                 storageRef: widget.item.networkImageUrl,
                 localPath: widget.item.imagePath,
-                builder: (context, image) => Image(
+                builder: (context, image, _, _) => Image(
                   image: image ?? _kTimelineFallbackImage,
                   height: 120,
                   width: double.infinity,

@@ -105,7 +105,7 @@ class _MemoryDetailScreenState extends ConsumerState<MemoryDetailScreen> {
                                 bucket: StorageBuckets.timeline,
                                 storageRef: currentItem.networkImageUrl,
                                 localPath: currentItem.imagePath,
-                                builder: (context, image) => Image(
+                                builder: (context, image, _, _) => Image(
                                   image: image ?? _kTimelineFallbackImage,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
@@ -357,7 +357,7 @@ class _EditItemDialogState extends ConsumerState<EditItemDialog> {
                   storageRef: widget.item.networkImageUrl,
                   // A freshly picked image wins over whatever is stored.
                   localPath: _newImagePath ?? widget.item.imagePath,
-                  builder: (context, image) => Image(
+                  builder: (context, image, _, _) => Image(
                     image: image ?? _kTimelineFallbackImage,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(

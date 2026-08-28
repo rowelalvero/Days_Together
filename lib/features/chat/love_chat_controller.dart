@@ -207,10 +207,19 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
             },
           );
         } catch (fcmError) {
+          // The message itself is stored; only the partner's push failed.
+          // Genuinely non-fatal, so it stays swallowed.
           debugPrint('LoveChatController: Failed to trigger push notification: $fcmError');
         }
       } catch (e) {
+        // Rethrown rather than swallowed: the local optimistic write above has
+        // already happened and is persisted, so the caller's UI stays correct,
+        // but the message did *not* reach the partner. Callers that care --
+        // ScrapbookShareUseCase, whose ScrapbookShareChatMirrorFailed result
+        // was unreachable while this was a debugPrint -- need to be able to
+        // tell.
         debugPrint('LoveChatController.sendMessage Supabase error: $e');
+        rethrow;
       }
     }
   }

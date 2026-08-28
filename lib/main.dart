@@ -50,15 +50,29 @@ void main() {
 }
 
 Future<void> _initializeApp() async {
+  // Each initialization step gets its own guard: they are independent, and a
+  // single shared try/catch meant one failing step silently skipped every
+  // later one (a throw inside NotificationService.init() took the home widget
+  // and FCM token-refresh registration down with it).
   try {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       publishableKey: AppConfig.supabaseAnonKey,
     );
+  } catch (e) {
+    debugPrint('Supabase initialization error: $e');
+  }
+
+  try {
     await NotificationService().init();
+  } catch (e) {
+    debugPrint('NotificationService initialization error: $e');
+  }
+
+  try {
     await HomeWidgetService.instance.initialize();
   } catch (e) {
-    debugPrint('Initialization error: $e');
+    debugPrint('HomeWidgetService initialization error: $e');
   }
 
   runApp(buildAppRoot(child: const MyApp()));

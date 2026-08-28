@@ -49,6 +49,12 @@ class KeyManagementService {
   static String _privateKeyStorageKeyFor(String userId) => 'e2ee_x25519_private_key_$userId';
   static String _coupleKeyStorageKeyFor(String userId) => 'e2ee_couple_photo_key_$userId';
 
+  // Records which couple the stored photo key belongs to, so a key left over
+  // from a previous relationship can be detected and purged. See
+  // [purgeCoupleKeyIfForDifferentCouple].
+  static String _coupleKeyOwnerStorageKeyFor(String userId) =>
+      'e2ee_couple_photo_key_couple_$userId';
+
   static final X25519 _keyExchangeAlgorithm = X25519();
   static final AesGcm _aesGcm = AesGcm.with256bits();
 
@@ -63,6 +69,7 @@ class KeyManagementService {
   SimpleKeyPair? _cachedKeyPair;
   String? _cachedKeyPairUserId;
   Uint8List? _testCoupleKey;
+  String? _testCoupleKeyCoupleId;
 
   Future<SimpleKeyPair> _loadOrCreateKeyPair(String userId) async {
     if (_bypassSecureStorage) return _cachedKeyPair!;
@@ -157,15 +164,31 @@ class KeyManagementService {
     return Uint8List.fromList(await secretKey.extractBytes());
   }
 
-  Future<void> storeCoupleKey(String userId, Uint8List coupleKeyBytes) {
+  /// Persists [coupleKeyBytes] for [userId], tagged with the [coupleId] it
+  /// belongs to so [purgeCoupleKeyIfForDifferentCouple] can later detect a
+  /// key left over from a previous relationship.
+  Future<void> storeCoupleKey(
+    String userId,
+    Uint8List coupleKeyBytes, {
+    String? coupleId,
+  }) async {
     if (_bypassSecureStorage) {
       _testCoupleKey = coupleKeyBytes;
-      return Future.value();
+      _testCoupleKeyCoupleId = coupleId;
+      return;
     }
-    return _secureStorage.write(
+    await _secureStorage.write(
       key: _coupleKeyStorageKeyFor(userId),
       value: base64Encode(coupleKeyBytes),
     );
+    if (coupleId != null) {
+      await _secureStorage.write(
+        key: _coupleKeyOwnerStorageKeyFor(userId),
+        value: coupleId,
+      );
+    } else {
+      await _secureStorage.delete(key: _coupleKeyOwnerStorageKeyFor(userId));
+    }
   }
 
   Future<Uint8List?> loadCoupleKey(String userId) async {
@@ -173,5 +196,76 @@ class KeyManagementService {
     final storedBase64 = await _secureStorage.read(key: _coupleKeyStorageKeyFor(userId));
     if (storedBase64 == null) return null;
     return base64Decode(storedBase64);
+  }
+
+  /// Deletes [userId]'s couple photo key (and its couple tag).
+  ///
+  /// Must be called whenever this device leaves a relationship -- unlinking,
+  /// or deleting the account. A key that outlives its relationship is not
+  /// merely stale: the next `joinWithCode` would make
+  /// `_wrapCoupleKeyForPartnerIfHeld` push the *previous* couple's key to the
+  /// *new* partner, leaving the two devices permanently disagreeing about
+  /// which key the couple's photos are encrypted under.
+  ///
+  /// Deliberately *not* called on a plain sign-out: storage is already scoped
+  /// per `userId`, so signing in as a different account cannot pick up this
+  /// one's key, and discarding it on sign-out would leave a user who signs
+  /// back into the same relationship unable to decrypt anything until their
+  /// partner's device happens to re-wrap for them.
+  Future<void> clearCoupleKey(String userId) async {
+    if (_bypassSecureStorage) {
+      _testCoupleKey = null;
+      _testCoupleKeyCoupleId = null;
+      return;
+    }
+    await _secureStorage.delete(key: _coupleKeyStorageKeyFor(userId));
+    await _secureStorage.delete(key: _coupleKeyOwnerStorageKeyFor(userId));
+  }
+
+  /// [clearCoupleKey] plus this device's X25519 private key, and the
+  /// in-memory keypair cache. For account deletion, where nothing about this
+  /// identity should survive.
+  Future<void> clearAllKeysForUser(String userId) async {
+    await clearCoupleKey(userId);
+    if (_cachedKeyPairUserId == userId) {
+      _cachedKeyPair = null;
+      _cachedKeyPairUserId = null;
+    }
+    if (_bypassSecureStorage) return;
+    await _secureStorage.delete(key: _privateKeyStorageKeyFor(userId));
+  }
+
+  /// Safety net for any path that leaves a relationship without going through
+  /// [clearCoupleKey]: drops a stored key whose tag says it belongs to a
+  /// different couple than [coupleId].
+  ///
+  /// A key stored before tagging existed has no tag; that is treated as
+  /// belonging to the current couple (the overwhelmingly common case) and
+  /// re-tagged, rather than discarded.
+  Future<void> purgeCoupleKeyIfForDifferentCouple(
+    String userId,
+    String coupleId,
+  ) async {
+    if (_bypassSecureStorage) {
+      if (_testCoupleKeyCoupleId == null) {
+        _testCoupleKeyCoupleId = coupleId;
+      } else if (_testCoupleKeyCoupleId != coupleId) {
+        _testCoupleKey = null;
+        _testCoupleKeyCoupleId = null;
+      }
+      return;
+    }
+    final storedKey = await _secureStorage.read(key: _coupleKeyStorageKeyFor(userId));
+    if (storedKey == null) return;
+
+    final ownerKey = _coupleKeyOwnerStorageKeyFor(userId);
+    final storedCoupleId = await _secureStorage.read(key: ownerKey);
+    if (storedCoupleId == null) {
+      await _secureStorage.write(key: ownerKey, value: coupleId);
+      return;
+    }
+    if (storedCoupleId != coupleId) {
+      await clearCoupleKey(userId);
+    }
   }
 }

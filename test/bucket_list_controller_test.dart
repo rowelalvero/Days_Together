@@ -104,6 +104,24 @@ void main() {
       expect(state.items.first.completedAt, isNotNull);
     });
 
+    // Regression: toggleItem's activity-log step ran outside the
+    // `index != -1` guard and re-looked-up the item with an `orElse`-less
+    // firstWhere, so toggling an item the partner had just deleted threw a
+    // StateError out of the tap handler.
+    test('toggleItem on an item that no longer exists is a no-op, not a throw', () async {
+      final container = _unpairedContainer();
+      addTearDown(container.dispose);
+      await Future.delayed(Duration.zero);
+      final notifier = container.read(bucketListControllerProvider.notifier);
+
+      await notifier.addItem('Deleted by partner mid-tap');
+      final id = container.read(bucketListControllerProvider).items.first.id;
+      await notifier.deleteItem(id);
+
+      await expectLater(notifier.toggleItem(id), completes);
+      expect(container.read(bucketListControllerProvider).items, isEmpty);
+    });
+
     test('deleteItem removes the item and re-indexes remaining order', () async {
       final container = _unpairedContainer();
       addTearDown(container.dispose);

@@ -106,7 +106,7 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                         bucket: StorageBuckets.timeline,
                         storageRef: item.networkImageUrl,
                         localPath: item.imagePath,
-                        builder: (context, image) => Container(
+                        builder: (context, image, _, _) => Container(
                           decoration: BoxDecoration(
                             image: DecorationImage(
                               image: image ?? _kStorybookFallbackImage,
@@ -190,7 +190,7 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                                 bucket: StorageBuckets.timeline,
                                 storageRef: item.networkImageUrl,
                                 localPath: item.imagePath,
-                                builder: (context, image) => Image(
+                                builder: (context, image, _, _) => Image(
                                   image: image ?? _kStorybookFallbackImage,
                                   height: 160,
                                   width: double.infinity,

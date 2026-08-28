@@ -42,8 +42,18 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
   void _sendMessage(LoveChatController notifier, String senderName) {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    notifier.sendMessage(text, senderName);
+    // The local, optimistic part of sendMessage has already completed by the
+    // time this can throw, so the message stays on screen either way -- this
+    // only surfaces that it did not reach the partner (sendMessage now
+    // rethrows its Supabase error instead of swallowing it).
+    final send = notifier.sendMessage(text, senderName);
     _messageController.clear();
+    send.catchError((Object _) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't send that to your partner — check your connection.")),
+      );
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {

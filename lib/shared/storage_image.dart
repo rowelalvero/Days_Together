@@ -86,7 +86,28 @@ Future<void> evictStorageImageCache({required String bucket, required String? re
   }
 }
 
-/// Resolves a storage ref to an [ImageProvider] and hands it to [builder].
+/// Whether a [StorageImageBuilder]'s resolution is still in flight, produced
+/// an image, or definitively failed.
+///
+/// The distinction matters because "no image yet" and "no image ever" want
+/// opposite UI: a spinner for the first, an error affordance for the second.
+/// Without it, an object that could not be resolved at all spun forever.
+enum StorageImageStatus { resolving, resolved, failed }
+
+/// Signature of [StorageImageBuilder.builder]. `retry` re-runs the whole
+/// resolution ladder from the top -- useful after a [StorageImageStatus.failed]
+/// caused by a transient condition (offline, or the couple's photo key not
+/// having arrived yet).
+typedef StorageImageWidgetBuilder =
+    Widget Function(
+      BuildContext context,
+      ImageProvider? image,
+      StorageImageStatus status,
+      VoidCallback retry,
+    );
+
+/// Resolves a storage ref to an [ImageProvider] and hands it to [builder],
+/// alongside a [StorageImageStatus] and a retry callback.
 ///
 /// Use this where a raw provider is required — `CircleAvatar.backgroundImage`,
 /// `DecorationImage`, and so on. For a plain image, prefer [StorageImage].
@@ -103,12 +124,13 @@ Future<void> evictStorageImageCache({required String bucket, required String? re
 ///  4. if no signed URL could be minted (offline, or denied), whatever
 ///     ciphertext already exists on disk under the stable cache key —
 ///     decrypted the same way — which is what keeps images working offline
-///  5. null, so the caller renders its own placeholder
+///  5. null with [StorageImageStatus.failed], so the caller renders an error
+///     affordance rather than a placeholder that never resolves
 ///
-/// Decryption failure (a legacy object uploaded before this feature existed,
-/// which is genuinely plaintext, not ciphertext) falls back to treating the
-/// fetched bytes as already-plaintext — see
-/// [PhotoEncryptionService.tryDecryptBytes].
+/// A legacy object uploaded before this feature existed is genuinely
+/// plaintext, not ciphertext; decryption failing on one is expected and it
+/// still renders. Ciphertext this device holds no key for is *not* treated
+/// that way — it fails, and neither poisons the in-memory plaintext cache.
 class StorageImageBuilder extends StatefulWidget {
   const StorageImageBuilder({
     super.key,
@@ -134,7 +156,7 @@ class StorageImageBuilder extends StatefulWidget {
   final int? maxWidth;
   final int? maxHeight;
 
-  final Widget Function(BuildContext context, ImageProvider? image) builder;
+  final StorageImageWidgetBuilder builder;
 
   @override
   State<StorageImageBuilder> createState() => _StorageImageBuilderState();
@@ -142,7 +164,19 @@ class StorageImageBuilder extends StatefulWidget {
 
 class _StorageImageBuilderState extends State<StorageImageBuilder> {
   ImageProvider? _image;
-  bool _resolving = false;
+  StorageImageStatus _status = StorageImageStatus.resolving;
+
+  /// Incremented by every [_resolve] call. An in-flight [_resolveAsync]
+  /// compares the token it captured against this before touching state, so a
+  /// resolve that has been superseded -- the widget was recycled onto a
+  /// different list row while its fetch was in flight -- discards its result
+  /// instead of painting the previous row's photo onto the new one.
+  ///
+  /// This replaced a plain `_resolving` bool, which had the opposite effect:
+  /// it made [didUpdateWidget] *skip* resolving the new ref entirely whenever
+  /// a resolve was already running, so a recycled element kept showing (and
+  /// then finished resolving to) the old image.
+  int _resolveToken = 0;
 
   @override
   void initState() {
@@ -156,7 +190,6 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
     if (oldWidget.storageRef != widget.storageRef ||
         oldWidget.bucket != widget.bucket ||
         oldWidget.localPath != widget.localPath) {
-      _image = null;
       _resolve();
     }
   }
@@ -166,7 +199,16 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
         ref: widget.storageRef,
       );
 
+  void _retry() {
+    if (!mounted) return;
+    setState(_resolve);
+  }
+
   void _resolve() {
+    final token = ++_resolveToken;
+    _image = null;
+    _status = StorageImageStatus.resolving;
+
     // 1. Local file wins outright. This is the user's own device copy, never
     // encrypted at rest on-device -- only the uploaded server copy is.
     final localPath = widget.localPath;
@@ -174,13 +216,14 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
       final file = File(localPath);
       if (file.existsSync()) {
         _image = FileImage(file);
+        _status = StorageImageStatus.resolved;
         return;
       }
     }
 
     final ref = widget.storageRef;
     if (ref == null || ref.trim().isEmpty) {
-      _image = null;
+      _status = StorageImageStatus.failed;
       return;
     }
 
@@ -189,6 +232,9 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
       final file = File(ref);
       if (file.existsSync()) {
         _image = FileImage(file);
+        _status = StorageImageStatus.resolved;
+      } else {
+        _status = StorageImageStatus.failed;
       }
       return;
     }
@@ -198,16 +244,15 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
     final cachedBytes = _DecryptedBytesCache.instance.get(_cacheKey);
     if (cachedBytes != null) {
       _image = _imageFromBytes(cachedBytes);
+      _status = StorageImageStatus.resolved;
       return;
     }
 
     // 3./4. Async: mint/reuse a signed URL, fetch, decrypt.
-    if (_resolving) return;
-    _resolving = true;
-    _resolveAsync(ref);
+    _resolveAsync(ref, token);
   }
 
-  Future<void> _resolveAsync(String ref) async {
+  Future<void> _resolveAsync(String ref, int token) async {
     final url = StorageUrlService.instance.resolveCached(bucket: widget.bucket, ref: ref) ??
         await StorageUrlService.instance.resolve(bucket: widget.bucket, ref: ref);
 
@@ -221,10 +266,12 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
     // cache key.
     resolvedImage ??= await _fromDiskCacheOnly();
 
-    if (!mounted) return;
+    if (!mounted || token != _resolveToken) return;
     setState(() {
       _image = resolvedImage;
-      _resolving = false;
+      _status = resolvedImage == null
+          ? StorageImageStatus.failed
+          : StorageImageStatus.resolved;
     });
   }
 
@@ -249,20 +296,42 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
     return null;
   }
 
-  Future<ImageProvider> _decryptFile(dynamic file) async {
+  /// Returns a provider for [file]'s decrypted contents, or null when the
+  /// bytes cannot be rendered at all -- which the caller reports as
+  /// [StorageImageStatus.failed] rather than an endless placeholder.
+  ///
+  /// Only genuinely displayable bytes reach [_DecryptedBytesCache]. Two paths
+  /// used to poison it with ciphertext for the rest of the session, leaving an
+  /// image broken even after the couple key arrived: no key being available at
+  /// all, and [PhotoEncryptionService.tryDecryptBytes]'s legacy-plaintext
+  /// fallback silently returning the still-encrypted input. Decryption is
+  /// therefore attempted via `decryptBytes`, whose thrown failure is
+  /// distinguishable, rather than via the swallowing `tryDecryptBytes`.
+  Future<ImageProvider?> _decryptFile(dynamic file) async {
     final rawBytes = await file.readAsBytes() as Uint8List;
     final userId = AuthService.instance.currentUserId;
     final coupleKey = userId == null ? null : await KeyManagementService.instance.loadCoupleKey(userId);
-    // No couple key yet (key exchange still pending, or nobody signed in):
-    // can't attempt decryption at all, so treat the bytes as-is. This still
-    // renders correctly for a legacy pre-encryption plaintext object; a
-    // genuinely encrypted object just fails to decode, same degrade path as
-    // any other unresolvable image (errorWidget).
-    final plaintext = coupleKey == null
-        ? rawBytes
-        : await PhotoEncryptionService.instance.tryDecryptBytes(rawBytes, coupleKey);
-    _DecryptedBytesCache.instance.put(_cacheKey, plaintext);
-    return _imageFromBytes(plaintext);
+
+    if (coupleKey != null) {
+      try {
+        final plaintext = await PhotoEncryptionService.instance.decryptBytes(rawBytes, coupleKey);
+        _DecryptedBytesCache.instance.put(_cacheKey, plaintext);
+        return _imageFromBytes(plaintext);
+      } catch (_) {
+        // Not decryptable under this key. Falls through to the legacy check
+        // below -- an object uploaded before E2EE shipped is genuinely
+        // plaintext and must still render.
+      }
+    }
+
+    // No couple key (exchange still in flight, or nobody signed in), or
+    // decryption failed. Accept the bytes only if they actually are an image;
+    // otherwise this is ciphertext this device cannot read *yet*, and treating
+    // it as plaintext is exactly what used to cache ciphertext under the
+    // plaintext cache key.
+    if (!_looksLikeImageBytes(rawBytes)) return null;
+    _DecryptedBytesCache.instance.put(_cacheKey, rawBytes);
+    return _imageFromBytes(rawBytes);
   }
 
   ImageProvider _imageFromBytes(Uint8List bytes) {
@@ -272,7 +341,43 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, _image);
+  Widget build(BuildContext context) => widget.builder(context, _image, _status, _retry);
+}
+
+/// Whether [bytes] begin with the magic number of an image format Flutter can
+/// decode. Used to tell a legacy (never-encrypted) object apart from
+/// ciphertext this device holds no key for -- AES-GCM output is
+/// indistinguishable from random, so it effectively never matches.
+bool _looksLikeImageBytes(Uint8List bytes) {
+  if (bytes.length < 12) return false;
+  // JPEG
+  if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return true;
+  // PNG
+  if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+    return true;
+  }
+  // GIF87a / GIF89a
+  if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38) {
+    return true;
+  }
+  // BMP
+  if (bytes[0] == 0x42 && bytes[1] == 0x4D) return true;
+  // RIFF....WEBP
+  if (bytes[0] == 0x52 &&
+      bytes[1] == 0x49 &&
+      bytes[2] == 0x46 &&
+      bytes[3] == 0x46 &&
+      bytes[8] == 0x57 &&
+      bytes[9] == 0x45 &&
+      bytes[10] == 0x42 &&
+      bytes[11] == 0x50) {
+    return true;
+  }
+  // ISO base media (HEIC/AVIF): "ftyp" at offset 4.
+  if (bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
+    return true;
+  }
+  return false;
 }
 
 /// Displays an image stored in Supabase Storage.
@@ -323,13 +428,20 @@ class StorageImage extends StatelessWidget {
       localPath: localPath,
       maxWidth: effectiveMaxWidth,
       maxHeight: effectiveMaxHeight,
-      builder: (context, image) {
+      builder: (context, image, status, retry) {
         final Widget child;
         if (image == null) {
+          // Keyed off the resolution status rather than "is there a ref":
+          // a ref that exists but cannot be resolved is a *failure*, and
+          // showing the placeholder for it left a spinner running forever
+          // with no way out.
           final hasRef = storageRef != null && storageRef!.trim().isNotEmpty;
-          child = hasRef
-              ? (placeholder?.call(context) ?? _defaultPlaceholder(context))
-              : (errorWidget?.call(context) ?? _defaultError(context));
+          child = switch (status) {
+            StorageImageStatus.resolving =>
+              placeholder?.call(context) ?? _defaultPlaceholder(context),
+            _ => errorWidget?.call(context) ??
+                _defaultError(context, hasRef ? retry : null),
+          };
         } else {
           child = Image(
             image: image,
@@ -337,7 +449,7 @@ class StorageImage extends StatelessWidget {
             width: width,
             height: height,
             errorBuilder: (context, _, _) =>
-                errorWidget?.call(context) ?? _defaultError(context),
+                errorWidget?.call(context) ?? _defaultError(context, retry),
           );
         }
 
@@ -362,14 +474,22 @@ class StorageImage extends StatelessWidget {
     );
   }
 
-  Widget _defaultError(BuildContext context) {
+  /// Tappable, because the most common causes of failure here are transient:
+  /// the device was offline when the signed URL was minted, or the couple's
+  /// photo key had not finished exchanging yet. [retry] re-runs the full
+  /// resolution ladder.
+  Widget _defaultError(BuildContext context, VoidCallback? retry) {
     final scheme = Theme.of(context).colorScheme;
-    return ColoredBox(
-      color: scheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.broken_image_outlined,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+    return GestureDetector(
+      onTap: retry,
+      child: ColoredBox(
+        color: scheme.surfaceContainerHighest,
+        child: Center(
+          child: Icon(
+            // Nothing to retry when there was never a ref to resolve.
+            retry == null ? Icons.broken_image_outlined : Icons.refresh_rounded,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
         ),
       ),
     );

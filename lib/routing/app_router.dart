@@ -139,6 +139,38 @@ String? _routeForStage(SessionStage stage) {
 /// through every call site.
 String? _pendingLocation;
 
+/// Queues [location] to be navigated to as soon as the router exists and
+/// session hydration finishes -- the cold-start counterpart to the capture
+/// inside [appRedirect].
+///
+/// `NotificationService.init()` runs (and is awaited) *before* `runApp`, so a
+/// notification tap that launched the app from terminated resolves its route
+/// while [_router] is still null. Pushing then would throw on [appRouter]'s
+/// null check, which previously aborted the rest of `_initializeApp`.
+/// Queueing instead routes it through the exact same pending-deep-link replay
+/// path a link arriving mid-hydration already uses: the first [appRedirect]
+/// runs at [Routes.loading], whose `stage == loading` branch leaves this value
+/// alone (it only captures locations *other than* `Routes.loading`), so it
+/// survives until the stage resolves and [computeRedirectTarget] replays it.
+void queueDeepLink(String location) {
+  _pendingLocation = location;
+}
+
+/// Whether [appRouter] can be read yet. `false` before `MyApp.build` has
+/// called [ensureAppRouter] -- notably during `_initializeApp`, where a cold
+/// -start notification payload is resolved.
+bool get appRouterIsReady => _router != null;
+
+/// The queued deep link, if any. Test-only window onto [_pendingLocation],
+/// which [appRedirect] otherwise consumes internally.
+@visibleForTesting
+String? get pendingDeepLinkForTest => _pendingLocation;
+
+@visibleForTesting
+void resetPendingDeepLinkForTest() {
+  _pendingLocation = null;
+}
+
 String? appRedirect(BuildContext context, GoRouterState state) {
   final container = ProviderScope.containerOf(context, listen: false);
   // Reads the raw CoupleSession instance, not sessionControllerProvider/

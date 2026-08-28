@@ -45,6 +45,10 @@ class SessionController extends Notifier<SessionState> {
 
   Future<void> completeOnboarding() => ref.read(coupleSessionProvider).completeOnboarding();
 
+  /// Resolves once this device holds the couple's photo-encryption key, or
+  /// after a short timeout. See `CoupleSession.waitForCoupleKey`.
+  Future<void> waitForCoupleKey() => ref.read(coupleSessionProvider).waitForCoupleKey();
+
   Future<bool> recoverRelationship(String code) =>
       ref.read(coupleSessionProvider).recoverRelationship(code);
 

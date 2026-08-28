@@ -273,39 +273,44 @@ class BucketListController extends Notifier<BucketListState>
   Future<void> toggleItem(String id) async {
     _localMutations.add(id);
     final index = state.items.indexWhere((item) => item.id == id);
-    if (index != -1) {
-      final item = state.items[index];
-      final newCompleted = !item.isCompleted;
-      final newCompletedAt = newCompleted ? DateTime.now() : null;
+    // Nothing to toggle -- the item was removed (typically by the partner)
+    // between this list being built and the tap landing. Returning here also
+    // guards the activity log below, which used to run unconditionally and
+    // re-look-up the item with an `orElse`-less `firstWhere`, throwing a
+    // StateError on exactly this race.
+    if (index == -1) return;
 
-      final items = [...state.items];
-      items[index] = item.copyWith(isCompleted: newCompleted, completedAt: newCompletedAt);
-      state = state.copyWith(items: items);
+    final item = state.items[index];
+    final newCompleted = !item.isCompleted;
+    final newCompletedAt = newCompleted ? DateTime.now() : null;
+    final updatedItem = item.copyWith(isCompleted: newCompleted, completedAt: newCompletedAt);
 
-      if (coupleId != null) {
-        try {
-          await Supabase.instance.client
-              .from('bucket_list')
-              .update({'is_completed': newCompleted, 'completed_at': newCompletedAt?.toIso8601String()})
-              .eq('id', id);
-          if (newCompleted) {
-            NotificationService().sendPartnerNotification(
-              title: 'Bucket List Completed!',
-              body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
-              feature: 'bucket_list',
-              itemId: id,
-            );
-          }
-        } catch (e) {
-          debugPrint('BucketListController.toggleItem Supabase error: $e');
+    final items = [...state.items];
+    items[index] = updatedItem;
+    state = state.copyWith(items: items);
+
+    if (coupleId != null) {
+      try {
+        await Supabase.instance.client
+            .from('bucket_list')
+            .update({'is_completed': newCompleted, 'completed_at': newCompletedAt?.toIso8601String()})
+            .eq('id', id);
+        if (newCompleted) {
+          NotificationService().sendPartnerNotification(
+            title: 'Bucket List Completed!',
+            body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
+            feature: 'bucket_list',
+            itemId: id,
+          );
         }
+      } catch (e) {
+        debugPrint('BucketListController.toggleItem Supabase error: $e');
       }
-      if (!ref.mounted) return;
-      await _persist();
     }
+    if (!ref.mounted) return;
+    await _persist();
 
     if (!ref.mounted) return;
-    final updatedItem = state.items.firstWhere((i) => i.id == id);
     await RecentActivityService.instance.logActivity(
       activityType: updatedItem.isCompleted ? 'completed' : 'updated',
       title: updatedItem.isCompleted ? 'Bucket List item completed' : 'Bucket List item updated',
