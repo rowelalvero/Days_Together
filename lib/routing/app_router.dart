@@ -37,6 +37,7 @@ import 'package:days_together/screens/together/vault_screen.dart';
 import 'package:days_together/screens/wrapped/wrapped_archive_screen.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
 import 'package:days_together/screens/wrapped/wrapped_screen.dart';
+import 'package:days_together/features/home_widgets/presentation/screens/home_widget_studio_screen.dart';
 
 /// The set of onboarding/session-stage-driven routes -- these are the ones
 /// [computeSessionStage] can redirect *to*. Once `stage == ready`, landing on
@@ -386,6 +387,7 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
       ),
       GoRoute(path: Routes.studioLoveLetter, builder: (_, _) => const AILoveLetterScreen()),
       GoRoute(path: Routes.studioInsights, builder: (_, _) => const RelationshipInsightsScreen()),
+      GoRoute(path: Routes.homeWidgets, builder: (_, _) => const HomeWidgetStudioScreen()),
       GoRoute(
         path: Routes.memoryPattern,
         builder: (context, state) {

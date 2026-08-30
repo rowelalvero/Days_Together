@@ -46,6 +46,7 @@ class Routes {
   static const String wrappedArchive = '/wrapped-archive';
   static const String wrapped = '/wrapped';
   static const String duration = '/duration';
+  static const String homeWidgets = '/home-widgets';
   static const String studioLoveLetter = '/studio/love-letter';
   static const String studioInsights = '/studio/insights';
 

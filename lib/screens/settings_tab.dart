@@ -157,6 +157,14 @@ class SettingsTab extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             _buildModernTile(
+              icon: Icons.widgets_outlined,
+              title: 'Home Screen Widgets',
+              subtitle: 'NoteIt drawings & relationship counter',
+              theme: theme,
+              onTap: () => context.push(Routes.homeWidgets),
+            ),
+            const SizedBox(height: 12),
+            _buildModernTile(
               icon: Icons.notifications_none_rounded,
               title: 'Notifications',
               subtitle: 'Configure alerts & quiet hours',
