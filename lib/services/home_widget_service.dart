@@ -128,9 +128,7 @@ class HomeWidgetService {
         logicalSize: const Size(320, 320),
       );
 
-      if (path != null) {
-        await HomeWidget.saveWidgetData<String>(keyNoteitRenderPath, path);
-      }
+      await HomeWidget.saveWidgetData<String>(keyNoteitRenderPath, path);
 
       await HomeWidget.updateWidget(
         name: androidNoteitWidgetName,
@@ -215,9 +213,7 @@ class HomeWidgetService {
         logicalSize: const Size(640, 320),
       );
 
-      if (path2x2 != null) {
-        await HomeWidget.saveWidgetData<String>(keyDaysTogetherRenderPath, path2x2);
-      }
+      await HomeWidget.saveWidgetData<String>(keyDaysTogetherRenderPath, path2x2);
       await HomeWidget.saveWidgetData<String>(keyStartTimestamp, isoString);
       await HomeWidget.saveWidgetData<String>(keyDurationText, durationText);
 

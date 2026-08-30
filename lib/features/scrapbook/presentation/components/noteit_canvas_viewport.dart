@@ -234,7 +234,7 @@ class NoteitCanvasViewport extends StatelessWidget {
                           icon: Icon(Icons.edit_rounded, color: theme.textColor),
                           onPressed: () {
                             if (selectedObj is CustomTextDrawable) {
-                              onStartInlineEditing(selectedObj as CustomTextDrawable);
+                              onStartInlineEditing(selectedObj);
                             }
                           },
                           tooltip: 'Edit Text Content',

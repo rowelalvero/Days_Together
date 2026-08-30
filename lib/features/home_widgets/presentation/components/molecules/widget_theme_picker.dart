@@ -39,7 +39,7 @@ class WidgetThemePicker extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: supportedThemes.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (context, index) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               final type = supportedThemes[index];
               return WidgetThemeChip(
