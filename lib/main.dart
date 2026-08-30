@@ -28,6 +28,9 @@ import 'package:days_together/app_config.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/home_widget_service.dart';
 
+import 'package:home_widget/home_widget.dart';
+import 'package:days_together/routing/routes.dart';
+
 @pragma('vm:entry-point')
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,11 +74,49 @@ Future<void> _initializeApp() async {
 
   try {
     await HomeWidgetService.instance.initialize();
+    _setupHomeWidgetDeepLinking();
   } catch (e) {
     debugPrint('HomeWidgetService initialization error: $e');
   }
 
   runApp(buildAppRoot(child: const MyApp()));
+}
+
+void _setupHomeWidgetDeepLinking() {
+  try {
+    HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
+      if (uri != null) {
+        _routeHomeWidgetDeepLink(uri);
+      }
+    });
+
+    HomeWidget.widgetClicked.listen((uri) {
+      if (uri != null) {
+        _routeHomeWidgetDeepLink(uri);
+      }
+    });
+  } catch (e) {
+    debugPrint('HomeWidget deep linking setup error: $e');
+  }
+}
+
+void _routeHomeWidgetDeepLink(Uri uri) {
+  if (uri.scheme == 'daystogether') {
+    String? targetRoute;
+    if (uri.host == 'noteit') {
+      targetRoute = Routes.notes;
+    } else if (uri.host == 'duration') {
+      targetRoute = Routes.duration;
+    }
+
+    if (targetRoute != null) {
+      if (appRouterIsReady) {
+        appRouter.go(targetRoute);
+      } else {
+        queueDeepLink(targetRoute);
+      }
+    }
+  }
 }
 
 /// The app's full widget root: a single `ProviderScope` -- the entire

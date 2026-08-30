@@ -16,6 +16,11 @@ import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/services/home_widget_service.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Riverpod port of `NoteitProvider` (Phase 6a of the architecture
 /// migration, ported together with `LoveChatController` since both share
@@ -457,9 +462,23 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
       final prefs = await SharedPreferences.getInstance();
       final jsonList = state.notes.map((n) => n.toJson()).toList();
       await prefs.setString(_storageKey, jsonEncode(jsonList));
+      _syncHomeWidget();
     } catch (e, st) {
       debugPrint('NoteitController._persistLocalOnly failed: $e\n$st');
     }
+  }
+
+  void _syncHomeWidget() {
+    try {
+      final drawingNotes = state.notes.where((n) => n.type == NoteitType.drawing).toList();
+      if (drawingNotes.isNotEmpty) {
+        final latest = drawingNotes.first;
+        HomeWidgetService.instance.renderAndSyncNoteit(
+          partnerName: latest.sender == 'you' ? 'You' : 'Partner',
+          drawingContent: latest.content,
+        );
+      }
+    } catch (_) {}
   }
 }
 
