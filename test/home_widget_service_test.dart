@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
-
+import 'package:days_together/features/home_widgets/domain/home_widget_models.dart';
 import 'package:flutter/services.dart';
 
 void main() {
@@ -84,6 +84,28 @@ void main() {
       );
       expect(formatted, equals('1 Days 02:05:15'));
     });
+
+    test('10. formatDuration handles yearsMonthsDays format mode', () {
+      final start = DateTime(2022, 6, 1);
+      final now = DateTime(2026, 6, 1, 10, 0);
+      final formatted = HomeWidgetService.formatDuration(
+        start,
+        now: now,
+        format: DaysCounterFormat.yearsMonthsDays,
+      );
+      expect(formatted, equals('4 Yrs 0 Mos 0 Days'));
+    });
+
+    test('11. formatDuration handles compact format mode', () {
+      final start = DateTime(2022, 6, 1);
+      final now = DateTime(2026, 6, 1, 10, 0);
+      final formatted = HomeWidgetService.formatDuration(
+        start,
+        now: now,
+        format: DaysCounterFormat.compact,
+      );
+      expect(formatted, equals('1461 Days'));
+    });
   });
 
   group('HomeWidgetService - Lifecycle & Relationship Integration Tests', () {
@@ -91,32 +113,32 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('10. HomeWidgetService.clearWidget executes without throwing', () async {
+    test('12. HomeWidgetService.clearWidget executes without throwing', () async {
       await expectLater(HomeWidgetService.instance.clearWidget(), completes);
     });
 
-    test('11. HomeWidgetService.updateWidget with null startDate executes clearWidget safely', () async {
+    test('13. HomeWidgetService.updateWidget with null startDate executes clearWidget safely', () async {
       await expectLater(
         HomeWidgetService.instance.updateWidget(startDate: null),
         completes,
       );
     });
 
-    test('12. RelationshipLifecycleManager.handleLogout triggers clearWidget safely', () async {
+    test('14. RelationshipLifecycleManager.handleLogout triggers clearWidget safely', () async {
       await expectLater(
         RelationshipLifecycleManager.instance.handleLogout(),
         completes,
       );
     });
 
-    test('13. RelationshipLifecycleManager.handleDisconnect triggers clearWidget safely', () async {
+    test('15. RelationshipLifecycleManager.handleDisconnect triggers clearWidget safely', () async {
       await expectLater(
         RelationshipLifecycleManager.instance.handleDisconnect(),
         completes,
       );
     });
 
-    test('14. CoupleSession.setStartDate updates widget date without error', () async {
+    test('16. CoupleSession.setStartDate updates widget date without error', () async {
       final session = CoupleSession();
       await expectLater(
         session.setStartDate(DateTime(2023, 5, 20)),
