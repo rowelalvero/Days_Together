@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
-import 'canvas_document.dart';
+import 'package:days_together/models/canvas_document.dart';
 
 enum NoteitType { drawing, photo, text }
 enum SyncStatus { sending, synced, failed }

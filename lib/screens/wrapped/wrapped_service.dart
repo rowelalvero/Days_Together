@@ -10,7 +10,7 @@ import 'package:days_together/features/love_studio/time_capsule_state.dart';
 import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/services/date_helper.dart';
-import 'wrapped_data.dart';
+import 'package:days_together/screens/wrapped/wrapped_data.dart';
 
 /// Pure data aggregation service — no UI.
 /// Computes a [WrappedData] snapshot from live providers and persists/loads
