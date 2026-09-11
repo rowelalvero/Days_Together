@@ -35,6 +35,23 @@
 -- per 20260621000000_remote_schema.sql), with pg_temp pinned last so a
 -- caller cannot shadow anything with a temporary table.
 
+-- To preview the blast radius before applying, run the SELECT below on its
+-- own (it is the DO block's loop query, unchanged). It lists exactly the
+-- functions this migration will ALTER; an empty result means the database is
+-- already fully hardened and this migration is a no-op:
+--
+--   SELECT p.oid::regprocedure AS signature
+--   FROM pg_proc p
+--   JOIN pg_namespace n ON n.oid = p.pronamespace
+--   WHERE n.nspname = 'public'
+--     AND p.prosecdef
+--     AND p.prokind = 'f'
+--     AND NOT EXISTS (
+--       SELECT 1
+--       FROM unnest(COALESCE(p.proconfig, ARRAY[]::text[])) AS cfg
+--       WHERE split_part(cfg, '=', 1) = 'search_path'
+--     );
+
 DO $$
 DECLARE
   fn record;
