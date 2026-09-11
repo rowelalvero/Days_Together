@@ -47,6 +47,37 @@ enum SessionStage {
 /// decides "is the user ready for the main app," matching
 /// `main.dart`'s pre-Phase-1 `_buildHomeContent` branch-for-branch
 /// (verified against `main.dart:188-218`).
+/// Whether the partner's `users` subscription needs (re)opening.
+///
+/// An identity change is not the only trigger. On a warm start
+/// `CoupleSession._loadLocalData` restores `partnerId` from
+/// `SharedPreferences` before any stream resolves -- deliberately, because the
+/// E2EE key exchange needs it to unwrap an incoming wrapped key. That made a
+/// bare `oldPartnerId != newPartnerId` check false on every warm launch, so
+/// the partner subscription was never opened: name, avatar, activity, join
+/// date and the mirrored license fields stayed frozen at their cached values
+/// for the whole session, and `CoupleKeyExchange.wrapForPartnerIfHeld`'s
+/// documented "a fresh app launch re-observing the same partner counts" retry
+/// never fired.
+///
+/// Subscription liveness is the real condition -- the same shape as the
+/// couples stream's own `coupleIdChanged || _coupleSub == null` guard.
+/// [hasLiveSubscription] is only consulted when there is a partner to
+/// subscribe to, so an unpaired session stays quiet instead of re-running the
+/// teardown on every couple-row update.
+///
+/// Pure and top-level for the same reason [computeSessionStage] is: the
+/// method that uses it needs a live Supabase stream, so this is the only part
+/// of the decision a unit test can reach.
+bool shouldResubscribePartner({
+  required String? oldPartnerId,
+  required String? newPartnerId,
+  required bool hasLiveSubscription,
+}) {
+  if (oldPartnerId != newPartnerId) return true;
+  return newPartnerId != null && !hasLiveSubscription;
+}
+
 SessionStage computeSessionStage({
   required bool isInitialized,
   required String? userId,
@@ -708,7 +739,13 @@ class CoupleSession extends ChangeNotifier {
       );
     }
 
-    if (oldPartnerId != _partnerId) {
+    // See [shouldResubscribePartner] for why an identity change alone is the
+    // wrong condition on a warm start.
+    if (shouldResubscribePartner(
+      oldPartnerId: oldPartnerId,
+      newPartnerId: _partnerId,
+      hasLiveSubscription: _partnerUserSub != null,
+    )) {
       _initPartnerUserSync();
       if (_partnerId != null) {
         _keyExchange.wrapForPartnerIfHeld(_partnerId!);

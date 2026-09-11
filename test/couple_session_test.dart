@@ -150,6 +150,83 @@ void main() {
   // last direct readers converted to CoupleSession (Definition-of-Done sweep
   // item 4). These tests exercise CoupleSession's own hydration and write
   // paths directly, at the source.
+  group('shouldResubscribePartner', () {
+    test('a new partner appearing resubscribes', () {
+      expect(
+        shouldResubscribePartner(
+          oldPartnerId: null,
+          newPartnerId: 'p1',
+          hasLiveSubscription: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a partner going away resubscribes, to tear the old one down', () {
+      expect(
+        shouldResubscribePartner(
+          oldPartnerId: 'p1',
+          newPartnerId: null,
+          hasLiveSubscription: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a different partner resubscribes', () {
+      expect(
+        shouldResubscribePartner(
+          oldPartnerId: 'p1',
+          newPartnerId: 'p2',
+          hasLiveSubscription: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test('an unchanged partner with no live subscription resubscribes', () {
+      // The warm-start regression. _loadLocalData restores partnerId from
+      // prefs before any stream resolves (the E2EE key exchange needs it),
+      // so the id matches and a bare identity check said "nothing to do" --
+      // leaving the partner's users subscription permanently unopened.
+      expect(
+        shouldResubscribePartner(
+          oldPartnerId: 'p1',
+          newPartnerId: 'p1',
+          hasLiveSubscription: false,
+        ),
+        isTrue,
+        reason: 'a warm start has the id cached but no subscription yet',
+      );
+    });
+
+    test('an unchanged partner with a live subscription does nothing', () {
+      expect(
+        shouldResubscribePartner(
+          oldPartnerId: 'p1',
+          newPartnerId: 'p1',
+          hasLiveSubscription: true,
+        ),
+        isFalse,
+        reason: 'every later couple-row update must not churn the stream',
+      );
+    });
+
+    test('an unpaired session stays quiet', () {
+      expect(
+        shouldResubscribePartner(
+          oldPartnerId: null,
+          newPartnerId: null,
+          hasLiveSubscription: false,
+        ),
+        isFalse,
+        reason:
+            'with no partner there is nothing to subscribe to, so repeated '
+            'couple-row updates must not re-run the teardown',
+      );
+    });
+  });
+
   group('CoupleSession hydration and identity state', () {
     test(
       'hydrates identity fields from SharedPreferences on construction',
