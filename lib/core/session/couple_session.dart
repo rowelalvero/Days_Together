@@ -898,8 +898,9 @@ class CoupleSession extends ChangeNotifier {
       try {
         final userUpdates = <String, dynamic>{};
         if (_yourName != null) userUpdates['display_name'] = _yourName;
-        if (_yourAvatarPath != null)
+        if (_yourAvatarPath != null) {
           userUpdates['avatar_url'] = _yourAvatarPath;
+        }
         // The 12 license fields (gender..signature) used to get a second
         // sync attempt here on newly pairing, in case their write-time push
         // (now LicenseController.updateFields, still try/catch-silent on
@@ -1645,16 +1646,21 @@ class CoupleSession extends ChangeNotifier {
 
       await prefs.clear();
 
-      if (onboardingCompleted != null)
+      if (onboardingCompleted != null) {
         await prefs.setBool(PrefsKeys.onboardingCompleted, onboardingCompleted);
-      if (startDate != null)
+      }
+      if (startDate != null) {
         await prefs.setString(PrefsKeys.relationshipStartDate, startDate);
-      if (startHour != null)
+      }
+      if (startHour != null) {
         await prefs.setInt(PrefsKeys.relationshipStartHour, startHour);
-      if (startMinute != null)
+      }
+      if (startMinute != null) {
         await prefs.setInt(PrefsKeys.relationshipStartMinute, startMinute);
-      if (yourAvatarPath != null)
+      }
+      if (yourAvatarPath != null) {
         await prefs.setString(PrefsKeys.yourAvatarPath, yourAvatarPath);
+      }
       if (yourName != null) await prefs.setString(PrefsKeys.yourName, yourName);
     }
 
