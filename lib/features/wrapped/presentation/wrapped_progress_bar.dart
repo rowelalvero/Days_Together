@@ -27,11 +27,13 @@ class WrappedProgressBar extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(2),
-              color: color.withValues(alpha: isCompleted
-                  ? 0.9
-                  : isActive
-                      ? 0.6
-                      : 0.25),
+              color: color.withValues(
+                alpha: isCompleted
+                    ? 0.9
+                    : isActive
+                    ? 0.6
+                    : 0.25,
+              ),
             ),
             child: isActive
                 ? TweenAnimationBuilder<double>(

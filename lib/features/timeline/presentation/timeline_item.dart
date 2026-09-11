@@ -1,6 +1,6 @@
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/screens/timeline/memory_detail_screen.dart';
+import 'package:days_together/features/timeline/presentation/pages/memory_detail_screen.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/services/storage_url_service.dart';

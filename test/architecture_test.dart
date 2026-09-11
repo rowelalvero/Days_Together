@@ -43,9 +43,9 @@ List<File> _dartFilesUnder(String relativeDir) {
 
 void main() {
   group('Architecture Rule 1 -- UI must not directly access Supabase', () {
-    test('no file under lib/screens/ imports supabase_flutter', () {
+    test('no file under lib/app/ imports supabase_flutter', () {
       final violations = <String>[];
-      for (final file in _dartFilesUnder('lib/screens')) {
+      for (final file in _dartFilesUnder('lib/app')) {
         final content = file.readAsStringSync();
         if (content.contains("import 'package:supabase_flutter")) {
           violations.add(file.path);
@@ -288,8 +288,11 @@ void main() {
       // other MaterialPageRoute site was converted to a named go_router
       // route.
       const exceptions = {
-        'lib/screens/love_story_screen.dart',
-        'lib/screens/timeline/memory_detail_screen.dart',
+        'lib/app/shell/love_story_screen.dart',
+        'lib/features/timeline/presentation/pages/memory_detail_screen.dart',
+        // TimelineTab's AddItemDialog push, which moved here when
+        // love_story_screen.dart was split -- same call site, new file.
+        'lib/features/timeline/presentation/pages/timeline_tab.dart',
         // relationship_license_screen.dart's two SignatureDrawingDialog
         // push sites, post-Phase-8 file split:
         'lib/features/relationship/presentation/license/license_screen.dart',
@@ -297,8 +300,8 @@ void main() {
         // Deliberately preserved as plain Navigator (not dialogs, but a
         // provably-safe conversion couldn't be made -- see the inline
         // comments at each site for the specific redirect-fight risk):
-        'lib/screens/onboarding/create_couple_code_screen.dart',
-        'lib/screens/onboarding/recover_relationship_screen.dart',
+        'lib/features/authentication/presentation/pages/create_couple_code_screen.dart',
+        'lib/features/authentication/presentation/pages/recover_relationship_screen.dart',
       };
       final violations = <String>[];
       for (final file in _dartFilesUnder('lib')) {

@@ -23,7 +23,7 @@ import 'package:days_together/app/router/route_names.dart';
 // the already-mounted shell, not screen navigation -- deliberately out of
 // go_router's scope (ADR-007); every other case now resolves to a Routes
 // constant instead of a screen import.
-import 'package:days_together/screens/love_story_screen.dart';
+import 'package:days_together/app/shell/love_story_screen.dart';
 
 class RecentActivityFeed extends ConsumerStatefulWidget {
   final LoveStoryTheme theme;
