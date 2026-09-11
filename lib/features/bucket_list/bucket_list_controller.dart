@@ -11,6 +11,7 @@ import 'package:days_together/features/bucket_list/domain/entities/bucket_list_m
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `BucketListProvider` (Phase 6a of the architecture
 /// migration, the first of the 12 domain providers -- the proof of the
@@ -28,7 +29,7 @@ class BucketListController extends Notifier<BucketListState>
   final Set<String> _localMutations = {};
 
   @override
-  String get tableName => 'bucket_list';
+  String get tableName => Tables.bucketList;
 
   @override
   BucketListState build() {
@@ -77,7 +78,7 @@ class BucketListController extends Notifier<BucketListState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('bucket_list')
+          .from(Tables.bucketList)
           .select()
           .eq('couple_id', coupleId!);
       final parsed = res.map(_parseItem).toList()
@@ -202,7 +203,7 @@ class BucketListController extends Notifier<BucketListState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('bucket_list').upsert({
+        await Supabase.instance.client.from(Tables.bucketList).upsert({
           'id': item.id,
           'couple_id': coupleId,
           'title': item.title,
@@ -257,7 +258,7 @@ class BucketListController extends Notifier<BucketListState>
           updates['scheduled_at'] = scheduledAt.toIso8601String();
         }
         await Supabase.instance.client
-            .from('bucket_list')
+            .from(Tables.bucketList)
             .update(updates)
             .eq('id', id);
         NotificationService().sendPartnerNotification(
@@ -336,7 +337,7 @@ class BucketListController extends Notifier<BucketListState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('bucket_list')
+            .from(Tables.bucketList)
             .update({
               'is_completed': newCompleted,
               'completed_at': newCompletedAt?.toIso8601String(),
@@ -384,7 +385,7 @@ class BucketListController extends Notifier<BucketListState>
       if (coupleId != null) {
         try {
           await Supabase.instance.client
-              .from('bucket_list')
+              .from(Tables.bucketList)
               .update({'title': newTitle})
               .eq('id', id);
         } catch (e) {
@@ -405,7 +406,7 @@ class BucketListController extends Notifier<BucketListState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('bucket_list')
+            .from(Tables.bucketList)
             .delete()
             .eq('id', id);
         NotificationService().sendPartnerNotification(
@@ -419,7 +420,7 @@ class BucketListController extends Notifier<BucketListState>
         for (var i = 0; i < remaining.length; i++) {
           if (remaining[i].order != i) {
             await Supabase.instance.client
-                .from('bucket_list')
+                .from(Tables.bucketList)
                 .update({'order_index': i})
                 .eq('id', remaining[i].id);
           }
@@ -470,7 +471,7 @@ class BucketListController extends Notifier<BucketListState>
       try {
         for (var i = 0; i < state.items.length; i++) {
           await Supabase.instance.client
-              .from('bucket_list')
+              .from(Tables.bucketList)
               .update({'order_index': i})
               .eq('id', state.items[i].id);
           if (!ref.mounted) return;

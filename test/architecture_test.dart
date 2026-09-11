@@ -530,6 +530,59 @@ void main() {
     },
   );
 
+  group('Supabase table names are centralized in Tables', () {
+    test(
+      'no lib/ file outside tables.dart passes a raw string literal to .from()',
+      () {
+        // Table names used to be raw literals at ~85 call sites across 18
+        // files, plus ten `tableName` getters. A renamed or mistyped table
+        // was a runtime PostgrestException the moment a user hit the
+        // feature, never a compile error. Same guard PrefsKeys has, same
+        // reason.
+        //
+        // Storage buckets are deliberately excluded: `storage.from(...)`
+        // takes a bucket, and those have their own StorageBuckets
+        // constants.
+        final rawFromCall = RegExp(r"(?<!storage)\.from\('[a-z_]+'\)");
+        final violations = <String>[];
+
+        for (final file in _dartFilesUnder('lib')) {
+          final normalized = file.path.replaceAll(r'\\', '/');
+          if (normalized.endsWith('lib/core/constants/tables.dart')) {
+            continue;
+          }
+          if (rawFromCall.hasMatch(file.readAsStringSync())) {
+            violations.add(normalized);
+          }
+        }
+
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'Supabase table passed as a raw string instead of a Tables constant: $violations',
+        );
+      },
+    );
+
+    test('no tableName getter returns a raw string literal', () {
+      // tableName drives the realtime subscription, so a typo here fails
+      // silently -- the subscription simply never delivers rows.
+      final rawGetter = RegExp(r"String get tableName => '[a-z_]+';");
+      final violations = <String>[];
+      for (final file in _dartFilesUnder('lib')) {
+        if (rawGetter.hasMatch(file.readAsStringSync())) {
+          violations.add(file.path.replaceAll(r'\\', '/'));
+        }
+      }
+      expect(
+        violations,
+        isEmpty,
+        reason: 'tableName must use a Tables constant: $violations',
+      );
+    });
+  });
+
   group(
     'Architecture Rule 12 -- shared/ and core/ must not depend on features/',
     () {

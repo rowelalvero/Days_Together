@@ -10,6 +10,7 @@ import 'package:days_together/core/storage/encrypted_storage_service.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 class NoteitSyncTask {
   final String id;
@@ -300,7 +301,7 @@ class NoteitSyncManager {
           : 'text';
 
       // Safe atomic insert/upsert (idempotency key is the task.id)
-      await Supabase.instance.client.from('love_notes').upsert({
+      await Supabase.instance.client.from(Tables.loveNotes).upsert({
         'id': task.id,
         'couple_id': coupleId,
         'type': typeStr,

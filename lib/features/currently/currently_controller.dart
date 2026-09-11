@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/currently/currently_state.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `CurrentlyProvider` (Phase 6a of the architecture
 /// migration, the eleventh of the 12 domain providers). Standard
@@ -17,7 +18,7 @@ class CurrentlyController extends Notifier<CurrentlyState>
   String? _partnerId;
 
   @override
-  String get tableName => 'love_taps';
+  String get tableName => Tables.loveTaps;
 
   @override
   List<String> get primaryKey => const ['id'];
@@ -101,7 +102,7 @@ class CurrentlyController extends Notifier<CurrentlyState>
 
     try {
       final List<dynamic> rows = await Supabase.instance.client
-          .from('love_taps')
+          .from(Tables.loveTaps)
           .select()
           .eq('couple_id', coupleId!)
           .order('date', ascending: false);
@@ -206,7 +207,7 @@ class CurrentlyController extends Notifier<CurrentlyState>
     }
 
     try {
-      await Supabase.instance.client.from('love_taps').upsert({
+      await Supabase.instance.client.from(Tables.loveTaps).upsert({
         'couple_id': coupleId!,
         'date': todayStr,
         ...updateData,

@@ -13,6 +13,7 @@ import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/network/realtime_subscription_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `DailyMoodProvider` (Phase 6a of the architecture
 /// migration). The second of the two providers (with `TopicCardsController`)
@@ -47,7 +48,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
   StreamSubscription? _questionSub;
 
   @override
-  String get tableName => 'moods';
+  String get tableName => Tables.moods;
 
   @override
   DailyMoodState build() {
@@ -87,7 +88,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
     if (coupleId == null) return;
     try {
       final List<dynamic> moodsRes = await Supabase.instance.client
-          .from('moods')
+          .from(Tables.moods)
           .select()
           .eq('couple_id', coupleId!);
       final incomingMyMoods = <DailyMood>[];
@@ -108,7 +109,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
       }
 
       final qRes = await Supabase.instance.client
-          .from('daily_questions')
+          .from(Tables.dailyQuestions)
           .select()
           .eq('couple_id', coupleId!)
           .eq('date', DailyMoodState.todayString)
@@ -392,7 +393,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
     if (coupleId != null && sessionUserId != null) {
       try {
         final moodId = '${sessionUserId}_${DailyMoodState.todayString}';
-        await Supabase.instance.client.from('moods').upsert({
+        await Supabase.instance.client.from(Tables.moods).upsert({
           'id': moodId,
           'couple_id': coupleId,
           'user_id': sessionUserId,
@@ -443,7 +444,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
     if (coupleId != null && sessionUserId != null) {
       try {
         final response = await Supabase.instance.client
-            .from('daily_questions')
+            .from(Tables.dailyQuestions)
             .select('answers')
             .eq('couple_id', coupleId!)
             .eq('date', DailyMoodState.todayString)
@@ -455,7 +456,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
         }
         answers[sessionUserId!] = answer;
 
-        await Supabase.instance.client.from('daily_questions').upsert({
+        await Supabase.instance.client.from(Tables.dailyQuestions).upsert({
           'couple_id': coupleId,
           'date': DailyMoodState.todayString,
           'question':

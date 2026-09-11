@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/features/relationship/domain/entities/relationship_metadata.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Typed access to the `license_details` table (ADR-003). Qualifies for a
 /// repository under the two-part test: read by `ProfileService.fetchLicenseDetails`
@@ -37,7 +38,7 @@ import 'package:days_together/features/relationship/domain/entities/relationship
 /// naming similarity (see `state-management.md`).
 ///
 /// CURRENT STATE (Phase 4): additive, like `UserRepository` -- see its doc
-/// comment for why `profile_service.dart`'s existing raw `.from('license_details')`
+/// comment for why `profile_service.dart`'s existing raw `.from(Tables.licenseDetails)`
 /// sites aren't rewired in this phase.
 class LicenseRepository {
   LicenseRepository._();
@@ -50,7 +51,7 @@ class LicenseRepository {
   /// doesn't exist yet.
   Future<RelationshipMetadata?> fetchLicense(String coupleId) async {
     final row = await _client
-        .from('license_details')
+        .from(Tables.licenseDetails)
         .select()
         .eq('couple_id', coupleId)
         .maybeSingle();
@@ -60,13 +61,13 @@ class LicenseRepository {
   /// Updates existing fields in the `license_details` table.
   Future<void> updateLicense(String coupleId, Map<String, dynamic> data) async {
     await _client
-        .from('license_details')
+        .from(Tables.licenseDetails)
         .update(data)
         .eq('couple_id', coupleId);
   }
 
   /// Upserts a `license_details` row (insert-or-update).
   Future<void> upsertLicense(Map<String, dynamic> data) async {
-    await _client.from('license_details').upsert(data);
+    await _client.from(Tables.licenseDetails).upsert(data);
   }
 }

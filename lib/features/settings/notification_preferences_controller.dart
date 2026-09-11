@@ -10,6 +10,7 @@ import 'package:days_together/features/settings/data/notification_preferences_ca
 import 'package:days_together/features/settings/notification_preferences_state.dart';
 import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `NotificationPreferencesProvider` (Phase 6a of the
 /// architecture migration, the twelfth and last of the 12 domain
@@ -125,7 +126,7 @@ class NotificationPreferencesController
     try {
       final client = Supabase.instance.client;
       final res = await client
-          .from('user_notification_preferences')
+          .from(Tables.userNotificationPreferences)
           .select()
           .eq('user_id', userId)
           .maybeSingle();
@@ -147,7 +148,7 @@ class NotificationPreferencesController
           timezone: DateTime.now().timeZoneName,
         );
         await client
-            .from('user_notification_preferences')
+            .from(Tables.userNotificationPreferences)
             .insert(preferences.toJson());
       }
 
@@ -173,7 +174,7 @@ class NotificationPreferencesController
 
     try {
       final client = Supabase.instance.client;
-      await client.from('user_notification_preferences').upsert(updatedJson);
+      await client.from(Tables.userNotificationPreferences).upsert(updatedJson);
 
       if (!ref.mounted) return;
       final updated = NotificationPreferences.fromJson(updatedJson);

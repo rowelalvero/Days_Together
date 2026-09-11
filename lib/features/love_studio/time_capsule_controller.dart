@@ -11,6 +11,7 @@ import 'package:days_together/features/love_studio/time_capsule_state.dart';
 import 'package:days_together/features/love_studio/domain/entities/time_capsule_model.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `TimeCapsuleProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port: like `GiftReminderController`/
@@ -25,7 +26,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   final Set<String> _localMutations = {};
 
   @override
-  String get tableName => 'time_capsules';
+  String get tableName => Tables.timeCapsules;
 
   @override
   TimeCapsuleState build() {
@@ -69,7 +70,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('time_capsules')
+          .from(Tables.timeCapsules)
           .select()
           .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
@@ -172,7 +173,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('time_capsules').upsert({
+        await Supabase.instance.client.from(Tables.timeCapsules).upsert({
           'id': capsule.id,
           'couple_id': coupleId,
           'message': message,
@@ -225,7 +226,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('time_capsules')
+            .from(Tables.timeCapsules)
             .update({'is_opened': true})
             .eq('id', id);
         NotificationService().sendPartnerNotification(
@@ -267,7 +268,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('time_capsules')
+            .from(Tables.timeCapsules)
             .delete()
             .eq('id', id);
       } catch (e) {

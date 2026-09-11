@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/security/key_management_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// The three identity fields [CoupleKeyExchange] needs from its owner, read
 /// fresh on every use rather than captured once: all three resolve
@@ -74,7 +75,7 @@ class CoupleKeyExchange {
     if (userId == null) return;
 
     _sub = Supabase.instance.client
-        .from('couple_key_exchanges')
+        .from(Tables.coupleKeyExchanges)
         .stream(primaryKey: ['couple_id', 'recipient_user_id'])
         .eq('recipient_user_id', userId)
         .listen(
@@ -112,7 +113,7 @@ class CoupleKeyExchange {
     if (partnerId == null) return;
     try {
       final partnerData = await Supabase.instance.client
-          .from('users')
+          .from(Tables.users)
           .select('public_key')
           .eq('id', partnerId)
           .maybeSingle();
@@ -199,7 +200,7 @@ class CoupleKeyExchange {
       if (coupleKeyBytes == null) return;
 
       final partnerData = await Supabase.instance.client
-          .from('users')
+          .from(Tables.users)
           .select('public_key')
           .eq('id', partnerId)
           .maybeSingle();

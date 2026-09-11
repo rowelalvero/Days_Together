@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 class NotificationService {
   /// The host platform, as stored on `user_fcm_tokens.device_type`. Replaces
@@ -118,7 +119,7 @@ class NotificationService {
       // Fallback: delete existing token for user before upsert
       try {
         await Supabase.instance.client
-            .from('user_fcm_tokens')
+            .from(Tables.userFcmTokens)
             .delete()
             .eq('user_id', userId);
       } catch (e) {
@@ -127,7 +128,7 @@ class NotificationService {
         );
       }
 
-      await Supabase.instance.client.from('user_fcm_tokens').upsert({
+      await Supabase.instance.client.from(Tables.userFcmTokens).upsert({
         'user_id': userId,
         'token': token,
         'device_type': _deviceType,
@@ -148,7 +149,7 @@ class NotificationService {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (token != null && userId != null) {
         await Supabase.instance.client
-            .from('user_fcm_tokens')
+            .from(Tables.userFcmTokens)
             .delete()
             .eq('user_id', userId)
             .eq('token', token);

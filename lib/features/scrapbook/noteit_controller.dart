@@ -16,6 +16,8 @@ import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/scrapbook/data/noteit_sync_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 
 /// Riverpod port of `NoteitProvider` (Phase 6a of the architecture
 /// migration, ported together with `LoveChatController` since both share
@@ -51,7 +53,7 @@ class NoteitController extends Notifier<NoteitState>
   static const String _storageKey = 'love_notes_items';
 
   @override
-  String get tableName => 'love_notes';
+  String get tableName => Tables.loveNotes;
 
   @override
   NoteitState build() {
@@ -140,7 +142,7 @@ class NoteitController extends Notifier<NoteitState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('love_notes')
+          .from(Tables.loveNotes)
           .select()
           .eq('couple_id', coupleId!);
       if (!ref.mounted) return;
@@ -472,14 +474,17 @@ class NoteitController extends Notifier<NoteitState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('love_notes').delete().eq('id', id);
+        await Supabase.instance.client
+            .from(Tables.loveNotes)
+            .delete()
+            .eq('id', id);
 
         if (noteToDelete.type == NoteitType.photo) {
           try {
             final storagePath = 'couples/$coupleId/love_notes/$id.jpg';
-            await Supabase.instance.client.storage.from('love-notes').remove([
-              storagePath,
-            ]);
+            await Supabase.instance.client.storage
+                .from(StorageBuckets.loveNotes)
+                .remove([storagePath]);
           } catch (e) {
             debugPrint('NoteitController.deleteNote storage remove error: $e');
           }

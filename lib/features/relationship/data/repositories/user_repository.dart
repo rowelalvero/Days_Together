@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/features/relationship/domain/entities/user_profile.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Typed access to the `users` table (ADR-003). Qualifies for a repository
 /// under the two-part test: read by multiple consumers (`CoupleSession`,
@@ -9,7 +10,7 @@ import 'package:days_together/features/relationship/domain/entities/user_profile
 ///
 /// CURRENT STATE (Phase 4 of the architecture migration): this repository is
 /// additive -- existing call sites in `relationship_provider.dart` (18 raw
-/// `.from('users')` sites) and `profile_service.dart` (its
+/// `.from(Tables.users)` sites) and `profile_service.dart` (its
 /// `updateUserDetails`) are deliberately left untouched here. Rewiring them
 /// is Phase 5's job, done as each state slice (`LicenseController`,
 /// `ProfileController`) is extracted and can be born calling this repository
@@ -26,7 +27,7 @@ class UserRepository {
   /// Fetches a single user row by id, or null if it doesn't exist.
   Future<UserProfile?> fetchUser(String userId) async {
     final row = await _client
-        .from('users')
+        .from(Tables.users)
         .select()
         .eq('id', userId)
         .maybeSingle();
@@ -35,7 +36,7 @@ class UserRepository {
 
   /// Updates profile columns in the `users` table for the given user id.
   Future<void> updateUser(String userId, Map<String, dynamic> data) async {
-    await _client.from('users').update(data).eq('id', userId);
+    await _client.from(Tables.users).update(data).eq('id', userId);
   }
 
   /// Updates a partner's profile fields via the `update_partner_profile` RPC

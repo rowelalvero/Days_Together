@@ -19,6 +19,7 @@ import 'package:days_together/core/session/partner_presence.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/widgets/storage_image.dart'
     show evictStorageImageCache;
+import 'package:days_together/core/constants/tables.dart';
 
 enum RelationshipStatus { waiting, active, disconnected, archived }
 
@@ -492,7 +493,7 @@ class CoupleSession extends ChangeNotifier {
   /// Subscribes to this user's own `users` row.
   void _subscribeToUserRow() {
     _userSub = Supabase.instance.client
-        .from('users')
+        .from(Tables.users)
         .stream(primaryKey: ['id'])
         .eq('id', _userId!)
         .listen(
@@ -518,7 +519,7 @@ class CoupleSession extends ChangeNotifier {
         // `UPDATE ... SET couple_id = NULL` and silently wipe a
         // live pairing. couple_id is omitted entirely so this can
         // never clear an existing link.
-        await Supabase.instance.client.from('users').upsert({
+        await Supabase.instance.client.from(Tables.users).upsert({
           'id': _userId!,
           'display_name': _yourName,
         }, ignoreDuplicates: true);
@@ -541,7 +542,7 @@ class CoupleSession extends ChangeNotifier {
     if (partnerDeletedNotice) {
       _showPartnerDeletedNotice = true;
       Supabase.instance.client
-          .from('users')
+          .from(Tables.users)
           .update({'partner_deleted_notice': false})
           .eq('id', _userId!)
           .then((_) {});
@@ -639,7 +640,7 @@ class CoupleSession extends ChangeNotifier {
   /// Subscribes to the couple row shared by both partners.
   void _subscribeToCouple() {
     _coupleSub = Supabase.instance.client
-        .from('couples')
+        .from(Tables.couples)
         .stream(primaryKey: ['id'])
         .eq('id', _coupleId!)
         .listen(
@@ -773,7 +774,7 @@ class CoupleSession extends ChangeNotifier {
     }
 
     _partnerUserSub = Supabase.instance.client
-        .from('users')
+        .from(Tables.users)
         .stream(primaryKey: ['id'])
         .eq('id', _partnerId!)
         .listen((pDataList) async {
@@ -786,7 +787,7 @@ class CoupleSession extends ChangeNotifier {
         });
 
     Supabase.instance.client
-        .from('users')
+        .from(Tables.users)
         .select()
         .eq('id', _partnerId!)
         .maybeSingle()
@@ -893,7 +894,7 @@ class CoupleSession extends ChangeNotifier {
     if (_userId != null) {
       try {
         await Supabase.instance.client
-            .from('users')
+            .from(Tables.users)
             .update({'current_activity': activity})
             .eq('id', _userId!);
       } catch (e) {
@@ -965,7 +966,7 @@ class CoupleSession extends ChangeNotifier {
       }
       if (coupleUpdates.isNotEmpty) {
         await Supabase.instance.client
-            .from('couples')
+            .from(Tables.couples)
             .update(coupleUpdates)
             .eq('id', _coupleId!);
       }
@@ -990,7 +991,7 @@ class CoupleSession extends ChangeNotifier {
     await prefs.setString(PrefsKeys.storyTitle, title);
     if (_coupleId != null) {
       Supabase.instance.client
-          .from('couples')
+          .from(Tables.couples)
           .update({'story_title': title})
           .eq('id', _coupleId!)
           .then((_) {});
@@ -1007,7 +1008,7 @@ class CoupleSession extends ChangeNotifier {
     );
     if (_coupleId != null) {
       Supabase.instance.client
-          .from('couples')
+          .from(Tables.couples)
           .update({'start_date': date.toIso8601String()})
           .eq('id', _coupleId!)
           .then((_) {});
@@ -1031,7 +1032,7 @@ class CoupleSession extends ChangeNotifier {
     await prefs.setInt(PrefsKeys.relationshipStartMinute, time.minute);
     if (_coupleId != null) {
       Supabase.instance.client
-          .from('couples')
+          .from(Tables.couples)
           .update({
             'start_time_hour': time.hour,
             'start_time_minute': time.minute,
@@ -1362,7 +1363,7 @@ class CoupleSession extends ChangeNotifier {
         }
 
         final coupleData = await Supabase.instance.client
-            .from('couples')
+            .from(Tables.couples)
             .select()
             .eq('id', _coupleId!)
             .maybeSingle();
@@ -1409,7 +1410,7 @@ class CoupleSession extends ChangeNotifier {
       if (updates.isNotEmpty) {
         try {
           await Supabase.instance.client
-              .from('users')
+              .from(Tables.users)
               .update(updates)
               .eq('id', _userId!);
         } catch (e) {
@@ -1429,7 +1430,7 @@ class CoupleSession extends ChangeNotifier {
     await prefs.setBool(PrefsKeys.isPremium, _isPremium);
     if (_coupleId != null) {
       Supabase.instance.client
-          .from('couples')
+          .from(Tables.couples)
           .update({'is_premium': _isPremium})
           .eq('id', _coupleId!)
           .then((_) {});
@@ -1560,7 +1561,7 @@ class CoupleSession extends ChangeNotifier {
     notifyListeners();
     if (isSupabaseAvailable && _userId != null) {
       Supabase.instance.client
-          .from('users')
+          .from(Tables.users)
           .update({'partner_deleted_notice': false})
           .eq('id', _userId!)
           .then((_) {});
@@ -1581,7 +1582,7 @@ class CoupleSession extends ChangeNotifier {
         debugPrint('Error calling delete_current_user RPC: $e');
         try {
           await Supabase.instance.client
-              .from('users')
+              .from(Tables.users)
               .delete()
               .eq('id', _userId!);
         } catch (e) {

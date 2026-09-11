@@ -14,6 +14,7 @@ import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/network/realtime_subscription_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `TopicCardsProvider` (Phase 6a of the architecture
 /// migration). One of the two providers (with `DailyMoodController`) that
@@ -36,7 +37,7 @@ class TopicCardsController extends Notifier<TopicCardsState>
   final Set<String> _localMutations = {};
 
   @override
-  String get tableName => 'topic_cards';
+  String get tableName => Tables.topicCards;
 
   @override
   TopicCardsState build() {
@@ -115,7 +116,7 @@ class TopicCardsController extends Notifier<TopicCardsState>
     if (coupleId == null) return;
     try {
       final List<dynamic> cardsRes = await Supabase.instance.client
-          .from('topic_cards')
+          .from(Tables.topicCards)
           .select()
           .eq('couple_id', coupleId!);
       final parsedCards = cardsRes.map((data) {
@@ -129,7 +130,7 @@ class TopicCardsController extends Notifier<TopicCardsState>
       }).toList();
 
       final List<dynamic> likesRes = await Supabase.instance.client
-          .from('topic_card_likes')
+          .from(Tables.topicCardLikes)
           .select()
           .eq('couple_id', coupleId!);
       final myLikes = <String>{};
@@ -379,7 +380,7 @@ class TopicCardsController extends Notifier<TopicCardsState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('topic_cards').upsert({
+        await Supabase.instance.client.from(Tables.topicCards).upsert({
           'id': newCard.id,
           'couple_id': coupleId,
           'category': category,
@@ -427,11 +428,11 @@ class TopicCardsController extends Notifier<TopicCardsState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('topic_cards')
+            .from(Tables.topicCards)
             .delete()
             .eq('id', id);
         await Supabase.instance.client
-            .from('topic_card_likes')
+            .from(Tables.topicCardLikes)
             .delete()
             .eq('couple_id', coupleId!)
             .eq('user_id', sessionUserId!)
@@ -520,14 +521,14 @@ class TopicCardsController extends Notifier<TopicCardsState>
         final targetLiked = entry.value;
         try {
           if (targetLiked) {
-            await Supabase.instance.client.from('topic_card_likes').upsert({
+            await Supabase.instance.client.from(Tables.topicCardLikes).upsert({
               'couple_id': coupleId,
               'user_id': sessionUserId,
               'card_id': cardId,
             });
           } else {
             await Supabase.instance.client
-                .from('topic_card_likes')
+                .from(Tables.topicCardLikes)
                 .delete()
                 .eq('couple_id', coupleId!)
                 .eq('user_id', sessionUserId!)

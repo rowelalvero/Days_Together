@@ -9,6 +9,7 @@ import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
 import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `LoveChatProvider` (Phase 6a of the architecture
 /// migration, ported together with `NoteitController` since both read the
@@ -76,7 +77,7 @@ class LoveChatController extends Notifier<LoveChatState>
   static const int maxLocalMessages = 200;
 
   @override
-  String get tableName => 'love_notes';
+  String get tableName => Tables.loveNotes;
 
   @override
   LoveChatState build() {
@@ -162,7 +163,7 @@ class LoveChatController extends Notifier<LoveChatState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('love_notes')
+          .from(Tables.loveNotes)
           .select()
           .eq('couple_id', coupleId!)
           .eq('type', 'chat')
@@ -235,7 +236,7 @@ class LoveChatController extends Notifier<LoveChatState>
 
     if (coupleId != null && sessionUserId != null) {
       try {
-        await Supabase.instance.client.from('love_notes').upsert({
+        await Supabase.instance.client.from(Tables.loveNotes).upsert({
           'id': newMessage.id,
           'couple_id': coupleId,
           'type': 'chat',
@@ -284,7 +285,7 @@ class LoveChatController extends Notifier<LoveChatState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('love_notes')
+            .from(Tables.loveNotes)
             .delete()
             .eq('id', messageId);
       } catch (e) {

@@ -21,6 +21,7 @@ import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/widgets/storage_image.dart'
     show evictStorageImageCache;
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `TimelineProvider` (Phase 6a of the architecture
 /// migration -- the widest UI consumer surface of the 12, 18 files).
@@ -41,7 +42,7 @@ class TimelineController extends Notifier<TimelineState>
   final Set<String> _localMutations = {};
 
   @override
-  String get tableName => 'timeline_items';
+  String get tableName => Tables.timelineItems;
 
   @override
   TimelineState build() {
@@ -157,7 +158,7 @@ class TimelineController extends Notifier<TimelineState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('timeline_items')
+          .from(Tables.timelineItems)
           .select()
           .eq('couple_id', coupleId!)
           .order('date', ascending: false)
@@ -337,13 +338,15 @@ class TimelineController extends Notifier<TimelineState>
         };
 
         try {
-          await Supabase.instance.client.from('timeline_items').upsert(dbData);
+          await Supabase.instance.client
+              .from(Tables.timelineItems)
+              .upsert(dbData);
         } catch (e) {
           if (_isMissingCommentsColumn(e)) {
             final fallbackData = Map<String, dynamic>.from(dbData)
               ..remove('comments');
             await Supabase.instance.client
-                .from('timeline_items')
+                .from(Tables.timelineItems)
                 .upsert(fallbackData);
           } else {
             rethrow;
@@ -480,13 +483,15 @@ class TimelineController extends Notifier<TimelineState>
         };
 
         try {
-          await Supabase.instance.client.from('timeline_items').upsert(dbData);
+          await Supabase.instance.client
+              .from(Tables.timelineItems)
+              .upsert(dbData);
         } catch (e) {
           if (_isMissingCommentsColumn(e)) {
             final fallbackData = Map<String, dynamic>.from(dbData)
               ..remove('comments');
             await Supabase.instance.client
-                .from('timeline_items')
+                .from(Tables.timelineItems)
                 .upsert(fallbackData);
           } else {
             rethrow;
@@ -570,15 +575,15 @@ class TimelineController extends Notifier<TimelineState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('timeline_items')
+            .from(Tables.timelineItems)
             .delete()
             .eq('id', id);
 
         try {
           final storagePath = 'couples/$coupleId/timeline/$id.jpg';
-          await Supabase.instance.client.storage.from('timeline').remove([
-            storagePath,
-          ]);
+          await Supabase.instance.client.storage
+              .from(StorageBuckets.timeline)
+              .remove([storagePath]);
         } catch (e) {
           debugPrint(
             'TimelineController.deleteTimelineItem storage remove error: $e',
@@ -588,7 +593,7 @@ class TimelineController extends Notifier<TimelineState>
         final currentRemaining = List<TimelineItemData>.from(state.items);
         for (var i = 0; i < currentRemaining.length; i++) {
           await Supabase.instance.client
-              .from('timeline_items')
+              .from(Tables.timelineItems)
               .update({'position': i})
               .eq('id', currentRemaining[i].id);
           if (!ref.mounted) return;
@@ -623,7 +628,7 @@ class TimelineController extends Notifier<TimelineState>
       try {
         for (var i = 0; i < state.items.length; i++) {
           await Supabase.instance.client
-              .from('timeline_items')
+              .from(Tables.timelineItems)
               .update({'position': i})
               .eq('id', state.items[i].id);
           if (!ref.mounted) return;

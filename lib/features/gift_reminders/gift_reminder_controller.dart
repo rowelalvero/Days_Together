@@ -11,6 +11,7 @@ import 'package:days_together/features/gift_reminders/gift_reminder_state.dart';
 import 'package:days_together/features/gift_reminders/domain/entities/gift_reminder_model.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `GiftReminderProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port, including a pre-existing asymmetry:
@@ -29,7 +30,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
   final Set<String> _localMutations = {};
 
   @override
-  String get tableName => 'gift_reminders';
+  String get tableName => Tables.giftReminders;
 
   @override
   GiftReminderState build() {
@@ -72,7 +73,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('gift_reminders')
+          .from(Tables.giftReminders)
           .select()
           .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
@@ -198,7 +199,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('gift_reminders').upsert({
+        await Supabase.instance.client.from(Tables.giftReminders).upsert({
           'id': reminder.id,
           'couple_id': coupleId,
           'title': title,
@@ -252,7 +253,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
         if (date != null) updates['date'] = date.toIso8601String();
 
         await Supabase.instance.client
-            .from('gift_reminders')
+            .from(Tables.giftReminders)
             .update(updates)
             .eq('id', id);
         NotificationService().sendPartnerNotification(
@@ -293,7 +294,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('gift_reminders')
+            .from(Tables.giftReminders)
             .update({'is_enabled': nextEnabled})
             .eq('id', id);
       } catch (e) {
@@ -336,7 +337,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('gift_reminders')
+            .from(Tables.giftReminders)
             .delete()
             .eq('id', id);
         NotificationService().sendPartnerNotification(

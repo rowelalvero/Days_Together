@@ -11,6 +11,7 @@ import 'package:days_together/features/calendar/calendar_state.dart';
 import 'package:days_together/features/calendar/domain/entities/calendar_event_model.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// Riverpod port of `CalendarProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port: like `GiftReminderController` (and
@@ -23,7 +24,7 @@ class CalendarController extends Notifier<CalendarState>
   final Set<String> _localMutations = {};
 
   @override
-  String get tableName => 'calendar_events';
+  String get tableName => Tables.calendarEvents;
 
   @override
   CalendarState build() {
@@ -89,7 +90,7 @@ class CalendarController extends Notifier<CalendarState>
     if (coupleId == null) return;
     try {
       final List<dynamic> res = await Supabase.instance.client
-          .from('calendar_events')
+          .from(Tables.calendarEvents)
           .select()
           .eq('couple_id', coupleId!);
       final parsed = res.map((data) => _parseEvent(data)).toList();
@@ -191,7 +192,7 @@ class CalendarController extends Notifier<CalendarState>
     _localMutations.add(event.id);
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('calendar_events').upsert({
+        await Supabase.instance.client.from(Tables.calendarEvents).upsert({
           'id': event.id,
           'couple_id': coupleId,
           'title': event.title,
@@ -237,7 +238,7 @@ class CalendarController extends Notifier<CalendarState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('calendar_events')
+            .from(Tables.calendarEvents)
             .update({
               'title': updatedEvent.title,
               'description': updatedEvent.description,
@@ -299,7 +300,7 @@ class CalendarController extends Notifier<CalendarState>
     if (coupleId != null) {
       try {
         await Supabase.instance.client
-            .from('calendar_events')
+            .from(Tables.calendarEvents)
             .delete()
             .eq('id', id);
         NotificationService().sendPartnerNotification(

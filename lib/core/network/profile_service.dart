@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/core/storage/encrypted_storage_service.dart';
+import 'package:days_together/core/constants/tables.dart';
 
 /// A service to encapsulate user profile, registry metadata, and avatar storage actions.
 class ProfileService {
@@ -14,7 +15,10 @@ class ProfileService {
     String userId,
     Map<String, dynamic> data,
   ) async {
-    await Supabase.instance.client.from('users').update(data).eq('id', userId);
+    await Supabase.instance.client
+        .from(Tables.users)
+        .update(data)
+        .eq('id', userId);
   }
 
   /// Updates partner profile fields via the update_partner_profile RPC (Audit C-2).
@@ -34,7 +38,7 @@ class ProfileService {
     Map<String, dynamic> data,
   ) async {
     await Supabase.instance.client
-        .from('couples')
+        .from(Tables.couples)
         .update(data)
         .eq('id', coupleId);
   }
@@ -45,20 +49,20 @@ class ProfileService {
     Map<String, dynamic> data,
   ) async {
     await Supabase.instance.client
-        .from('license_details')
+        .from(Tables.licenseDetails)
         .update(data)
         .eq('couple_id', coupleId);
   }
 
   /// Upserts registry/license metadata in the `license_details` table.
   Future<void> upsertLicenseDetails(Map<String, dynamic> data) async {
-    await Supabase.instance.client.from('license_details').upsert(data);
+    await Supabase.instance.client.from(Tables.licenseDetails).upsert(data);
   }
 
   /// Fetches relationship license details for a specific couple.
   Future<Map<String, dynamic>?> fetchLicenseDetails(String coupleId) async {
     final list = await Supabase.instance.client
-        .from('license_details')
+        .from(Tables.licenseDetails)
         .select()
         .eq('couple_id', coupleId);
     return list.isNotEmpty ? list.first : null;
