@@ -419,20 +419,29 @@ class _PinPromptDialogState extends State<_PinPromptDialog> {
         ),
         TextButton(
           onPressed: () async {
+            // Resolved up front, before any await and before the pop: this is
+            // the dialog's own context, so looking up an ancestor through it
+            // after `Navigator.pop` would be a lookup through a deactivated
+            // element. Both objects outlive the dialog route -- the messenger
+            // is the app-level one under `MaterialApp` -- so the snack bar
+            // still shows on the screen underneath.
+            final messenger = ScaffoldMessenger.of(context);
+            final navigator = Navigator.of(context);
+
             final correct = await widget.vault.verifyPin(_pinController.text);
             if (!mounted) return;
             if (correct) {
               await widget.vault.addLetter(widget.generatedLetter);
               if (!mounted) return;
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
+              navigator.pop();
+              messenger.showSnackBar(
                 const SnackBar(
                   content: Text('🔒 Saved securely to your Secret Vault!'),
                   backgroundColor: Colors.pinkAccent,
                 ),
               );
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 const SnackBar(
                   content: Text('Incorrect PIN. Please try again.'),
                   backgroundColor: Colors.redAccent,

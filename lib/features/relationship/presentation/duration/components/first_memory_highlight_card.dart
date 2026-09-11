@@ -22,14 +22,7 @@ class FirstMemoryHighlightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final memories = tp.items;
-    TimelineItemData? firstMemory;
-
-    if (memories.isNotEmpty) {
-      final sorted = List<TimelineItemData>.from(memories)
-        ..sort((a, b) => a.date.compareTo(b.date));
-      firstMemory = sorted.first;
-    }
+    final firstMemory = tp.firstMemory;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

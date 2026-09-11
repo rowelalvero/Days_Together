@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:days_together/models/app_settings.dart';
@@ -26,6 +27,17 @@ class HomeWidgetService {
   static const String keyDurationText = HomeWidgetConstants.keyDurationText;
   static const String keyNoteitRenderPath = HomeWidgetConstants.keyNoteitRenderPath;
   static const String keyDaysTogetherRenderPath = HomeWidgetConstants.keyDaysTogetherRenderPath;
+
+  /// Whether the `home_widget` plugin actually has an implementation on this
+  /// host. It ships Android and iOS only, so on desktop, web, and under
+  /// `flutter test` every call below throws
+  /// `MissingPluginException(No implementation found for method ... on channel
+  /// home_widget)` and dumps a stack trace into the log. Each public entry
+  /// point bails out on this instead of relying on its `catch` to mop up.
+  /// `kIsWeb` is checked first because `dart:io`'s [Platform] itself throws on
+  /// web, and `&&` short-circuits before it is touched.
+  static bool get isSupportedPlatform =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   /// Pure duration calculation and formatting function with format mode support.
   static String formatDuration(
@@ -99,6 +111,7 @@ class HomeWidgetService {
 
   /// Initialize HomeWidget iOS App Group configuration.
   Future<void> initialize() async {
+    if (!isSupportedPlatform) return;
     try {
       await HomeWidget.setAppGroupId(appGroupId);
     } catch (e, st) {
@@ -113,6 +126,7 @@ class HomeWidgetService {
     String? timeAgo,
     LoveStoryTheme? theme,
   }) async {
+    if (!isSupportedPlatform) return;
     try {
       final effectiveTheme = theme ?? ThemeManager.getTheme(ThemeType.midnightRose);
       final widget = Noteit2x2RenderCard(
@@ -150,6 +164,7 @@ class HomeWidgetService {
     String? partner2Name,
     String? milestoneText,
   }) async {
+    if (!isSupportedPlatform) return;
     try {
       if (startDate == null) {
         await clearWidget();
@@ -229,6 +244,7 @@ class HomeWidgetService {
 
   /// Request the operating system to pin the widget to home screen (Android).
   Future<bool> requestPin(HomeWidgetType type) async {
+    if (!isSupportedPlatform) return false;
     try {
       if (Platform.isAndroid) {
         final widgetName = type == HomeWidgetType.noteit2x2
@@ -259,6 +275,7 @@ class HomeWidgetService {
 
   /// Clear home screen widget data upon logout or relationship disconnect.
   Future<void> clearWidget() async {
+    if (!isSupportedPlatform) return;
     try {
       await HomeWidget.saveWidgetData<String>(keyStartTimestamp, null);
       await HomeWidget.saveWidgetData<String>(keyDurationText, null);

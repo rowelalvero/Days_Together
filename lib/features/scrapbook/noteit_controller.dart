@@ -474,7 +474,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
           drawingContent: latest.content,
         );
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('NoteitController: home widget sync failed: $e');
+    }
   }
 }
 

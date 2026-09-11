@@ -22,6 +22,8 @@ import 'package:days_together/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerStatefulWidget, ConsumerState, ConsumerWidget, WidgetRef, ProviderScope;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:days_together/features/home_widgets/data/home_widget_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/app_config.dart';
@@ -79,7 +81,17 @@ Future<void> _initializeApp() async {
     debugPrint('HomeWidgetService initialization error: $e');
   }
 
-  runApp(buildAppRoot(child: const MyApp()));
+  // Resolved here, not lazily inside the provider: `homeWidgetRepositoryProvider`
+  // needs a `SharedPreferences` instance, `SharedPreferences.getInstance()` is
+  // async, and a Riverpod `Provider` body is not. See [buildAppRoot].
+  SharedPreferences? prefs;
+  try {
+    prefs = await SharedPreferences.getInstance();
+  } catch (e) {
+    debugPrint('SharedPreferences initialization error: $e');
+  }
+
+  runApp(buildAppRoot(child: const MyApp(), homeWidgetPrefs: prefs));
 }
 
 void _setupHomeWidgetDeepLinking() {
@@ -129,8 +141,27 @@ void _routeHomeWidgetDeepLink(Uri uri) {
 /// bridge into. Factored out of [runApp] so `test/riverpod_bridge_test.dart`
 /// can pump the exact production wiring around a probe widget of its
 /// choosing instead of a hand-maintained duplicate that could drift.
-Widget buildAppRoot({required Widget child}) {
+///
+/// [homeWidgetPrefs] supplies the one override production must install:
+/// `homeWidgetRepositoryProvider` deliberately throws when it has not been
+/// overridden, so that missing wiring fails loudly instead of silently
+/// serving a default widget configuration -- but that contract only holds if
+/// the real app actually installs the override. It didn't, so navigating to
+/// the Home Widget Studio threw `UnimplementedError` onto a red error screen
+/// on every device. It stays nullable so `test/riverpod_bridge_test.dart` can
+/// keep pumping this exact tree without caring about a provider it never
+/// reads, and so a failure to open `SharedPreferences` degrades to only that
+/// one screen failing rather than taking down app startup.
+Widget buildAppRoot({
+  required Widget child,
+  SharedPreferences? homeWidgetPrefs,
+}) {
   return ProviderScope(
+    overrides: [
+      if (homeWidgetPrefs != null)
+        homeWidgetRepositoryProvider
+            .overrideWithValue(HomeWidgetRepository(homeWidgetPrefs)),
+    ],
     child: _CoupleSessionBridge(child: child),
   );
 }

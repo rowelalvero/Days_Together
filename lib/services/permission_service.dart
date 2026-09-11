@@ -44,7 +44,9 @@ class PermissionService {
       if (apiMatch != null) {
         return int.parse(apiMatch.group(1)!);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('PermissionService: could not parse the Android SDK int from the OS version string: $e');
+    }
     return 0;
   }
 

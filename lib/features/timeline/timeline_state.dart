@@ -33,6 +33,22 @@ class TimelineState {
     );
   }
 
+  /// The earliest-dated memory, or null when there are none.
+  ///
+  /// Lives here rather than in `FirstMemoryHighlightCard.build()`, which used
+  /// to copy the entire list and sort it -- an allocation plus O(N log N) on
+  /// every single rebuild -- only to read element 0. One linear scan needs
+  /// neither.
+  TimelineItemData? get firstMemory {
+    TimelineItemData? earliest;
+    for (final item in items) {
+      if (earliest == null || item.date.isBefore(earliest.date)) {
+        earliest = item;
+      }
+    }
+    return earliest;
+  }
+
   static int clampIndex(List<TimelineItemData> items, int desired) {
     if (items.isEmpty) return 0;
     return desired.clamp(0, items.length - 1);

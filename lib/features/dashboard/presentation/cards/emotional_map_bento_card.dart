@@ -291,7 +291,9 @@ class EmotionalMapBentoCard extends StatelessWidget {
                             ),
                           ),
                         );
-                      } catch (_) {}
+                      } catch (e) {
+                        debugPrint('EmotionalMapBentoCard: rendering a weekday axis label failed: $e');
+                      }
                     }
                     return const SizedBox.shrink();
                   },

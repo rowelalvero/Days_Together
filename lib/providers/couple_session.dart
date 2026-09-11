@@ -370,9 +370,32 @@ class CoupleSession extends ChangeNotifier {
       (data) async {
         final user = data.session?.user;
 
+        // Supabase emits `onAuthStateChange` for routine background events as
+        // well as real sign-in/sign-out: `tokenRefreshed` fires roughly hourly
+        // for the lifetime of the session, and `userUpdated` after any auth
+        // profile mutation. Neither changes *which* account is signed in, but
+        // the teardown below would drop every realtime channel (love chat,
+        // note-its, presence) and flip `_isInitialized` back to false, which
+        // makes `computeSessionStage()` report `SessionStage.loading` and
+        // bounces `appRedirect` to the loading route -- yanking the user out
+        // of whatever screen they were on mid-session. supabase_flutter
+        // re-authenticates the existing realtime socket itself on refresh, so
+        // for these events, while the same user stays signed in, there is
+        // nothing to rebuild.
+        final isSameUserBackgroundRefresh = (data.event ==
+                    AuthChangeEvent.tokenRefreshed ||
+                data.event == AuthChangeEvent.userUpdated) &&
+            user != null &&
+            user.id == _userId;
+        if (isSameUserBackgroundRefresh) {
+          return;
+        }
+
         try {
           await Supabase.instance.client.removeAllChannels();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('CoupleSession: removeAllChannels() during auth change failed: $e');
+        }
 
         _cancelActiveSubscriptions();
         _userSub?.cancel();
@@ -429,7 +452,9 @@ class CoupleSession extends ChangeNotifier {
                       },
                       ignoreDuplicates: true,
                     );
-                  } catch (_) {}
+                  } catch (e) {
+                    debugPrint('CoupleSession: self-heal insert of missing public.users row failed: $e');
+                  }
                   _isInitialized = true;
                   notifyListeners();
                   return;
@@ -919,7 +944,9 @@ class CoupleSession extends ChangeNotifier {
       try {
         _presenceChannel!.unsubscribe();
         Supabase.instance.client.removeChannel(_presenceChannel!);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('CoupleSession: tearing down the previous presence channel failed: $e');
+      }
       _presenceChannel = null;
     }
 
@@ -958,7 +985,9 @@ class CoupleSession extends ChangeNotifier {
                 'user_id': _userId,
                 'online_at': DateTime.now().toIso8601String(),
               });
-            } catch (_) {}
+            } catch (e) {
+              debugPrint('CoupleSession: presence track() failed: $e');
+            }
           }
         });
   }
@@ -1038,7 +1067,9 @@ class CoupleSession extends ChangeNotifier {
             .update(coupleUpdates)
             .eq('id', _coupleId!);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('CoupleSession: persisting couple start date/time failed: $e');
+    }
 
     // 3. Upload the avatar if it is still only a local file.
     // Must test for a real device path, NOT `!startsWith('http')`: avatar refs
@@ -1219,7 +1250,9 @@ class CoupleSession extends ChangeNotifier {
           body: 'Your partner updated their profile photo.',
           feature: 'relationship',
         );
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('CoupleSession: profile-photo partner notification failed: $e');
+      }
     } else {
       if (yourPath != null) {
         _yourAvatarPath = yourPath;
@@ -1384,7 +1417,9 @@ class CoupleSession extends ChangeNotifier {
             body: 'You and your partner are now paired!',
             feature: 'relationship',
           );
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('CoupleSession: pairing partner notification failed: $e');
+        }
 
         final coupleData = await Supabase.instance.client
             .from('couples')
@@ -1437,7 +1472,9 @@ class CoupleSession extends ChangeNotifier {
               .from('users')
               .update(updates)
               .eq('id', _userId!);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('CoupleSession: persisting display name/avatar to users failed: $e');
+        }
       }
     }
 
@@ -1541,7 +1578,9 @@ class CoupleSession extends ChangeNotifier {
             body: 'Your partner has unlinked from the relationship.',
             feature: 'relationship',
           );
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('CoupleSession: unlink partner notification failed: $e');
+        }
         await _coupleService.disconnectRelationshipWorkspace();
       }
 
@@ -1596,7 +1635,9 @@ class CoupleSession extends ChangeNotifier {
         debugPrint('Error calling delete_current_user RPC: $e');
         try {
           await Supabase.instance.client.from('users').delete().eq('id', _userId!);
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('CoupleSession: fallback direct delete of the users row failed: $e');
+        }
       }
     }
     await logout(wipeAll: true);
@@ -1624,7 +1665,9 @@ class CoupleSession extends ChangeNotifier {
     );
     try {
       await googleSignIn.signOut();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('CoupleSession: Google sign-out during account deletion failed: $e');
+    }
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
       throw 'Sign in aborted by user';
@@ -1713,7 +1756,9 @@ class CoupleSession extends ChangeNotifier {
       try {
         final googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('CoupleSession: Google sign-out during logout failed: $e');
+      }
     }
 
     notifyListeners();
@@ -1730,7 +1775,9 @@ class CoupleSession extends ChangeNotifier {
       try {
         _presenceChannel!.unsubscribe();
         Supabase.instance.client.removeChannel(_presenceChannel!);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('CoupleSession: presence channel teardown during dispose failed: $e');
+      }
     }
     super.dispose();
   }

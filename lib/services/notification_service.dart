@@ -10,6 +10,19 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NotificationService {
+  /// The host platform, as stored on `user_fcm_tokens.device_type`. Replaces
+  /// `Platform.isIOS ? 'ios' : 'android'`, which labelled every desktop,
+  /// Linux, and web run as an Android device -- so any per-platform push
+  /// routing or analytics built on this column was reading a value that was
+  /// simply wrong off-device. `kIsWeb` is tested first because `dart:io`'s
+  /// [Platform] throws on web.
+  static String get _deviceType {
+    if (kIsWeb) return 'web';
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isAndroid) return 'android';
+    return Platform.operatingSystem;
+  }
+
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
@@ -92,7 +105,7 @@ class NotificationService {
       try {
         await Supabase.instance.client.rpc('upsert_user_fcm_token', params: {
           'p_token': token,
-          'p_device_type': Platform.isIOS ? 'ios' : 'android',
+          'p_device_type': _deviceType,
         });
         _tokenSynced = true;
         debugPrint('NotificationService: Token synced via RPC successfully.');
@@ -107,12 +120,14 @@ class NotificationService {
             .from('user_fcm_tokens')
             .delete()
             .eq('user_id', userId);
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('NotificationService: deleting the stale FCM token before upsert failed: $e');
+      }
 
       await Supabase.instance.client.from('user_fcm_tokens').upsert({
         'user_id': userId,
         'token': token,
-        'device_type': Platform.isIOS ? 'ios' : 'android',
+        'device_type': _deviceType,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'token');
 
