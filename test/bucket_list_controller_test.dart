@@ -12,6 +12,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// bucketListControllerProvider is `autoDispose`: a bare `container.read()`
 /// does not keep it alive, so without an active listener Riverpod tears it
@@ -29,7 +37,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('BucketListController', () {
@@ -47,8 +55,10 @@ void main() {
 
     test('build() hydrates from the SharedPreferences cache', () async {
       SharedPreferences.setMockInitialValues({
-        'bucket_list_items':
-            '[{"id":"1","title":"Skydive","isCompleted":false,"order":0,"createdAt":"2024-01-01T00:00:00.000"}]',
+        'user_id': _testUserId,
+        _cacheKey(
+          'bucket_list_items',
+        ): '[{"id":"1","title":"Skydive","isCompleted":false,"order":0,"createdAt":"2024-01-01T00:00:00.000"}]',
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -76,7 +86,7 @@ void main() {
 
       final prefs = await SharedPreferences.getInstance();
       expect(
-        prefs.getString('bucket_list_items'),
+        prefs.getString(_cacheKey('bucket_list_items')),
         contains('Watch the sunrise'),
       );
     });
@@ -198,7 +208,7 @@ void main() {
       expect(state.items, isEmpty);
       expect(state.isLoading, false);
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('bucket_list_items'), isFalse);
+      expect(prefs.containsKey(_cacheKey('bucket_list_items')), isFalse);
     });
 
     test(

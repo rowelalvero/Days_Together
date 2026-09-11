@@ -10,6 +10,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// dailyMoodControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -24,7 +32,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('DailyMoodController', () {
@@ -59,7 +67,10 @@ void main() {
         expect(state.todayMood?.note, 'Great day');
 
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.getString('daily_moods'), contains('Great day'));
+        expect(
+          prefs.getString(_cacheKey('daily_moods')),
+          contains('Great day'),
+        );
       },
     );
 
@@ -119,7 +130,7 @@ void main() {
         expect(state.partnerMoods, isEmpty);
         expect(state.todayQuestion, isNotNull);
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.containsKey('daily_moods'), isFalse);
+        expect(prefs.containsKey(_cacheKey('daily_moods')), isFalse);
       },
     );
   });

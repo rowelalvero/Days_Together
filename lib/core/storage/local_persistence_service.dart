@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/shared/models/app_settings.dart';
 
@@ -13,18 +14,26 @@ import 'package:days_together/shared/models/app_settings.dart';
 /// despite having no Supabase dependency at all -- moved here as part of
 /// architecture Phase 0 (see docs/architecture/migration-roadmap.md).
 class LocalPersistenceService {
-  static const String _timelineKey = 'timeline_items';
+  /// Per-user, like every other feature cache: timeline memories are private
+  /// couple data, and a device-wide key let a second account signing in read
+  /// the previous one's until the network sync replaced them. See
+  /// [ScopedJsonCache].
+  static const ScopedJsonCache _timelineCache = ScopedJsonCache(
+    'timeline_items',
+  );
+
+  /// Deliberately NOT scoped. This is the theme and music preference -- device
+  /// chrome, not couple data -- and scoping it would reset a returning user's
+  /// theme for no privacy gain.
   static const String _settingsKey = 'app_settings';
 
   Future<void> saveTimelineItems(List<TimelineItemData> items) async {
-    final prefs = await SharedPreferences.getInstance();
     final jsonList = items.map((item) => item.toJson()).toList();
-    await prefs.setString(_timelineKey, jsonEncode(jsonList));
+    await _timelineCache.write(jsonEncode(jsonList));
   }
 
   Future<List<TimelineItemData>> loadTimelineItems() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_timelineKey);
+    final jsonString = await _timelineCache.read();
 
     if (jsonString == null) {
       return [];

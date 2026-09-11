@@ -10,6 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/calendar/domain/entities/calendar_event_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// calendarControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -24,7 +32,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('CalendarController', () {
@@ -58,7 +66,10 @@ void main() {
       expect(state.events.first.title, 'Dinner date');
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('calendar_events'), contains('Dinner date'));
+      expect(
+        prefs.getString(_cacheKey('calendar_events')),
+        contains('Dinner date'),
+      );
     });
 
     test('updateEvent replaces the event locally when unpaired', () async {
@@ -150,7 +161,7 @@ void main() {
       final state = container.read(calendarControllerProvider);
       expect(state.events, isEmpty);
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('calendar_events'), isFalse);
+      expect(prefs.containsKey(_cacheKey('calendar_events')), isFalse);
     });
   });
 }

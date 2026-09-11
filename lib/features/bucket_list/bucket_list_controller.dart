@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
@@ -12,6 +11,7 @@ import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `BucketListProvider` (Phase 6a of the architecture
 /// migration, the first of the 12 domain providers -- the proof of the
@@ -25,7 +25,7 @@ import 'package:days_together/core/constants/tables.dart';
 /// changed.
 class BucketListController extends Notifier<BucketListState>
     with SupabaseLifecycleNotifier<BucketListState> {
-  static const String _storageKey = 'bucket_list_items';
+  static const ScopedJsonCache _cache = ScopedJsonCache('bucket_list_items');
   final Set<String> _localMutations = {};
 
   @override
@@ -40,8 +40,7 @@ class BucketListController extends Notifier<BucketListState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
+      final jsonString = await _cache.read();
       List<BucketListItem> items = const [];
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
@@ -65,12 +64,7 @@ class BucketListController extends Notifier<BucketListState>
   @override
   Future<void> purgeCache() async {
     state = state.copyWith(items: [], isLoading: false);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      debugPrint('BucketListController.purgeCache error: $e');
-    }
+    await _cache.clearAll();
   }
 
   @override
@@ -500,9 +494,8 @@ class BucketListController extends Notifier<BucketListState>
 
   Future<void> _persistLocalOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final jsonList = state.items.map((item) => item.toJson()).toList();
-      await prefs.setString(_storageKey, jsonEncode(jsonList));
+      await _cache.write(jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('BucketListController._persistLocalOnly failed: $e\n$st');
     }

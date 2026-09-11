@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -91,10 +93,13 @@ void main() {
     );
 
     test('TEST 17: Logout Local Cache Purge & Account Data Isolation', () async {
-      // 1. User A logs in, creates local chat and timeline data
+      // 1. User A signs in and creates local chat and timeline data.
+      //    The caches are keyed per user (ScopedJsonCache), so a signed-in
+      //    user id is what gives them a slot to write into.
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(PrefsKeys.userId, 'user-a');
       await prefs.setString(
-        'love_chat_messages',
+        const ScopedJsonCache('love_chat_messages').keyFor('user-a'),
         jsonEncode([
           {
             'id': 'user-a-msg-1',
@@ -105,7 +110,7 @@ void main() {
         ]),
       );
       await prefs.setString(
-        'timeline_items',
+        const ScopedJsonCache('timeline_items').keyFor('user-a'),
         jsonEncode([
           {
             'id': 'user-a-time-1',
@@ -156,9 +161,53 @@ void main() {
       expect(container.read(timelineControllerProvider).items, isEmpty);
 
       // Verify SharedPreferences is completely purged on disk
-      expect(prefs.getString('love_chat_messages'), isNull);
-      final timelineString = prefs.getString('timeline_items');
+      expect(
+        prefs.getString(
+          const ScopedJsonCache('love_chat_messages').keyFor('user-a'),
+        ),
+        isNull,
+      );
+      final timelineString = prefs.getString(
+        const ScopedJsonCache('timeline_items').keyFor('user-a'),
+      );
       expect(timelineString == null || timelineString == '[]', isTrue);
+
+      // 3. Isolation no longer depends on that purge having run. Re-seed
+      //    user A's chat, switch the signed-in user without clearing anything
+      //    -- the auth listener's signed-out branch does exactly that for a
+      //    server-side revocation or an expired refresh token -- and confirm
+      //    user B reads nothing. Before the caches were keyed per user, B
+      //    would have read A's messages straight off disk.
+      await prefs.setString(
+        const ScopedJsonCache('love_chat_messages').keyFor('user-a'),
+        jsonEncode([
+          {
+            'id': 'user-a-msg-2',
+            'sender_id': 'you',
+            'sender_name': 'User A',
+            'content': 'Second Secret',
+          },
+        ]),
+      );
+      await prefs.setString(PrefsKeys.userId, 'user-b');
+
+      final bContainer = ProviderContainer(
+        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+      );
+      addTearDown(bContainer.dispose);
+      bContainer.listen(loveChatControllerProvider, (prev, next) {});
+      await Future.delayed(Duration.zero);
+
+      expect(
+        bContainer
+            .read(loveChatControllerProvider)
+            .messages
+            .where((m) => m.content == 'Second Secret'),
+        isEmpty,
+        reason:
+            'a second account on the same device must never read the first '
+            "account's cached messages",
+      );
     });
   });
 }

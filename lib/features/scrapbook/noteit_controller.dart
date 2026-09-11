@@ -6,7 +6,6 @@ import 'package:flutter/material.dart' show Color, Offset;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,6 +17,7 @@ import 'package:days_together/features/scrapbook/data/noteit_sync_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `NoteitProvider` (Phase 6a of the architecture
 /// migration, ported together with `LoveChatController` since both share
@@ -50,7 +50,7 @@ import 'package:days_together/core/storage/storage_url_service.dart';
 /// state, even though the underlying data synced fine.
 class NoteitController extends Notifier<NoteitState>
     with SupabaseLifecycleNotifier<NoteitState> {
-  static const String _storageKey = 'love_notes_items';
+  static const ScopedJsonCache _cache = ScopedJsonCache('love_notes_items');
 
   @override
   String get tableName => Tables.loveNotes;
@@ -81,8 +81,7 @@ class NoteitController extends Notifier<NoteitState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
+      final jsonString = await _cache.read();
       List<NoteitItem> notes;
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
@@ -129,12 +128,7 @@ class NoteitController extends Notifier<NoteitState>
   @override
   Future<void> purgeCache() async {
     state = state.copyWith(notes: [], isLoading: false);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      debugPrint('NoteitController.purgeCache error: $e');
-    }
+    await _cache.clearAll();
   }
 
   @override
@@ -547,9 +541,8 @@ class NoteitController extends Notifier<NoteitState>
 
   Future<void> _persistLocalOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final jsonList = state.notes.map((n) => n.toJson()).toList();
-      await prefs.setString(_storageKey, jsonEncode(jsonList));
+      await _cache.write(jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('NoteitController._persistLocalOnly failed: $e\n$st');
     }

@@ -13,6 +13,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// loveChatControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -29,7 +37,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('LoveChatController', () {
@@ -48,7 +56,10 @@ void main() {
     );
 
     test('sendMessage prepends locally and persists', () async {
-      SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -63,11 +74,17 @@ void main() {
       expect(state.messages.first.senderId, 'you');
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('love_chat_messages'), contains('Hi love'));
+      expect(
+        prefs.getString(_cacheKey('love_chat_messages')),
+        contains('Hi love'),
+      );
     });
 
     test('deleteMessage removes locally', () async {
-      SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -82,7 +99,10 @@ void main() {
     });
 
     test('messages are capped at maxLocalMessages, newest kept', () async {
-      SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -128,7 +148,8 @@ void main() {
           ).toJson(),
       ];
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode(seeded),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode(seeded),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -161,7 +182,10 @@ void main() {
     test(
       'purgeCache clears messages and the SharedPreferences cache',
       () async {
-        SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
+        SharedPreferences.setMockInitialValues({
+          'user_id': _testUserId,
+          _cacheKey('love_chat_messages'): '[]',
+        });
         final container = _unpairedContainer();
         addTearDown(container.dispose);
         await Future.delayed(Duration.zero);
@@ -173,7 +197,7 @@ void main() {
         final state = container.read(loveChatControllerProvider);
         expect(state.messages, isEmpty);
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.containsKey('love_chat_messages'), isFalse);
+        expect(prefs.containsKey(_cacheKey('love_chat_messages')), isFalse);
       },
     );
 
@@ -196,7 +220,8 @@ void main() {
         createdAt: now,
       );
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode([msg.toJson()]),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode([msg.toJson()]),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -221,7 +246,8 @@ void main() {
           ).toJson(),
       ];
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode(rawList),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode(rawList),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -246,7 +272,8 @@ void main() {
           ).toJson(),
       ];
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode(rawList),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode(rawList),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -271,7 +298,8 @@ void main() {
           ).toJson(),
       ];
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode(rawList),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode(rawList),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -285,7 +313,8 @@ void main() {
 
     test('falls back safely on malformed persisted JSON', () async {
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': '{invalid_json_corrupted}',
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): '{invalid_json_corrupted}',
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -309,7 +338,8 @@ void main() {
           ).toJson(),
       ];
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode(rawList),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode(rawList),
       });
 
       // App instance 1.
@@ -345,7 +375,11 @@ void main() {
         createdAt: now.subtract(const Duration(minutes: 5)),
       );
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode([oldMsg.toJson(), newMsg.toJson()]),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode([
+          oldMsg.toJson(),
+          newMsg.toJson(),
+        ]),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -369,7 +403,8 @@ void main() {
           ).toJson(),
       ];
       SharedPreferences.setMockInitialValues({
-        'love_chat_messages': jsonEncode(oversizedList),
+        'user_id': _testUserId,
+        _cacheKey('love_chat_messages'): jsonEncode(oversizedList),
       });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
@@ -380,7 +415,7 @@ void main() {
       expect(state.messages.length, 200);
 
       final prefs = await SharedPreferences.getInstance();
-      final migratedDiskJson = prefs.getString('love_chat_messages');
+      final migratedDiskJson = prefs.getString(_cacheKey('love_chat_messages'));
       expect(migratedDiskJson, isNotNull);
       final migratedList = jsonDecode(migratedDiskJson!) as List;
       expect(migratedList.length, 200);

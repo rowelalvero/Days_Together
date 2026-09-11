@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
@@ -10,6 +9,7 @@ import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
 import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `LoveChatProvider` (Phase 6a of the architecture
 /// migration, ported together with `NoteitController` since both read the
@@ -73,7 +73,7 @@ List<LoveChatMessage> _sortedNewestFirst(Iterable<LoveChatMessage> messages) {
 
 class LoveChatController extends Notifier<LoveChatState>
     with SupabaseLifecycleNotifier<LoveChatState> {
-  static const String _storageKey = 'love_chat_messages';
+  static const ScopedJsonCache _cache = ScopedJsonCache('love_chat_messages');
   static const int maxLocalMessages = 200;
 
   @override
@@ -93,8 +93,7 @@ class LoveChatController extends Notifier<LoveChatState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
+      final jsonString = await _cache.read();
       if (jsonString != null) {
         final jsonList = jsonDecode(jsonString) as List;
         final List<LoveChatMessage> parsedList = [];
@@ -150,12 +149,7 @@ class LoveChatController extends Notifier<LoveChatState>
   @override
   Future<void> purgeCache() async {
     state = state.copyWith(messages: [], isLoading: false);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      debugPrint('LoveChatController.purgeCache error: $e');
-    }
+    await _cache.clearAll();
   }
 
   @override
@@ -298,11 +292,10 @@ class LoveChatController extends Notifier<LoveChatState>
 
   Future<void> _persistLocalOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final sorted = _sortedNewestFirst(state.messages);
       final bounded = sorted.take(maxLocalMessages).toList();
       final jsonList = bounded.map((m) => m.toJson()).toList();
-      await prefs.setString(_storageKey, jsonEncode(jsonList));
+      await _cache.write(jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('LoveChatController._persistLocalOnly failed: $e\n$st');
     }

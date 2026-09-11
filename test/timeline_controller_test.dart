@@ -15,6 +15,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
+
+const String _testUserId = 'u1';
 
 /// timelineControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -37,7 +41,9 @@ TimelineItemData _item(String title, DateTime date) => TimelineItemData(
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    // The timeline cache is keyed per user (ScopedJsonCache), so it needs
+    // a signed-in id to have a slot to read and write.
+    SharedPreferences.setMockInitialValues({PrefsKeys.userId: _testUserId});
   });
 
   group('TimelineController', () {
@@ -199,7 +205,12 @@ void main() {
         final state = container.read(timelineControllerProvider);
         expect(state.items, isEmpty);
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.getString('timeline_items'), '[]');
+        expect(
+          prefs.getString(
+            const ScopedJsonCache('timeline_items').keyFor(_testUserId),
+          ),
+          '[]',
+        );
       },
     );
   });

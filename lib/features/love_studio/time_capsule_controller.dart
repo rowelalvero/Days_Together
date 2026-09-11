@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
@@ -12,6 +11,7 @@ import 'package:days_together/features/love_studio/domain/entities/time_capsule_
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `TimeCapsuleProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port: like `GiftReminderController`/
@@ -22,7 +22,7 @@ import 'package:days_together/core/constants/tables.dart';
 /// does not -- both copied verbatim from the original.
 class TimeCapsuleController extends Notifier<TimeCapsuleState>
     with SupabaseLifecycleNotifier<TimeCapsuleState> {
-  static const String _storageKey = 'time_capsules';
+  static const ScopedJsonCache _cache = ScopedJsonCache('time_capsules');
   final Set<String> _localMutations = {};
 
   @override
@@ -37,8 +37,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
+      final jsonString = await _cache.read();
       final capsules = jsonString != null
           ? ((jsonDecode(jsonString) as List)
                 .map((json) => TimeCapsule.fromJson(json))
@@ -57,12 +56,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   @override
   Future<void> purgeCache() async {
     state = state.copyWith(capsules: [], isLoading: false);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      debugPrint('TimeCapsuleController.purgeCache error: $e');
-    }
+    await _cache.clearAll();
   }
 
   @override
@@ -292,9 +286,8 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
 
   Future<void> _persistLocalOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final jsonList = state.capsules.map((c) => c.toJson()).toList();
-      await prefs.setString(_storageKey, jsonEncode(jsonList));
+      await _cache.write(jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('TimeCapsuleController._persistLocalOnly failed: $e\n$st');
     }

@@ -530,6 +530,45 @@ void main() {
     },
   );
 
+  group('feature caches are per-user, not device-wide', () {
+    test('no feature controller touches SharedPreferences directly', () {
+      // Every feature cache used to be a bare device-wide key
+      // ('calendar_events', 'love_chat_messages', ...). Explicit logout wipes
+      // all prefs, but the auth listener's signed-out branch -- a server-side
+      // revocation, an expired refresh token, an account switch -- clears
+      // nothing, so the next account read the previous one's data. Going
+      // through ScopedJsonCache makes the key per-user by construction rather
+      // than by remembering to purge.
+      //
+      // license_controller and timeline_controller are exempt: they persist
+      // PrefsKeys entries (license fields, the timeline sort order), not a
+      // feature cache, and those are already covered by the PrefsKeys rule.
+      const exempt = {
+        'lib/features/relationship/license_controller.dart',
+        'lib/features/timeline/timeline_controller.dart',
+      };
+      final violations = <String>[];
+
+      for (final file in _dartFilesUnder('lib/features')) {
+        final normalized = file.path.replaceAll('\\', '/');
+        if (!normalized.endsWith('_controller.dart')) continue;
+        if (exempt.any(normalized.endsWith)) continue;
+        final content = file.readAsStringSync();
+        if (RegExp(r'SharedPreferences\.getInstance\(\)').hasMatch(content)) {
+          violations.add(normalized);
+        }
+      }
+
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'Feature controllers must cache through ScopedJsonCache so the key '
+            'is scoped to the signed-in user: $violations',
+      );
+    });
+  });
+
   group('Supabase table names are centralized in Tables', () {
     test(
       'no lib/ file outside tables.dart passes a raw string literal to .from()',
@@ -547,7 +586,7 @@ void main() {
         final violations = <String>[];
 
         for (final file in _dartFilesUnder('lib')) {
-          final normalized = file.path.replaceAll(r'\\', '/');
+          final normalized = file.path.replaceAll('\\', '/');
           if (normalized.endsWith('lib/core/constants/tables.dart')) {
             continue;
           }
@@ -572,7 +611,7 @@ void main() {
       final violations = <String>[];
       for (final file in _dartFilesUnder('lib')) {
         if (rawGetter.hasMatch(file.readAsStringSync())) {
-          violations.add(file.path.replaceAll(r'\\', '/'));
+          violations.add(file.path.replaceAll('\\', '/'));
         }
       }
       expect(

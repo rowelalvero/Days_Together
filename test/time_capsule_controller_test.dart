@@ -9,6 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// timeCapsuleControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -23,7 +31,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('TimeCapsuleController', () {
@@ -53,7 +61,7 @@ void main() {
       ]);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('time_capsules'), contains('Sooner'));
+      expect(prefs.getString(_cacheKey('time_capsules')), contains('Sooner'));
     });
 
     test('a capsule with a past openDate is openable, not locked', () async {
@@ -147,7 +155,7 @@ void main() {
         final state = container.read(timeCapsuleControllerProvider);
         expect(state.capsules, isEmpty);
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.containsKey('time_capsules'), isFalse);
+        expect(prefs.containsKey(_cacheKey('time_capsules')), isFalse);
       },
     );
   });

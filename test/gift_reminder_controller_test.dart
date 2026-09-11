@@ -9,6 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// giftReminderControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -23,7 +31,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('GiftReminderController', () {
@@ -51,7 +59,10 @@ void main() {
       expect(state.reminders.first.title, "Mom's birthday");
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('gift_reminders'), contains("Mom's birthday"));
+      expect(
+        prefs.getString(_cacheKey('gift_reminders')),
+        contains("Mom's birthday"),
+      );
     });
 
     test('toggleReminder flips isEnabled when unpaired', () async {
@@ -152,7 +163,7 @@ void main() {
         final state = container.read(giftReminderControllerProvider);
         expect(state.reminders, isEmpty);
         final prefs = await SharedPreferences.getInstance();
-        expect(prefs.containsKey('gift_reminders'), isFalse);
+        expect(prefs.containsKey(_cacheKey('gift_reminders')), isFalse);
       },
     );
   });

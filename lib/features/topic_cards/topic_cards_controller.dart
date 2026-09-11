@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,6 +14,7 @@ import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/network/realtime_subscription_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `TopicCardsProvider` (Phase 6a of the architecture
 /// migration). One of the two providers (with `DailyMoodController`) that
@@ -27,9 +27,15 @@ import 'package:days_together/core/constants/tables.dart';
 /// overriding initRealtime due to multiple tables."
 class TopicCardsController extends Notifier<TopicCardsState>
     with SupabaseLifecycleNotifier<TopicCardsState> {
-  static const String _customCardsKey = 'topic_cards_custom';
-  static const String _likedCardIdsKey = 'topic_cards_liked_ids';
-  static const String _pendingLikesKey = 'topic_cards_pending_likes';
+  static const ScopedJsonCache _customCardsCache = ScopedJsonCache(
+    'topic_cards_custom',
+  );
+  static const ScopedJsonCache _likedCardIdsCache = ScopedJsonCache(
+    'topic_cards_liked_ids',
+  );
+  static const ScopedJsonCache _pendingLikesCache = ScopedJsonCache(
+    'topic_cards_pending_likes',
+  );
 
   StreamSubscription? _syncCardsSub;
   StreamSubscription? _syncLikesSub;
@@ -57,20 +63,22 @@ class TopicCardsController extends Notifier<TopicCardsState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-
-      final likedList = prefs.getStringList(_likedCardIdsKey);
-      final likedCardIds = likedList != null ? likedList.toSet() : <String>{};
+      // Stored as a JSON array rather than a SharedPreferences string
+      // list, so all three of this feature's caches speak one format.
+      final likedJson = await _likedCardIdsCache.read();
+      final likedCardIds = likedJson != null
+          ? (jsonDecode(likedJson) as List).cast<String>().toSet()
+          : <String>{};
 
       List<TopicCard> customCards = [];
-      final customJson = prefs.getString(_customCardsKey);
+      final customJson = await _customCardsCache.read();
       if (customJson != null) {
         final decoded = jsonDecode(customJson) as List;
         customCards = decoded.map((json) => TopicCard.fromJson(json)).toList();
       }
 
       Map<String, bool> pendingLikes = {};
-      final pendingJson = prefs.getString(_pendingLikesKey);
+      final pendingJson = await _pendingLikesCache.read();
       if (pendingJson != null) {
         final decoded = jsonDecode(pendingJson) as Map<String, dynamic>;
         pendingLikes = decoded.map((k, v) => MapEntry(k, v as bool));
@@ -101,14 +109,9 @@ class TopicCardsController extends Notifier<TopicCardsState>
       isLoading: false,
       currentIndex: 0,
     );
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_customCardsKey);
-      await prefs.remove(_likedCardIdsKey);
-      await prefs.remove(_pendingLikesKey);
-    } catch (e) {
-      debugPrint('TopicCardsController.purgeCache error: $e');
-    }
+    await _customCardsCache.clearAll();
+    await _likedCardIdsCache.clearAll();
+    await _pendingLikesCache.clearAll();
   }
 
   @override
@@ -557,31 +560,16 @@ class TopicCardsController extends Notifier<TopicCardsState>
   }
 
   Future<void> _saveCustomCards() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final serialized = state.customCards.map((c) => c.toJson()).toList();
-      await prefs.setString(_customCardsKey, jsonEncode(serialized));
-    } catch (e) {
-      debugPrint('TopicCardsController._saveCustomCards failed: $e');
-    }
+    final serialized = state.customCards.map((c) => c.toJson()).toList();
+    await _customCardsCache.write(jsonEncode(serialized));
   }
 
   Future<void> _saveLikedCardIds() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_likedCardIdsKey, state.likedCardIds.toList());
-    } catch (e) {
-      debugPrint('TopicCardsController._saveLikedCardIds failed: $e');
-    }
+    await _likedCardIdsCache.write(jsonEncode(state.likedCardIds.toList()));
   }
 
   Future<void> _savePendingLikes() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_pendingLikesKey, jsonEncode(state.pendingLikes));
-    } catch (e) {
-      debugPrint('TopicCardsController._savePendingLikes failed: $e');
-    }
+    await _pendingLikesCache.write(jsonEncode(state.pendingLikes));
   }
 
   Future<void> _persistLocalOnly() async {

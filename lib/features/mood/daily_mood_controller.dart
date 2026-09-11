@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
@@ -14,6 +13,7 @@ import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/network/realtime_subscription_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `DailyMoodProvider` (Phase 6a of the architecture
 /// migration). The second of the two providers (with `TopicCardsController`)
@@ -26,9 +26,13 @@ import 'package:days_together/core/constants/tables.dart';
 /// due to multiple tables" comment.
 class DailyMoodController extends Notifier<DailyMoodState>
     with SupabaseLifecycleNotifier<DailyMoodState> {
-  static const String _moodKey = 'daily_moods';
-  static const String _partnerMoodKey = 'partner_daily_moods';
-  static const String _questionKey = 'daily_sync_questions';
+  static const ScopedJsonCache _moodCache = ScopedJsonCache('daily_moods');
+  static const ScopedJsonCache _partnerMoodCache = ScopedJsonCache(
+    'partner_daily_moods',
+  );
+  static const ScopedJsonCache _questionCache = ScopedJsonCache(
+    'daily_sync_questions',
+  );
 
   static const List<String> _defaultQuestions = [
     'What made you smile about your partner today?',
@@ -73,14 +77,9 @@ class DailyMoodController extends Notifier<DailyMoodState>
       todayQuestion: _generateTodayQuestion(),
       isLoading: false,
     );
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_moodKey);
-      await prefs.remove(_partnerMoodKey);
-      await prefs.remove(_questionKey);
-    } catch (e) {
-      debugPrint('DailyMoodController.purgeCache error: $e');
-    }
+    await _moodCache.clearAll();
+    await _partnerMoodCache.clearAll();
+    await _questionCache.clearAll();
   }
 
   @override
@@ -320,8 +319,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
 
   Future<void> _loadLocalMoods() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final moodJson = prefs.getString(_moodKey);
+      final moodJson = await _moodCache.read();
       final moods = moodJson != null
           ? (jsonDecode(moodJson) as List)
                 .map((j) => DailyMood.fromJson(j))
@@ -336,8 +334,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
 
   Future<void> _loadLocalPartnerMoods() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final moodJson = prefs.getString(_partnerMoodKey);
+      final moodJson = await _partnerMoodCache.read();
       final moods = moodJson != null
           ? (jsonDecode(moodJson) as List)
                 .map((j) => DailyMood.fromJson(j))
@@ -352,8 +349,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
 
   Future<void> _loadLocalQuestion() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final qJson = prefs.getString(_questionKey);
+      final qJson = await _questionCache.read();
       DailySyncQuestion question;
       if (qJson != null) {
         question = DailySyncQuestion.fromJson(jsonDecode(qJson));
@@ -530,14 +526,13 @@ class DailyMoodController extends Notifier<DailyMoodState>
 
   Future<void> _persistLocalMoodsOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final jsonList = state.moods.map((m) => m.toJson()).toList();
-      await prefs.setString(_moodKey, jsonEncode(jsonList));
+      await _moodCache.write(jsonEncode(jsonList));
 
       final partnerJsonList = state.partnerMoods
           .map((m) => m.toJson())
           .toList();
-      await prefs.setString(_partnerMoodKey, jsonEncode(partnerJsonList));
+      await _partnerMoodCache.write(jsonEncode(partnerJsonList));
     } catch (e, st) {
       debugPrint('DailyMoodController._persistLocalMoodsOnly failed: $e\n$st');
     }
@@ -545,12 +540,8 @@ class DailyMoodController extends Notifier<DailyMoodState>
 
   Future<void> _persistLocalQuestionOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       if (state.todayQuestion != null) {
-        await prefs.setString(
-          _questionKey,
-          jsonEncode(state.todayQuestion!.toJson()),
-        );
+        await _questionCache.write(jsonEncode(state.todayQuestion!.toJson()));
       }
     } catch (e, st) {
       debugPrint(

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
@@ -12,6 +11,7 @@ import 'package:days_together/features/gift_reminders/domain/entities/gift_remin
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `GiftReminderProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port, including a pre-existing asymmetry:
@@ -26,7 +26,7 @@ import 'package:days_together/core/constants/tables.dart';
 /// as-is; not introduced by this port and out of scope to fix here.
 class GiftReminderController extends Notifier<GiftReminderState>
     with SupabaseLifecycleNotifier<GiftReminderState> {
-  static const String _storageKey = 'gift_reminders';
+  static const ScopedJsonCache _cache = ScopedJsonCache('gift_reminders');
   final Set<String> _localMutations = {};
 
   @override
@@ -41,8 +41,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
+      final jsonString = await _cache.read();
       final reminders = jsonString != null
           ? (jsonDecode(jsonString) as List)
                 .map((json) => GiftReminder.fromJson(json))
@@ -60,12 +59,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
   @override
   Future<void> purgeCache() async {
     state = state.copyWith(reminders: [], isLoading: false);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      debugPrint('GiftReminderController.purgeCache error: $e');
-    }
+    await _cache.clearAll();
   }
 
   @override
@@ -368,9 +362,8 @@ class GiftReminderController extends Notifier<GiftReminderState>
 
   Future<void> _persistLocalOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final jsonList = state.reminders.map((r) => r.toJson()).toList();
-      await prefs.setString(_storageKey, jsonEncode(jsonList));
+      await _cache.write(jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('GiftReminderController._persistLocalOnly failed: $e\n$st');
     }

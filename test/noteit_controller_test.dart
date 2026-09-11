@@ -15,6 +15,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
+
+/// The controller caches are keyed per user (see ScopedJsonCache): a bare
+/// device-wide key let a second account signing in read the first one's data.
+/// Tests seed [_testUserId] so the cache has a user to scope by, and derive
+/// keys through the cache itself rather than hardcoding the scheme.
+const String _testUserId = 'u1';
+String _cacheKey(String prefix) => ScopedJsonCache(prefix).keyFor(_testUserId);
 
 /// noteitControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -29,7 +37,7 @@ ProviderContainer _unpairedContainer() {
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'user_id': _testUserId});
   });
 
   group('NoteitController', () {
@@ -61,7 +69,10 @@ void main() {
     );
 
     test('sendText prepends locally and marks failed when unpaired', () async {
-      SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_notes_items'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -77,11 +88,17 @@ void main() {
       expect(state.notes.first.syncStatus, SyncStatus.failed);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('love_notes_items'), contains('Thinking of you'));
+      expect(
+        prefs.getString(_cacheKey('love_notes_items')),
+        contains('Thinking of you'),
+      );
     });
 
     test('sendDrawing prepends locally', () async {
-      SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_notes_items'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -97,7 +114,10 @@ void main() {
     });
 
     test('deleteNote removes locally when unpaired', () async {
-      SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_notes_items'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -114,7 +134,10 @@ void main() {
     test(
       'updateItemSyncStatus updates the matching note and persists',
       () async {
-        SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
+        SharedPreferences.setMockInitialValues({
+          'user_id': _testUserId,
+          _cacheKey('love_notes_items'): '[]',
+        });
         final container = _unpairedContainer();
         addTearDown(container.dispose);
         await Future.delayed(Duration.zero);
@@ -133,7 +156,10 @@ void main() {
     );
 
     test('purgeCache clears notes and the SharedPreferences cache', () async {
-      SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
+      SharedPreferences.setMockInitialValues({
+        'user_id': _testUserId,
+        _cacheKey('love_notes_items'): '[]',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -145,7 +171,7 @@ void main() {
       final state = container.read(noteitControllerProvider);
       expect(state.notes, isEmpty);
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('love_notes_items'), isFalse);
+      expect(prefs.containsKey(_cacheKey('love_notes_items')), isFalse);
     });
   });
 }

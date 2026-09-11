@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
@@ -12,6 +11,7 @@ import 'package:days_together/features/calendar/domain/entities/calendar_event_m
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/constants/tables.dart';
+import 'package:days_together/core/storage/scoped_json_cache.dart';
 
 /// Riverpod port of `CalendarProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port: like `GiftReminderController` (and
@@ -20,7 +20,7 @@ import 'package:days_together/core/constants/tables.dart';
 /// realtime echo, matching the original exactly.
 class CalendarController extends Notifier<CalendarState>
     with SupabaseLifecycleNotifier<CalendarState> {
-  static const String _storageKey = 'calendar_events';
+  static const ScopedJsonCache _cache = ScopedJsonCache('calendar_events');
   final Set<String> _localMutations = {};
 
   @override
@@ -35,8 +35,7 @@ class CalendarController extends Notifier<CalendarState>
 
   Future<void> _loadFromCache() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
+      final jsonString = await _cache.read();
       final events = jsonString != null
           ? (jsonDecode(jsonString) as List)
                 .map((json) => CalendarEvent.fromJson(json))
@@ -54,12 +53,7 @@ class CalendarController extends Notifier<CalendarState>
   @override
   Future<void> purgeCache() async {
     state = state.copyWith(events: [], isLoading: false);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e) {
-      debugPrint('CalendarController.purgeCache error: $e');
-    }
+    await _cache.clearAll();
   }
 
   CalendarEvent _parseEvent(Map<String, dynamic> data) {
@@ -339,9 +333,8 @@ class CalendarController extends Notifier<CalendarState>
 
   Future<void> _persistLocalOnly() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final jsonList = state.events.map((e) => e.toJson()).toList();
-      await prefs.setString(_storageKey, jsonEncode(jsonList));
+      await _cache.write(jsonEncode(jsonList));
     } catch (e, st) {
       debugPrint('CalendarController._persistLocalOnly failed: $e\n$st');
     }
