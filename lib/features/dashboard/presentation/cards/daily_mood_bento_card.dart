@@ -5,6 +5,7 @@ import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/features/mood/daily_mood_state.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
@@ -32,6 +33,7 @@ class DailyMoodBentoCard extends StatelessWidget {
         final dailyMood = ref.watch(dailyMoodControllerProvider);
         final isPaired = ref.watch(sessionControllerProvider).isPaired;
         final myToday = dailyMood.todayMood;
+        final partnerName = ref.watch(profileControllerProvider).partnerName;
 
         String statusText = myToday != null
             ? (isPaired ? 'Synced Mood Logged' : 'Mood Logged')
@@ -105,6 +107,7 @@ class DailyMoodBentoCard extends StatelessWidget {
                   ),
                   child: _buildMoodContent(context, isPaired, dailyMood),
                 ),
+                ..._buildNotePreview(isPaired, dailyMood, partnerName),
                 const SizedBox(height: 14),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -148,6 +151,83 @@ class DailyMoodBentoCard extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// The day's mood note, shown under the score boxes.
+  ///
+  /// Prefers the partner's note over your own: yours you already wrote, while
+  /// theirs is the part of their check-in the dashboard otherwise gives no
+  /// sign of — the score boxes show a number and an emoji, never the words.
+  /// Falls back to your own note when they haven't written one, so a logged
+  /// mood still reads back.
+  ///
+  /// Returns an empty list when there is nothing to show, so the card keeps
+  /// its current height rather than reserving an empty box — the same
+  /// conditional the Love Meter's own "Today's Mood" card uses.
+  List<Widget> _buildNotePreview(
+    bool isPaired,
+    DailyMoodState dailyMood,
+    String? partnerName,
+  ) {
+    String? textOf(String? note) {
+      final trimmed = note?.trim();
+      return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+    }
+
+    final partnerNote = isPaired
+        ? textOf(dailyMood.partnerTodayMood?.note)
+        : null;
+    final note = partnerNote ?? textOf(dailyMood.todayMood?.note);
+    if (note == null) return const [];
+
+    // Always attributed: with a YOU box and a PARTNER box side by side above
+    // it, an unlabelled quote would be ambiguous about who wrote it.
+    final author = partnerNote != null
+        ? ((partnerName == null || partnerName.trim().isEmpty)
+              ? 'PARTNER'
+              : partnerName.trim().toUpperCase())
+        : 'YOU';
+
+    return [
+      const SizedBox(height: 10),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: theme.textColor.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.textColor.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              author,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.cardCategory(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w800,
+                color: theme.textColor.withValues(alpha: 0.35),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '"$note"',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.body(
+                fontSize: 11.5,
+                color: theme.textColor.withValues(alpha: 0.7),
+              ).copyWith(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 
   Widget _buildMoodContent(

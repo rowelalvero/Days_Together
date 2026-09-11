@@ -431,12 +431,16 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
+                  // Selection reads as an accent-coloured ring rather than a
+                  // solid accent fill, so the emoji stays legible against the
+                  // sheet's own background instead of sitting on a saturated
+                  // disc.
                   color: isSelected
-                      ? theme.accentColor
+                      ? Colors.transparent
                       : theme.textColor.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? theme.textColor : Colors.transparent,
+                    color: isSelected ? theme.accentColor : Colors.transparent,
                     width: 2,
                   ),
                 ),
