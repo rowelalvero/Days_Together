@@ -6,11 +6,11 @@
 -- letter "save to vault" action). This drops what it owned server-side.
 --
 -- *** DESTRUCTIVE AND IRREVERSIBLE ***
--- This deletes every row in public.vault_items and every object stored in the
--- vault-photos bucket. Those photos are AES-GCM ciphertext encrypted with the
--- couple's E2EE photo key, so there is no server-side copy to recover from
--- and no way to reconstruct them once deleted. Take a backup first if there
--- is any doubt.
+-- This deletes every row in public.vault_items. The vault-photos objects are
+-- removed separately via the Storage API (see section 2). Those photos are
+-- AES-GCM ciphertext encrypted with the couple's E2EE photo key, so there is
+-- no server-side copy to recover from and no way to reconstruct them once
+-- deleted. Take a backup first if there is any doubt.
 --
 -- Deliberately NOT dropped:
 --   * public.user_notification_preferences.vault_enabled -- an unused boolean
@@ -30,12 +30,18 @@
 DROP TABLE IF EXISTS public.vault_items CASCADE;
 
 -- ---------------------------------------------------------------------------
--- 2. Stored vault photos, then the bucket itself.
---    Objects must go first: storage.buckets has a foreign key from
---    storage.objects, so deleting a non-empty bucket errors out.
+-- 2. The vault-photos bucket is NOT dropped here.
+--    Supabase blocks direct DML against the storage schema -- the first
+--    attempt at this migration failed with
+--      ERROR: Direct deletion from storage tables is not allowed.
+--             Use the Storage API instead. (SQLSTATE 42501)
+--    and, because the CLI runs each migration in a transaction, rolled the
+--    whole thing back cleanly.
+--
+--    Emptying and removing the bucket is therefore a Storage API operation,
+--    done out of band (`supabase storage rm ... -r` then deleting the bucket
+--    from the dashboard), not something a migration can express.
 -- ---------------------------------------------------------------------------
-DELETE FROM storage.objects WHERE bucket_id = 'vault-photos';
-DELETE FROM storage.buckets WHERE id = 'vault-photos';
 
 -- ---------------------------------------------------------------------------
 -- 3. Re-scope the shared storage policies.
