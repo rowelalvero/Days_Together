@@ -16,7 +16,6 @@ import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/scrapbook/data/noteit_sync_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
-import 'package:days_together/core/platform/home_widget/home_widget_service.dart';
 
 /// Riverpod port of `NoteitProvider` (Phase 6a of the architecture
 /// migration, ported together with `LoveChatController` since both share
@@ -546,26 +545,8 @@ class NoteitController extends Notifier<NoteitState>
       final prefs = await SharedPreferences.getInstance();
       final jsonList = state.notes.map((n) => n.toJson()).toList();
       await prefs.setString(_storageKey, jsonEncode(jsonList));
-      _syncHomeWidget();
     } catch (e, st) {
       debugPrint('NoteitController._persistLocalOnly failed: $e\n$st');
-    }
-  }
-
-  void _syncHomeWidget() {
-    try {
-      final drawingNotes = state.notes
-          .where((n) => n.type == NoteitType.drawing)
-          .toList();
-      if (drawingNotes.isNotEmpty) {
-        final latest = drawingNotes.first;
-        HomeWidgetService.instance.renderAndSyncNoteit(
-          partnerName: latest.sender == 'you' ? 'You' : 'Partner',
-          drawingContent: latest.content,
-        );
-      }
-    } catch (e) {
-      debugPrint('NoteitController: home widget sync failed: $e');
     }
   }
 }

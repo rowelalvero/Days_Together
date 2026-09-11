@@ -36,7 +36,6 @@ class Routes {
   static const String notes = '/notes';
   static const String timeCapsule = '/time-capsule';
   static const String calendar = '/calendar';
-  static const String vault = '/vault';
   static const String topicCards = '/topic-cards';
   static const String license = '/license';
   static const String gifts = '/gifts';
@@ -46,7 +45,6 @@ class Routes {
   static const String wrappedArchive = '/wrapped-archive';
   static const String wrapped = '/wrapped';
   static const String duration = '/duration';
-  static const String homeWidgets = '/home-widgets';
   static const String studioLoveLetter = '/studio/love-letter';
   static const String studioInsights = '/studio/insights';
 

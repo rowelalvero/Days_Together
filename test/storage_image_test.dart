@@ -27,7 +27,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: StorageImage(
-            bucket: 'vault-photos',
+            bucket: 'timeline',
             storageRef: null,
             width: 40,
             height: 40,
@@ -49,7 +49,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: StorageImage(
-            bucket: 'vault-photos',
+            bucket: 'timeline',
             storageRef: '   ',
             width: 40,
             height: 40,
@@ -65,7 +65,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: StorageImage(
-            bucket: 'vault-photos',
+            bucket: 'timeline',
             storageRef: null,
             width: 40,
             height: 40,
@@ -87,7 +87,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: StorageImageBuilder(
-            bucket: 'vault-photos',
+            bucket: 'timeline',
             storageRef: null,
             builder: (context, image, status, _) {
               statuses.add(status);
@@ -112,7 +112,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: StorageImageBuilder(
-              bucket: 'vault-photos',
+              bucket: 'timeline',
               storageRef: missing,
               builder: (context, image, status, _) {
                 last = status;
@@ -156,7 +156,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: StorageImageBuilder(
-            bucket: 'vault-photos',
+            bucket: 'timeline',
             storageRef: 'couples/c1/photos/remote.jpg',
             localPath: file.path,
             builder: (context, image, s, _) {
@@ -181,7 +181,7 @@ void main() {
 
         Widget build(String path) => MaterialApp(
           home: StorageImageBuilder(
-            bucket: 'vault-photos',
+            bucket: 'timeline',
             storageRef: null,
             localPath: path,
             builder: (context, image, _, _) {

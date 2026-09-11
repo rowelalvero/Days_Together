@@ -54,15 +54,6 @@ class TogetherTab extends ConsumerWidget {
                   _buildFeatureCard(
                     context: context,
                     theme: theme,
-                    emoji: '🔒',
-                    title: 'The Vault',
-                    subtitle: 'Private memories.',
-                    color: theme.accentColor,
-                    onTap: () => context.push(Routes.vault),
-                  ),
-                  _buildFeatureCard(
-                    context: context,
-                    theme: theme,
                     emoji: '✅',
                     title: 'Bucket List',
                     subtitle:

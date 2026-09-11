@@ -4,7 +4,7 @@
 /// `lib/providers/relationship_provider.dart` as of architecture Phase 0.
 /// `RelationshipProvider` itself was later deleted (Definition-of-Done
 /// sweep item 4); these keys are now owned by `CoupleSession` and the
-/// controllers it feeds. 2 more (`timelineIsAscending`, `vaultPinFallback`)
+/// controllers it feeds. 1 more (`timelineIsAscending`)
 /// were added once the Definition-of-Done sweep found their owning
 /// controllers already touched but still using raw literals, per the
 /// incremental-centralization plan below.
@@ -84,10 +84,10 @@ class PrefsKeys {
   //      still using raw literals instead of this registry (per this
   //      file's own "centralized incrementally" scope note above) ----
   static const String timelineIsAscending = 'timeline_is_ascending';
-  static const String vaultPinFallback = 'vault_pin_fallback';
 
-  /// All 43 keys, for verification (e.g. the Phase 0 exit-criteria test
-  /// asserting `PrefsKeys.all.length == 43`).
+  /// All 42 keys, for verification (e.g. the Phase 0 exit-criteria test
+  /// asserting `PrefsKeys.all.length == 42`). Was 43 before the Secret
+  /// Vault's `vaultPinFallback` was removed with that feature.
   static const List<String> all = [
     coupleId,
     partnerId,
@@ -131,6 +131,5 @@ class PrefsKeys {
     yourSignature,
     partnerSignature,
     timelineIsAscending,
-    vaultPinFallback,
   ];
 }

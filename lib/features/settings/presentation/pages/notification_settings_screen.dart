@@ -321,18 +321,6 @@ class NotificationSettingsScreen extends ConsumerWidget {
                             ),
                             const Divider(height: 1),
                             _buildSwitchTile(
-                              title: 'Vault',
-                              subtitle: 'Secure uploads (details kept private)',
-                              value: prefs.vaultEnabled,
-                              onChanged: prefs.muteAll
-                                  ? null
-                                  : (_) => notifier.togglePreference(
-                                      'vault_enabled',
-                                    ),
-                              theme: theme,
-                            ),
-                            const Divider(height: 1),
-                            _buildSwitchTile(
                               title: 'Gifts',
                               subtitle: 'Gifts ideas and reminders',
                               value: prefs.giftsEnabled,

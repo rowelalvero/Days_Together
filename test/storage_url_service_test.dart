@@ -45,10 +45,10 @@ void main() {
   group('pathFrom — legacy URLs', () {
     test('extracts the path from a legacy public URL', () {
       final url =
-          '$proj/storage/v1/object/public/vault-photos/couples/c1/vault_photos/p1.jpg';
+          '$proj/storage/v1/object/public/timeline/couples/c1/photos/p1.jpg';
       expect(
-        StorageUrlService.pathFrom(url, bucket: StorageBuckets.vaultPhotos),
-        'couples/c1/vault_photos/p1.jpg',
+        StorageUrlService.pathFrom(url, bucket: StorageBuckets.timeline),
+        'couples/c1/photos/p1.jpg',
       );
     });
 
@@ -83,7 +83,7 @@ void main() {
       // Must not cross-key: signing this against `avatars` would fail anyway,
       // but a wrong cacheKey would collide across buckets.
       final url =
-          '$proj/storage/v1/object/public/vault-photos/couples/c1/vault_photos/p1.jpg';
+          '$proj/storage/v1/object/public/timeline/couples/c1/photos/p1.jpg';
       expect(
         StorageUrlService.pathFrom(url, bucket: StorageBuckets.avatars),
         isNull,
@@ -146,10 +146,10 @@ void main() {
     test('strips a redundant leading bucket segment', () {
       expect(
         StorageUrlService.pathFrom(
-          'vault-photos/couples/c1/vault_photos/p1.jpg',
-          bucket: StorageBuckets.vaultPhotos,
+          'timeline/couples/c1/photos/p1.jpg',
+          bucket: StorageBuckets.timeline,
         ),
-        'couples/c1/vault_photos/p1.jpg',
+        'couples/c1/photos/p1.jpg',
       );
     });
 
@@ -157,7 +157,7 @@ void main() {
       expect(
         StorageUrlService.pathFrom(
           '/data/user/0/com.app/cache/img.jpg',
-          bucket: StorageBuckets.vaultPhotos,
+          bucket: StorageBuckets.timeline,
         ),
         isNull,
       );
@@ -204,6 +204,9 @@ void main() {
     );
 
     test('does not collide across buckets for identical sub-paths', () {
+      // Two *different* buckets is the whole point of this test -- the second
+      // one was `vaultPhotos` before the Secret Vault removal deleted that
+      // bucket, so it is now `avatars`.
       const path = 'couples/c1/shared/x.jpg';
       expect(
         StorageUrlService.cacheKeyFor(
@@ -212,7 +215,7 @@ void main() {
         ),
         isNot(
           StorageUrlService.cacheKeyFor(
-            bucket: StorageBuckets.vaultPhotos,
+            bucket: StorageBuckets.avatars,
             ref: path,
           ),
         ),
@@ -263,7 +266,7 @@ void main() {
     test('returns null for a local file ref', () {
       expect(
         StorageUrlService.instance.resolveCached(
-          bucket: StorageBuckets.vaultPhotos,
+          bucket: StorageBuckets.timeline,
           ref: '/data/user/0/com.app/cache/img.jpg',
         ),
         isNull,

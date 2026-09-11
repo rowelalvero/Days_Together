@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
-import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/love_studio/data/ai_service.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
@@ -71,61 +70,6 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
           _isGenerating = false;
         });
       }
-    }
-  }
-
-  void _saveToVault(BuildContext context, LoveStoryTheme theme) async {
-    if (_generatedLetter == null) return;
-    final vaultState = ref.read(vaultControllerProvider);
-    final vault = ref.read(vaultControllerProvider.notifier);
-
-    if (!vaultState.hasPin) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: theme.primaryColor,
-          title: Text(
-            'Vault Locked',
-            style: AppTypography.title(color: theme.textColor),
-          ),
-          content: Text(
-            'Please set up a Secret Vault PIN under the Together tab first to save your letters securely.',
-            style: AppTypography.body(
-              color: theme.textColor.withValues(alpha: 0.7),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Okay',
-                style: AppTypography.button(color: theme.accentColor),
-              ),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    if (!vaultState.isUnlocked) {
-      showDialog(
-        context: context,
-        builder: (dialogContext) => _PinPromptDialog(
-          theme: theme,
-          vault: vault,
-          generatedLetter: _generatedLetter!,
-        ),
-      );
-    } else {
-      await vault.addLetter(_generatedLetter!);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🔒 Saved securely to your Secret Vault!'),
-          backgroundColor: Colors.pinkAccent,
-        ),
-      );
     }
   }
 
@@ -373,13 +317,6 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
                   Share.share(_generatedLetter!);
                 },
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.lock_outline_rounded,
-                  color: theme.textColor.withValues(alpha: 0.7),
-                ),
-                onPressed: () => _saveToVault(context, theme),
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -393,119 +330,6 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PinPromptDialog extends StatefulWidget {
-  final dynamic theme;
-  final dynamic vault;
-  final String generatedLetter;
-
-  const _PinPromptDialog({
-    required this.theme,
-    required this.vault,
-    required this.generatedLetter,
-  });
-
-  @override
-  State<_PinPromptDialog> createState() => _PinPromptDialogState();
-}
-
-class _PinPromptDialogState extends State<_PinPromptDialog> {
-  late final TextEditingController _pinController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pinController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _pinController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = widget.theme;
-    return AlertDialog(
-      backgroundColor: theme.primaryColor,
-      title: Text(
-        'Enter Vault PIN',
-        style: AppTypography.title(color: theme.textColor),
-      ),
-      content: TextField(
-        controller: _pinController,
-        keyboardType: TextInputType.number,
-        obscureText: true,
-        maxLength: 4,
-        style: AppTypography.bodyMono(
-          color: theme.textColor,
-          fontSize: 24,
-        ).copyWith(letterSpacing: 16),
-        textAlign: TextAlign.center,
-        decoration: InputDecoration(
-          counterText: '',
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: theme.textColor.withValues(alpha: 0.38),
-            ),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: theme.accentColor),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(
-            'Cancel',
-            style: AppTypography.button(
-              color: theme.textColor.withValues(alpha: 0.7),
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () async {
-            // Resolved up front, before any await and before the pop: this is
-            // the dialog's own context, so looking up an ancestor through it
-            // after `Navigator.pop` would be a lookup through a deactivated
-            // element. Both objects outlive the dialog route -- the messenger
-            // is the app-level one under `MaterialApp` -- so the snack bar
-            // still shows on the screen underneath.
-            final messenger = ScaffoldMessenger.of(context);
-            final navigator = Navigator.of(context);
-
-            final correct = await widget.vault.verifyPin(_pinController.text);
-            if (!mounted) return;
-            if (correct) {
-              await widget.vault.addLetter(widget.generatedLetter);
-              if (!mounted) return;
-              navigator.pop();
-              messenger.showSnackBar(
-                const SnackBar(
-                  content: Text('🔒 Saved securely to your Secret Vault!'),
-                  backgroundColor: Colors.pinkAccent,
-                ),
-              );
-            } else {
-              messenger.showSnackBar(
-                const SnackBar(
-                  content: Text('Incorrect PIN. Please try again.'),
-                  backgroundColor: Colors.redAccent,
-                ),
-              );
-            }
-          },
-          child: Text(
-            'Unlock & Save',
-            style: AppTypography.button(color: theme.accentColor),
-          ),
-        ),
-      ],
     );
   }
 }

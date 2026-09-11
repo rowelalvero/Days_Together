@@ -34,8 +34,7 @@ void main() {
   // KeyManagementService for E2EE photo encryption's key exchange (posting a
   // public key, and -- for create -- minting/storing the couple photo key).
   // KeyManagementService.withKeyPair bypasses FlutterSecureStorage entirely
-  // (no platform channel in a plain unit test), matching the same constraint
-  // vault_controller_test.dart documents for the Vault PIN.
+  // (no platform channel in a plain unit test).
   late KeyManagementService fakeKeyManagementService;
 
   setUp(() async {

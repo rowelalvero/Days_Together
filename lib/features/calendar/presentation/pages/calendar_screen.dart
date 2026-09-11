@@ -9,9 +9,7 @@ import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
-import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/calendar/domain/entities/calendar_event_model.dart';
-import 'package:days_together/shared/models/vault_item_model.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/app/theme/app_typography.dart';
@@ -560,7 +558,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final timelineProvider = ref.watch(timelineControllerProvider);
     final bucketProvider = ref.watch(bucketListControllerProvider);
     final giftProvider = ref.watch(giftReminderControllerProvider);
-    final vaultProvider = ref.watch(vaultControllerProvider);
 
     final firstDayOfMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
     final lastDayOfMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0);
@@ -630,9 +627,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               final hasGift = giftProvider.reminders.any(
                 (i) => _isSameDay(i.nextOccurrence, date),
               );
-              final hasVault = vaultProvider.visibleItems.any(
-                (i) => _isSameDay(i.createdAt, date),
-              );
 
               final startDate = relProvider.startDate;
               final isAnniversary =
@@ -645,8 +639,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   isAnniversary ||
                   hasTimeline ||
                   hasBucket ||
-                  hasGift ||
-                  hasVault;
+                  hasGift;
 
               return GestureDetector(
                 onTap: () => setState(() => _selectedDay = date),
@@ -710,7 +703,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final timelineProvider = ref.watch(timelineControllerProvider);
     final bucketProvider = ref.watch(bucketListControllerProvider);
     final giftProvider = ref.watch(giftReminderControllerProvider);
-    final vaultProvider = ref.watch(vaultControllerProvider);
 
     final events = calendar.eventsForDay(_selectedDay);
 
@@ -727,9 +719,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final giftItems = giftProvider.reminders
         .where((i) => _isSameDay(i.nextOccurrence, _selectedDay))
         .toList();
-    final vaultItems = vaultProvider.visibleItems
-        .where((i) => _isSameDay(i.createdAt, _selectedDay))
-        .toList();
 
     // Check for anniversary
     final startDate = relProvider.startDate;
@@ -743,8 +732,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         isAnniversary ||
         timelineItems.isNotEmpty ||
         bucketItems.isNotEmpty ||
-        giftItems.isNotEmpty ||
-        vaultItems.isNotEmpty;
+        giftItems.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -815,20 +803,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       emoji: '🎁',
                       color: Colors.orangeAccent,
                       onTap: () => context.push(Routes.gifts),
-                    ),
-                  ),
-                  ...vaultItems.map(
-                    (item) => _buildIntegratedCard(
-                      title: vaultProvider.isUnlocked
-                          ? (item.type == VaultItemType.letter
-                                ? 'Private Letter'
-                                : 'Private Photo')
-                          : 'Locked Memory',
-                      subtitle:
-                          'The Vault • ${DateFormat.jm().format(item.createdAt)}',
-                      emoji: '🔒',
-                      color: Colors.purpleAccent,
-                      onTap: () => context.push(Routes.vault),
                     ),
                   ),
                 ],

@@ -22,7 +22,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/main.dart';
 import 'package:days_together/core/session/couple_session.dart';
-import 'package:days_together/features/home_widgets/data/home_widget_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -59,52 +58,6 @@ void main() {
             'coupleSessionProvider must return the same CoupleSession '
             'instance on every read within the same container -- a plain '
             'Provider constructs its value exactly once and caches it.',
-      );
-    },
-  );
-
-  testWidgets(
-    'buildAppRoot supplies homeWidgetRepositoryProvider, which throws when unoverridden',
-    (tester) async {
-      // homeWidgetRepositoryProvider has no default implementation -- its
-      // body throws UnimplementedError so that missing wiring fails loudly
-      // rather than silently serving a default widget config. Production
-      // shipped without ever installing the override, so opening the Home
-      // Widget Studio crashed to a red error screen on every device. Every
-      // other test of that screen constructs its own ProviderScope and hands
-      // in the override by hand, which is exactly why the gap was invisible;
-      // this one pumps the real buildAppRoot tree instead.
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-
-      late BuildContext probeContext;
-
-      await tester.pumpWidget(
-        buildAppRoot(
-          homeWidgetPrefs: prefs,
-          child: Builder(
-            builder: (context) {
-              probeContext = context;
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      );
-      await tester.pump();
-
-      final container = ProviderScope.containerOf(probeContext);
-
-      expect(
-        () => container.read(homeWidgetRepositoryProvider),
-        returnsNormally,
-        reason:
-            'buildAppRoot must install the homeWidgetRepositoryProvider '
-            'override; without it, every read of it throws '
-            'UnimplementedError and the Home Widget Studio cannot open.',
-      );
-      expect(
-        container.read(homeWidgetRepositoryProvider),
-        isA<HomeWidgetRepository>(),
       );
     },
   );

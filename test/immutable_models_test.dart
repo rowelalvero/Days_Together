@@ -8,7 +8,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
 import 'package:days_together/features/gift_reminders/domain/entities/gift_reminder_model.dart';
-import 'package:days_together/shared/models/vault_item_model.dart';
 import 'package:days_together/features/love_studio/domain/entities/time_capsule_model.dart';
 import 'package:days_together/features/mood/domain/entities/daily_mood_model.dart';
 
@@ -80,32 +79,6 @@ void main() {
 
         expect(original.reminderDaysBefore, const [30, 14, 7]);
         expect(updated.reminderDaysBefore, const [7, 1]);
-      },
-    );
-  });
-
-  group('VaultItem', () {
-    test('round-trips a photo item through toJson/fromJson losslessly', () {
-      final original = VaultItem(
-        type: VaultItemType.photo,
-        imagePath: '/local/photo.jpg',
-        imageUrl: 'couples/c1/vault/photo.jpg',
-        createdAt: DateTime.utc(2024, 2, 2),
-      );
-
-      final restored = VaultItem.fromJson(original.toJson());
-
-      expect(restored.type, VaultItemType.photo);
-      expect(restored.imagePath, original.imagePath);
-      expect(restored.imageUrl, original.imageUrl);
-      expect(restored.createdAt, original.createdAt);
-    });
-
-    test(
-      'fromJson falls back to VaultItemType.photo for an out-of-range type index',
-      () {
-        final restored = VaultItem.fromJson({'type': 99, 'createdAt': null});
-        expect(restored.type, VaultItemType.photo);
       },
     );
   });

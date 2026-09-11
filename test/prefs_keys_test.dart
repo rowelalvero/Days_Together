@@ -5,9 +5,9 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 void main() {
   group('PrefsKeys', () {
     test(
-      'contains exactly 43 entries (Phase 0 exit criterion, +2 from the item-14 sweep fix)',
+      'contains exactly 42 entries (Phase 0 exit criterion; was 43 before the Secret Vault removal dropped vaultPinFallback)',
       () {
-        expect(PrefsKeys.all.length, 43);
+        expect(PrefsKeys.all.length, 42);
       },
     );
 
@@ -43,7 +43,6 @@ void main() {
           'lib/core/session/couple_session.dart',
           'lib/features/relationship/license_controller.dart',
           'lib/features/timeline/timeline_controller.dart',
-          'lib/features/vault/vault_controller.dart',
         ].map((path) => File(path).readAsStringSync()).toList();
 
         // Recover the value -> constant-name mapping directly from

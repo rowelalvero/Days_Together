@@ -33,11 +33,9 @@ import 'package:days_together/features/scrapbook/presentation/pages/noteit_scree
 import 'package:days_together/features/relationship/presentation/duration/relationship_duration_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/license_screen.dart';
 import 'package:days_together/features/topic_cards/presentation/pages/topic_cards_screen.dart';
-import 'package:days_together/features/vault/presentation/pages/vault_screen.dart';
 import 'package:days_together/features/wrapped/presentation/pages/wrapped_archive_screen.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/features/wrapped/presentation/pages/wrapped_screen.dart';
-import 'package:days_together/features/home_widgets/presentation/pages/home_widget_studio_screen.dart';
 
 /// The set of onboarding/session-stage-driven routes -- these are the ones
 /// [computeSessionStage] can redirect *to*. Once `stage == ready`, landing on
@@ -350,7 +348,6 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
         builder: (_, _) => const TimeCapsuleScreen(),
       ),
       GoRoute(path: Routes.calendar, builder: (_, _) => const CalendarScreen()),
-      GoRoute(path: Routes.vault, builder: (_, _) => const VaultScreen()),
       GoRoute(
         path: Routes.topicCards,
         builder: (_, _) => const TopicCardsScreen(),
@@ -439,10 +436,6 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
       GoRoute(
         path: Routes.studioInsights,
         builder: (_, _) => const RelationshipInsightsScreen(),
-      ),
-      GoRoute(
-        path: Routes.homeWidgets,
-        builder: (_, _) => const HomeWidgetStudioScreen(),
       ),
       GoRoute(
         path: Routes.memoryPattern,

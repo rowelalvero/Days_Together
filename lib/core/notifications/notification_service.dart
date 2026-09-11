@@ -275,7 +275,6 @@ class NotificationService {
             : (location: Routes.homeTab(1), replace: true),
       'time_capsule' => (location: Routes.timeCapsule, replace: false),
       'calendar' => (location: Routes.calendar, replace: false),
-      'vault' => (location: Routes.vault, replace: false),
       'topic_cards' => (location: Routes.topicCards, replace: false),
       'relationship' => (location: Routes.license, replace: false),
       'gifts' => (location: Routes.gifts, replace: false),

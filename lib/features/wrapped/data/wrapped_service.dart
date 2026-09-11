@@ -7,7 +7,6 @@ import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/features/mood/daily_mood_state.dart';
 import 'package:days_together/features/calendar/calendar_state.dart';
 import 'package:days_together/features/love_studio/time_capsule_state.dart';
-import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/core/utils/date_helper.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
@@ -71,7 +70,6 @@ class WrappedService {
     required DailyMoodState mp,
     required CalendarState cp,
     required TimeCapsuleState cap,
-    required VaultState vp,
   }) {
     final now = DateTime.now();
     final startDate = workspace.startDate;
@@ -284,7 +282,16 @@ class WrappedService {
       capsulesCreated: capCreated,
       capsulesOpened: capOpened,
       upcomingCapsules: capUpcoming,
-      totalPhotos: vp.visibleItems.length,
+      // Timeline photo memories; was the Secret Vault's item count before
+      // that feature was removed. The field stays on WrappedData so archived
+      // wrapped records still deserialize.
+      totalPhotos: allMemories
+          .where(
+            (m) =>
+                (m.imagePath != null && m.imagePath!.isNotEmpty) ||
+                (m.networkImageUrl != null && m.networkImageUrl!.isNotEmpty),
+          )
+          .length,
       totalCapsules: allCapsules.length,
       milestonesAchievedThisYear: achievedThisYear,
       letterTemplateIndex: year % 4,

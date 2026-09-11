@@ -11,7 +11,6 @@ import 'package:days_together/features/gift_reminders/gift_reminder_controller.d
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
-import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
@@ -27,16 +26,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
         ConsumerWidget,
         WidgetRef,
         ProviderScope;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/features/home_widgets/data/home_widget_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/app/config/app_config.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
-import 'package:days_together/core/platform/home_widget/home_widget_service.dart';
-
-import 'package:home_widget/home_widget.dart';
-import 'package:days_together/app/router/route_names.dart';
 
 @pragma('vm:entry-point')
 void main() {
@@ -79,61 +72,7 @@ Future<void> _initializeApp() async {
     debugPrint('NotificationService initialization error: $e');
   }
 
-  try {
-    await HomeWidgetService.instance.initialize();
-    _setupHomeWidgetDeepLinking();
-  } catch (e) {
-    debugPrint('HomeWidgetService initialization error: $e');
-  }
-
-  // Resolved here, not lazily inside the provider: `homeWidgetRepositoryProvider`
-  // needs a `SharedPreferences` instance, `SharedPreferences.getInstance()` is
-  // async, and a Riverpod `Provider` body is not. See [buildAppRoot].
-  SharedPreferences? prefs;
-  try {
-    prefs = await SharedPreferences.getInstance();
-  } catch (e) {
-    debugPrint('SharedPreferences initialization error: $e');
-  }
-
-  runApp(buildAppRoot(child: const MyApp(), homeWidgetPrefs: prefs));
-}
-
-void _setupHomeWidgetDeepLinking() {
-  try {
-    HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
-      if (uri != null) {
-        _routeHomeWidgetDeepLink(uri);
-      }
-    });
-
-    HomeWidget.widgetClicked.listen((uri) {
-      if (uri != null) {
-        _routeHomeWidgetDeepLink(uri);
-      }
-    });
-  } catch (e) {
-    debugPrint('HomeWidget deep linking setup error: $e');
-  }
-}
-
-void _routeHomeWidgetDeepLink(Uri uri) {
-  if (uri.scheme == 'daystogether') {
-    String? targetRoute;
-    if (uri.host == 'noteit') {
-      targetRoute = Routes.notes;
-    } else if (uri.host == 'duration') {
-      targetRoute = Routes.duration;
-    }
-
-    if (targetRoute != null) {
-      if (appRouterIsReady) {
-        appRouter.go(targetRoute);
-      } else {
-        queueDeepLink(targetRoute);
-      }
-    }
-  }
+  runApp(buildAppRoot(child: const MyApp()));
 }
 
 /// The app's full widget root: a single `ProviderScope` -- the entire
@@ -146,30 +85,8 @@ void _routeHomeWidgetDeepLink(Uri uri) {
 /// bridge into. Factored out of [runApp] so `test/riverpod_bridge_test.dart`
 /// can pump the exact production wiring around a probe widget of its
 /// choosing instead of a hand-maintained duplicate that could drift.
-///
-/// [homeWidgetPrefs] supplies the one override production must install:
-/// `homeWidgetRepositoryProvider` deliberately throws when it has not been
-/// overridden, so that missing wiring fails loudly instead of silently
-/// serving a default widget configuration -- but that contract only holds if
-/// the real app actually installs the override. It didn't, so navigating to
-/// the Home Widget Studio threw `UnimplementedError` onto a red error screen
-/// on every device. It stays nullable so `test/riverpod_bridge_test.dart` can
-/// keep pumping this exact tree without caring about a provider it never
-/// reads, and so a failure to open `SharedPreferences` degrades to only that
-/// one screen failing rather than taking down app startup.
-Widget buildAppRoot({
-  required Widget child,
-  SharedPreferences? homeWidgetPrefs,
-}) {
-  return ProviderScope(
-    overrides: [
-      if (homeWidgetPrefs != null)
-        homeWidgetRepositoryProvider.overrideWithValue(
-          HomeWidgetRepository(homeWidgetPrefs),
-        ),
-    ],
-    child: _CoupleSessionBridge(child: child),
-  );
+Widget buildAppRoot({required Widget child}) {
+  return ProviderScope(child: _CoupleSessionBridge(child: child));
 }
 
 /// The single bridge from `CoupleSession`'s raw `ChangeNotifier` world into
@@ -319,7 +236,6 @@ class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
       ref.read(calendarControllerProvider.notifier).updateSession(session);
       ref.read(timeCapsuleControllerProvider.notifier).updateSession(session);
       ref.read(timelineControllerProvider.notifier).updateSession(session);
-      ref.read(vaultControllerProvider.notifier).updateSession(session);
       ref.read(noteitControllerProvider.notifier).updateSession(session);
       ref.read(loveChatControllerProvider.notifier).updateSession(session);
       ref.read(topicCardsControllerProvider.notifier).updateSession(session);

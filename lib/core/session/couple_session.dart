@@ -13,7 +13,6 @@ import 'package:days_together/core/network/couple_service.dart';
 import 'package:days_together/core/network/profile_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/session/relationship_lifecycle_manager.dart';
-import 'package:days_together/core/platform/home_widget/home_widget_service.dart';
 import 'package:days_together/core/session/couple_key_exchange.dart';
 import 'package:days_together/core/security/key_management_service.dart';
 import 'package:days_together/core/session/partner_presence.dart';
@@ -331,10 +330,6 @@ class CoupleSession extends ChangeNotifier {
     if (!isSupabaseAvailable || (_coupleId != null && _onboardingCompleted)) {
       _isInitialized = true;
     }
-    HomeWidgetService.instance.updateWidget(
-      startDate: _startDate,
-      startTime: _startTime,
-    );
     notifyListeners();
 
     // Background-validate cached avatar URLs on startup.
@@ -968,10 +963,6 @@ class CoupleSession extends ChangeNotifier {
 
   Future<void> setStartDate(DateTime date) async {
     _startDate = date;
-    await HomeWidgetService.instance.updateWidget(
-      startDate: _startDate,
-      startTime: _startTime,
-    );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       PrefsKeys.relationshipStartDate,
@@ -998,10 +989,6 @@ class CoupleSession extends ChangeNotifier {
 
   Future<void> setStartTime(TimeOfDay time) async {
     _startTime = time;
-    await HomeWidgetService.instance.updateWidget(
-      startDate: _startDate,
-      startTime: _startTime,
-    );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(PrefsKeys.relationshipStartHour, time.hour);
     await prefs.setInt(PrefsKeys.relationshipStartMinute, time.minute);
@@ -1634,8 +1621,6 @@ class CoupleSession extends ChangeNotifier {
     // The 24 license fields used to be reset here -- LicenseController's
     // own state is invalidated on logout by main.dart's
     // _LicenseLifecycleBridge instead (see license_controller.dart).
-
-    await HomeWidgetService.instance.clearWidget();
 
     final prefs = await SharedPreferences.getInstance();
     if (wipeAll) {

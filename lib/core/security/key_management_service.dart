@@ -12,7 +12,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 ///
 /// The private key and the couple's photo key both live only in
 /// [FlutterSecureStorage], deliberately with no fallback to SharedPreferences
-/// (unlike `VaultController`'s PIN storage): a plaintext-readable fallback
+/// (no plaintext fallback here): a plaintext-readable fallback
 /// would defeat the entire point of end-to-end photo encryption.
 ///
 /// Every method takes the currently signed-in user's id explicitly and scopes
@@ -38,7 +38,7 @@ class KeyManagementService {
   /// ECDH+HKDF+AES-GCM wrap/unwrap logic, and anything built on top of it
   /// (e.g. `CoupleSession`'s pairing flow), can be unit-tested without a
   /// platform channel (a plain `flutter test` has none -- see
-  /// `vault_controller_test.dart` for the same constraint).
+  /// the same constraint applies to any secure-storage-backed test).
   @visibleForTesting
   KeyManagementService.withKeyPair(SimpleKeyPair keyPair)
     : _cachedKeyPair = keyPair,

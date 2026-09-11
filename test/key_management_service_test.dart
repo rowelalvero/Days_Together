@@ -8,7 +8,7 @@ import 'package:days_together/core/security/key_management_service.dart';
 /// Covers the ECDH+HKDF+AES-GCM key-wrapping logic via
 /// [KeyManagementService.withKeyPair], which pre-seeds the keypair cache and
 /// so never touches FlutterSecureStorage -- there's no platform channel in a
-/// plain unit test (see vault_controller_test.dart for the same constraint).
+/// plain unit test.
 ///
 /// The per-user storage/cache scoping group below is the regression test for
 /// a real bug found during the mandatory two-device manual test: testing two

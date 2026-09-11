@@ -5,7 +5,6 @@ import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
-import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
@@ -20,14 +19,21 @@ class RelationshipStatistics extends ConsumerWidget {
     final timeline = ref.watch(timelineControllerProvider);
     final bucket = ref.watch(bucketListControllerProvider);
     final noteit = ref.watch(noteitControllerProvider);
-    final vault = ref.watch(vaultControllerProvider);
     final capsule = ref.watch(timeCapsuleControllerProvider);
     final workspace = ref.watch(workspaceControllerProvider);
 
     final totalMemories = timeline.items.length;
     final bucketStats = '${bucket.completedItems}/${bucket.totalItems}';
     final totalNotes = noteit.visibleNotes.length;
-    final totalVaultItems = vault.visibleItems.length;
+    // Sourced from timeline photo memories since the Secret Vault was
+    // removed; it was previously the vault's item count.
+    final totalPhotos = timeline.items
+        .where(
+          (i) =>
+              (i.imagePath != null && i.imagePath!.isNotEmpty) ||
+              (i.networkImageUrl != null && i.networkImageUrl!.isNotEmpty),
+        )
+        .length;
     final totalCapsules = capsule.capsules.length;
 
     // Calculate timeline years from start date
@@ -43,7 +49,7 @@ class RelationshipStatistics extends ConsumerWidget {
       ),
       _StatItem(
         label: 'Total Photos',
-        value: '$totalVaultItems',
+        value: '$totalPhotos',
         color: const Color(0xFF8B5CF6), // Purple
       ),
       _StatItem(

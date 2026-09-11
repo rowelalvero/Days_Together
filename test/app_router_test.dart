@@ -240,7 +240,7 @@ void main() {
   // resolved inside NotificationService.init(), which main.dart awaits
   // *before* runApp -- so there is no GoRouter yet. Reading `appRouter` there
   // threw, and because that throw happened inside _initializeApp's single
-  // try/catch it also skipped HomeWidgetService.initialize() and the FCM
+  // try/catch it also skipped the FCM
   // token-refresh registration. The payload is now queued and replayed
   // through the same pending-deep-link path a link arriving mid-hydration
   // already used.
@@ -289,7 +289,7 @@ void main() {
       'the queued link is what the redirect replays once the stage resolves',
       () {
         NotificationService().handleNotificationPayloadForTest({
-          'feature': 'vault',
+          'feature': 'bucket_list',
         });
 
         // Still loading: hold at /loading, keeping the queued link.
@@ -309,7 +309,7 @@ void main() {
             here: Routes.loading,
             pendingLocation: pendingDeepLinkForTest,
           ),
-          Routes.vault,
+          Routes.bucketList,
         );
       },
     );

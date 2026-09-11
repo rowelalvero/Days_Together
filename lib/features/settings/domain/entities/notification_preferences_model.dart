@@ -9,7 +9,6 @@ class NotificationPreferences {
   final bool timeCapsuleEnabled;
   final bool calendarEnabled;
   final bool loveNotesEnabled;
-  final bool vaultEnabled;
   final bool giftsEnabled;
   final bool relationshipEnabled;
   final bool memoriesEnabled;
@@ -33,7 +32,6 @@ class NotificationPreferences {
     this.timeCapsuleEnabled = true,
     this.calendarEnabled = true,
     this.loveNotesEnabled = true,
-    this.vaultEnabled = true,
     this.giftsEnabled = true,
     this.relationshipEnabled = true,
     this.memoriesEnabled = true,
@@ -58,7 +56,6 @@ class NotificationPreferences {
     bool? timeCapsuleEnabled,
     bool? calendarEnabled,
     bool? loveNotesEnabled,
-    bool? vaultEnabled,
     bool? giftsEnabled,
     bool? relationshipEnabled,
     bool? memoriesEnabled,
@@ -82,7 +79,6 @@ class NotificationPreferences {
       timeCapsuleEnabled: timeCapsuleEnabled ?? this.timeCapsuleEnabled,
       calendarEnabled: calendarEnabled ?? this.calendarEnabled,
       loveNotesEnabled: loveNotesEnabled ?? this.loveNotesEnabled,
-      vaultEnabled: vaultEnabled ?? this.vaultEnabled,
       giftsEnabled: giftsEnabled ?? this.giftsEnabled,
       relationshipEnabled: relationshipEnabled ?? this.relationshipEnabled,
       memoriesEnabled: memoriesEnabled ?? this.memoriesEnabled,
@@ -109,7 +105,6 @@ class NotificationPreferences {
       timeCapsuleEnabled: json['time_capsule_enabled'] as bool? ?? true,
       calendarEnabled: json['calendar_enabled'] as bool? ?? true,
       loveNotesEnabled: json['love_notes_enabled'] as bool? ?? true,
-      vaultEnabled: json['vault_enabled'] as bool? ?? true,
       giftsEnabled: json['gifts_enabled'] as bool? ?? true,
       relationshipEnabled: json['relationship_enabled'] as bool? ?? true,
       memoriesEnabled: json['memories_enabled'] as bool? ?? true,
@@ -136,7 +131,6 @@ class NotificationPreferences {
       'time_capsule_enabled': timeCapsuleEnabled,
       'calendar_enabled': calendarEnabled,
       'love_notes_enabled': loveNotesEnabled,
-      'vault_enabled': vaultEnabled,
       'gifts_enabled': giftsEnabled,
       'relationship_enabled': relationshipEnabled,
       'memories_enabled': memoriesEnabled,

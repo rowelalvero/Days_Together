@@ -13,7 +13,7 @@ import 'package:days_together/core/security/photo_encryption_service.dart';
 ///
 /// [KeyManagementService]/[PhotoEncryptionService] stay pure/Supabase-free
 /// (see their own docs); this class is the one place that wires them to an
-/// actual bucket upload, shared by every upload call site (avatar, vault,
+/// actual bucket upload, shared by every upload call site (avatar,
 /// timeline, note-it) so the encrypt-then-upload sequence exists exactly
 /// once rather than being re-implemented at each site.
 class EncryptedStorageService {

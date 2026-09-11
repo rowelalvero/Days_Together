@@ -16,7 +16,6 @@ import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
-import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
@@ -36,7 +35,6 @@ class SettingsTab extends ConsumerWidget {
     final mp = ref.read(dailyMoodControllerProvider);
     final cp = ref.read(calendarControllerProvider);
     final cap = ref.read(timeCapsuleControllerProvider);
-    final vp = ref.read(vaultControllerProvider);
 
     final data = WrappedService.aggregate(
       year: year,
@@ -48,7 +46,6 @@ class SettingsTab extends ConsumerWidget {
       mp: mp,
       cp: cp,
       cap: cap,
-      vp: vp,
     );
 
     if (!context.mounted) return;
@@ -155,14 +152,6 @@ class SettingsTab extends ConsumerWidget {
               subtitle: theme.name,
               theme: theme,
               onTap: () => context.push(Routes.themeSelector),
-            ),
-            const SizedBox(height: 12),
-            _buildModernTile(
-              icon: Icons.widgets_outlined,
-              title: 'Home Screen Widgets',
-              subtitle: 'NoteIt drawings & relationship counter',
-              theme: theme,
-              onTap: () => context.push(Routes.homeWidgets),
             ),
             const SizedBox(height: 12),
             _buildModernTile(

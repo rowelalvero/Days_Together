@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:days_together/core/platform/home_widget/home_widget_service.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
 
 /// Standard interface for relationship lifecycle observers.
@@ -62,7 +61,6 @@ class RelationshipLifecycleManager {
     debugPrint(
       'RelationshipLifecycleManager: Coordinating Disconnect event...',
     );
-    await HomeWidgetService.instance.clearWidget();
     // Drop every signed storage URL so a link to the previous couple's objects
     // cannot be reused after the relationship ends.
     StorageUrlService.instance.clearAll();
@@ -79,7 +77,6 @@ class RelationshipLifecycleManager {
 
   Future<void> handleLogout() async {
     debugPrint('RelationshipLifecycleManager: Coordinating Logout event...');
-    await HomeWidgetService.instance.clearWidget();
     StorageUrlService.instance.clearAll();
     for (final listener in _listeners) {
       try {

@@ -50,17 +50,16 @@ Rule 12).
 ## Where the boundaries came from
 
 `docs/architecture/feature-boundaries.md` defines which features exist, what
-each owns, and the dependency matrix between them. Two placements deliberately
-differ from that document, both because `core/` cannot depend on `features/`:
+each owns, and the dependency matrix between them. One placement deliberately
+differs from that document, because `core/` cannot depend on `features/`:
 
 - **`CoupleSession` lives in `core/session/`**, not `features/authentication/`.
-  `core/riverpod/supabase_lifecycle_notifier.dart` depends on it and 13
-  features read it. `features/authentication/` owns the onboarding UI.
-- **The OS home-screen widget bridge lives in `core/platform/home_widget/`**
-  (service, constants, models, offscreen render templates), while
-  `features/home_widgets/` keeps the in-app Studio screen that configures it —
-  the same split that already separates `core/notifications/` from the
-  `settings` feature.
+  `core/riverpod/supabase_lifecycle_notifier.dart` depends on it and the
+  feature controllers read it. `features/authentication/` owns the onboarding
+  UI.
+
+Two features the document still lists no longer exist: `vault` (the Secret
+Vault) and `home_widgets` (the OS home-screen widget), both removed outright.
 
 The application shell (`LoveStoryScreen` and its four tabs) lives in
 `app/shell/`, not here: a scaffold that composes every feature's entry point is

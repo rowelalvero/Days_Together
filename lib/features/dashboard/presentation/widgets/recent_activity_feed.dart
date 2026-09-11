@@ -15,7 +15,6 @@ import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
-import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 
@@ -89,8 +88,6 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
         return const Color(0xFF3B82F6); // Blue
       case 'time_capsule':
         return const Color(0xFFF97316); // Orange
-      case 'vault':
-        return const Color(0xFF64748B); // Slate
       case 'topic_cards':
         return const Color(0xFFEC4899); // Pink
       case 'gifts':
@@ -144,13 +141,6 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
           exists = capsuleState.capsules.any((c) => c.id == referenceId);
         }
         targetRoute = Routes.timeCapsule;
-        break;
-      case 'vault':
-        if (referenceId != null && activity.activityType != 'deleted') {
-          final vaultState = ref.read(vaultControllerProvider);
-          exists = vaultState.visibleItems.any((i) => i.id == referenceId);
-        }
-        targetRoute = Routes.vault;
         break;
       case 'love_notes':
       case 'doodle_notes':

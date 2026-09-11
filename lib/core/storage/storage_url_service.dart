@@ -13,7 +13,6 @@ class StorageBuckets {
 
   static const String avatars = 'avatars';
   static const String timeline = 'timeline';
-  static const String vaultPhotos = 'vault-photos';
   static const String loveNotes = 'love-notes';
 }
 
@@ -40,7 +39,7 @@ class _NegativeEntry {
 /// and this service mints signed URLs on demand and holds them in memory only.
 ///
 /// A "ref" is any of:
-///  * a bare object path — `couples/{id}/vault_photos/{x}.jpg` (the current format)
+///  * a bare object path — `couples/{id}/timeline/{x}.jpg` (the current format)
 ///  * a legacy public URL — `https://…/storage/v1/object/public/{bucket}/{path}?t=1`
 ///  * a foreign absolute URL — e.g. a Google OAuth avatar; passed through as-is
 ///  * an absolute device file path — not a storage ref; the caller renders a [File]
@@ -58,7 +57,7 @@ class StorageUrlService {
   static const Duration refreshMargin = Duration(minutes: 30);
 
   /// How long a failed signing attempt is remembered, so a legitimately denied
-  /// object (vault locked, unlinked partner) doesn't hammer the endpoint.
+  /// object (a deleted photo, an unlinked partner) doesn't hammer the endpoint.
   static const Duration negativeTtl = Duration(seconds: 30);
 
   final Map<String, _SignedEntry> _cache = {};

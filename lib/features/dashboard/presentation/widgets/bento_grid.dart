@@ -5,7 +5,6 @@ import 'package:days_together/features/dashboard/presentation/cards/daily_sync_b
 import 'package:days_together/features/dashboard/presentation/cards/doodle_notes_bento_card.dart';
 import 'package:days_together/features/dashboard/presentation/cards/emotional_map_bento_card.dart';
 import 'package:days_together/features/dashboard/presentation/cards/love_chat_bento_card.dart';
-import 'package:days_together/features/dashboard/presentation/cards/secret_vault_bento_card.dart';
 import 'package:days_together/features/dashboard/presentation/cards/shared_calendar_bento_card.dart';
 import 'package:days_together/features/dashboard/presentation/cards/time_capsule_bento_card.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
@@ -34,8 +33,6 @@ class BentoGrid extends StatelessWidget {
         BucketListBentoCard(theme: theme),
         const SizedBox(height: 16),
         TimeCapsuleBentoCard(theme: theme),
-        const SizedBox(height: 16),
-        SecretVaultBentoCard(theme: theme),
         const SizedBox(height: 16),
         LoveChatBentoCard(theme: theme),
       ],

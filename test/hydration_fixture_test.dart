@@ -1,5 +1,5 @@
 // The single highest-ROI test in the Phase 5 migration
-// (docs/architecture/migration-roadmap.md): a realistic 43-key
+// (docs/architecture/migration-roadmap.md): a realistic 42-key
 // SharedPreferences snapshot, captured once here, that every state-ownership
 // extraction must continue to hydrate identically. Written before extracting
 // LicenseController (the roadmap's explicit ordering requirement), so it
@@ -30,7 +30,7 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/core/session/couple_session.dart';
 
-/// A realistic 43-key hydration snapshot. Every key in [PrefsKeys.all] has
+/// A realistic 42-key hydration snapshot. Every key in [PrefsKeys.all] has
 /// an entry here -- the "no key silently dropped" property this test
 /// exists to guard is checked directly against this map's own keys, not
 /// hand-copied, so PrefsKeys and this fixture can't silently drift apart.
@@ -93,7 +93,6 @@ Map<String, Object> _realDeviceSnapshot() {
 
     // Incrementally centralized keys (see prefs_keys.dart)
     PrefsKeys.timelineIsAscending: false,
-    PrefsKeys.vaultPinFallback: '1234',
   };
 }
 
@@ -106,14 +105,9 @@ void main() {
           const MethodChannel('plugins.flutter.io/path_provider'),
           (MethodCall methodCall) async => '.',
         );
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('home_widget'),
-          (MethodCall methodCall) async => null,
-        );
   });
 
-  group('Hydration fixture -- the 43-key snapshot survives a fresh load', () {
+  group('Hydration fixture -- the 42-key snapshot survives a fresh load', () {
     test(
       'the fixture itself covers exactly PrefsKeys.all, nothing more or less',
       () {
@@ -123,7 +117,7 @@ void main() {
           PrefsKeys.all.toSet(),
           reason:
               'the fixture must be updated whenever PrefsKeys.all changes, '
-              'or this test stops actually covering all 43 keys',
+              'or this test stops actually covering all 42 keys',
         );
       },
     );
@@ -192,7 +186,7 @@ void main() {
     );
 
     test(
-      'every one of the 43 raw SharedPreferences keys survives a load unchanged',
+      'every one of the 42 raw SharedPreferences keys survives a load unchanged',
       () async {
         // The controller-agnostic ground truth (see file doc comment): this
         // must keep passing across every Phase 5 extraction regardless of
