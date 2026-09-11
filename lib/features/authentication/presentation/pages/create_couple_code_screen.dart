@@ -291,8 +291,9 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
                             );
                             setState(() => _copiedRecovery = true);
                             Future.delayed(const Duration(seconds: 2), () {
-                              if (mounted)
+                              if (mounted) {
                                 setState(() => _copiedRecovery = false);
+                              }
                             });
                           },
                           icon: Icon(
