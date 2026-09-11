@@ -380,356 +380,353 @@ class CoupleSession extends ChangeNotifier {
     _partnerUserSub = null;
   }
 
+  /// Opens the one auth subscription the session owns. The per-event work
+  /// lives in [_handleAuthChange]; the two table streams it can start have
+  /// their own setup/handler pairs below.
+  ///
+  /// This was a single 352-line method holding the auth listener, the `users`
+  /// stream, and the `couples` stream nested three closures deep. Split into
+  /// named methods -- pure code motion, no behavior change: the listener
+  /// bodies captured no outer locals (each builds its own `prefs`), so each
+  /// lifted out whole.
   void _initSupabaseSync() {
     _authSub?.cancel();
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
-      (data) async {
-        final user = data.session?.user;
-
-        // Supabase emits `onAuthStateChange` for routine background events as
-        // well as real sign-in/sign-out: `tokenRefreshed` fires roughly hourly
-        // for the lifetime of the session, and `userUpdated` after any auth
-        // profile mutation. Neither changes *which* account is signed in, but
-        // the teardown below would drop every realtime channel (love chat,
-        // note-its, presence) and flip `_isInitialized` back to false, which
-        // makes `computeSessionStage()` report `SessionStage.loading` and
-        // bounces `appRedirect` to the loading route -- yanking the user out
-        // of whatever screen they were on mid-session. supabase_flutter
-        // re-authenticates the existing realtime socket itself on refresh, so
-        // for these events, while the same user stays signed in, there is
-        // nothing to rebuild.
-        final isSameUserBackgroundRefresh =
-            (data.event == AuthChangeEvent.tokenRefreshed ||
-                data.event == AuthChangeEvent.userUpdated) &&
-            user != null &&
-            user.id == _userId;
-        if (isSameUserBackgroundRefresh) {
-          return;
-        }
-
-        try {
-          await Supabase.instance.client.removeAllChannels();
-        } catch (e) {
-          debugPrint(
-            'CoupleSession: removeAllChannels() during auth change failed: $e',
-          );
-        }
-
-        _cancelActiveSubscriptions();
-        _userSub?.cancel();
-        _userSub = null;
-        _keyExchange.reset();
-
-        if (user == null) {
-          _userId = null;
-          _coupleId = null;
-          _partnerId = null;
-          _isPaired = false;
-          _status = RelationshipStatus.disconnected;
-          _yourActivity = null;
-          _partnerActivity = null;
-          _yourJoinDate = null;
-          _partnerJoinDate = null;
-          _presence.disconnect();
-          _isInitialized = true;
-          notifyListeners();
-          return;
-        }
-
-        _userId = user.id;
-        _isInitialized = false;
-        notifyListeners();
-
-        _keyExchange.start();
-
-        _userSub = Supabase.instance.client
-            .from('users')
-            .stream(primaryKey: ['id'])
-            .eq('id', _userId!)
-            .listen(
-              (dataList) async {
-                if (dataList.isEmpty) {
-                  try {
-                    // Self-heal a missing public.users row. Deliberately an
-                    // insert-if-absent, NOT an upsert: the stream can yield an
-                    // empty list transiently (reconnect, RLS hiccup) even when
-                    // the row exists, and an upsert would then degrade to
-                    // `UPDATE ... SET couple_id = NULL` and silently wipe a
-                    // live pairing. couple_id is omitted entirely so this can
-                    // never clear an existing link.
-                    await Supabase.instance.client.from('users').upsert({
-                      'id': _userId!,
-                      'display_name': _yourName,
-                    }, ignoreDuplicates: true);
-                  } catch (e) {
-                    debugPrint(
-                      'CoupleSession: self-heal insert of missing public.users row failed: $e',
-                    );
-                  }
-                  _isInitialized = true;
-                  notifyListeners();
-                  return;
-                }
-
-                final prefs = await SharedPreferences.getInstance();
-                final userData = dataList.first;
-                final newCoupleId = userData['couple_id'] as String?;
-
-                final partnerDeletedNotice =
-                    userData['partner_deleted_notice'] as bool? ?? false;
-                if (partnerDeletedNotice) {
-                  _showPartnerDeletedNotice = true;
-                  Supabase.instance.client
-                      .from('users')
-                      .update({'partner_deleted_notice': false})
-                      .eq('id', _userId!)
-                      .then((_) {});
-                }
-
-                bool coupleIdChanged = _coupleId != newCoupleId;
-                _coupleId = newCoupleId;
-                if (_coupleId != null) {
-                  await prefs.setString(PrefsKeys.coupleId, _coupleId!);
-                } else {
-                  await prefs.remove(PrefsKeys.coupleId);
-                }
-
-                // Sync FCM Token to Supabase
-                NotificationService().syncTokenToSupabase();
-
-                _yourName =
-                    userData['display_name'] as String? ??
-                    prefs.getString(PrefsKeys.yourName);
-                _yourActivity = userData['current_activity'] as String?;
-                if (_yourName != null) {
-                  await prefs.setString(PrefsKeys.yourName, _yourName!);
-                }
-                final userAvatar = userData['avatar_url'] as String?;
-                if (userAvatar != null && userAvatar.isNotEmpty) {
-                  _yourAvatarPath = userAvatar;
-                  await prefs.setString(PrefsKeys.yourAvatarPath, userAvatar);
-                }
-
-                final storedComp = prefs.getBool(PrefsKeys.onboardingCompleted);
-                if (storedComp != null) {
-                  _onboardingCompleted = storedComp;
-                } else if (_coupleId != null &&
-                    _yourName != null &&
-                    _yourName!.isNotEmpty &&
-                    (_startDate != null || _isPaired)) {
-                  _onboardingCompleted = true;
-                  await prefs.setBool(PrefsKeys.onboardingCompleted, true);
-                }
-
-                // Restore preserved onboarding details if unpaired
-                if (_coupleId == null) {
-                  _isPaired = false;
-                  _status = RelationshipStatus.disconnected;
-                  await prefs.setBool(PrefsKeys.isPaired, false);
-                  final dateStr = prefs.getString(
-                    PrefsKeys.relationshipStartDate,
-                  );
-                  if (dateStr != null) {
-                    _startDate = DateTime.parse(dateStr);
-                  }
-                  final hour = prefs.getInt(PrefsKeys.relationshipStartHour);
-                  final minute = prefs.getInt(
-                    PrefsKeys.relationshipStartMinute,
-                  );
-                  if (hour != null && minute != null) {
-                    _startTime = TimeOfDay(hour: hour, minute: minute);
-                  }
-                  _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
-                }
-
-                // Load and cache your join date
-                final createdAtStr = userData['created_at'] as String?;
-                if (createdAtStr != null) {
-                  _yourJoinDate = DateTime.parse(createdAtStr);
-                } else {
-                  final authCreated =
-                      Supabase.instance.client.auth.currentUser?.createdAt;
-                  if (authCreated != null) {
-                    _yourJoinDate = DateTime.parse(authCreated);
-                  }
-                }
-
-                if (_yourJoinDate != null) {
-                  await prefs.setString(
-                    PrefsKeys.yourJoinDate,
-                    _yourJoinDate!.toIso8601String(),
-                  );
-                }
-
-                if (_coupleId != null) {
-                  if (coupleIdChanged || _coupleSub == null) {
-                    _cancelActiveSubscriptions();
-                    _partnerActivity = null;
-                    _syncLocalDetailsToCloud();
-
-                    _coupleSub = Supabase.instance.client
-                        .from('couples')
-                        .stream(primaryKey: ['id'])
-                        .eq('id', _coupleId!)
-                        .listen(
-                          (coupleDataList) async {
-                            if (coupleDataList.isEmpty) return;
-                            final coupleData = coupleDataList.first;
-
-                            _storyTitle = coupleData['story_title'] as String?;
-                            final startStr =
-                                coupleData['start_date'] as String?;
-                            if (startStr != null) {
-                              _startDate = DateTime.parse(startStr);
-                            }
-                            final hour = coupleData['start_time_hour'] as int?;
-                            final minute =
-                                coupleData['start_time_minute'] as int?;
-                            if (hour != null && minute != null) {
-                              _startTime = TimeOfDay(
-                                hour: hour,
-                                minute: minute,
-                              );
-                            }
-                            _isPremium =
-                                coupleData['is_premium'] as bool? ?? false;
-
-                            final dbCode =
-                                coupleData['pairing_code'] as String?;
-                            if (dbCode != null && dbCode.isNotEmpty) {
-                              _coupleCode = dbCode;
-                            }
-
-                            final partnerAId =
-                                coupleData['partner_a_id'] as String?;
-                            final partnerBId =
-                                coupleData['partner_b_id'] as String?;
-
-                            final oldPartnerId = _partnerId;
-                            _partnerId = (partnerAId == _userId)
-                                ? partnerBId
-                                : partnerAId;
-                            _isPaired = _coupleId != null && _partnerId != null;
-
-                            final statusStr =
-                                coupleData['status'] as String? ?? 'waiting';
-                            _status = RelationshipStatus.values.firstWhere(
-                              (e) => e.name == statusStr,
-                              orElse: () => RelationshipStatus.waiting,
-                            );
-
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setBool(PrefsKeys.isPaired, _isPaired);
-                            // Mirrored so a warm start knows the partner
-                            // before any stream resolves -- the E2EE key
-                            // exchange needs _partnerId to unwrap an incoming
-                            // wrapped key (see CoupleKeyExchange.start), and
-                            // only joinWithCode used to persist it, leaving
-                            // the creator's device with a null _partnerId on
-                            // every launch.
-                            if (_partnerId != null) {
-                              await prefs.setString(
-                                PrefsKeys.partnerId,
-                                _partnerId!,
-                              );
-                            } else {
-                              await prefs.remove(PrefsKeys.partnerId);
-                            }
-                            if (_storyTitle != null) {
-                              await prefs.setString(
-                                PrefsKeys.storyTitle,
-                                _storyTitle!,
-                              );
-                            }
-                            if (_startDate != null) {
-                              await prefs.setString(
-                                PrefsKeys.relationshipStartDate,
-                                _startDate!.toIso8601String(),
-                              );
-                            }
-                            if (_startTime != null) {
-                              await prefs.setInt(
-                                PrefsKeys.relationshipStartHour,
-                                _startTime!.hour,
-                              );
-                              await prefs.setInt(
-                                PrefsKeys.relationshipStartMinute,
-                                _startTime!.minute,
-                              );
-                            }
-                            await prefs.setBool(
-                              PrefsKeys.isPremium,
-                              _isPremium,
-                            );
-
-                            if (_startDate != null ||
-                                _isPaired ||
-                                statusStr == 'active') {
-                              _onboardingCompleted = true;
-                              await prefs.setBool(
-                                PrefsKeys.onboardingCompleted,
-                                true,
-                              );
-                            }
-
-                            // Safety net against a couple photo key that
-                            // outlived the relationship it belongs to (see
-                            // KeyManagementService.clearCoupleKey): if this
-                            // device is now in a *different* couple than the
-                            // stored key was issued for, drop it rather than
-                            // re-wrapping the previous relationship's key for
-                            // the new partner below.
-                            if (_userId != null && _coupleId != null) {
-                              await _keyManagementService
-                                  .purgeCoupleKeyIfForDifferentCouple(
-                                    _userId!,
-                                    _coupleId!,
-                                  );
-                            }
-
-                            if (oldPartnerId != _partnerId) {
-                              _initPartnerUserSync();
-                              if (_partnerId != null) {
-                                _keyExchange.wrapForPartnerIfHeld(_partnerId!);
-                                // A wrapped key may have arrived before this
-                                // partner identity was known; it is held
-                                // rather than dropped, and applied here.
-                                _keyExchange.drainPending();
-                              }
-                            }
-
-                            _initPresence();
-                            _isInitialized = true;
-                            notifyListeners();
-                          },
-                          onError: (error) {
-                            debugPrint('Supabase couples stream error: $error');
-                            _isInitialized = true;
-                            notifyListeners();
-                          },
-                        );
-                  } else {
-                    _isInitialized = true;
-                    notifyListeners();
-                  }
-                } else {
-                  _cancelActiveSubscriptions();
-                  _partnerActivity = null;
-                  _isInitialized = true;
-                  notifyListeners();
-                }
-              },
-              onError: (error) {
-                debugPrint('Supabase users stream error: $error');
-                _isInitialized = true;
-                notifyListeners();
-              },
-            );
-      },
+      _handleAuthChange,
       onError: (error) {
         debugPrint('Supabase AuthStateChange error: $error');
       },
     );
+  }
+
+  /// Tears the previous session down and, when someone is signed in, rebuilds
+  /// it: key exchange restarts and the `users` stream is resubscribed.
+  Future<void> _handleAuthChange(AuthState data) async {
+    final user = data.session?.user;
+
+    // Supabase emits `onAuthStateChange` for routine background events as
+    // well as real sign-in/sign-out: `tokenRefreshed` fires roughly hourly
+    // for the lifetime of the session, and `userUpdated` after any auth
+    // profile mutation. Neither changes *which* account is signed in, but
+    // the teardown below would drop every realtime channel (love chat,
+    // note-its, presence) and flip `_isInitialized` back to false, which
+    // makes `computeSessionStage()` report `SessionStage.loading` and
+    // bounces `appRedirect` to the loading route -- yanking the user out
+    // of whatever screen they were on mid-session. supabase_flutter
+    // re-authenticates the existing realtime socket itself on refresh, so
+    // for these events, while the same user stays signed in, there is
+    // nothing to rebuild.
+    final isSameUserBackgroundRefresh =
+        (data.event == AuthChangeEvent.tokenRefreshed ||
+            data.event == AuthChangeEvent.userUpdated) &&
+        user != null &&
+        user.id == _userId;
+    if (isSameUserBackgroundRefresh) {
+      return;
+    }
+
+    try {
+      await Supabase.instance.client.removeAllChannels();
+    } catch (e) {
+      debugPrint(
+        'CoupleSession: removeAllChannels() during auth change failed: $e',
+      );
+    }
+
+    _cancelActiveSubscriptions();
+    _userSub?.cancel();
+    _userSub = null;
+    _keyExchange.reset();
+
+    if (user == null) {
+      _userId = null;
+      _coupleId = null;
+      _partnerId = null;
+      _isPaired = false;
+      _status = RelationshipStatus.disconnected;
+      _yourActivity = null;
+      _partnerActivity = null;
+      _yourJoinDate = null;
+      _partnerJoinDate = null;
+      _presence.disconnect();
+      _isInitialized = true;
+      notifyListeners();
+      return;
+    }
+
+    _userId = user.id;
+    _isInitialized = false;
+    notifyListeners();
+
+    _keyExchange.start();
+
+    _subscribeToUserRow();
+  }
+
+  /// Subscribes to this user's own `users` row.
+  void _subscribeToUserRow() {
+    _userSub = Supabase.instance.client
+        .from('users')
+        .stream(primaryKey: ['id'])
+        .eq('id', _userId!)
+        .listen(
+          _handleUserRow,
+          onError: (error) {
+            debugPrint('Supabase users stream error: $error');
+            _isInitialized = true;
+            notifyListeners();
+          },
+        );
+  }
+
+  /// Mirrors the user's own row into session state -- couple id, display
+  /// name, avatar, onboarding flag, join date -- and (re)subscribes to the
+  /// couple whenever the couple id changes.
+  Future<void> _handleUserRow(List<Map<String, dynamic>> dataList) async {
+    if (dataList.isEmpty) {
+      try {
+        // Self-heal a missing public.users row. Deliberately an
+        // insert-if-absent, NOT an upsert: the stream can yield an
+        // empty list transiently (reconnect, RLS hiccup) even when
+        // the row exists, and an upsert would then degrade to
+        // `UPDATE ... SET couple_id = NULL` and silently wipe a
+        // live pairing. couple_id is omitted entirely so this can
+        // never clear an existing link.
+        await Supabase.instance.client.from('users').upsert({
+          'id': _userId!,
+          'display_name': _yourName,
+        }, ignoreDuplicates: true);
+      } catch (e) {
+        debugPrint(
+          'CoupleSession: self-heal insert of missing public.users row failed: $e',
+        );
+      }
+      _isInitialized = true;
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final userData = dataList.first;
+    final newCoupleId = userData['couple_id'] as String?;
+
+    final partnerDeletedNotice =
+        userData['partner_deleted_notice'] as bool? ?? false;
+    if (partnerDeletedNotice) {
+      _showPartnerDeletedNotice = true;
+      Supabase.instance.client
+          .from('users')
+          .update({'partner_deleted_notice': false})
+          .eq('id', _userId!)
+          .then((_) {});
+    }
+
+    bool coupleIdChanged = _coupleId != newCoupleId;
+    _coupleId = newCoupleId;
+    if (_coupleId != null) {
+      await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+    } else {
+      await prefs.remove(PrefsKeys.coupleId);
+    }
+
+    // Sync FCM Token to Supabase
+    NotificationService().syncTokenToSupabase();
+
+    _yourName =
+        userData['display_name'] as String? ??
+        prefs.getString(PrefsKeys.yourName);
+    _yourActivity = userData['current_activity'] as String?;
+    if (_yourName != null) {
+      await prefs.setString(PrefsKeys.yourName, _yourName!);
+    }
+    final userAvatar = userData['avatar_url'] as String?;
+    if (userAvatar != null && userAvatar.isNotEmpty) {
+      _yourAvatarPath = userAvatar;
+      await prefs.setString(PrefsKeys.yourAvatarPath, userAvatar);
+    }
+
+    final storedComp = prefs.getBool(PrefsKeys.onboardingCompleted);
+    if (storedComp != null) {
+      _onboardingCompleted = storedComp;
+    } else if (_coupleId != null &&
+        _yourName != null &&
+        _yourName!.isNotEmpty &&
+        (_startDate != null || _isPaired)) {
+      _onboardingCompleted = true;
+      await prefs.setBool(PrefsKeys.onboardingCompleted, true);
+    }
+
+    // Restore preserved onboarding details if unpaired
+    if (_coupleId == null) {
+      _isPaired = false;
+      _status = RelationshipStatus.disconnected;
+      await prefs.setBool(PrefsKeys.isPaired, false);
+      final dateStr = prefs.getString(PrefsKeys.relationshipStartDate);
+      if (dateStr != null) {
+        _startDate = DateTime.parse(dateStr);
+      }
+      final hour = prefs.getInt(PrefsKeys.relationshipStartHour);
+      final minute = prefs.getInt(PrefsKeys.relationshipStartMinute);
+      if (hour != null && minute != null) {
+        _startTime = TimeOfDay(hour: hour, minute: minute);
+      }
+      _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
+    }
+
+    // Load and cache your join date
+    final createdAtStr = userData['created_at'] as String?;
+    if (createdAtStr != null) {
+      _yourJoinDate = DateTime.parse(createdAtStr);
+    } else {
+      final authCreated = Supabase.instance.client.auth.currentUser?.createdAt;
+      if (authCreated != null) {
+        _yourJoinDate = DateTime.parse(authCreated);
+      }
+    }
+
+    if (_yourJoinDate != null) {
+      await prefs.setString(
+        PrefsKeys.yourJoinDate,
+        _yourJoinDate!.toIso8601String(),
+      );
+    }
+
+    if (_coupleId != null) {
+      if (coupleIdChanged || _coupleSub == null) {
+        _cancelActiveSubscriptions();
+        _partnerActivity = null;
+        _syncLocalDetailsToCloud();
+
+        _subscribeToCouple();
+      } else {
+        _isInitialized = true;
+        notifyListeners();
+      }
+    } else {
+      _cancelActiveSubscriptions();
+      _partnerActivity = null;
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  /// Subscribes to the couple row shared by both partners.
+  void _subscribeToCouple() {
+    _coupleSub = Supabase.instance.client
+        .from('couples')
+        .stream(primaryKey: ['id'])
+        .eq('id', _coupleId!)
+        .listen(
+          _handleCoupleRow,
+          onError: (error) {
+            debugPrint('Supabase couples stream error: $error');
+            _isInitialized = true;
+            notifyListeners();
+          },
+        );
+  }
+
+  /// Mirrors the couple row into session state and reacts to a partner
+  /// identity appearing or changing: partner sync, E2EE key wrap/drain, and
+  /// presence.
+  Future<void> _handleCoupleRow(
+    List<Map<String, dynamic>> coupleDataList,
+  ) async {
+    if (coupleDataList.isEmpty) return;
+    final coupleData = coupleDataList.first;
+
+    _storyTitle = coupleData['story_title'] as String?;
+    final startStr = coupleData['start_date'] as String?;
+    if (startStr != null) {
+      _startDate = DateTime.parse(startStr);
+    }
+    final hour = coupleData['start_time_hour'] as int?;
+    final minute = coupleData['start_time_minute'] as int?;
+    if (hour != null && minute != null) {
+      _startTime = TimeOfDay(hour: hour, minute: minute);
+    }
+    _isPremium = coupleData['is_premium'] as bool? ?? false;
+
+    final dbCode = coupleData['pairing_code'] as String?;
+    if (dbCode != null && dbCode.isNotEmpty) {
+      _coupleCode = dbCode;
+    }
+
+    final partnerAId = coupleData['partner_a_id'] as String?;
+    final partnerBId = coupleData['partner_b_id'] as String?;
+
+    final oldPartnerId = _partnerId;
+    _partnerId = (partnerAId == _userId) ? partnerBId : partnerAId;
+    _isPaired = _coupleId != null && _partnerId != null;
+
+    final statusStr = coupleData['status'] as String? ?? 'waiting';
+    _status = RelationshipStatus.values.firstWhere(
+      (e) => e.name == statusStr,
+      orElse: () => RelationshipStatus.waiting,
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(PrefsKeys.isPaired, _isPaired);
+    // Mirrored so a warm start knows the partner
+    // before any stream resolves -- the E2EE key
+    // exchange needs _partnerId to unwrap an incoming
+    // wrapped key (see CoupleKeyExchange.start), and
+    // only joinWithCode used to persist it, leaving
+    // the creator's device with a null _partnerId on
+    // every launch.
+    if (_partnerId != null) {
+      await prefs.setString(PrefsKeys.partnerId, _partnerId!);
+    } else {
+      await prefs.remove(PrefsKeys.partnerId);
+    }
+    if (_storyTitle != null) {
+      await prefs.setString(PrefsKeys.storyTitle, _storyTitle!);
+    }
+    if (_startDate != null) {
+      await prefs.setString(
+        PrefsKeys.relationshipStartDate,
+        _startDate!.toIso8601String(),
+      );
+    }
+    if (_startTime != null) {
+      await prefs.setInt(PrefsKeys.relationshipStartHour, _startTime!.hour);
+      await prefs.setInt(PrefsKeys.relationshipStartMinute, _startTime!.minute);
+    }
+    await prefs.setBool(PrefsKeys.isPremium, _isPremium);
+
+    if (_startDate != null || _isPaired || statusStr == 'active') {
+      _onboardingCompleted = true;
+      await prefs.setBool(PrefsKeys.onboardingCompleted, true);
+    }
+
+    // Safety net against a couple photo key that
+    // outlived the relationship it belongs to (see
+    // KeyManagementService.clearCoupleKey): if this
+    // device is now in a *different* couple than the
+    // stored key was issued for, drop it rather than
+    // re-wrapping the previous relationship's key for
+    // the new partner below.
+    if (_userId != null && _coupleId != null) {
+      await _keyManagementService.purgeCoupleKeyIfForDifferentCouple(
+        _userId!,
+        _coupleId!,
+      );
+    }
+
+    if (oldPartnerId != _partnerId) {
+      _initPartnerUserSync();
+      if (_partnerId != null) {
+        _keyExchange.wrapForPartnerIfHeld(_partnerId!);
+        // A wrapped key may have arrived before this
+        // partner identity was known; it is held
+        // rather than dropped, and applied here.
+        _keyExchange.drainPending();
+      }
+    }
+
+    _initPresence();
+    _isInitialized = true;
+    notifyListeners();
   }
 
   void _initPartnerUserSync() {
