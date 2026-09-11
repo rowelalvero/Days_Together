@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:days_together/core/errors/app_failure.dart';
 
 import 'package:days_together/features/settings/notification_preferences_state.dart';
 import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
@@ -20,17 +24,28 @@ import 'package:days_together/core/session/couple_session.dart';
 /// `RelationshipLifecycleProvider`'s own smaller `updateSession` contract
 /// directly.
 ///
-/// **Preserved, non-obvious gating:** the original base class's
-/// `updateSession` only calls `syncInitialData()` when *both*
-/// `coupleId` and `userId` are non-null, even though this provider's own
-/// logic only ever reads `userId`. This means a signed-in-but-unpaired user
-/// never has their notification preferences loaded until pairing completes
-/// -- almost certainly an accident of inheriting the base class unchanged
-/// rather than a deliberate design choice, but preserved exactly rather
-/// than "fixed," since Phase 6a's job is a faithful port.
+/// **Gating, since corrected:** the original base class's `updateSession`
+/// only ran `syncInitialData()` when *both* `coupleId` and `userId` were
+/// non-null, even though this controller's logic only ever reads `userId`
+/// -- `user_notification_preferences` is a per-user table. A
+/// signed-in-but-unpaired user therefore never loaded their preferences at
+/// all, and the settings screen sat on its spinner forever. Phase 6a
+/// preserved that verbatim because its job was a faithful port; it is now
+/// gated on `userId` alone. `coupleId` is still tracked, purely so that
+/// pairing counts as a credentials change and triggers a refresh.
+///
+/// **Local cache:** preferences are mirrored into `SharedPreferences` under
+/// [_storageKey], so reopening the screen paints the last-known values
+/// immediately instead of showing a spinner while a network round-trip
+/// completes -- this controller is `autoDispose`, so without the mirror
+/// every visit started from an empty state. The cache key is a controller
+/// -local constant rather than a `PrefsKeys` entry, matching how every
+/// other domain controller stores its own cache (`PrefsKeys` holds the
+/// session/license/workspace keys, not per-feature caches).
 class NotificationPreferencesController
     extends Notifier<NotificationPreferencesState> {
   static const _syncTimeout = Duration(seconds: 15);
+  static const String _storageKey = 'notification_preferences';
 
   String? _coupleId;
   String? _userId;
@@ -40,10 +55,47 @@ class NotificationPreferencesController
     final session = ref.read(coupleSessionProvider);
     _coupleId = session.coupleId;
     _userId = session.userId;
-    if (_coupleId != null && _userId != null) {
+    // Paint the cached values first, then refresh from Supabase.
+    _loadFromCache();
+    if (_userId != null) {
       Future.microtask(_runSyncInitialData);
     }
     return const NotificationPreferencesState();
+  }
+
+  /// Seeds state from the last-known preferences so the settings screen has
+  /// something to render on the first frame. Deliberately does not set
+  /// `isLoading`: the cached values are real, and the refresh behind them is
+  /// not something the user needs to wait on.
+  Future<void> _loadFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_storageKey);
+      if (jsonString == null || jsonString.isEmpty) return;
+      if (!ref.mounted) return;
+      // A completed network load wins over the cache if it got there first.
+      if (state.preferences != null) return;
+      state = state.copyWith(
+        preferences: NotificationPreferences.fromJson(
+          jsonDecode(jsonString) as Map<String, dynamic>,
+        ),
+      );
+    } catch (e, st) {
+      debugPrint(
+        'NotificationPreferencesController._loadFromCache failed: $e\n$st',
+      );
+    }
+  }
+
+  Future<void> _persistLocalOnly(NotificationPreferences preferences) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_storageKey, jsonEncode(preferences.toJson()));
+    } catch (e, st) {
+      debugPrint(
+        'NotificationPreferencesController._persistLocalOnly failed: $e\n$st',
+      );
+    }
   }
 
   void _runSyncInitialData() {
@@ -63,7 +115,7 @@ class NotificationPreferencesController
     _coupleId = session.coupleId;
     _userId = session.userId;
 
-    if (_coupleId != null && _userId != null) {
+    if (_userId != null) {
       try {
         await syncInitialData().timeout(_syncTimeout);
       } on TimeoutException {
@@ -77,6 +129,14 @@ class NotificationPreferencesController
   }
 
   Future<void> purgeCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (e, st) {
+      debugPrint(
+        'NotificationPreferencesController.purgeCache failed: $e\n$st',
+      );
+    }
     if (!ref.mounted) return;
     state = const NotificationPreferencesState();
   }
@@ -122,6 +182,7 @@ class NotificationPreferencesController
 
       if (!ref.mounted) return;
       state = state.copyWith(preferences: preferences, isLoading: false);
+      await _persistLocalOnly(preferences);
     } catch (e) {
       debugPrint(
         'NotificationPreferencesController: Error loading preferences: $e',
@@ -144,14 +205,28 @@ class NotificationPreferencesController
       await client.from('user_notification_preferences').upsert(updatedJson);
 
       if (!ref.mounted) return;
-      state = state.copyWith(
-        preferences: NotificationPreferences.fromJson(updatedJson),
-      );
+      final updated = NotificationPreferences.fromJson(updatedJson);
+      state = state.copyWith(preferences: updated, failure: null);
+      await _persistLocalOnly(updated);
     } catch (e) {
       debugPrint(
         'NotificationPreferencesController: Error updating preference $key: $e',
       );
+      if (!ref.mounted) return;
+      // The write ran before the local state update, so `state.preferences`
+      // still holds the pre-toggle values and the switch stays where it was.
+      // Publishing the failure is what lets the screen say so, instead of
+      // the tap looking like it simply did nothing.
+      state = state.copyWith(failure: mapExceptionToFailure(e));
     }
+  }
+
+  /// Drops the last write failure. Called by the UI once it has shown it, so
+  /// the same error is not surfaced twice.
+  void clearFailure() {
+    if (!ref.mounted) return;
+    if (state.failure == null) return;
+    state = state.copyWith(failure: null);
   }
 
   Future<void> togglePreference(String key) async {

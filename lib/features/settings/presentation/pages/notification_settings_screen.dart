@@ -41,6 +41,23 @@ class NotificationSettingsScreen extends ConsumerWidget {
     );
     final prefs = state.preferences;
 
+    // A failed toggle leaves the switch where it was -- the Supabase write
+    // runs before the local state update -- so without this the tap looked
+    // like it simply did nothing. The controller publishes the failure and
+    // this reports it, then clears it so the same error cannot reappear on
+    // an unrelated rebuild.
+    ref.listen(notificationPreferencesControllerProvider, (previous, next) {
+      final failure = next.failure;
+      if (failure == null || previous?.failure == failure) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Couldn't save that setting. ${failure.message}"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      notifier.clearFailure();
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -62,7 +79,10 @@ class NotificationSettingsScreen extends ConsumerWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(gradient: themeProvider.currentGradient),
-        child: prefs == null || state.isLoading
+        // Only spin when there is genuinely nothing to show. With a cached
+        // copy in hand the refresh happens behind the existing values rather
+        // than behind a spinner.
+        child: prefs == null
             ? const Center(child: CircularProgressIndicator())
             : SafeArea(
                 child: SingleChildScrollView(
