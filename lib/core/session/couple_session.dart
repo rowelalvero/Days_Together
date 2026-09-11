@@ -330,6 +330,7 @@ class CoupleSession extends ChangeNotifier {
     _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
     _partnerAvatarPath = prefs.getString(PrefsKeys.partnerAvatarPath);
     _coupleCode = prefs.getString(PrefsKeys.coupleCode);
+    _userId = prefs.getString(PrefsKeys.userId);
     _coupleId = prefs.getString(PrefsKeys.coupleId);
     // Restored, not merely written: the E2EE key-exchange stream is scoped to
     // the user and can emit a wrapped key before the couples stream resolves
@@ -466,6 +467,15 @@ class CoupleSession extends ChangeNotifier {
     _keyExchange.reset();
 
     if (user == null) {
+      // logout() wipes every pref, but this branch also runs for a
+      // server-side revocation or an expired refresh token, which clear
+      // nothing -- so the mirror has to be dropped explicitly here.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(PrefsKeys.userId);
+      } catch (e) {
+        debugPrint('CoupleSession: clearing the persisted user id failed: $e');
+      }
       _userId = null;
       _coupleId = null;
       _partnerId = null;
@@ -484,6 +494,13 @@ class CoupleSession extends ChangeNotifier {
     _userId = user.id;
     _isInitialized = false;
     notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(PrefsKeys.userId, user.id);
+    } catch (e) {
+      debugPrint('CoupleSession: persisting the user id failed: $e');
+    }
 
     _keyExchange.start();
 

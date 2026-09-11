@@ -5,9 +5,9 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 void main() {
   group('PrefsKeys', () {
     test(
-      'contains exactly 42 entries (Phase 0 exit criterion; was 43 before the Secret Vault removal dropped vaultPinFallback)',
+      'contains exactly 43 entries (Phase 0 exit criterion; 42 after the Secret Vault removal dropped vaultPinFallback, then +1 for the mirrored userId)',
       () {
-        expect(PrefsKeys.all.length, 42);
+        expect(PrefsKeys.all.length, 43);
       },
     );
 

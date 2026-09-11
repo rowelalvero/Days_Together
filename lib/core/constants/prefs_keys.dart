@@ -29,6 +29,17 @@ class PrefsKeys {
   PrefsKeys._();
 
   // ---- Session / pairing identity (owned by CoupleSession, Phase 1) ----
+  /// The signed-in Supabase user id, mirrored so a cold start knows who
+  /// is signed in before the async auth listener resolves -- the same
+  /// reason [coupleId] and [partnerId] are mirrored. Without it,
+  /// `computeSessionStage` saw a null userId on a warm launch and could
+  /// route a returning user to the welcome screen until auth caught up.
+  ///
+  /// Cleared explicitly on the auth listener's signed-out branch:
+  /// `logout()` wipes all prefs, but a server-side revocation or an
+  /// expired refresh token does not, and a stale id here would leave the
+  /// app believing it is signed in.
+  static const String userId = 'user_id';
   static const String coupleId = 'couple_id';
   static const String partnerId = 'partner_id';
   static const String isPaired = 'is_paired';
@@ -89,6 +100,7 @@ class PrefsKeys {
   /// asserting `PrefsKeys.all.length == 42`). Was 43 before the Secret
   /// Vault's `vaultPinFallback` was removed with that feature.
   static const List<String> all = [
+    userId,
     coupleId,
     partnerId,
     isPaired,

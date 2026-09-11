@@ -248,6 +248,55 @@ void main() {
       },
     );
 
+    test('hydrates userId, so identity is known before auth resolves', () async {
+      // userId used to be set only by the async Supabase auth listener, while
+      // coupleId and partnerId were both mirrored to prefs. That left a window
+      // on every cold start where the session was initialized but userId was
+      // still null -- computeSessionStage reads that as `unauthenticated`,
+      // which could bounce a returning user to the welcome screen until auth
+      // caught up, and left anything keyed on the user id with nothing to key
+      // on.
+      SharedPreferences.setMockInitialValues({
+        'user_id': 'u1',
+        'couple_id': 'c1',
+        'is_paired': true,
+        'onboarding_completed': true,
+      });
+
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+
+      expect(session.userId, 'u1');
+      expect(
+        computeSessionStage(
+          isInitialized: session.isInitialized,
+          userId: session.userId,
+          coupleId: session.coupleId,
+          isCreator: session.isCreator,
+          isPaired: session.isPaired,
+          onboardingCompleted: session.onboardingCompleted,
+          startDate: session.startDate,
+        ),
+        isNot(SessionStage.unauthenticated),
+        reason:
+            'a hydrated, onboarded session must not look signed out while '
+            'the auth listener is still in flight',
+      );
+    });
+
+    test('a session with no persisted userId still reports none', () async {
+      SharedPreferences.setMockInitialValues({'couple_id': 'c1'});
+
+      final session = CoupleSession();
+      await Future.delayed(Duration.zero);
+
+      expect(
+        session.userId,
+        isNull,
+        reason: 'hydration must not invent an identity that was never stored',
+      );
+    });
+
     test(
       'isInitialized becomes true once local hydration resolves offline',
       () async {
