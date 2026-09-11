@@ -11,14 +11,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/settings/notification_preferences_controller.dart';
+import 'package:days_together/features/settings/data/notification_preferences_cache.dart';
+import 'package:days_together/features/settings/notification_preferences_state.dart';
 import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
 import 'package:days_together/core/errors/app_failure.dart';
 import 'package:days_together/core/session/couple_session.dart';
 
-/// The controller's own cache key. Duplicated here deliberately: the
-/// constant is private, and a test that reached into it could not catch the
-/// key being renamed out from under a shipped install.
-const String _cacheKey = 'notification_preferences';
+/// Seeds the controller with fixed state, so tests can reach code paths
+/// that need non-null preferences. The real build() cannot get there in a
+/// unit test: CoupleSession never produces a userId without a live Supabase
+/// client, so both the network load and the per-user cache load are
+/// unreachable. Same subclass-fake technique as
+/// daily_mood_bento_card_test.dart.
+class _SeededController extends NotificationPreferencesController {
+  _SeededController(this._seed);
+  final NotificationPreferencesState _seed;
+  @override
+  NotificationPreferencesState build() => _seed;
+}
+
+ProviderContainer _seededContainer(NotificationPreferences preferences) {
+  final container = ProviderContainer(
+    overrides: [
+      coupleSessionProvider.overrideWithValue(CoupleSession()),
+      notificationPreferencesControllerProvider.overrideWith(
+        () => _SeededController(
+          NotificationPreferencesState(preferences: preferences),
+        ),
+      ),
+    ],
+  );
+  container.listen(notificationPreferencesControllerProvider, (prev, next) {});
+  return container;
+}
 
 /// notificationPreferencesControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why
@@ -101,58 +126,19 @@ void main() {
       },
     );
 
-    test('build() seeds preferences from the local cache', () async {
-      // The controller is autoDispose, so without this mirror every visit to
-      // the settings screen started from an empty state and sat on a spinner
-      // until a network round-trip finished -- and showed nothing at all
-      // offline.
-      SharedPreferences.setMockInitialValues({
-        _cacheKey: jsonEncode(
-          NotificationPreferences(
-            userId: 'u1',
-            timezone: 'UTC',
-          ).copyWith(chatEnabled: false, muteAll: true).toJson(),
-        ),
-      });
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-
-      final state = container.read(notificationPreferencesControllerProvider);
-      expect(state.preferences, isNotNull);
-      expect(state.preferences!.chatEnabled, isFalse);
-      expect(state.preferences!.muteAll, isTrue);
-      expect(
-        state.isLoading,
-        isFalse,
-        reason:
-            'cached values are real -- the refresh behind them must not '
-            'put the screen back behind a spinner',
-      );
-    });
-
-    test('a malformed cache entry is ignored rather than thrown', () async {
-      SharedPreferences.setMockInitialValues({_cacheKey: 'not json'});
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-
-      expect(
-        container.read(notificationPreferencesControllerProvider).preferences,
-        isNull,
-      );
-    });
+    // The cache round-trip, its per-user scoping, malformed-entry
+    // tolerance and clearAll now live in
+    // notification_preferences_cache_test.dart. They cannot be driven from
+    // here any more: the cache is keyed on userId, and a unit-test
+    // CoupleSession has none.
 
     test('a failed write publishes a failure the UI can surface', () async {
-      // Seeded from cache so preferences are non-null and updatePreference
-      // gets past its early return; the Supabase write then throws, because
-      // Supabase.initialize() was never called. That is the offline path.
-      SharedPreferences.setMockInitialValues({
-        _cacheKey: jsonEncode(
-          NotificationPreferences(userId: 'u1', timezone: 'UTC').toJson(),
-        ),
-      });
-      final container = _unpairedContainer();
+      // Seeded so updatePreference gets past its early return; the Supabase
+      // write then throws, because Supabase.initialize() was never called.
+      // That is the offline path.
+      final container = _seededContainer(
+        NotificationPreferences(userId: 'u1', timezone: 'UTC'),
+      );
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
       final notifier = container.read(
@@ -184,9 +170,9 @@ void main() {
       );
     });
 
-    test('purgeCache clears the stored cache entry too', () async {
+    test('purgeCache clears cached entries for every user', () async {
       SharedPreferences.setMockInitialValues({
-        _cacheKey: jsonEncode(
+        NotificationPreferencesCache.keyFor('u1'): jsonEncode(
           NotificationPreferences(userId: 'u1', timezone: 'UTC').toJson(),
         ),
       });
@@ -199,10 +185,9 @@ void main() {
 
       await notifier.purgeCache();
 
-      final prefs = await SharedPreferences.getInstance();
       expect(
-        prefs.containsKey(_cacheKey),
-        isFalse,
+        await const NotificationPreferencesCache().load('u1'),
+        isNull,
         reason: 'preferences must not survive on disk after sign-out',
       );
     });

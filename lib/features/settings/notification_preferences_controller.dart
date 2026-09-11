@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/errors/app_failure.dart';
+import 'package:days_together/features/settings/data/notification_preferences_cache.dart';
 
 import 'package:days_together/features/settings/notification_preferences_state.dart';
 import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
@@ -34,18 +33,18 @@ import 'package:days_together/core/session/couple_session.dart';
 /// gated on `userId` alone. `coupleId` is still tracked, purely so that
 /// pairing counts as a credentials change and triggers a refresh.
 ///
-/// **Local cache:** preferences are mirrored into `SharedPreferences` under
-/// [_storageKey], so reopening the screen paints the last-known values
-/// immediately instead of showing a spinner while a network round-trip
-/// completes -- this controller is `autoDispose`, so without the mirror
-/// every visit started from an empty state. The cache key is a controller
-/// -local constant rather than a `PrefsKeys` entry, matching how every
-/// other domain controller stores its own cache (`PrefsKeys` holds the
-/// session/license/workspace keys, not per-feature caches).
+/// **Local cache:** preferences are mirrored on device by
+/// [NotificationPreferencesCache], so reopening the screen paints the
+/// last-known values immediately instead of showing a spinner while a
+/// network round-trip completes -- this controller is `autoDispose`, so
+/// without the mirror every visit started from an empty state. The cache is
+/// keyed per user; see that class for why, and for why it is a separate
+/// object rather than inline methods here.
 class NotificationPreferencesController
     extends Notifier<NotificationPreferencesState> {
   static const _syncTimeout = Duration(seconds: 15);
-  static const String _storageKey = 'notification_preferences';
+  static const NotificationPreferencesCache _cache =
+      NotificationPreferencesCache();
 
   String? _coupleId;
   String? _userId;
@@ -63,39 +62,18 @@ class NotificationPreferencesController
     return const NotificationPreferencesState();
   }
 
-  /// Seeds state from the last-known preferences so the settings screen has
-  /// something to render on the first frame. Deliberately does not set
-  /// `isLoading`: the cached values are real, and the refresh behind them is
-  /// not something the user needs to wait on.
+  /// Seeds state from this user's last-known preferences so the settings
+  /// screen has something to render on the first frame. Deliberately does
+  /// not set `isLoading`: the cached values are real, and the refresh behind
+  /// them is not something the user needs to wait on.
   Future<void> _loadFromCache() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = prefs.getString(_storageKey);
-      if (jsonString == null || jsonString.isEmpty) return;
-      if (!ref.mounted) return;
-      // A completed network load wins over the cache if it got there first.
-      if (state.preferences != null) return;
-      state = state.copyWith(
-        preferences: NotificationPreferences.fromJson(
-          jsonDecode(jsonString) as Map<String, dynamic>,
-        ),
-      );
-    } catch (e, st) {
-      debugPrint(
-        'NotificationPreferencesController._loadFromCache failed: $e\n$st',
-      );
-    }
-  }
-
-  Future<void> _persistLocalOnly(NotificationPreferences preferences) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_storageKey, jsonEncode(preferences.toJson()));
-    } catch (e, st) {
-      debugPrint(
-        'NotificationPreferencesController._persistLocalOnly failed: $e\n$st',
-      );
-    }
+    final userId = _userId;
+    if (userId == null) return;
+    final cached = await _cache.load(userId);
+    if (cached == null || !ref.mounted) return;
+    // A completed network load wins over the cache if it got there first.
+    if (state.preferences != null) return;
+    state = state.copyWith(preferences: cached);
   }
 
   void _runSyncInitialData() {
@@ -129,14 +107,7 @@ class NotificationPreferencesController
   }
 
   Future<void> purgeCache() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
-    } catch (e, st) {
-      debugPrint(
-        'NotificationPreferencesController.purgeCache failed: $e\n$st',
-      );
-    }
+    await _cache.clearAll();
     if (!ref.mounted) return;
     state = const NotificationPreferencesState();
   }
@@ -182,7 +153,7 @@ class NotificationPreferencesController
 
       if (!ref.mounted) return;
       state = state.copyWith(preferences: preferences, isLoading: false);
-      await _persistLocalOnly(preferences);
+      await _cache.save(userId, preferences);
     } catch (e) {
       debugPrint(
         'NotificationPreferencesController: Error loading preferences: $e',
@@ -207,7 +178,8 @@ class NotificationPreferencesController
       if (!ref.mounted) return;
       final updated = NotificationPreferences.fromJson(updatedJson);
       state = state.copyWith(preferences: updated, failure: null);
-      await _persistLocalOnly(updated);
+      final userId = _userId;
+      if (userId != null) await _cache.save(userId, updated);
     } catch (e) {
       debugPrint(
         'NotificationPreferencesController: Error updating preference $key: $e',
