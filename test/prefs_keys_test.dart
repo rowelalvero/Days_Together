@@ -35,7 +35,7 @@ void main() {
       // and vault_provider.dart outright once their Riverpod controllers
       // fully superseded them, so only the two controller files remain here.
       final sources = [
-        'lib/providers/couple_session.dart',
+        'lib/core/session/couple_session.dart',
         'lib/features/relationship/license_controller.dart',
         'lib/features/timeline/timeline_controller.dart',
         'lib/features/vault/vault_controller.dart',

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
 
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
-import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/core/permissions/permission_service.dart';
 import 'package:days_together/shared/cached_avatar.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';

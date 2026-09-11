@@ -35,9 +35,13 @@ class LicenseQrCodec {
   }) {
     final dateFormat = DateFormat('yyyy-MM-dd');
 
-    final startDateStr = startDate != null ? dateFormat.format(startDate) : 'Not set';
+    final startDateStr = startDate != null
+        ? dateFormat.format(startDate)
+        : 'Not set';
 
-    final birthdateStr = holderBirthdate != null ? dateFormat.format(holderBirthdate) : 'Not set';
+    final birthdateStr = holderBirthdate != null
+        ? dateFormat.format(holderBirthdate)
+        : 'Not set';
 
     final issuedDateStr = holderDateIssued != null
         ? dateFormat.format(holderDateIssued)

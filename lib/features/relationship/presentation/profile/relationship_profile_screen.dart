@@ -11,7 +11,7 @@ import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/profile_state.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
-import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/relationship/presentation/profile/delete_account_confirmation_dialog.dart';

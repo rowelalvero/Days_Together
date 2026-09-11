@@ -8,7 +8,7 @@ import 'package:days_together/features/scrapbook/domain/scrapbook_share_use_case
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/shared/models/canvas_document.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// Forces the note-creation step to fail, to exercise
 /// ScrapbookShareNoteFailed without needing a real Supabase failure.

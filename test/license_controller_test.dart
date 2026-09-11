@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 void main() {
   group('LicenseController', () {

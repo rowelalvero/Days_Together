@@ -2,7 +2,7 @@ import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/relationship/workspace_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// Owns a Riverpod-native read+write surface over `CoupleSession`'s 7
 /// workspace fields (pairing code, story title, start date/time, premium

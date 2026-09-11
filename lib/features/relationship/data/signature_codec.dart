@@ -17,7 +17,9 @@ class SignatureCodec {
     return strokes
         .map((stroke) {
           return stroke
-              .map((p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}')
+              .map(
+                (p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}',
+              )
               .join(';');
         })
         .join('|');

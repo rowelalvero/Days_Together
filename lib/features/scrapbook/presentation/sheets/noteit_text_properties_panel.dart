@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/utils/canvas_mapping.dart';
+import 'package:days_together/features/scrapbook/domain/canvas_mapping.dart';
 
 /// Font resolution helper for scrapbook text elements with safety fallback.
 TextStyle getNoteitTextStyle({

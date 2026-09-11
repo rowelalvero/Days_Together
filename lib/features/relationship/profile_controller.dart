@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/relationship/profile_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// Owns a Riverpod-native read+write surface over `CoupleSession`'s 6
 /// profile fields (name, avatar path, join date -- both "your" and

@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
 import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 

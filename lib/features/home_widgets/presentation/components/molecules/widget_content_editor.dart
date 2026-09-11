@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/features/home_widgets/domain/home_widget_models.dart';
+import 'package:days_together/core/platform/home_widget/home_widget_models.dart';
 
 class WidgetContentEditor extends StatelessWidget {
   final HomeWidgetType widgetType;

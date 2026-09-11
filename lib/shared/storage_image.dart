@@ -4,10 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-import 'package:days_together/services/auth_service.dart';
-import 'package:days_together/services/key_management_service.dart';
-import 'package:days_together/services/photo_encryption_service.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/network/auth_service.dart';
+import 'package:days_together/core/security/key_management_service.dart';
+import 'package:days_together/core/security/photo_encryption_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 
 /// A dedicated disk cache, separate from `cached_network_image`'s
 /// `DefaultCacheManager`, for objects fetched via [StorageImageBuilder].

@@ -7,7 +7,7 @@ import 'package:days_together/features/relationship/presentation/license/cards/l
 import 'package:days_together/features/relationship/presentation/license/cards/license_front.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 
 /// Renders either partner's license face (front or back) for the export
 /// studio's preview -- resolves `LicenseDetails`' per-partner fields down

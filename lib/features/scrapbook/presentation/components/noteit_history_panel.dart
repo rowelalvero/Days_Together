@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
-import 'package:days_together/services/noteit_sync_manager.dart';
+import 'package:days_together/features/scrapbook/data/noteit_sync_manager.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/shared/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';

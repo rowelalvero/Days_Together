@@ -6,7 +6,7 @@ import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/flippable_license_card.dart';
 import 'package:days_together/features/relationship/profile_state.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
-import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 
 /// Renders either partner's [FlippableLicenseCard], resolving
 /// `LicenseDetails`' per-partner fields down to the flattened,

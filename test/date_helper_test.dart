@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 
 /// Brute-force reference matching the exact semantics of the O(days) loop
 /// that used to live in relationship_duration_screen.dart's

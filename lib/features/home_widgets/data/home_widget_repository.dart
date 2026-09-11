@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/features/home_widgets/domain/home_widget_constants.dart';
-import 'package:days_together/features/home_widgets/domain/home_widget_models.dart';
+import 'package:days_together/core/platform/home_widget/home_widget_constants.dart';
+import 'package:days_together/core/platform/home_widget/home_widget_models.dart';
 
 final homeWidgetRepositoryProvider = Provider<HomeWidgetRepository>((ref) {
   throw UnimplementedError('homeWidgetRepositoryProvider must be initialized with SharedPreferences');

@@ -1,5 +1,5 @@
 import 'package:days_together/core/errors/app_failure.dart';
-import 'package:days_together/core/scrapbook_ref.dart';
+import 'package:days_together/core/models/scrapbook_ref.dart';
 import 'package:days_together/features/scrapbook/data/noteit_draft_store.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
@@ -52,7 +52,11 @@ class ScrapbookShareChatMirrorFailed extends ScrapbookShareResult {
 /// -- it comes back as [ScrapbookShareChatMirrorFailed] so the UI can
 /// choose to tell the user.
 class ScrapbookShareUseCase {
-  const ScrapbookShareUseCase(this._noteitProvider, this._chatProvider, this._draftStore);
+  const ScrapbookShareUseCase(
+    this._noteitProvider,
+    this._chatProvider,
+    this._draftStore,
+  );
 
   final NoteitController _noteitProvider;
   final LoveChatController _chatProvider;

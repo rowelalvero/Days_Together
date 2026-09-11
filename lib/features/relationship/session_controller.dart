@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/relationship/session_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// Owns a Riverpod-native read+write surface over `CoupleSession`'s
 /// identity/session-lifecycle fields (`isInitialized`, `userId`, `coupleId`,

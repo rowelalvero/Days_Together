@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -211,7 +211,7 @@ void main() {
       // guard, referenced by license_repository.dart's doc comment as the
       // reason `creator_id` is deliberately left unmodeled: no Dart call
       // site reads it, and it must stay that way (server-only column).
-      final content = File('lib/providers/couple_session.dart').readAsStringSync();
+      final content = File('lib/core/session/couple_session.dart').readAsStringSync();
       expect(content.contains("['creator_id']"), false);
       expect(content.contains("'creator_id'"), false);
       expect(content.contains('"creator_id"'), false);

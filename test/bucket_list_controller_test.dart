@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// bucketListControllerProvider is `autoDispose`: a bare `container.read()`
 /// does not keep it alive, so without an active listener Riverpod tears it

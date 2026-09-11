@@ -14,7 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// noteitControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why

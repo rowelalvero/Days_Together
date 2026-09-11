@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// loveChatControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:days_together/core/constants/prefs_keys.dart';
-import 'package:days_together/data/user_repository.dart';
+import 'package:days_together/features/relationship/data/repositories/user_repository.dart';
 import 'package:days_together/features/relationship/license_details.dart';
-import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/activity/recent_activity_service.dart';
 
 /// Sentinel distinguishing "field not provided" from "explicitly cleared".
 /// Mirrors [LicenseDetails.copyWith]'s sentinel and the pattern

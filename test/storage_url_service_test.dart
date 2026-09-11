@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 
 /// These cover the pure classification/parsing surface of [StorageUrlService],
 /// which is where a subtle bug would silently corrupt every stored image ref.

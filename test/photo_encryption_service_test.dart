@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/services/photo_encryption_service.dart';
+import 'package:days_together/core/security/photo_encryption_service.dart';
 
 void main() {
   final service = PhotoEncryptionService.instance;

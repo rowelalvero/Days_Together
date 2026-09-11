@@ -12,14 +12,14 @@ import 'package:uuid/uuid.dart';
 
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/shared/models/vault_item_model.dart';
-import 'package:days_together/services/encrypted_storage_service.dart';
-import 'package:days_together/services/notification_service.dart';
-import 'package:days_together/services/permission_service.dart';
-import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/encrypted_storage_service.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
+import 'package:days_together/core/permissions/permission_service.dart';
+import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 
 /// Riverpod port of `VaultProvider` (Phase 6a of the architecture
 /// migration). Faithful behavior port: `addPhoto`/`addLetter`/`deleteItem`

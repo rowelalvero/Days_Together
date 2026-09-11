@@ -3,7 +3,7 @@ import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/presentation/pages/memory_detail_screen.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';

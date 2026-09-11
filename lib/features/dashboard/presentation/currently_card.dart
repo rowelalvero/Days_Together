@@ -11,7 +11,7 @@ import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/features/currently/currently_controller.dart';
 import 'package:days_together/features/currently/currently_state.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 
 class CurrentlyCard extends ConsumerStatefulWidget {

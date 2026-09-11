@@ -24,7 +24,7 @@
 // can't observe the dedup this suite needs to verify.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
+import 'package:days_together/core/network/realtime_subscription_manager.dart';
 
 void main() {
   group('RealtimeSubscriptionManager', () {

@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// giftReminderControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why

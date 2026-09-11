@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/features/settings/notification_preferences_state.dart';
 import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// Riverpod port of `NotificationPreferencesProvider` (Phase 6a of the
 /// architecture migration, the twelfth and last of the 12 domain

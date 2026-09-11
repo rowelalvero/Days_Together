@@ -6,7 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/vault/vault_controller.dart';
-import 'package:days_together/services/ai_service.dart';
+import 'package:days_together/features/love_studio/data/ai_service.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
 class AILoveLetterScreen extends ConsumerStatefulWidget {

@@ -282,11 +282,16 @@ void main() {
     });
 
     test('notification_service.dart imports no screen file', () {
-      final content = File('lib/services/notification_service.dart').readAsStringSync();
-      final violations = RegExp(r"import 'package:days_together/screens/[^']+';")
-          .allMatches(content)
-          .map((m) => m.group(0)!)
-          .toList();
+      // lib/screens/ was dissolved by the feature-first migration: screens now
+      // live under lib/features/<f>/presentation/ and the shell under
+      // lib/app/shell/. The rule is unchanged -- notification_service must
+      // resolve a payload to a route, never reach into UI -- so it now matches
+      // those two locations instead of the retired path.
+      final content =
+          File('lib/core/notifications/notification_service.dart').readAsStringSync();
+      final violations = RegExp(
+        r"import 'package:days_together/(?:features/[a-z_]+/presentation|app/shell)/[^']+';",
+      ).allMatches(content).map((m) => m.group(0)!).toList();
       expect(
         violations,
         isEmpty,

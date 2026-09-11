@@ -5,7 +5,7 @@ import 'package:days_together/features/relationship/data/signature_codec.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/card_shell.dart';
 import 'package:days_together/features/relationship/presentation/license/license_widgets.dart';
 import 'package:days_together/features/relationship/presentation/license/painters/signature_painter.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 

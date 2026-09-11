@@ -10,15 +10,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
-import 'package:days_together/services/encrypted_storage_service.dart';
-import 'package:days_together/services/local_persistence_service.dart';
-import 'package:days_together/services/notification_service.dart';
-import 'package:days_together/services/permission_service.dart';
-import 'package:days_together/services/recent_activity_service.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/encrypted_storage_service.dart';
+import 'package:days_together/core/storage/local_persistence_service.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
+import 'package:days_together/core/permissions/permission_service.dart';
+import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart' show evictStorageImageCache;
 
 /// Riverpod port of `TimelineProvider` (Phase 6a of the architecture

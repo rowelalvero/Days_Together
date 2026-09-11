@@ -8,7 +8,7 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
-import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/core/permissions/permission_service.dart';
 
 class AvatarCreationScreen extends ConsumerStatefulWidget {
   const AvatarCreationScreen({super.key});

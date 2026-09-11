@@ -14,7 +14,7 @@ import 'package:days_together/features/relationship/presentation/duration/compon
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
-import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
 /// Relationship Duration & Milestones Screen.

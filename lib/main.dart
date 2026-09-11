@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
@@ -27,8 +27,8 @@ import 'package:days_together/features/home_widgets/data/home_widget_repository.
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/app/config/app_config.dart';
-import 'package:days_together/services/notification_service.dart';
-import 'package:days_together/services/home_widget_service.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
+import 'package:days_together/core/platform/home_widget/home_widget_service.dart';
 
 import 'package:home_widget/home_widget.dart';
 import 'package:days_together/app/router/route_names.dart';

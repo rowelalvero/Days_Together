@@ -22,8 +22,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cryptography/cryptography.dart';
-import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/services/key_management_service.dart';
+import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/security/key_management_service.dart';
 
 import 'fake_couple_service.dart';
 

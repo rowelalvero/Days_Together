@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/currently/currently_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// Riverpod port of `CurrentlyProvider` (Phase 6a of the architecture
 /// migration, the eleventh of the 12 domain providers). Standard

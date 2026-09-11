@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 
 /// A reusable, cached avatar widget that handles:

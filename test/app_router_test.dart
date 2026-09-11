@@ -9,10 +9,10 @@
 // destination screen renders themed text).
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/app/router/app_router.dart';
 import 'package:days_together/app/router/route_names.dart';
-import 'package:days_together/services/notification_service.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
 
 void main() {
   group('computeRedirectTarget -- loading', () {

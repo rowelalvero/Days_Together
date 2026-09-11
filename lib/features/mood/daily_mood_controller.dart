@@ -9,10 +9,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/mood/daily_mood_state.dart';
 import 'package:days_together/features/mood/domain/entities/daily_mood_model.dart';
-import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/services/notification_service.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
-import 'package:days_together/services/recent_activity_service.dart';
+import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
+import 'package:days_together/core/network/realtime_subscription_manager.dart';
+import 'package:days_together/core/activity/recent_activity_service.dart';
 
 /// Riverpod port of `DailyMoodProvider` (Phase 6a of the architecture
 /// migration). The second of the two providers (with `TopicCardsController`)

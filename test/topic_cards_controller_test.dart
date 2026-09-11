@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
 import 'package:days_together/features/topic_cards/topic_cards_state.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// topicCardsControllerProvider is `autoDispose` -- see
 /// bucket_list_controller_test.dart's identical helper doc comment for why

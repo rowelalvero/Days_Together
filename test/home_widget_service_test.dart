@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/services/home_widget_service.dart';
-import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/services/relationship_lifecycle_manager.dart';
-import 'package:days_together/features/home_widgets/domain/home_widget_models.dart';
+import 'package:days_together/core/platform/home_widget/home_widget_service.dart';
+import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/session/relationship_lifecycle_manager.dart';
+import 'package:days_together/core/platform/home_widget/home_widget_models.dart';
 import 'package:flutter/services.dart';
 
 void main() {

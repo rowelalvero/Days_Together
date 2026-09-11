@@ -5,7 +5,7 @@ import 'package:days_together/features/scrapbook/presentation/raster_canvas.dart
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_text_properties_panel.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/utils/canvas_mapping.dart';
+import 'package:days_together/features/scrapbook/domain/canvas_mapping.dart';
 
 /// Interactive workspace wrapping the multi-layer RasterCanvas, inline text
 /// editing overlays, floating selected-object controls, font size sliders, and send buttons.

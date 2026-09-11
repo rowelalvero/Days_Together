@@ -1,4 +1,4 @@
-import 'package:days_together/services/couple_service.dart';
+import 'package:days_together/core/network/couple_service.dart';
 
 /// A controllable substitute for [CoupleService], injected into
 /// [CoupleSession]'s constructor (ADR-010's exception: "singletons convert

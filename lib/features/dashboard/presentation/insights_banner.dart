@@ -8,7 +8,7 @@ import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/features/relationship/profile_state.dart';
 import 'package:days_together/features/relationship/presence_state.dart';
-import 'package:days_together/services/date_helper.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 
 class InsightsBanner extends StatefulWidget {
   final TimelineState timelineProvider;

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/services/realtime_subscription_manager.dart';
+import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/network/realtime_subscription_manager.dart';
 
 /// The Riverpod-native replacement for `SupabaseLifecycleProvider`/
 /// `RelationshipLifecycleProvider` (`lib/services/relationship_lifecycle_manager.dart`),
@@ -105,7 +105,9 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
     syncInitialData().timeout(
       _syncTimeout,
       onTimeout: () {
-        debugPrint('$runtimeType: syncInitialData timed out after ${_syncTimeout.inSeconds}s');
+        debugPrint(
+          '$runtimeType: syncInitialData timed out after ${_syncTimeout.inSeconds}s',
+        );
       },
     );
   }
@@ -114,7 +116,11 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
     if (_coupleId == null) return;
     _syncSub?.cancel();
     _syncSub = RealtimeSubscriptionManager.instance
-        .getStream(tableName: tableName, coupleId: _coupleId!, primaryKey: primaryKey)
+        .getStream(
+          tableName: tableName,
+          coupleId: _coupleId!,
+          primaryKey: primaryKey,
+        )
         .listen(onRealtimeData, onError: onRealtimeError);
   }
 
@@ -127,7 +133,8 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
   /// `CoupleSession` change -- the Riverpod-native equivalent of
   /// `RelationshipLifecycleProvider.updateSession`.
   Future<void> updateSession(CoupleSession session) async {
-    final credentialsChanged = _coupleId != session.coupleId || _userId != session.userId;
+    final credentialsChanged =
+        _coupleId != session.coupleId || _userId != session.userId;
 
     if (credentialsChanged) {
       _coupleId = session.coupleId;
@@ -138,7 +145,9 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
         try {
           await syncInitialData().timeout(_syncTimeout);
         } on TimeoutException {
-          debugPrint('$runtimeType: syncInitialData timed out after ${_syncTimeout.inSeconds}s');
+          debugPrint(
+            '$runtimeType: syncInitialData timed out after ${_syncTimeout.inSeconds}s',
+          );
         }
         // syncInitialData is implemented by the concrete class and may have
         // awaited a network call; this autoDispose notifier could have been
@@ -151,7 +160,9 @@ mixin SupabaseLifecycleNotifier<T> on Notifier<T> {
       } else {
         await purgeCache();
       }
-    } else if (session.isSupabaseAvailable && _syncSub == null && _coupleId != null) {
+    } else if (session.isSupabaseAvailable &&
+        _syncSub == null &&
+        _coupleId != null) {
       initRealtime();
     }
   }

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/core/scrapbook_ref.dart';
+import 'package:days_together/core/models/scrapbook_ref.dart';
 
 void main() {
   group('ScrapbookRef', () {

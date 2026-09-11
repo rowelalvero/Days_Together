@@ -26,52 +26,68 @@ sealed class AppFailure {
   final Object? cause;
 
   @override
-  String toString() => cause == null ? '$runtimeType($message)' : '$runtimeType($message, cause: $cause)';
+  String toString() => cause == null
+      ? '$runtimeType($message)'
+      : '$runtimeType($message, cause: $cause)';
 }
 
 /// Connectivity or 5xx-class failures. Retryable.
 class NetworkFailure extends AppFailure {
-  const NetworkFailure({String message = 'A network error occurred. Please check your connection.', Object? cause})
-      : super(message, cause: cause);
+  const NetworkFailure({
+    String message = 'A network error occurred. Please check your connection.',
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// Supabase Auth session is missing, expired, or invalid.
 class AuthFailure extends AppFailure {
-  const AuthFailure({String message = 'Your session has expired. Please sign in again.', Object? cause})
-      : super(message, cause: cause);
+  const AuthFailure({
+    String message = 'Your session has expired. Please sign in again.',
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// A Row Level Security or permission denial (Postgrest `42501`/`403`-class).
 /// Not retryable.
 class AuthorizationFailure extends AppFailure {
-  const AuthorizationFailure({String message = "You don't have permission to do that.", Object? cause})
-      : super(message, cause: cause);
+  const AuthorizationFailure({
+    String message = "You don't have permission to do that.",
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// Bad input rejected by a database constraint or check (Postgrest
 /// `23xxx`/`400`-class). Not retryable.
 class ValidationFailure extends AppFailure {
-  const ValidationFailure({String message = 'That input was not valid.', Object? cause})
-      : super(message, cause: cause);
+  const ValidationFailure({
+    String message = 'That input was not valid.',
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// The requested row or resource does not exist.
 class NotFoundFailure extends AppFailure {
-  const NotFoundFailure({String message = "That couldn't be found.", Object? cause})
-      : super(message, cause: cause);
+  const NotFoundFailure({
+    String message = "That couldn't be found.",
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// A Supabase Storage (bucket) failure -- distinct from a local disk I/O
 /// error, which falls under [UnknownFailure].
 class StorageFailure extends AppFailure {
-  const StorageFailure({String message = 'A file storage error occurred.', Object? cause})
-      : super(message, cause: cause);
+  const StorageFailure({
+    String message = 'A file storage error occurred.',
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// Anything that doesn't fit the categories above -- the catch-all.
 class UnknownFailure extends AppFailure {
-  const UnknownFailure({String message = 'Something went wrong. Please try again.', Object? cause})
-      : super(message, cause: cause);
+  const UnknownFailure({
+    String message = 'Something went wrong. Please try again.',
+    Object? cause,
+  }) : super(message, cause: cause);
 }
 
 /// Maps a raw exception caught at a repository/service boundary to the

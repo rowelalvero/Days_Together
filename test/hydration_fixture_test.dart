@@ -28,7 +28,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/core/session/couple_session.dart';
 
 /// A realistic 43-key hydration snapshot. Every key in [PrefsKeys.all] has
 /// an entry here -- the "no key silently dropped" property this test

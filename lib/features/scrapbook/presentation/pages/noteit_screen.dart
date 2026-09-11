@@ -21,10 +21,10 @@ import 'package:days_together/features/scrapbook/presentation/dialogs/noteit_bac
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_brush_properties_panel.dart';
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_text_properties_panel.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/services/permission_service.dart';
+import 'package:days_together/core/permissions/permission_service.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/utils/canvas_mapping.dart';
+import 'package:days_together/features/scrapbook/domain/canvas_mapping.dart';
 
 /// NoteIt / Scrapbook interactive canvas screen.
 /// Coordinates the canvas viewport, floating toolbars, rich text editing,

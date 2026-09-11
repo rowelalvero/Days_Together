@@ -20,8 +20,12 @@ import 'package:share_plus/share_plus.dart';
 class ImageExportService {
   const ImageExportService();
 
-  Future<Uint8List> _capturePng(GlobalKey key, {double pixelRatio = 4.0}) async {
-    final boundary = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+  Future<Uint8List> _capturePng(
+    GlobalKey key, {
+    double pixelRatio = 4.0,
+  }) async {
+    final boundary =
+        key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) {
       throw Exception('Preview capture layer not ready. Please try again.');
     }
@@ -43,14 +47,21 @@ class ImageExportService {
   }
 
   /// Captures [key]'s RepaintBoundary and saves it to the device gallery.
-  Future<void> saveToGallery(GlobalKey key, {required String filenamePrefix}) async {
+  Future<void> saveToGallery(
+    GlobalKey key, {
+    required String filenamePrefix,
+  }) async {
     final bytes = await _capturePng(key);
     final file = await _writeTempPng(bytes, filenamePrefix);
     await Gal.putImage(file.path);
   }
 
   /// Captures [key]'s RepaintBoundary and opens the platform share sheet.
-  Future<void> share(GlobalKey key, {required String filenamePrefix, required String shareText}) async {
+  Future<void> share(
+    GlobalKey key, {
+    required String filenamePrefix,
+    required String shareText,
+  }) async {
     final bytes = await _capturePng(key);
     final file = await _writeTempPng(bytes, filenamePrefix);
     await Share.shareXFiles([XFile(file.path)], text: shareText);

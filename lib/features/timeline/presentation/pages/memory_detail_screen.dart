@@ -4,7 +4,7 @@ import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/timeline/presentation/memory_notes_section.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

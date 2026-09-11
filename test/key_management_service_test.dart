@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/services/key_management_service.dart';
+import 'package:days_together/core/security/key_management_service.dart';
 
 /// Covers the ECDH+HKDF+AES-GCM key-wrapping logic via
 /// [KeyManagementService.withKeyPair], which pre-seeds the keypair cache and

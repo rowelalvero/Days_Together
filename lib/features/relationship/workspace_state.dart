@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' show TimeOfDay;
 
-import 'package:days_together/providers/couple_session.dart' show RelationshipStatus;
+import 'package:days_together/core/session/couple_session.dart' show RelationshipStatus;
 
 /// The 7 workspace fields `WorkspaceController` mirrors from `CoupleSession`
 /// (Phase 6b-1 of the architecture migration, unit 3). See
