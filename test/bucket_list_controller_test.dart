@@ -64,7 +64,9 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      await container.read(bucketListControllerProvider.notifier).addItem('Watch the sunrise');
+      await container
+          .read(bucketListControllerProvider.notifier)
+          .addItem('Watch the sunrise');
 
       final state = container.read(bucketListControllerProvider);
       expect(state.items, hasLength(1));
@@ -73,7 +75,10 @@ void main() {
       expect(state.completedItems, 0);
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('bucket_list_items'), contains('Watch the sunrise'));
+      expect(
+        prefs.getString('bucket_list_items'),
+        contains('Watch the sunrise'),
+      );
     });
 
     test('toggleItem flips completion and updates progress', () async {
@@ -108,39 +113,49 @@ void main() {
     // `index != -1` guard and re-looked-up the item with an `orElse`-less
     // firstWhere, so toggling an item the partner had just deleted threw a
     // StateError out of the tap handler.
-    test('toggleItem on an item that no longer exists is a no-op, not a throw', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(bucketListControllerProvider.notifier);
+    test(
+      'toggleItem on an item that no longer exists is a no-op, not a throw',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(bucketListControllerProvider.notifier);
 
-      await notifier.addItem('Deleted by partner mid-tap');
-      final id = container.read(bucketListControllerProvider).items.first.id;
-      await notifier.deleteItem(id);
+        await notifier.addItem('Deleted by partner mid-tap');
+        final id = container.read(bucketListControllerProvider).items.first.id;
+        await notifier.deleteItem(id);
 
-      await expectLater(notifier.toggleItem(id), completes);
-      expect(container.read(bucketListControllerProvider).items, isEmpty);
-    });
+        await expectLater(notifier.toggleItem(id), completes);
+        expect(container.read(bucketListControllerProvider).items, isEmpty);
+      },
+    );
 
-    test('deleteItem removes the item and re-indexes remaining order', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(bucketListControllerProvider.notifier);
+    test(
+      'deleteItem removes the item and re-indexes remaining order',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(bucketListControllerProvider.notifier);
 
-      await notifier.addItem('First');
-      await notifier.addItem('Second');
-      await notifier.addItem('Third');
-      final firstId = container.read(bucketListControllerProvider).items.first.id;
+        await notifier.addItem('First');
+        await notifier.addItem('Second');
+        await notifier.addItem('Third');
+        final firstId = container
+            .read(bucketListControllerProvider)
+            .items
+            .first
+            .id;
 
-      await notifier.deleteItem(firstId);
+        await notifier.deleteItem(firstId);
 
-      final state = container.read(bucketListControllerProvider);
-      expect(state.items, hasLength(2));
-      expect(state.items.any((i) => i.id == firstId), isFalse);
-      expect(state.items[0].order, 0);
-      expect(state.items[1].order, 1);
-    });
+        final state = container.read(bucketListControllerProvider);
+        expect(state.items, hasLength(2));
+        expect(state.items.any((i) => i.id == firstId), isFalse);
+        expect(state.items[0].order, 0);
+        expect(state.items[1].order, 1);
+      },
+    );
 
     test('reorderItems moves an item and re-indexes order', () async {
       final container = _unpairedContainer();
@@ -154,9 +169,20 @@ void main() {
 
       await notifier.reorderItems(0, 2);
 
-      final titles = container.read(bucketListControllerProvider).items.map((i) => i.title).toList();
+      final titles = container
+          .read(bucketListControllerProvider)
+          .items
+          .map((i) => i.title)
+          .toList();
       expect(titles, ['B', 'A', 'C']);
-      expect(container.read(bucketListControllerProvider).items.map((i) => i.order).toList(), [0, 1, 2]);
+      expect(
+        container
+            .read(bucketListControllerProvider)
+            .items
+            .map((i) => i.order)
+            .toList(),
+        [0, 1, 2],
+      );
     });
 
     test('purgeCache clears items and the SharedPreferences cache', () async {
@@ -175,18 +201,24 @@ void main() {
       expect(prefs.containsKey('bucket_list_items'), isFalse);
     });
 
-    test('updateSession with an unpaired-to-unpaired transition is a no-op', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(bucketListControllerProvider.notifier);
-      await notifier.addItem('Keep me');
+    test(
+      'updateSession with an unpaired-to-unpaired transition is a no-op',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(bucketListControllerProvider.notifier);
+        await notifier.addItem('Keep me');
 
-      // A CoupleSession with the same (null) coupleId/userId -- no
-      // credentials change, so nothing should be purged or re-synced.
-      await notifier.updateSession(CoupleSession());
+        // A CoupleSession with the same (null) coupleId/userId -- no
+        // credentials change, so nothing should be purged or re-synced.
+        await notifier.updateSession(CoupleSession());
 
-      expect(container.read(bucketListControllerProvider).items, hasLength(1));
-    });
+        expect(
+          container.read(bucketListControllerProvider).items,
+          hasLength(1),
+        );
+      },
+    );
   });
 }

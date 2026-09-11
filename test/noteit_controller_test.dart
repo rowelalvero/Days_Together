@@ -33,26 +33,32 @@ void main() {
   });
 
   group('NoteitController', () {
-    test('build() prepopulates the tutorial notes when there is no cache', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'build() prepopulates the tutorial notes when there is no cache',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      final state = container.read(noteitControllerProvider);
-      expect(state.notes, hasLength(2));
-      expect(state.isLoading, false);
-    });
+        final state = container.read(noteitControllerProvider);
+        expect(state.notes, hasLength(2));
+        expect(state.isLoading, false);
+      },
+    );
 
-    test('visibleNotes is empty while unpaired, even with notes present', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'visibleNotes is empty while unpaired, even with notes present',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      final state = container.read(noteitControllerProvider);
-      expect(state.notes, isNotEmpty);
-      expect(state.visibleNotes, isEmpty);
-      expect(state.coupleId, isNull);
-    });
+        final state = container.read(noteitControllerProvider);
+        expect(state.notes, isNotEmpty);
+        expect(state.visibleNotes, isEmpty);
+        expect(state.coupleId, isNull);
+      },
+    );
 
     test('sendText prepends locally and marks failed when unpaired', () async {
       SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
@@ -61,7 +67,9 @@ void main() {
       await Future.delayed(Duration.zero);
 
       const bgColor = Color(0xFF000000);
-      await container.read(noteitControllerProvider.notifier).sendText('Thinking of you', bgColor);
+      await container
+          .read(noteitControllerProvider.notifier)
+          .sendText('Thinking of you', bgColor);
 
       final state = container.read(noteitControllerProvider);
       expect(state.notes, hasLength(1));
@@ -79,7 +87,9 @@ void main() {
       await Future.delayed(Duration.zero);
 
       const bgColor = Color(0xFFFFFFFF);
-      await container.read(noteitControllerProvider.notifier).sendDrawing('1,1;2,2', bgColor);
+      await container
+          .read(noteitControllerProvider.notifier)
+          .sendDrawing('1,1;2,2', bgColor);
 
       final state = container.read(noteitControllerProvider);
       expect(state.notes, hasLength(1));
@@ -101,20 +111,26 @@ void main() {
       expect(container.read(noteitControllerProvider).notes, isEmpty);
     });
 
-    test('updateItemSyncStatus updates the matching note and persists', () async {
-      SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(noteitControllerProvider.notifier);
+    test(
+      'updateItemSyncStatus updates the matching note and persists',
+      () async {
+        SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(noteitControllerProvider.notifier);
 
-      await notifier.sendText('Retry me', const Color(0xFF654321));
-      final id = container.read(noteitControllerProvider).notes.first.id;
+        await notifier.sendText('Retry me', const Color(0xFF654321));
+        final id = container.read(noteitControllerProvider).notes.first.id;
 
-      notifier.updateItemSyncStatus(id, SyncStatus.synced);
+        notifier.updateItemSyncStatus(id, SyncStatus.synced);
 
-      expect(container.read(noteitControllerProvider).notes.first.syncStatus, SyncStatus.synced);
-    });
+        expect(
+          container.read(noteitControllerProvider).notes.first.syncStatus,
+          SyncStatus.synced,
+        );
+      },
+    );
 
     test('purgeCache clears notes and the SharedPreferences cache', () async {
       SharedPreferences.setMockInitialValues({'love_notes_items': '[]'});

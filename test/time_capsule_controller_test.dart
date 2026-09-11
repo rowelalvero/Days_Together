@@ -47,7 +47,10 @@ void main() {
       await notifier.createCapsule('Sooner', DateTime(2026, 1, 1));
 
       final state = container.read(timeCapsuleControllerProvider);
-      expect(state.capsules.map((c) => c.message).toList(), ['Sooner', 'Later']);
+      expect(state.capsules.map((c) => c.message).toList(), [
+        'Sooner',
+        'Later',
+      ]);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('time_capsules'), contains('Sooner'));
@@ -63,7 +66,10 @@ void main() {
       await notifier.createCapsule('Not yet', DateTime(2099, 1, 1));
 
       final state = container.read(timeCapsuleControllerProvider);
-      expect(state.openableCapsules.map((c) => c.message), contains('Ready now'));
+      expect(
+        state.openableCapsules.map((c) => c.message),
+        contains('Ready now'),
+      );
       expect(state.lockedCapsules.map((c) => c.message), contains('Not yet'));
     });
 
@@ -74,7 +80,11 @@ void main() {
       final notifier = container.read(timeCapsuleControllerProvider.notifier);
 
       await notifier.createCapsule('Ready now', DateTime(2020, 1, 1));
-      final id = container.read(timeCapsuleControllerProvider).capsules.first.id;
+      final id = container
+          .read(timeCapsuleControllerProvider)
+          .capsules
+          .first
+          .id;
 
       await notifier.openCapsule(id);
 
@@ -91,11 +101,18 @@ void main() {
       final notifier = container.read(timeCapsuleControllerProvider.notifier);
 
       await notifier.createCapsule('Not yet', DateTime(2099, 1, 1));
-      final id = container.read(timeCapsuleControllerProvider).capsules.first.id;
+      final id = container
+          .read(timeCapsuleControllerProvider)
+          .capsules
+          .first
+          .id;
 
       await notifier.openCapsule(id);
 
-      expect(container.read(timeCapsuleControllerProvider).openedCapsules, isEmpty);
+      expect(
+        container.read(timeCapsuleControllerProvider).openedCapsules,
+        isEmpty,
+      );
     });
 
     test('deleteCapsule removes locally when unpaired', () async {
@@ -105,26 +122,33 @@ void main() {
       final notifier = container.read(timeCapsuleControllerProvider.notifier);
 
       await notifier.createCapsule('Gone soon', DateTime(2026, 1, 1));
-      final id = container.read(timeCapsuleControllerProvider).capsules.first.id;
+      final id = container
+          .read(timeCapsuleControllerProvider)
+          .capsules
+          .first
+          .id;
 
       await notifier.deleteCapsule(id);
 
       expect(container.read(timeCapsuleControllerProvider).capsules, isEmpty);
     });
 
-    test('purgeCache clears capsules and the SharedPreferences cache', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(timeCapsuleControllerProvider.notifier);
-      await notifier.createCapsule('Something', DateTime(2026, 1, 1));
+    test(
+      'purgeCache clears capsules and the SharedPreferences cache',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(timeCapsuleControllerProvider.notifier);
+        await notifier.createCapsule('Something', DateTime(2026, 1, 1));
 
-      await notifier.purgeCache();
+        await notifier.purgeCache();
 
-      final state = container.read(timeCapsuleControllerProvider);
-      expect(state.capsules, isEmpty);
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('time_capsules'), isFalse);
-    });
+        final state = container.read(timeCapsuleControllerProvider);
+        expect(state.capsules, isEmpty);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey('time_capsules'), isFalse);
+      },
+    );
   });
 }

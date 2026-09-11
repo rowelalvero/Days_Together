@@ -16,20 +16,32 @@ void main() {
     expect(titleStyle.fontSize, 28.0);
     expect(titleStyle.fontWeight, FontWeight.w700);
 
-    final bodyStyle = AppTypography.bodyMedium(color: Colors.red, fontSize: 13.0);
+    final bodyStyle = AppTypography.bodyMedium(
+      color: Colors.red,
+      fontSize: 13.0,
+    );
     expect(bodyStyle.color, Colors.red);
     expect(bodyStyle.fontSize, 13.0);
 
-    final standardBodyStyle = AppTypography.body(color: Colors.green, fontSize: 15.0);
+    final standardBodyStyle = AppTypography.body(
+      color: Colors.green,
+      fontSize: 15.0,
+    );
     expect(standardBodyStyle.color, Colors.green);
     expect(standardBodyStyle.fontSize, 15.0);
 
-    final cormorantStyle = AppTypography.cormorant(fontSize: 32, fontStyle: FontStyle.italic);
+    final cormorantStyle = AppTypography.cormorant(
+      fontSize: 32,
+      fontStyle: FontStyle.italic,
+    );
     expect(cormorantStyle.fontFamily, contains('Spectral'));
     expect(cormorantStyle.fontSize, 32);
     expect(cormorantStyle.fontStyle, FontStyle.italic);
 
-    final spectralStyle = AppTypography.spectral(fontSize: 18, color: Colors.blue);
+    final spectralStyle = AppTypography.spectral(
+      fontSize: 18,
+      color: Colors.blue,
+    );
     expect(spectralStyle.fontFamily, contains('Spectral'));
     expect(spectralStyle.fontSize, 18);
     expect(spectralStyle.color, Colors.blue);

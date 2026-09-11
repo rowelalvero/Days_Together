@@ -18,14 +18,20 @@ void main() {
   group('computeRedirectTarget -- loading', () {
     test('holds at Routes.loading', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.loading, here: Routes.loading),
+        computeRedirectTarget(
+          stage: SessionStage.loading,
+          here: Routes.loading,
+        ),
         isNull,
       );
     });
 
     test('redirects any other location to Routes.loading', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.loading, here: Routes.calendar),
+        computeRedirectTarget(
+          stage: SessionStage.loading,
+          here: Routes.calendar,
+        ),
         Routes.loading,
       );
     });
@@ -34,21 +40,33 @@ void main() {
   group('computeRedirectTarget -- unauthenticated', () {
     test('allows Routes.welcome', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.unauthenticated, here: Routes.welcome),
+        computeRedirectTarget(
+          stage: SessionStage.unauthenticated,
+          here: Routes.welcome,
+        ),
         isNull,
       );
     });
 
-    test('allows Routes.auth (a forward step reached before userId is set)', () {
-      expect(
-        computeRedirectTarget(stage: SessionStage.unauthenticated, here: Routes.auth),
-        isNull,
-      );
-    });
+    test(
+      'allows Routes.auth (a forward step reached before userId is set)',
+      () {
+        expect(
+          computeRedirectTarget(
+            stage: SessionStage.unauthenticated,
+            here: Routes.auth,
+          ),
+          isNull,
+        );
+      },
+    );
 
     test('redirects a couple-scoped route to Routes.welcome', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.unauthenticated, here: Routes.calendar),
+        computeRedirectTarget(
+          stage: SessionStage.unauthenticated,
+          here: Routes.calendar,
+        ),
         Routes.welcome,
       );
     });
@@ -67,7 +85,10 @@ void main() {
 
     test('redirects anything else to Routes.pairing', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.needsCouple, here: Routes.home),
+        computeRedirectTarget(
+          stage: SessionStage.needsCouple,
+          here: Routes.home,
+        ),
         Routes.pairing,
       );
     });
@@ -76,34 +97,53 @@ void main() {
   group('computeRedirectTarget -- needsWorkspace/needsGenesis/needsAvatar', () {
     test('needsWorkspace only allows Routes.workspace', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.needsWorkspace, here: Routes.workspace),
+        computeRedirectTarget(
+          stage: SessionStage.needsWorkspace,
+          here: Routes.workspace,
+        ),
         isNull,
       );
       expect(
-        computeRedirectTarget(stage: SessionStage.needsWorkspace, here: Routes.genesis),
+        computeRedirectTarget(
+          stage: SessionStage.needsWorkspace,
+          here: Routes.genesis,
+        ),
         Routes.workspace,
-        reason: 'jumping ahead to the next stage\'s screen must still redirect back',
+        reason:
+            'jumping ahead to the next stage\'s screen must still redirect back',
       );
     });
 
     test('needsGenesis only allows Routes.genesis', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.needsGenesis, here: Routes.genesis),
+        computeRedirectTarget(
+          stage: SessionStage.needsGenesis,
+          here: Routes.genesis,
+        ),
         isNull,
       );
       expect(
-        computeRedirectTarget(stage: SessionStage.needsGenesis, here: Routes.avatar),
+        computeRedirectTarget(
+          stage: SessionStage.needsGenesis,
+          here: Routes.avatar,
+        ),
         Routes.genesis,
       );
     });
 
     test('needsAvatar only allows Routes.avatar', () {
       expect(
-        computeRedirectTarget(stage: SessionStage.needsAvatar, here: Routes.avatar),
+        computeRedirectTarget(
+          stage: SessionStage.needsAvatar,
+          here: Routes.avatar,
+        ),
         isNull,
       );
       expect(
-        computeRedirectTarget(stage: SessionStage.needsAvatar, here: Routes.home),
+        computeRedirectTarget(
+          stage: SessionStage.needsAvatar,
+          here: Routes.home,
+        ),
         Routes.avatar,
       );
     });
@@ -111,9 +151,18 @@ void main() {
 
   group('computeRedirectTarget -- ready', () {
     test('allows Routes.home and any non-onboarding route', () {
-      expect(computeRedirectTarget(stage: SessionStage.ready, here: Routes.home), isNull);
-      expect(computeRedirectTarget(stage: SessionStage.ready, here: Routes.calendar), isNull);
-      expect(computeRedirectTarget(stage: SessionStage.ready, here: Routes.license), isNull);
+      expect(
+        computeRedirectTarget(stage: SessionStage.ready, here: Routes.home),
+        isNull,
+      );
+      expect(
+        computeRedirectTarget(stage: SessionStage.ready, here: Routes.calendar),
+        isNull,
+      );
+      expect(
+        computeRedirectTarget(stage: SessionStage.ready, here: Routes.license),
+        isNull,
+      );
     });
 
     test('bounces every onboarding route to Routes.home', () {
@@ -151,34 +200,40 @@ void main() {
       );
     });
 
-    test('an invalid pending location is redirected to the resolved stage\'s target instead', () {
-      // e.g. a notification tap for /calendar arrived while stage was
-      // loading, but hydration resolved to unauthenticated (the user was
-      // never actually signed in) -- the deep link must not leak through.
-      expect(
-        computeRedirectTarget(
-          stage: SessionStage.unauthenticated,
-          here: Routes.loading,
-          pendingLocation: Routes.calendar,
-        ),
-        Routes.welcome,
-      );
-    });
+    test(
+      'an invalid pending location is redirected to the resolved stage\'s target instead',
+      () {
+        // e.g. a notification tap for /calendar arrived while stage was
+        // loading, but hydration resolved to unauthenticated (the user was
+        // never actually signed in) -- the deep link must not leak through.
+        expect(
+          computeRedirectTarget(
+            stage: SessionStage.unauthenticated,
+            here: Routes.loading,
+            pendingLocation: Routes.calendar,
+          ),
+          Routes.welcome,
+        );
+      },
+    );
 
-    test('a pending location that is itself already correct still resolves, not null', () {
-      // Replaying /home when ready must actually navigate there -- the
-      // router is still sitting at /loading, so "no redirect needed" (null)
-      // would strand it, unlike the non-replay case where null means "stay
-      // put" is already correct.
-      expect(
-        computeRedirectTarget(
-          stage: SessionStage.ready,
-          here: Routes.loading,
-          pendingLocation: Routes.home,
-        ),
-        Routes.home,
-      );
-    });
+    test(
+      'a pending location that is itself already correct still resolves, not null',
+      () {
+        // Replaying /home when ready must actually navigate there -- the
+        // router is still sitting at /loading, so "no redirect needed" (null)
+        // would strand it, unlike the non-replay case where null means "stay
+        // put" is already correct.
+        expect(
+          computeRedirectTarget(
+            stage: SessionStage.ready,
+            here: Routes.loading,
+            pendingLocation: Routes.home,
+          ),
+          Routes.home,
+        );
+      },
+    );
   });
 
   // Regression: a notification tap that launched the app from terminated is
@@ -197,27 +252,31 @@ void main() {
       expect(appRouterIsReady, isFalse);
     });
 
-    test('a payload arriving before the router exists is queued, not thrown', () {
-      expect(
-        () => NotificationService().handleNotificationPayloadForTest(
-          {'feature': 'chat'},
-        ),
-        returnsNormally,
-      );
-      expect(pendingDeepLinkForTest, Routes.chat);
-    });
+    test(
+      'a payload arriving before the router exists is queued, not thrown',
+      () {
+        expect(
+          () => NotificationService().handleNotificationPayloadForTest({
+            'feature': 'chat',
+          }),
+          returnsNormally,
+        );
+        expect(pendingDeepLinkForTest, Routes.chat);
+      },
+    );
 
     test('an item-scoped payload queues the item route', () {
-      NotificationService().handleNotificationPayloadForTest(
-        {'feature': 'memories', 'item_id': 'memory-42'},
-      );
+      NotificationService().handleNotificationPayloadForTest({
+        'feature': 'memories',
+        'item_id': 'memory-42',
+      });
       expect(pendingDeepLinkForTest, Routes.memory('memory-42'));
     });
 
     test('an unrecognized feature queues nothing', () {
-      NotificationService().handleNotificationPayloadForTest(
-        {'feature': 'not_a_feature'},
-      );
+      NotificationService().handleNotificationPayloadForTest({
+        'feature': 'not_a_feature',
+      });
       expect(pendingDeepLinkForTest, isNull);
     });
 
@@ -226,28 +285,33 @@ void main() {
       expect(pendingDeepLinkForTest, isNull);
     });
 
-    test('the queued link is what the redirect replays once the stage resolves', () {
-      NotificationService().handleNotificationPayloadForTest({'feature': 'vault'});
+    test(
+      'the queued link is what the redirect replays once the stage resolves',
+      () {
+        NotificationService().handleNotificationPayloadForTest({
+          'feature': 'vault',
+        });
 
-      // Still loading: hold at /loading, keeping the queued link.
-      expect(
-        computeRedirectTarget(
-          stage: SessionStage.loading,
-          here: Routes.loading,
-          pendingLocation: pendingDeepLinkForTest,
-        ),
-        isNull,
-      );
+        // Still loading: hold at /loading, keeping the queued link.
+        expect(
+          computeRedirectTarget(
+            stage: SessionStage.loading,
+            here: Routes.loading,
+            pendingLocation: pendingDeepLinkForTest,
+          ),
+          isNull,
+        );
 
-      // Hydration finished as `ready` -- the deep link is honored.
-      expect(
-        computeRedirectTarget(
-          stage: SessionStage.ready,
-          here: Routes.loading,
-          pendingLocation: pendingDeepLinkForTest,
-        ),
-        Routes.vault,
-      );
-    });
+        // Hydration finished as `ready` -- the deep link is honored.
+        expect(
+          computeRedirectTarget(
+            stage: SessionStage.ready,
+            here: Routes.loading,
+            pendingLocation: pendingDeepLinkForTest,
+          ),
+          Routes.vault,
+        );
+      },
+    );
   });
 }

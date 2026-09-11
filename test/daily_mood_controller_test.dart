@@ -28,74 +28,99 @@ void main() {
   });
 
   group('DailyMoodController', () {
-    test('build() generates a deterministic today-question when there is no cache', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'build() generates a deterministic today-question when there is no cache',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      final state = container.read(dailyMoodControllerProvider);
-      expect(state.moods, isEmpty);
-      expect(state.todayQuestion, isNotNull);
-      expect(state.hasLoggedToday, isFalse);
-    });
+        final state = container.read(dailyMoodControllerProvider);
+        expect(state.moods, isEmpty);
+        expect(state.todayQuestion, isNotNull);
+        expect(state.hasLoggedToday, isFalse);
+      },
+    );
 
-    test('logMood records locally when unpaired and reflects in hasLoggedToday/todayMood', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'logMood records locally when unpaired and reflects in hasLoggedToday/todayMood',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      await container.read(dailyMoodControllerProvider.notifier).logMood(8, note: 'Great day');
+        await container
+            .read(dailyMoodControllerProvider.notifier)
+            .logMood(8, note: 'Great day');
 
-      final state = container.read(dailyMoodControllerProvider);
-      expect(state.hasLoggedToday, isTrue);
-      expect(state.todayMood?.moodScore, 8);
-      expect(state.todayMood?.note, 'Great day');
+        final state = container.read(dailyMoodControllerProvider);
+        expect(state.hasLoggedToday, isTrue);
+        expect(state.todayMood?.moodScore, 8);
+        expect(state.todayMood?.note, 'Great day');
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('daily_moods'), contains('Great day'));
-    });
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('daily_moods'), contains('Great day'));
+      },
+    );
 
-    test('logMood twice in the same day replaces, not duplicates, today\'s entry', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(dailyMoodControllerProvider.notifier);
+    test(
+      'logMood twice in the same day replaces, not duplicates, today\'s entry',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(dailyMoodControllerProvider.notifier);
 
-      await notifier.logMood(5);
-      await notifier.logMood(9, note: 'Even better');
+        await notifier.logMood(5);
+        await notifier.logMood(9, note: 'Even better');
 
-      final state = container.read(dailyMoodControllerProvider);
-      expect(state.moods.where((m) => m.date == state.todayMood!.date), hasLength(1));
-      expect(state.todayMood?.moodScore, 9);
-    });
+        final state = container.read(dailyMoodControllerProvider);
+        expect(
+          state.moods.where((m) => m.date == state.todayMood!.date),
+          hasLength(1),
+        );
+        expect(state.todayMood?.moodScore, 9);
+      },
+    );
 
-    test('answerDailyQuestion records the answer locally when unpaired', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(dailyMoodControllerProvider.notifier);
+    test(
+      'answerDailyQuestion records the answer locally when unpaired',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(dailyMoodControllerProvider.notifier);
 
-      await notifier.answerDailyQuestion('Because you make me laugh every day.');
+        await notifier.answerDailyQuestion(
+          'Because you make me laugh every day.',
+        );
 
-      final state = container.read(dailyMoodControllerProvider);
-      expect(state.todayQuestion?.myAnswer, 'Because you make me laugh every day.');
-    });
+        final state = container.read(dailyMoodControllerProvider);
+        expect(
+          state.todayQuestion?.myAnswer,
+          'Because you make me laugh every day.',
+        );
+      },
+    );
 
-    test('purgeCache clears moods and regenerates a fresh today-question', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(dailyMoodControllerProvider.notifier);
-      await notifier.logMood(7);
+    test(
+      'purgeCache clears moods and regenerates a fresh today-question',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(dailyMoodControllerProvider.notifier);
+        await notifier.logMood(7);
 
-      await notifier.purgeCache();
+        await notifier.purgeCache();
 
-      final state = container.read(dailyMoodControllerProvider);
-      expect(state.moods, isEmpty);
-      expect(state.partnerMoods, isEmpty);
-      expect(state.todayQuestion, isNotNull);
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('daily_moods'), isFalse);
-    });
+        final state = container.read(dailyMoodControllerProvider);
+        expect(state.moods, isEmpty);
+        expect(state.partnerMoods, isEmpty);
+        expect(state.todayQuestion, isNotNull);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey('daily_moods'), isFalse);
+      },
+    );
   });
 }

@@ -33,16 +33,19 @@ void main() {
   });
 
   group('LoveChatController', () {
-    test('build() prepopulates a welcome message when there is no cache', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'build() prepopulates a welcome message when there is no cache',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      final state = container.read(loveChatControllerProvider);
-      expect(state.messages, hasLength(1));
-      expect(state.messages.first.senderId, 'partner');
-      expect(state.isLoading, false);
-    });
+        final state = container.read(loveChatControllerProvider);
+        expect(state.messages, hasLength(1));
+        expect(state.messages.first.senderId, 'partner');
+        expect(state.isLoading, false);
+      },
+    );
 
     test('sendMessage prepends locally and persists', () async {
       SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
@@ -50,7 +53,9 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      await container.read(loveChatControllerProvider.notifier).sendMessage('Hi love', 'Me');
+      await container
+          .read(loveChatControllerProvider.notifier)
+          .sendMessage('Hi love', 'Me');
 
       final state = container.read(loveChatControllerProvider);
       expect(state.messages, hasLength(1));
@@ -90,7 +95,10 @@ void main() {
       final state = container.read(loveChatControllerProvider);
       expect(state.messages.length, LoveChatController.maxLocalMessages);
       // Most recently sent message stays at the front.
-      expect(state.messages.first.content, 'Message ${LoveChatController.maxLocalMessages + 4}');
+      expect(
+        state.messages.first.content,
+        'Message ${LoveChatController.maxLocalMessages + 4}',
+      );
     });
 
     test('messages sharing a createdAt keep a deterministic order', () async {
@@ -139,7 +147,8 @@ void main() {
       expect(
         after.first.content,
         'Newest',
-        reason: 'a freshly sent message must stay at the front even when its '
+        reason:
+            'a freshly sent message must stay at the front even when its '
             'timestamp ties with every existing message',
       );
       expect(
@@ -149,21 +158,24 @@ void main() {
       );
     });
 
-    test('purgeCache clears messages and the SharedPreferences cache', () async {
-      SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(loveChatControllerProvider.notifier);
-      await notifier.sendMessage('Something', 'Me');
+    test(
+      'purgeCache clears messages and the SharedPreferences cache',
+      () async {
+        SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(loveChatControllerProvider.notifier);
+        await notifier.sendMessage('Something', 'Me');
 
-      await notifier.purgeCache();
+        await notifier.purgeCache();
 
-      final state = container.read(loveChatControllerProvider);
-      expect(state.messages, isEmpty);
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('love_chat_messages'), isFalse);
-    });
+        final state = container.read(loveChatControllerProvider);
+        expect(state.messages, isEmpty);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey('love_chat_messages'), isFalse);
+      },
+    );
 
     // The tests below port `LoveChatProvider`'s old M-1 bounded-local-chat-
     // persistence coverage (test/love_chat_provider_test.dart, deleted once
@@ -208,7 +220,9 @@ void main() {
             createdAt: now.subtract(Duration(minutes: i)),
           ).toJson(),
       ];
-      SharedPreferences.setMockInitialValues({'love_chat_messages': jsonEncode(rawList)});
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': jsonEncode(rawList),
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -231,7 +245,9 @@ void main() {
             createdAt: now.subtract(Duration(minutes: i)),
           ).toJson(),
       ];
-      SharedPreferences.setMockInitialValues({'love_chat_messages': jsonEncode(rawList)});
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': jsonEncode(rawList),
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -254,7 +270,9 @@ void main() {
             createdAt: now.subtract(Duration(minutes: i)),
           ).toJson(),
       ];
-      SharedPreferences.setMockInitialValues({'love_chat_messages': jsonEncode(rawList)});
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': jsonEncode(rawList),
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -266,7 +284,9 @@ void main() {
     });
 
     test('falls back safely on malformed persisted JSON', () async {
-      SharedPreferences.setMockInitialValues({'love_chat_messages': '{invalid_json_corrupted}'});
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': '{invalid_json_corrupted}',
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
@@ -288,7 +308,9 @@ void main() {
             createdAt: now.subtract(Duration(seconds: i)),
           ).toJson(),
       ];
-      SharedPreferences.setMockInitialValues({'love_chat_messages': jsonEncode(rawList)});
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': jsonEncode(rawList),
+      });
 
       // App instance 1.
       final container1 = _unpairedContainer();
@@ -346,7 +368,9 @@ void main() {
             createdAt: now.subtract(Duration(minutes: i)),
           ).toJson(),
       ];
-      SharedPreferences.setMockInitialValues({'love_chat_messages': jsonEncode(oversizedList)});
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': jsonEncode(oversizedList),
+      });
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);

@@ -24,55 +24,64 @@ void main() {
   Future<SimpleKeyPair> newKeyPair() => X25519().newKeyPair();
 
   group('getOrCreatePublicKeyBase64', () {
-    test('returns a stable 32-byte X25519 public key for a seeded keypair', () async {
-      final keyPair = await newKeyPair();
-      final service = KeyManagementService.withKeyPair(keyPair);
+    test(
+      'returns a stable 32-byte X25519 public key for a seeded keypair',
+      () async {
+        final keyPair = await newKeyPair();
+        final service = KeyManagementService.withKeyPair(keyPair);
 
-      final first = await service.getOrCreatePublicKeyBase64('user');
-      final second = await service.getOrCreatePublicKeyBase64('user');
+        final first = await service.getOrCreatePublicKeyBase64('user');
+        final second = await service.getOrCreatePublicKeyBase64('user');
 
-      expect(first, second);
-      expect(base64Decode(first).length, 32);
-    });
+        expect(first, second);
+        expect(base64Decode(first).length, 32);
+      },
+    );
 
-    test('two independently generated keypairs have different public keys', () async {
-      final serviceA = KeyManagementService.withKeyPair(await newKeyPair());
-      final serviceB = KeyManagementService.withKeyPair(await newKeyPair());
+    test(
+      'two independently generated keypairs have different public keys',
+      () async {
+        final serviceA = KeyManagementService.withKeyPair(await newKeyPair());
+        final serviceB = KeyManagementService.withKeyPair(await newKeyPair());
 
-      expect(
-        await serviceA.getOrCreatePublicKeyBase64('user'),
-        isNot(await serviceB.getOrCreatePublicKeyBase64('user')),
-      );
-    });
+        expect(
+          await serviceA.getOrCreatePublicKeyBase64('user'),
+          isNot(await serviceB.getOrCreatePublicKeyBase64('user')),
+        );
+      },
+    );
   });
 
   group('wrapKeyForPartner / unwrapKeyFromPartner', () {
-    test('ECDH round trip: partner unwraps exactly what was wrapped for them', () async {
-      final alice = KeyManagementService.withKeyPair(await newKeyPair());
-      final bob = KeyManagementService.withKeyPair(await newKeyPair());
+    test(
+      'ECDH round trip: partner unwraps exactly what was wrapped for them',
+      () async {
+        final alice = KeyManagementService.withKeyPair(await newKeyPair());
+        final bob = KeyManagementService.withKeyPair(await newKeyPair());
 
-      final alicePublicKey = await alice.getOrCreatePublicKeyBase64('user');
-      final bobPublicKey = await bob.getOrCreatePublicKeyBase64('user');
+        final alicePublicKey = await alice.getOrCreatePublicKeyBase64('user');
+        final bobPublicKey = await bob.getOrCreatePublicKeyBase64('user');
 
-      final coupleKey = Uint8List.fromList(List.generate(32, (i) => i));
+        final coupleKey = Uint8List.fromList(List.generate(32, (i) => i));
 
-      // Alice wraps the couple key for Bob using Bob's public key.
-      final wrapped = await alice.wrapKeyForPartner(
-        userId: 'alice',
-        coupleKeyBytes: coupleKey,
-        partnerPublicKeyBase64: bobPublicKey,
-      );
+        // Alice wraps the couple key for Bob using Bob's public key.
+        final wrapped = await alice.wrapKeyForPartner(
+          userId: 'alice',
+          coupleKeyBytes: coupleKey,
+          partnerPublicKeyBase64: bobPublicKey,
+        );
 
-      // Bob unwraps it using Alice's public key -- ECDH guarantees both sides
-      // land on the same shared secret regardless of which side computes it.
-      final unwrapped = await bob.unwrapKeyFromPartner(
-        userId: 'bob',
-        wrappedKeyBase64: wrapped,
-        partnerPublicKeyBase64: alicePublicKey,
-      );
+        // Bob unwraps it using Alice's public key -- ECDH guarantees both sides
+        // land on the same shared secret regardless of which side computes it.
+        final unwrapped = await bob.unwrapKeyFromPartner(
+          userId: 'bob',
+          wrappedKeyBase64: wrapped,
+          partnerPublicKeyBase64: alicePublicKey,
+        );
 
-      expect(unwrapped, coupleKey);
-    });
+        expect(unwrapped, coupleKey);
+      },
+    );
 
     test('a third party cannot unwrap a key not wrapped for them', () async {
       final alice = KeyManagementService.withKeyPair(await newKeyPair());
@@ -137,36 +146,44 @@ void main() {
     setUp(() {
       TestWidgetsFlutterBinding.ensureInitialized();
       backing.clear();
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-        fakeSecureStorageHandler,
-      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+            fakeSecureStorageHandler,
+          );
     });
 
     tearDown(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-        const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-        null,
-      );
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+            null,
+          );
     });
 
-    test('two different signed-in users on the same device get independent keypairs', () async {
-      final service = KeyManagementService.instance;
+    test(
+      'two different signed-in users on the same device get independent keypairs',
+      () async {
+        final service = KeyManagementService.instance;
 
-      final aliceKey = await service.getOrCreatePublicKeyBase64('user-alice');
-      final bobKey = await service.getOrCreatePublicKeyBase64('user-bob');
+        final aliceKey = await service.getOrCreatePublicKeyBase64('user-alice');
+        final bobKey = await service.getOrCreatePublicKeyBase64('user-bob');
 
-      // This is the exact bug found on-device: without per-user scoping (in
-      // both the in-memory cache and the secure-storage key name), the
-      // second call would silently return the first user's already-cached
-      // keypair instead of generating/loading a distinct one.
-      expect(aliceKey, isNot(bobKey));
+        // This is the exact bug found on-device: without per-user scoping (in
+        // both the in-memory cache and the secure-storage key name), the
+        // second call would silently return the first user's already-cached
+        // keypair instead of generating/loading a distinct one.
+        expect(aliceKey, isNot(bobKey));
 
-      // Calling again for the same user returns the same key (persisted and
-      // cached, not regenerated every time).
-      expect(await service.getOrCreatePublicKeyBase64('user-alice'), aliceKey);
-      expect(await service.getOrCreatePublicKeyBase64('user-bob'), bobKey);
-    });
+        // Calling again for the same user returns the same key (persisted and
+        // cached, not regenerated every time).
+        expect(
+          await service.getOrCreatePublicKeyBase64('user-alice'),
+          aliceKey,
+        );
+        expect(await service.getOrCreatePublicKeyBase64('user-bob'), bobKey);
+      },
+    );
 
     test('couple key storage is also isolated per user', () async {
       final service = KeyManagementService.instance;
@@ -197,14 +214,20 @@ void main() {
       expect(await service.loadCoupleKey('user-alice'), isNull);
       // The tag is gone too, so a later store for a different couple cannot
       // be mistaken for the old one.
-      expect(backing.keys.where((k) => k.contains('couple_photo_key')), isEmpty);
+      expect(
+        backing.keys.where((k) => k.contains('couple_photo_key')),
+        isEmpty,
+      );
     });
 
     test('clearCoupleKey leaves another user\'s key untouched', () async {
       final service = KeyManagementService.instance;
       final keyForBob = Uint8List.fromList(List.filled(32, 2));
 
-      await service.storeCoupleKey('user-alice', Uint8List.fromList(List.filled(32, 1)));
+      await service.storeCoupleKey(
+        'user-alice',
+        Uint8List.fromList(List.filled(32, 1)),
+      );
       await service.storeCoupleKey('user-bob', keyForBob);
 
       await service.clearCoupleKey('user-alice');
@@ -217,7 +240,10 @@ void main() {
       final service = KeyManagementService.instance;
 
       final publicKey = await service.getOrCreatePublicKeyBase64('user-alice');
-      await service.storeCoupleKey('user-alice', Uint8List.fromList(List.filled(32, 3)));
+      await service.storeCoupleKey(
+        'user-alice',
+        Uint8List.fromList(List.filled(32, 3)),
+      );
 
       await service.clearAllKeysForUser('user-alice');
 
@@ -225,7 +251,10 @@ void main() {
       expect(backing.keys.where((k) => k.contains('user-alice')), isEmpty);
       // The in-memory keypair cache is busted too, so the next call mints a
       // genuinely fresh identity rather than resurrecting the deleted one.
-      expect(await service.getOrCreatePublicKeyBase64('user-alice'), isNot(publicKey));
+      expect(
+        await service.getOrCreatePublicKeyBase64('user-alice'),
+        isNot(publicKey),
+      );
     });
 
     group('purgeCoupleKeyIfForDifferentCouple', () {
@@ -237,7 +266,10 @@ void main() {
           coupleId: 'couple-old',
         );
 
-        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-new');
+        await service.purgeCoupleKeyIfForDifferentCouple(
+          'user-alice',
+          'couple-new',
+        );
 
         expect(await service.loadCoupleKey('user-alice'), isNull);
       });
@@ -247,7 +279,10 @@ void main() {
         final key = Uint8List.fromList(List.filled(32, 9));
         await service.storeCoupleKey('user-alice', key, coupleId: 'couple-1');
 
-        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-1');
+        await service.purgeCoupleKeyIfForDifferentCouple(
+          'user-alice',
+          'couple-1',
+        );
 
         expect(await service.loadCoupleKey('user-alice'), key);
       });
@@ -259,22 +294,34 @@ void main() {
         final key = Uint8List.fromList(List.filled(32, 9));
         await service.storeCoupleKey('user-alice', key);
 
-        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-1');
+        await service.purgeCoupleKeyIfForDifferentCouple(
+          'user-alice',
+          'couple-1',
+        );
         expect(await service.loadCoupleKey('user-alice'), key);
 
         // ...and it is tagged from then on, so a later relationship change is
         // still caught.
-        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-2');
+        await service.purgeCoupleKeyIfForDifferentCouple(
+          'user-alice',
+          'couple-2',
+        );
         expect(await service.loadCoupleKey('user-alice'), isNull);
       });
 
       test('is a no-op when no key is stored', () async {
         final service = KeyManagementService.instance;
 
-        await service.purgeCoupleKeyIfForDifferentCouple('user-alice', 'couple-1');
+        await service.purgeCoupleKeyIfForDifferentCouple(
+          'user-alice',
+          'couple-1',
+        );
 
         expect(await service.loadCoupleKey('user-alice'), isNull);
-        expect(backing.keys.where((k) => k.contains('couple_photo_key')), isEmpty);
+        expect(
+          backing.keys.where((k) => k.contains('couple_photo_key')),
+          isEmpty,
+        );
       });
     });
   });

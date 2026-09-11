@@ -43,8 +43,14 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      await container.read(calendarControllerProvider.notifier).addEvent(
-            CalendarEvent(title: 'Dinner date', date: DateTime(2026, 10, 10), type: CalendarEventType.date),
+      await container
+          .read(calendarControllerProvider.notifier)
+          .addEvent(
+            CalendarEvent(
+              title: 'Dinner date',
+              date: DateTime(2026, 10, 10),
+              type: CalendarEventType.date,
+            ),
           );
 
       final state = container.read(calendarControllerProvider);
@@ -91,40 +97,53 @@ void main() {
       await Future.delayed(Duration.zero);
       final notifier = container.read(calendarControllerProvider.notifier);
 
-      await notifier.addEvent(CalendarEvent(title: 'Today', date: DateTime(2026, 7, 4)));
-      await notifier.addEvent(CalendarEvent(title: 'Another day', date: DateTime(2026, 7, 5)));
+      await notifier.addEvent(
+        CalendarEvent(title: 'Today', date: DateTime(2026, 7, 4)),
+      );
+      await notifier.addEvent(
+        CalendarEvent(title: 'Another day', date: DateTime(2026, 7, 5)),
+      );
 
-      final matches = container.read(calendarControllerProvider).eventsForDay(DateTime(2026, 7, 4));
+      final matches = container
+          .read(calendarControllerProvider)
+          .eventsForDay(DateTime(2026, 7, 4));
       expect(matches, hasLength(1));
       expect(matches.first.title, 'Today');
     });
 
-    test('eventsForDay matches recurring-yearly events by month/day regardless of year', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(calendarControllerProvider.notifier);
+    test(
+      'eventsForDay matches recurring-yearly events by month/day regardless of year',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(calendarControllerProvider.notifier);
 
-      await notifier.addEvent(
-        CalendarEvent(
-          title: 'Anniversary',
-          date: DateTime(2020, 3, 15),
-          type: CalendarEventType.anniversary,
-          isRecurringYearly: true,
-        ),
-      );
+        await notifier.addEvent(
+          CalendarEvent(
+            title: 'Anniversary',
+            date: DateTime(2020, 3, 15),
+            type: CalendarEventType.anniversary,
+            isRecurringYearly: true,
+          ),
+        );
 
-      final matches = container.read(calendarControllerProvider).eventsForDay(DateTime(2026, 3, 15));
-      expect(matches, hasLength(1));
-      expect(matches.first.title, 'Anniversary');
-    });
+        final matches = container
+            .read(calendarControllerProvider)
+            .eventsForDay(DateTime(2026, 3, 15));
+        expect(matches, hasLength(1));
+        expect(matches.first.title, 'Anniversary');
+      },
+    );
 
     test('purgeCache clears events and the SharedPreferences cache', () async {
       final container = _unpairedContainer();
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
       final notifier = container.read(calendarControllerProvider.notifier);
-      await notifier.addEvent(CalendarEvent(title: 'Something', date: DateTime(2026, 8, 8)));
+      await notifier.addEvent(
+        CalendarEvent(title: 'Something', date: DateTime(2026, 8, 8)),
+      );
 
       await notifier.purgeCache();
 

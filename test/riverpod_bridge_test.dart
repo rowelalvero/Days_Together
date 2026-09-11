@@ -55,7 +55,8 @@ void main() {
       expect(
         identical(first, second),
         isTrue,
-        reason: 'coupleSessionProvider must return the same CoupleSession '
+        reason:
+            'coupleSessionProvider must return the same CoupleSession '
             'instance on every read within the same container -- a plain '
             'Provider constructs its value exactly once and caches it.',
       );
@@ -96,7 +97,8 @@ void main() {
       expect(
         () => container.read(homeWidgetRepositoryProvider),
         returnsNormally,
-        reason: 'buildAppRoot must install the homeWidgetRepositoryProvider '
+        reason:
+            'buildAppRoot must install the homeWidgetRepositoryProvider '
             'override; without it, every read of it throws '
             'UnimplementedError and the Home Widget Studio cannot open.',
       );

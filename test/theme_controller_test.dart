@@ -38,29 +38,40 @@ void main() {
       expect(state.settings.currentTheme, ThemeType.offWhite);
     });
 
-    test('build() adopts persisted settings once the async load resolves', () async {
-      final persisted = AppSettings(currentTheme: ThemeType.pink, musicVolume: 0.2);
-      SharedPreferences.setMockInitialValues({
-        'app_settings': jsonEncode(persisted.toJson()),
-      });
-      final container = _readyContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'build() adopts persisted settings once the async load resolves',
+      () async {
+        final persisted = AppSettings(
+          currentTheme: ThemeType.pink,
+          musicVolume: 0.2,
+        );
+        SharedPreferences.setMockInitialValues({
+          'app_settings': jsonEncode(persisted.toJson()),
+        });
+        final container = _readyContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      final state = container.read(themeControllerProvider);
-      expect(state.currentTheme, ThemeType.pink);
-      expect(state.settings.musicVolume, 0.2);
-    });
+        final state = container.read(themeControllerProvider);
+        expect(state.currentTheme, ThemeType.pink);
+        expect(state.settings.musicVolume, 0.2);
+      },
+    );
 
-    test('a missing or malformed settings cache falls back to defaults without crashing', () async {
-      SharedPreferences.setMockInitialValues({'app_settings': 'not valid json'});
-      final container = _readyContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
+    test(
+      'a missing or malformed settings cache falls back to defaults without crashing',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'app_settings': 'not valid json',
+        });
+        final container = _readyContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
 
-      final state = container.read(themeControllerProvider);
-      expect(state.currentTheme, ThemeType.offWhite);
-    });
+        final state = container.read(themeControllerProvider);
+        expect(state.currentTheme, ThemeType.offWhite);
+      },
+    );
 
     test('changeTheme is a no-op when the theme is already active', () async {
       SharedPreferences.setMockInitialValues({});
@@ -89,7 +100,9 @@ void main() {
       expect(state.settings.currentTheme, ThemeType.deepPurple);
 
       final prefs = await SharedPreferences.getInstance();
-      final saved = AppSettings.fromJson(jsonDecode(prefs.getString('app_settings')!));
+      final saved = AppSettings.fromJson(
+        jsonDecode(prefs.getString('app_settings')!),
+      );
       expect(saved.currentTheme, ThemeType.deepPurple);
     });
 
@@ -99,7 +112,10 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
       final notifier = container.read(themeControllerProvider.notifier);
-      final originalAccent = container.read(themeControllerProvider).settings.customAccentColor;
+      final originalAccent = container
+          .read(themeControllerProvider)
+          .settings
+          .customAccentColor;
 
       await notifier.setCustomColor(primary: 0xFF123456);
 
@@ -117,9 +133,14 @@ void main() {
 
       await notifier.setCustomIsDark(false);
 
-      expect(container.read(themeControllerProvider).settings.customIsDark, false);
+      expect(
+        container.read(themeControllerProvider).settings.customIsDark,
+        false,
+      );
       final prefs = await SharedPreferences.getInstance();
-      final saved = AppSettings.fromJson(jsonDecode(prefs.getString('app_settings')!));
+      final saved = AppSettings.fromJson(
+        jsonDecode(prefs.getString('app_settings')!),
+      );
       expect(saved.customIsDark, false);
     });
 
@@ -131,25 +152,33 @@ void main() {
       final notifier = container.read(themeControllerProvider.notifier);
 
       await notifier.toggleFavoriteTheme('Midnight Glass');
-      expect(container.read(themeControllerProvider).settings.favoriteThemes, ['Midnight Glass']);
+      expect(container.read(themeControllerProvider).settings.favoriteThemes, [
+        'Midnight Glass',
+      ]);
 
       await notifier.toggleFavoriteTheme('Midnight Glass');
-      expect(container.read(themeControllerProvider).settings.favoriteThemes, isEmpty);
+      expect(
+        container.read(themeControllerProvider).settings.favoriteThemes,
+        isEmpty,
+      );
     });
 
-    test('currentLoveTheme and currentGradient resolve the custom theme from settings', () async {
-      SharedPreferences.setMockInitialValues({});
-      final container = _readyContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(themeControllerProvider.notifier);
+    test(
+      'currentLoveTheme and currentGradient resolve the custom theme from settings',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = _readyContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(themeControllerProvider.notifier);
 
-      await notifier.changeTheme(ThemeType.custom);
-      await notifier.setCustomColor(primary: 0xFFABCDEF);
+        await notifier.changeTheme(ThemeType.custom);
+        await notifier.setCustomColor(primary: 0xFFABCDEF);
 
-      final state = container.read(themeControllerProvider);
-      expect(state.currentLoveTheme.primaryColor.toARGB32(), 0xFFABCDEF);
-      expect(state.currentGradient.colors.first.toARGB32(), 0xFFABCDEF);
-    });
+        final state = container.read(themeControllerProvider);
+        expect(state.currentLoveTheme.primaryColor.toARGB32(), 0xFFABCDEF);
+        expect(state.currentGradient.colors.first.toARGB32(), 0xFFABCDEF);
+      },
+    );
   });
 }

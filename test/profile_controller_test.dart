@@ -19,11 +19,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (MethodCall methodCall) async {
-        return '.';
-      },
-    );
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.';
+          },
+        );
   });
 
   group('ProfileController.updateFromSession mirroring', () {
@@ -50,93 +50,125 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      container.read(profileControllerProvider.notifier).updateFromSession(session);
+      container
+          .read(profileControllerProvider.notifier)
+          .updateFromSession(session);
 
       var notifyCount = 0;
-      container.listen(profileControllerProvider, (prev, next) => notifyCount++);
-      container.read(profileControllerProvider.notifier).updateFromSession(session);
+      container.listen(
+        profileControllerProvider,
+        (prev, next) => notifyCount++,
+      );
+      container
+          .read(profileControllerProvider.notifier)
+          .updateFromSession(session);
 
       expect(notifyCount, 0);
     });
 
-    test('mirrors name/avatar/join-date fields and notifies exactly once when they change', () async {
-      SharedPreferences.setMockInitialValues({
-        'your_name': 'Alex',
-        'partner_name': 'Sam',
-        'your_avatar_path': '/avatars/alex.png',
-        'partner_avatar_path': '/avatars/sam.png',
-        'your_join_date': DateTime(2022, 1, 1).toIso8601String(),
-        'partner_join_date': DateTime(2022, 1, 2).toIso8601String(),
-      });
+    test(
+      'mirrors name/avatar/join-date fields and notifies exactly once when they change',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'your_name': 'Alex',
+          'partner_name': 'Sam',
+          'your_avatar_path': '/avatars/alex.png',
+          'partner_avatar_path': '/avatars/sam.png',
+          'your_join_date': DateTime(2022, 1, 1).toIso8601String(),
+          'partner_join_date': DateTime(2022, 1, 2).toIso8601String(),
+        });
 
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
-      var notifyCount = 0;
-      container.listen(profileControllerProvider, (prev, next) => notifyCount++);
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
+        var notifyCount = 0;
+        container.listen(
+          profileControllerProvider,
+          (prev, next) => notifyCount++,
+        );
 
-      container.read(profileControllerProvider.notifier).updateFromSession(session);
+        container
+            .read(profileControllerProvider.notifier)
+            .updateFromSession(session);
 
-      final state = container.read(profileControllerProvider);
-      expect(notifyCount, 1);
-      expect(state.yourName, 'Alex');
-      expect(state.partnerName, 'Sam');
-      expect(state.yourAvatarPath, '/avatars/alex.png');
-      expect(state.partnerAvatarPath, '/avatars/sam.png');
-      expect(state.yourJoinDate, DateTime(2022, 1, 1));
-      expect(state.partnerJoinDate, DateTime(2022, 1, 2));
+        final state = container.read(profileControllerProvider);
+        expect(notifyCount, 1);
+        expect(state.yourName, 'Alex');
+        expect(state.partnerName, 'Sam');
+        expect(state.yourAvatarPath, '/avatars/alex.png');
+        expect(state.partnerAvatarPath, '/avatars/sam.png');
+        expect(state.yourJoinDate, DateTime(2022, 1, 1));
+        expect(state.partnerJoinDate, DateTime(2022, 1, 2));
 
-      // A second call with unchanged fields must not notify again.
-      container.read(profileControllerProvider.notifier).updateFromSession(session);
-      expect(notifyCount, 1);
-    });
+        // A second call with unchanged fields must not notify again.
+        container
+            .read(profileControllerProvider.notifier)
+            .updateFromSession(session);
+        expect(notifyCount, 1);
+      },
+    );
   });
 
   group('ProfileController write methods delegate to CoupleSession', () {
-    test('setYourName writes through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'setYourName writes through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(profileControllerProvider.notifier).setYourName('Ashwel');
+        await container
+            .read(profileControllerProvider.notifier)
+            .setYourName('Ashwel');
 
-      expect(session.yourName, 'Ashwel');
-    });
+        expect(session.yourName, 'Ashwel');
+      },
+    );
 
-    test('setNames writes through both sides to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'setNames writes through both sides to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(profileControllerProvider.notifier).setNames('Ashwel', 'Rowel');
+        await container
+            .read(profileControllerProvider.notifier)
+            .setNames('Ashwel', 'Rowel');
 
-      expect(session.yourName, 'Ashwel');
-      expect(session.partnerName, 'Rowel');
-    });
+        expect(session.yourName, 'Ashwel');
+        expect(session.partnerName, 'Rowel');
+      },
+    );
 
-    test('setAvatars writes through to the live CoupleSession instance without a Supabase pairing', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'setAvatars writes through to the live CoupleSession instance without a Supabase pairing',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      // Offline/unpaired path (no Supabase, no coupleId): setAvatars falls
-      // through to the plain local-write branch, matching
-      // couple_session.dart's own behavior.
-      await container.read(profileControllerProvider.notifier).setAvatars(yourPath: '/mock/avatars/ashwel.jpg');
+        // Offline/unpaired path (no Supabase, no coupleId): setAvatars falls
+        // through to the plain local-write branch, matching
+        // couple_session.dart's own behavior.
+        await container
+            .read(profileControllerProvider.notifier)
+            .setAvatars(yourPath: '/mock/avatars/ashwel.jpg');
 
-      expect(session.yourAvatarPath, '/mock/avatars/ashwel.jpg');
-    });
+        expect(session.yourAvatarPath, '/mock/avatars/ashwel.jpg');
+      },
+    );
   });
 }

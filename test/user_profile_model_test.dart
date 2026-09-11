@@ -38,9 +38,7 @@ void main() {
     });
 
     test('fromMap handles minimal dictionary safely', () {
-      final map = {
-        'id': 'user-uuid-999',
-      };
+      final map = {'id': 'user-uuid-999'};
 
       final profile = UserProfile.fromMap(map);
 

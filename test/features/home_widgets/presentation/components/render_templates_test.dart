@@ -10,7 +10,9 @@ import 'package:days_together/core/platform/home_widget/render_templates/days_to
 void main() {
   final theme = ThemeManager.getTheme(ThemeType.midnightRose);
 
-  testWidgets('Noteit2x2RenderCard renders empty state and drawing state', (tester) async {
+  testWidgets('Noteit2x2RenderCard renders empty state and drawing state', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -26,7 +28,9 @@ void main() {
     expect(find.text('Tap to draw first 💕'), findsOneWidget);
   });
 
-  testWidgets('DaysTogether2x2RenderCard renders days count and title', (tester) async {
+  testWidgets('DaysTogether2x2RenderCard renders days count and title', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -44,7 +48,9 @@ void main() {
     expect(find.text('4th Anniversary'), findsOneWidget);
   });
 
-  testWidgets('DaysTogether4x2RenderCard renders couple details and time', (tester) async {
+  testWidgets('DaysTogether4x2RenderCard renders couple details and time', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(

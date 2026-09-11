@@ -46,7 +46,9 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      await container.read(topicCardsControllerProvider.notifier).addCustomCard('Our own question?', 'Fun & Quirky');
+      await container
+          .read(topicCardsControllerProvider.notifier)
+          .addCustomCard('Our own question?', 'Fun & Quirky');
 
       final state = container.read(topicCardsControllerProvider);
       expect(state.customCards, hasLength(1));
@@ -64,7 +66,10 @@ void main() {
 
       final state = container.read(topicCardsControllerProvider);
       expect(state.activeDeck, isNotEmpty);
-      expect(state.activeDeck.every((c) => c.category == 'Fun & Quirky'), isTrue);
+      expect(
+        state.activeDeck.every((c) => c.category == 'Fun & Quirky'),
+        isTrue,
+      );
     });
 
     test('nextCard/previousCard wrap around the active deck', () async {
@@ -73,14 +78,20 @@ void main() {
       await Future.delayed(Duration.zero);
       final notifier = container.read(topicCardsControllerProvider.notifier);
       await notifier.setCategory('Fun & Quirky');
-      final deckLength = container.read(topicCardsControllerProvider).activeDeck.length;
+      final deckLength = container
+          .read(topicCardsControllerProvider)
+          .activeDeck
+          .length;
 
       notifier.setCurrentIndex(deckLength - 1);
       notifier.nextCard();
       expect(container.read(topicCardsControllerProvider).currentIndex, 0);
 
       notifier.previousCard();
-      expect(container.read(topicCardsControllerProvider).currentIndex, deckLength - 1);
+      expect(
+        container.read(topicCardsControllerProvider).currentIndex,
+        deckLength - 1,
+      );
     });
 
     test('toggleLikeCard marks a card liked and persists', () async {
@@ -100,37 +111,47 @@ void main() {
       expect(prefs.getStringList('topic_cards_liked_ids'), contains(cardId));
     });
 
-    test('deleteCard removes a custom card and its like locally when unpaired', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(topicCardsControllerProvider.notifier);
+    test(
+      'deleteCard removes a custom card and its like locally when unpaired',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(topicCardsControllerProvider.notifier);
 
-      await notifier.addCustomCard('Delete me', 'Fun & Quirky');
-      final id = container.read(topicCardsControllerProvider).customCards.first.id;
-      await notifier.toggleLikeCard(id);
+        await notifier.addCustomCard('Delete me', 'Fun & Quirky');
+        final id = container
+            .read(topicCardsControllerProvider)
+            .customCards
+            .first
+            .id;
+        await notifier.toggleLikeCard(id);
 
-      await notifier.deleteCard(id);
+        await notifier.deleteCard(id);
 
-      final state = container.read(topicCardsControllerProvider);
-      expect(state.customCards, isEmpty);
-      expect(state.likedCardIds, isNot(contains(id)));
-    });
+        final state = container.read(topicCardsControllerProvider);
+        expect(state.customCards, isEmpty);
+        expect(state.likedCardIds, isNot(contains(id)));
+      },
+    );
 
-    test('purgeCache clears cards, likes, and the SharedPreferences cache', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(topicCardsControllerProvider.notifier);
-      await notifier.addCustomCard('Something', 'Fun & Quirky');
+    test(
+      'purgeCache clears cards, likes, and the SharedPreferences cache',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(topicCardsControllerProvider.notifier);
+        await notifier.addCustomCard('Something', 'Fun & Quirky');
 
-      await notifier.purgeCache();
+        await notifier.purgeCache();
 
-      final state = container.read(topicCardsControllerProvider);
-      expect(state.customCards, isEmpty);
-      expect(state.likedCardIds, isEmpty);
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('topic_cards_custom'), isFalse);
-    });
+        final state = container.read(topicCardsControllerProvider);
+        expect(state.customCards, isEmpty);
+        expect(state.likedCardIds, isEmpty);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey('topic_cards_custom'), isFalse);
+      },
+    );
   });
 }

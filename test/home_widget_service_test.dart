@@ -13,9 +13,9 @@ void main() {
   setUpAll(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('home_widget'),
-      (MethodCall methodCall) async => true,
-    );
+          const MethodChannel('home_widget'),
+          (MethodCall methodCall) async => true,
+        );
   });
 
   group('HomeWidgetService - Duration Calculation & Formatting Tests', () {
@@ -38,19 +38,25 @@ void main() {
       expect(formatted, equals('0 Days 05:03:09'));
     });
 
-    test('4. Single-day relationship with zero-padding check (1 Days 05:03:09)', () {
-      final start = DateTime(2026, 8, 7, 0, 0, 0);
-      final now = DateTime(2026, 8, 8, 5, 3, 9);
-      final formatted = HomeWidgetService.formatDuration(start, now: now);
-      expect(formatted, equals('1 Days 05:03:09'));
-    });
+    test(
+      '4. Single-day relationship with zero-padding check (1 Days 05:03:09)',
+      () {
+        final start = DateTime(2026, 8, 7, 0, 0, 0);
+        final now = DateTime(2026, 8, 8, 5, 3, 9);
+        final formatted = HomeWidgetService.formatDuration(start, now: now);
+        expect(formatted, equals('1 Days 05:03:09'));
+      },
+    );
 
-    test('5. Hour, minute, second zero-padding for single digit numbers (00, 01, 09)', () {
-      final start = DateTime(2026, 8, 8, 0, 0, 0);
-      final now = DateTime(2026, 8, 8, 0, 1, 9);
-      final formatted = HomeWidgetService.formatDuration(start, now: now);
-      expect(formatted, equals('0 Days 00:01:09'));
-    });
+    test(
+      '5. Hour, minute, second zero-padding for single digit numbers (00, 01, 09)',
+      () {
+        final start = DateTime(2026, 8, 8, 0, 0, 0);
+        final now = DateTime(2026, 8, 8, 0, 1, 9);
+        final formatted = HomeWidgetService.formatDuration(start, now: now);
+        expect(formatted, equals('0 Days 00:01:09'));
+      },
+    );
 
     test('6. Multiple-day relationship (25 Days 12:45:32)', () {
       final start = DateTime(2026, 7, 14, 0, 0, 0);
@@ -113,38 +119,53 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('12. HomeWidgetService.clearWidget executes without throwing', () async {
-      await expectLater(HomeWidgetService.instance.clearWidget(), completes);
-    });
+    test(
+      '12. HomeWidgetService.clearWidget executes without throwing',
+      () async {
+        await expectLater(HomeWidgetService.instance.clearWidget(), completes);
+      },
+    );
 
-    test('13. HomeWidgetService.updateWidget with null startDate executes clearWidget safely', () async {
-      await expectLater(
-        HomeWidgetService.instance.updateWidget(startDate: null),
-        completes,
-      );
-    });
+    test(
+      '13. HomeWidgetService.updateWidget with null startDate executes clearWidget safely',
+      () async {
+        await expectLater(
+          HomeWidgetService.instance.updateWidget(startDate: null),
+          completes,
+        );
+      },
+    );
 
-    test('14. RelationshipLifecycleManager.handleLogout triggers clearWidget safely', () async {
-      await expectLater(
-        RelationshipLifecycleManager.instance.handleLogout(),
-        completes,
-      );
-    });
+    test(
+      '14. RelationshipLifecycleManager.handleLogout triggers clearWidget safely',
+      () async {
+        await expectLater(
+          RelationshipLifecycleManager.instance.handleLogout(),
+          completes,
+        );
+      },
+    );
 
-    test('15. RelationshipLifecycleManager.handleDisconnect triggers clearWidget safely', () async {
-      await expectLater(
-        RelationshipLifecycleManager.instance.handleDisconnect(),
-        completes,
-      );
-    });
+    test(
+      '15. RelationshipLifecycleManager.handleDisconnect triggers clearWidget safely',
+      () async {
+        await expectLater(
+          RelationshipLifecycleManager.instance.handleDisconnect(),
+          completes,
+        );
+      },
+    );
 
-    test('16. CoupleSession.setStartDate updates widget date without error', () async {
-      final session = CoupleSession();
-      await expectLater(
-        session.setStartDate(DateTime(2023, 5, 20)),
-        completes,
-      );
-      expect(session.startDate, equals(DateTime(2023, 5, 20)));
-    });
+    test(
+      '16. CoupleSession.setStartDate updates widget date without error',
+      () async {
+        final session = CoupleSession();
+        await expectLater(
+          session.setStartDate(DateTime(2023, 5, 20)),
+          completes,
+        );
+        expect(session.startDate, equals(DateTime(2023, 5, 20)));
+      },
+    );
   });
 }

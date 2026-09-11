@@ -15,43 +15,62 @@ import 'package:days_together/core/activity/recent_activity_service.dart';
 
 void main() {
   group('RecentActivityController', () {
-    test('build() reflects RecentActivityService.activitiesNotifier\'s current value', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'build() reflects RecentActivityService.activitiesNotifier\'s current value',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      final state = container.read(recentActivityControllerProvider);
-      expect(state.activities, RecentActivityService.instance.activitiesNotifier.value);
-    });
+        final state = container.read(recentActivityControllerProvider);
+        expect(
+          state.activities,
+          RecentActivityService.instance.activitiesNotifier.value,
+        );
+      },
+    );
 
-    test('isLoading flips back to false once init() resolves (even on its graceful-failure path)', () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      container.listen(recentActivityControllerProvider, (prev, next) {});
+    test(
+      'isLoading flips back to false once init() resolves (even on its graceful-failure path)',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        container.listen(recentActivityControllerProvider, (prev, next) {});
 
-      await Future.delayed(Duration.zero);
+        await Future.delayed(Duration.zero);
 
-      expect(container.read(recentActivityControllerProvider).isLoading, false);
-    });
+        expect(
+          container.read(recentActivityControllerProvider).isLoading,
+          false,
+        );
+      },
+    );
 
-    test('state updates when RecentActivityService.activitiesNotifier changes externally', () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      container.listen(recentActivityControllerProvider, (prev, next) {});
-      await Future.delayed(Duration.zero);
+    test(
+      'state updates when RecentActivityService.activitiesNotifier changes externally',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        container.listen(recentActivityControllerProvider, (prev, next) {});
+        await Future.delayed(Duration.zero);
 
-      final activity = LocalActivity(
-        id: 'test-1',
-        activityType: 'updated',
-        title: 'Test activity',
-        description: 'A test activity',
-        icon: '✨',
-        timestamp: DateTime.now(),
-        initiatedByCurrentUser: true,
-      );
-      addTearDown(() => RecentActivityService.instance.activitiesNotifier.value = []);
-      RecentActivityService.instance.activitiesNotifier.value = [activity];
+        final activity = LocalActivity(
+          id: 'test-1',
+          activityType: 'updated',
+          title: 'Test activity',
+          description: 'A test activity',
+          icon: '✨',
+          timestamp: DateTime.now(),
+          initiatedByCurrentUser: true,
+        );
+        addTearDown(
+          () => RecentActivityService.instance.activitiesNotifier.value = [],
+        );
+        RecentActivityService.instance.activitiesNotifier.value = [activity];
 
-      expect(container.read(recentActivityControllerProvider).activities, [activity]);
-    });
+        expect(container.read(recentActivityControllerProvider).activities, [
+          activity,
+        ]);
+      },
+    );
   });
 }

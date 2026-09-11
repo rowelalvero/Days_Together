@@ -64,25 +64,28 @@ void main() {
       expect(result, contains('DATE ISSUED: Not set'));
     });
 
-    test('date issued falls back to start date when unset, matching the original widget logic', () {
-      final result = LicenseQrCodec.encode(
-        holderName: 'Ada',
-        holderGender: null,
-        holderBirthdate: null,
-        holderAddress: null,
-        holderNationality: 'unknown',
-        holderWeight: 'unknown',
-        holderHeight: 'unknown',
-        holderBloodType: 'unknown',
-        holderEyeColor: 'unknown',
-        holderConditions: 'none',
-        holderDateIssued: null,
-        emergencyName: 'Someone',
-        emergencyPhone: 'unknown',
-        startDate: DateTime(2021, 3, 4),
-      );
+    test(
+      'date issued falls back to start date when unset, matching the original widget logic',
+      () {
+        final result = LicenseQrCodec.encode(
+          holderName: 'Ada',
+          holderGender: null,
+          holderBirthdate: null,
+          holderAddress: null,
+          holderNationality: 'unknown',
+          holderWeight: 'unknown',
+          holderHeight: 'unknown',
+          holderBloodType: 'unknown',
+          holderEyeColor: 'unknown',
+          holderConditions: 'none',
+          holderDateIssued: null,
+          emergencyName: 'Someone',
+          emergencyPhone: 'unknown',
+          startDate: DateTime(2021, 3, 4),
+        );
 
-      expect(result, contains('DATE ISSUED: 2021-03-04'));
-    });
+        expect(result, contains('DATE ISSUED: 2021-03-04'));
+      },
+    );
   });
 }

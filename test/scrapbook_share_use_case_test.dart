@@ -41,8 +41,10 @@ ProviderContainer _unpairedContainer({
   final container = ProviderContainer(
     overrides: [
       coupleSessionProvider.overrideWithValue(CoupleSession()),
-      if (chatOverride != null) loveChatControllerProvider.overrideWith(chatOverride),
-      if (noteitOverride != null) noteitControllerProvider.overrideWith(noteitOverride),
+      if (chatOverride != null)
+        loveChatControllerProvider.overrideWith(chatOverride),
+      if (noteitOverride != null)
+        noteitControllerProvider.overrideWith(noteitOverride),
     ],
   );
   container.listen(loveChatControllerProvider, (prev, next) {});
@@ -84,47 +86,57 @@ void main() {
       expect(await draftStore.load(), isNull);
     });
 
-    test('note-creation failure: draft is NOT cleared, no item is returned', () async {
-      final container = _unpairedContainer(noteitOverride: _ThrowingNoteitController.new);
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final noteit = container.read(noteitControllerProvider.notifier);
-      final chat = container.read(loveChatControllerProvider.notifier);
-      const draftStore = NoteitDraftStore();
-      await draftStore.save(draftDoc);
+    test(
+      'note-creation failure: draft is NOT cleared, no item is returned',
+      () async {
+        final container = _unpairedContainer(
+          noteitOverride: _ThrowingNoteitController.new,
+        );
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final noteit = container.read(noteitControllerProvider.notifier);
+        final chat = container.read(loveChatControllerProvider.notifier);
+        const draftStore = NoteitDraftStore();
+        await draftStore.save(draftDoc);
 
-      final useCase = ScrapbookShareUseCase(noteit, chat, draftStore);
-      final result = await useCase.share(
-        canvasJson: '{}',
-        localImagePath: null,
-        yourName: 'Me',
-      );
+        final useCase = ScrapbookShareUseCase(noteit, chat, draftStore);
+        final result = await useCase.share(
+          canvasJson: '{}',
+          localImagePath: null,
+          yourName: 'Me',
+        );
 
-      expect(result, isA<ScrapbookShareNoteFailed>());
-      expect(await draftStore.load(), isNotNull);
-    });
+        expect(result, isA<ScrapbookShareNoteFailed>());
+        expect(await draftStore.load(), isNotNull);
+      },
+    );
 
-    test('chat-mirror failure: note is kept, draft is cleared, distinct error surfaced', () async {
-      final container = _unpairedContainer(chatOverride: _ThrowingLoveChatController.new);
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final noteit = container.read(noteitControllerProvider.notifier);
-      final chat = container.read(loveChatControllerProvider.notifier);
-      const draftStore = NoteitDraftStore();
-      await draftStore.save(draftDoc);
+    test(
+      'chat-mirror failure: note is kept, draft is cleared, distinct error surfaced',
+      () async {
+        final container = _unpairedContainer(
+          chatOverride: _ThrowingLoveChatController.new,
+        );
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final noteit = container.read(noteitControllerProvider.notifier);
+        final chat = container.read(loveChatControllerProvider.notifier);
+        const draftStore = NoteitDraftStore();
+        await draftStore.save(draftDoc);
 
-      final useCase = ScrapbookShareUseCase(noteit, chat, draftStore);
-      final result = await useCase.share(
-        canvasJson: '{}',
-        localImagePath: null,
-        yourName: 'Me',
-      );
+        final useCase = ScrapbookShareUseCase(noteit, chat, draftStore);
+        final result = await useCase.share(
+          canvasJson: '{}',
+          localImagePath: null,
+          yourName: 'Me',
+        );
 
-      expect(result, isA<ScrapbookShareChatMirrorFailed>());
-      final failed = result as ScrapbookShareChatMirrorFailed;
-      expect(failed.item.content, '{}');
-      expect(failed.failure.message, isNotEmpty);
-      expect(await draftStore.load(), isNull);
-    });
+        expect(result, isA<ScrapbookShareChatMirrorFailed>());
+        final failed = result as ScrapbookShareChatMirrorFailed;
+        expect(failed.item.content, '{}');
+        expect(failed.failure.message, isNotEmpty);
+        expect(await draftStore.load(), isNull);
+      },
+    );
   });
 }

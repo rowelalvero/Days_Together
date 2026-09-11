@@ -42,10 +42,9 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      await container.read(giftReminderControllerProvider.notifier).addReminder(
-            "Mom's birthday",
-            DateTime(2026, 12, 1),
-          );
+      await container
+          .read(giftReminderControllerProvider.notifier)
+          .addReminder("Mom's birthday", DateTime(2026, 12, 1));
 
       final state = container.read(giftReminderControllerProvider);
       expect(state.reminders, hasLength(1));
@@ -62,13 +61,31 @@ void main() {
       final notifier = container.read(giftReminderControllerProvider.notifier);
 
       await notifier.addReminder('Anniversary', DateTime(2026, 9, 1));
-      final id = container.read(giftReminderControllerProvider).reminders.first.id;
+      final id = container
+          .read(giftReminderControllerProvider)
+          .reminders
+          .first
+          .id;
 
       await notifier.toggleReminder(id);
-      expect(container.read(giftReminderControllerProvider).reminders.first.isEnabled, false);
+      expect(
+        container
+            .read(giftReminderControllerProvider)
+            .reminders
+            .first
+            .isEnabled,
+        false,
+      );
 
       await notifier.toggleReminder(id);
-      expect(container.read(giftReminderControllerProvider).reminders.first.isEnabled, true);
+      expect(
+        container
+            .read(giftReminderControllerProvider)
+            .reminders
+            .first
+            .isEnabled,
+        true,
+      );
     });
 
     test('updateReminder updates title/date locally when unpaired', () async {
@@ -78,11 +95,22 @@ void main() {
       final notifier = container.read(giftReminderControllerProvider.notifier);
 
       await notifier.addReminder('Old title', DateTime(2026, 1, 1));
-      final id = container.read(giftReminderControllerProvider).reminders.first.id;
+      final id = container
+          .read(giftReminderControllerProvider)
+          .reminders
+          .first
+          .id;
 
-      await notifier.updateReminder(id, title: 'New title', date: DateTime(2026, 2, 2));
+      await notifier.updateReminder(
+        id,
+        title: 'New title',
+        date: DateTime(2026, 2, 2),
+      );
 
-      final reminder = container.read(giftReminderControllerProvider).reminders.first;
+      final reminder = container
+          .read(giftReminderControllerProvider)
+          .reminders
+          .first;
       expect(reminder.title, 'New title');
       expect(reminder.date, DateTime(2026, 2, 2));
     });
@@ -108,19 +136,24 @@ void main() {
       expect(state.reminders.first.title, 'Keep');
     });
 
-    test('purgeCache clears reminders and the SharedPreferences cache', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(giftReminderControllerProvider.notifier);
-      await notifier.addReminder('Something', DateTime(2026, 5, 5));
+    test(
+      'purgeCache clears reminders and the SharedPreferences cache',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(
+          giftReminderControllerProvider.notifier,
+        );
+        await notifier.addReminder('Something', DateTime(2026, 5, 5));
 
-      await notifier.purgeCache();
+        await notifier.purgeCache();
 
-      final state = container.read(giftReminderControllerProvider);
-      expect(state.reminders, isEmpty);
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey('gift_reminders'), isFalse);
-    });
+        final state = container.read(giftReminderControllerProvider);
+        expect(state.reminders, isEmpty);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey('gift_reminders'), isFalse);
+      },
+    );
   });
 }

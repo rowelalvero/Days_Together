@@ -24,11 +24,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (MethodCall methodCall) async {
-        return '.';
-      },
-    );
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.';
+          },
+        );
   });
 
   group('SessionController.updateFromSession mirroring', () {
@@ -58,86 +58,116 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      container.read(sessionControllerProvider.notifier).updateFromSession(session);
+      container
+          .read(sessionControllerProvider.notifier)
+          .updateFromSession(session);
 
       var notifyCount = 0;
-      container.listen(sessionControllerProvider, (prev, next) => notifyCount++);
-      container.read(sessionControllerProvider.notifier).updateFromSession(session);
+      container.listen(
+        sessionControllerProvider,
+        (prev, next) => notifyCount++,
+      );
+      container
+          .read(sessionControllerProvider.notifier)
+          .updateFromSession(session);
 
       expect(notifyCount, 0);
     });
 
-    test('mirrors identity/lifecycle fields and notifies exactly once when they change', () async {
-      SharedPreferences.setMockInitialValues({
-        'couple_id': 'couple-123',
-        'is_paired': true,
-        'is_creator': true,
-        'onboarding_completed': true,
-      });
+    test(
+      'mirrors identity/lifecycle fields and notifies exactly once when they change',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'couple_id': 'couple-123',
+          'is_paired': true,
+          'is_creator': true,
+          'onboarding_completed': true,
+        });
 
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
-      var notifyCount = 0;
-      container.listen(sessionControllerProvider, (prev, next) => notifyCount++);
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
+        var notifyCount = 0;
+        container.listen(
+          sessionControllerProvider,
+          (prev, next) => notifyCount++,
+        );
 
-      container.read(sessionControllerProvider.notifier).updateFromSession(session);
+        container
+            .read(sessionControllerProvider.notifier)
+            .updateFromSession(session);
 
-      final state = container.read(sessionControllerProvider);
-      expect(notifyCount, 1);
-      expect(state.isInitialized, true);
-      expect(state.coupleId, 'couple-123');
-      expect(state.isPaired, true);
-      expect(state.isCreator, true);
-      expect(state.onboardingCompleted, true);
-      expect(state.isOnboardingComplete, true);
+        final state = container.read(sessionControllerProvider);
+        expect(notifyCount, 1);
+        expect(state.isInitialized, true);
+        expect(state.coupleId, 'couple-123');
+        expect(state.isPaired, true);
+        expect(state.isCreator, true);
+        expect(state.onboardingCompleted, true);
+        expect(state.isOnboardingComplete, true);
 
-      // A second call with unchanged fields must not notify again.
-      container.read(sessionControllerProvider.notifier).updateFromSession(session);
-      expect(notifyCount, 1);
-    });
+        // A second call with unchanged fields must not notify again.
+        container
+            .read(sessionControllerProvider.notifier)
+            .updateFromSession(session);
+        expect(notifyCount, 1);
+      },
+    );
   });
 
   group('SessionController write methods delegate to CoupleSession', () {
-    test('forceInitialized writes through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'forceInitialized writes through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      container.read(sessionControllerProvider.notifier).forceInitialized();
+        container.read(sessionControllerProvider.notifier).forceInitialized();
 
-      expect(session.isInitialized, true);
-    });
+        expect(session.isInitialized, true);
+      },
+    );
 
-    test('clearPartnerDeletedNotice writes through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'clearPartnerDeletedNotice writes through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      container.read(sessionControllerProvider.notifier).clearPartnerDeletedNotice();
+        container
+            .read(sessionControllerProvider.notifier)
+            .clearPartnerDeletedNotice();
 
-      expect(session.showPartnerDeletedNotice, false);
-    });
+        expect(session.showPartnerDeletedNotice, false);
+      },
+    );
 
-    test('unlinkPartner writes through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'unlinkPartner writes through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(sessionControllerProvider.notifier).unlinkPartner();
+        await container
+            .read(sessionControllerProvider.notifier)
+            .unlinkPartner();
 
-      expect(session.isPaired, false);
-    });
+        expect(session.isPaired, false);
+      },
+    );
   });
 }

@@ -28,7 +28,9 @@ void main() {
         isFalse,
       );
       expect(
-        StorageUrlService.isLocalFileRef('$proj/storage/v1/object/public/avatars/x.jpg'),
+        StorageUrlService.isLocalFileRef(
+          '$proj/storage/v1/object/public/avatars/x.jpg',
+        ),
         isFalse,
       );
     });
@@ -178,30 +180,36 @@ void main() {
   });
 
   group('cacheKeyFor', () {
-    test('is stable across the legacy URL and the bare path for one object', () {
-      // The whole point: a signed URL rotates, but the cacheKey must not, or
-      // cached_network_image re-downloads every image on every rotation.
-      const path = 'couples/c1/avatars/u1_1700000000.jpg';
-      final legacy =
-          '$proj/storage/v1/object/public/avatars/$path?t=1700000000';
+    test(
+      'is stable across the legacy URL and the bare path for one object',
+      () {
+        // The whole point: a signed URL rotates, but the cacheKey must not, or
+        // cached_network_image re-downloads every image on every rotation.
+        const path = 'couples/c1/avatars/u1_1700000000.jpg';
+        final legacy =
+            '$proj/storage/v1/object/public/avatars/$path?t=1700000000';
 
-      final fromPath = StorageUrlService.cacheKeyFor(
-        bucket: StorageBuckets.avatars,
-        ref: path,
-      );
-      final fromLegacy = StorageUrlService.cacheKeyFor(
-        bucket: StorageBuckets.avatars,
-        ref: legacy,
-      );
+        final fromPath = StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.avatars,
+          ref: path,
+        );
+        final fromLegacy = StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.avatars,
+          ref: legacy,
+        );
 
-      expect(fromPath, fromLegacy);
-      expect(fromPath, 'avatars|$path');
-    });
+        expect(fromPath, fromLegacy);
+        expect(fromPath, 'avatars|$path');
+      },
+    );
 
     test('does not collide across buckets for identical sub-paths', () {
       const path = 'couples/c1/shared/x.jpg';
       expect(
-        StorageUrlService.cacheKeyFor(bucket: StorageBuckets.timeline, ref: path),
+        StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.timeline,
+          ref: path,
+        ),
         isNot(
           StorageUrlService.cacheKeyFor(
             bucket: StorageBuckets.vaultPhotos,
@@ -234,8 +242,10 @@ void main() {
     test('passes a foreign URL straight through without signing', () {
       const url = 'https://lh3.googleusercontent.com/a/ACg8ocK=s96-c';
       expect(
-        StorageUrlService.instance
-            .resolveCached(bucket: StorageBuckets.avatars, ref: url),
+        StorageUrlService.instance.resolveCached(
+          bucket: StorageBuckets.avatars,
+          ref: url,
+        ),
         url,
       );
     });

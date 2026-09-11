@@ -47,7 +47,10 @@ void main() {
 
       notifier.onRealtimeData([]);
 
-      expect(container.read(currentlyControllerProvider).state, LoveTapState.idle);
+      expect(
+        container.read(currentlyControllerProvider).state,
+        LoveTapState.idle,
+      );
     });
 
     test('onRealtimeData with both partners tapped today yields mutual', () {
@@ -62,7 +65,10 @@ void main() {
         {'date': todayStr, 'partner1_tapped': true, 'partner2_tapped': true},
       ]);
 
-      expect(container.read(currentlyControllerProvider).state, LoveTapState.mutual);
+      expect(
+        container.read(currentlyControllerProvider).state,
+        LoveTapState.mutual,
+      );
     });
 
     test('purgeCache resets state to idle and clears history', () {

@@ -19,16 +19,19 @@ import 'package:days_together/core/session/couple_session.dart';
 
 void main() {
   group('LicenseController', () {
-    test('build() hydrates an empty LicenseDetails when no keys are set', () async {
-      SharedPreferences.setMockInitialValues({});
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+    test(
+      'build() hydrates an empty LicenseDetails when no keys are set',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      final license = await container.read(licenseControllerProvider.future);
+        final license = await container.read(licenseControllerProvider.future);
 
-      expect(license.yourGender, isNull);
-      expect(license.partnerConditions, isNull);
-    });
+        expect(license.yourGender, isNull);
+        expect(license.partnerConditions, isNull);
+      },
+    );
 
     test('build() hydrates every field from SharedPreferences', () async {
       SharedPreferences.setMockInitialValues({
@@ -50,72 +53,80 @@ void main() {
       expect(license.partnerSignature, 'sig-data');
     });
 
-    test('updateFields persists only the provided fields, leaving others untouched', () async {
-      SharedPreferences.setMockInitialValues({
-        PrefsKeys.yourGender: 'Female',
-        PrefsKeys.partnerGender: 'Male',
-      });
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
-      );
-      addTearDown(container.dispose);
-      await container.read(licenseControllerProvider.future);
+    test(
+      'updateFields persists only the provided fields, leaving others untouched',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          PrefsKeys.yourGender: 'Female',
+          PrefsKeys.partnerGender: 'Male',
+        });
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+        );
+        addTearDown(container.dispose);
+        await container.read(licenseControllerProvider.future);
 
-      await container.read(licenseControllerProvider.notifier).updateFields(
-            yourPhone: '555-0100',
-          );
+        await container
+            .read(licenseControllerProvider.notifier)
+            .updateFields(yourPhone: '555-0100');
 
-      final license = container.read(licenseControllerProvider).value!;
-      expect(license.yourPhone, '555-0100');
-      // Untouched fields, set before the update, must survive it -- this is
-      // the direct regression guard for the sentinel pattern updateFields
-      // inherited from the old updateLicense.
-      expect(license.yourGender, 'Female');
-      expect(license.partnerGender, 'Male');
+        final license = container.read(licenseControllerProvider).value!;
+        expect(license.yourPhone, '555-0100');
+        // Untouched fields, set before the update, must survive it -- this is
+        // the direct regression guard for the sentinel pattern updateFields
+        // inherited from the old updateLicense.
+        expect(license.yourGender, 'Female');
+        expect(license.partnerGender, 'Male');
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString(PrefsKeys.yourPhone), '555-0100');
-      expect(prefs.getString(PrefsKeys.yourGender), 'Female');
-    });
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString(PrefsKeys.yourPhone), '555-0100');
+        expect(prefs.getString(PrefsKeys.yourGender), 'Female');
+      },
+    );
 
-    test('updateFields(field: null) explicitly clears a field, distinct from omitting it', () async {
-      SharedPreferences.setMockInitialValues({
-        PrefsKeys.yourSignature: 'old-signature',
-      });
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
-      );
-      addTearDown(container.dispose);
-      await container.read(licenseControllerProvider.future);
+    test(
+      'updateFields(field: null) explicitly clears a field, distinct from omitting it',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          PrefsKeys.yourSignature: 'old-signature',
+        });
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+        );
+        addTearDown(container.dispose);
+        await container.read(licenseControllerProvider.future);
 
-      await container.read(licenseControllerProvider.notifier).updateFields(
-            yourSignature: null,
-          );
+        await container
+            .read(licenseControllerProvider.notifier)
+            .updateFields(yourSignature: null);
 
-      final license = container.read(licenseControllerProvider).value!;
-      expect(license.yourSignature, isNull);
+        final license = container.read(licenseControllerProvider).value!;
+        expect(license.yourSignature, isNull);
 
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.containsKey(PrefsKeys.yourSignature), isFalse);
-    });
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.containsKey(PrefsKeys.yourSignature), isFalse);
+      },
+    );
 
-    test('updateFields only ever writes "your" or "partner" fields as given -- both sides work independently', () async {
-      SharedPreferences.setMockInitialValues({});
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
-      );
-      addTearDown(container.dispose);
-      await container.read(licenseControllerProvider.future);
+    test(
+      'updateFields only ever writes "your" or "partner" fields as given -- both sides work independently',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(CoupleSession())],
+        );
+        addTearDown(container.dispose);
+        await container.read(licenseControllerProvider.future);
 
-      await container.read(licenseControllerProvider.notifier).updateFields(
-            yourBloodType: 'O+',
-            partnerBloodType: 'A+',
-          );
+        await container
+            .read(licenseControllerProvider.notifier)
+            .updateFields(yourBloodType: 'O+', partnerBloodType: 'A+');
 
-      final license = container.read(licenseControllerProvider).value!;
-      expect(license.yourBloodType, 'O+');
-      expect(license.partnerBloodType, 'A+');
-    });
+        final license = container.read(licenseControllerProvider).value!;
+        expect(license.yourBloodType, 'O+');
+        expect(license.partnerBloodType, 'A+');
+      },
+    );
   });
 
   group('LicenseDetails', () {

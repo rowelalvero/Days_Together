@@ -48,12 +48,11 @@ List<File> _dartFilesUnder(String relativeDir) {
 /// Phase 4 scanning the same set, and picks up a model added under a new
 /// feature without a test edit.
 List<File> _modelFiles() => [
-      ..._dartFilesUnder('lib/shared/models'),
-      ...Directory('lib/features')
-          .listSync()
-          .whereType<Directory>()
-          .expand((d) => _dartFilesUnder('${d.path}/domain/entities')),
-    ];
+  ..._dartFilesUnder('lib/shared/models'),
+  ...Directory('lib/features').listSync().whereType<Directory>().expand(
+    (d) => _dartFilesUnder('${d.path}/domain/entities'),
+  ),
+];
 
 void main() {
   group('Architecture Rule 1 -- UI must not directly access Supabase', () {
@@ -68,213 +67,246 @@ void main() {
       expect(
         violations,
         isEmpty,
-        reason: 'Screens importing supabase_flutter directly (see ADR-004): $violations',
+        reason:
+            'Screens importing supabase_flutter directly (see ADR-004): $violations',
       );
     });
 
-    test('no widget file under lib/shared/ or lib/features/*/presentation/ imports supabase_flutter', () {
-      // Phase 7b relocated lib/widgets/ into lib/shared/ (design-system-tier,
-      // feature-agnostic components) and lib/features/<name>/presentation/
-      // (feature-specific ones) -- this is their combined successor scope.
-      final violations = <String>[];
-      final widgetDirs = [
-        ..._dartFilesUnder('lib/shared'),
-        for (final entry in Directory('lib/features').listSync())
-          if (entry is Directory) ..._dartFilesUnder('${entry.path}/presentation'),
-      ];
-      for (final file in widgetDirs) {
-        final content = file.readAsStringSync();
-        if (content.contains("import 'package:supabase_flutter")) {
-          violations.add(file.path);
-        }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'Widgets importing supabase_flutter directly (see ADR-004): $violations',
-      );
-    });
-  });
-
-  group('Architecture Rule 13 -- models must not import Flutter\'s rendering layer', () {
-    test('no model class extends CustomPainter', () {
-      final violations = <String>[];
-      for (final file in _modelFiles()) {
-        final content = file.readAsStringSync();
-        if (content.contains('extends CustomPainter')) {
-          violations.add(file.path);
-        }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'Model files declaring a CustomPainter (model->UI violation, see migration-roadmap.md Phase 0): $violations',
-      );
-    });
-  });
-
-  group('Migration Phase 1 / item 4 -- RelationshipProvider is gone; everything depends on CoupleSession', () {
-    test('no lib/ file has a live code reference to RelationshipProvider', () {
-      // RelationshipProvider started as a pass-through facade over
-      // CoupleSession (Phase 6b-1) kept alive only so UI files that hadn't
-      // converted yet didn't need to change in that phase. The
-      // Definition-of-Done sweep's item 4 converted its last direct readers
-      // (license/ presentation files, bento_grid.dart, noteit_screen.dart)
-      // to CoupleSession directly and deleted relationship_provider.dart
-      // outright -- this is the literal exit criterion the item's
-      // Definition-of-Done row always promised, finally enforced. Comment
-      // lines are skipped deliberately: several files' doc comments
-      // accurately narrate RelationshipProvider's history (e.g. "extracted
-      // from RelationshipProvider in Phase 5"), which is legitimate
-      // documentation, not a regression -- this rule only catches an actual
-      // reintroduced import/type/constructor reference.
-      final violations = <String>[];
-      for (final file in _dartFilesUnder('lib')) {
-        for (final rawLine in file.readAsLinesSync()) {
-          final line = rawLine.trim();
-          if (line.startsWith('//')) continue;
-          if (line.contains('RelationshipProvider')) {
+    test(
+      'no widget file under lib/shared/ or lib/features/*/presentation/ imports supabase_flutter',
+      () {
+        // Phase 7b relocated lib/widgets/ into lib/shared/ (design-system-tier,
+        // feature-agnostic components) and lib/features/<name>/presentation/
+        // (feature-specific ones) -- this is their combined successor scope.
+        final violations = <String>[];
+        final widgetDirs = [
+          ..._dartFilesUnder('lib/shared'),
+          for (final entry in Directory('lib/features').listSync())
+            if (entry is Directory)
+              ..._dartFilesUnder('${entry.path}/presentation'),
+        ];
+        for (final file in widgetDirs) {
+          final content = file.readAsStringSync();
+          if (content.contains("import 'package:supabase_flutter")) {
             violations.add(file.path);
-            break;
           }
         }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'RelationshipProvider referenced but it was deleted (see migration-roadmap.md item 4): $violations',
-      );
-    });
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'Widgets importing supabase_flutter directly (see ADR-004): $violations',
+        );
+      },
+    );
   });
 
-  group('Item 3 gap-fix Phase 1 -- the 12 retired domain providers are gone; everything depends on their Riverpod controllers', () {
-    test('no lib/ file has a live code reference to any of the 12 retired provider class names', () {
-      // The 12 domain providers (TimelineProvider, BucketListProvider,
-      // TimeCapsuleProvider, DailyMoodProvider, GiftReminderProvider,
-      // VaultProvider, CalendarProvider, TopicCardsProvider, NoteitProvider,
-      // LoveChatProvider, CurrentlyProvider, NotificationPreferencesProvider)
-      // each had a complete, faithful Riverpod port under lib/features/<name>/
-      // before their UI call sites were ever converted -- once every
-      // context.watch<X>()/context.read<X>() site was flipped to
-      // ref.watch/ref.read on the corresponding *ControllerProvider, the old
-      // lib/providers/*.dart files and their main.dart registrations were
-      // deleted outright (see migration-roadmap.md's "Corrected on
-      // implementation" note for item 3). Comment lines are skipped
-      // deliberately -- several files' doc comments accurately narrate these
-      // providers' history (e.g. "Riverpod port of TimelineProvider"), which
-      // is legitimate documentation, not a regression -- this rule only
-      // catches an actual reintroduced import/type/constructor reference.
-      const retiredProviderNames = [
-        'TimelineProvider',
-        'BucketListProvider',
-        'TimeCapsuleProvider',
-        'DailyMoodProvider',
-        'GiftReminderProvider',
-        'VaultProvider',
-        'CalendarProvider',
-        'TopicCardsProvider',
-        'NoteitProvider',
-        'LoveChatProvider',
-        'CurrentlyProvider',
-        'NotificationPreferencesProvider',
-      ];
-      final violations = <String>[];
-      for (final file in _dartFilesUnder('lib')) {
-        for (final rawLine in file.readAsLinesSync()) {
-          final line = rawLine.trim();
-          if (line.startsWith('//')) continue;
-          for (final name in retiredProviderNames) {
-            if (line.contains(name)) {
-              violations.add('${file.path}: $name');
+  group(
+    'Architecture Rule 13 -- models must not import Flutter\'s rendering layer',
+    () {
+      test('no model class extends CustomPainter', () {
+        final violations = <String>[];
+        for (final file in _modelFiles()) {
+          final content = file.readAsStringSync();
+          if (content.contains('extends CustomPainter')) {
+            violations.add(file.path);
+          }
+        }
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'Model files declaring a CustomPainter (model->UI violation, see migration-roadmap.md Phase 0): $violations',
+        );
+      });
+    },
+  );
+
+  group(
+    'Migration Phase 1 / item 4 -- RelationshipProvider is gone; everything depends on CoupleSession',
+    () {
+      test('no lib/ file has a live code reference to RelationshipProvider', () {
+        // RelationshipProvider started as a pass-through facade over
+        // CoupleSession (Phase 6b-1) kept alive only so UI files that hadn't
+        // converted yet didn't need to change in that phase. The
+        // Definition-of-Done sweep's item 4 converted its last direct readers
+        // (license/ presentation files, bento_grid.dart, noteit_screen.dart)
+        // to CoupleSession directly and deleted relationship_provider.dart
+        // outright -- this is the literal exit criterion the item's
+        // Definition-of-Done row always promised, finally enforced. Comment
+        // lines are skipped deliberately: several files' doc comments
+        // accurately narrate RelationshipProvider's history (e.g. "extracted
+        // from RelationshipProvider in Phase 5"), which is legitimate
+        // documentation, not a regression -- this rule only catches an actual
+        // reintroduced import/type/constructor reference.
+        final violations = <String>[];
+        for (final file in _dartFilesUnder('lib')) {
+          for (final rawLine in file.readAsLinesSync()) {
+            final line = rawLine.trim();
+            if (line.startsWith('//')) continue;
+            if (line.contains('RelationshipProvider')) {
+              violations.add(file.path);
               break;
             }
           }
         }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'A retired provider class name was referenced but it was deleted (see migration-roadmap.md item 3): $violations',
-      );
-    });
-  });
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'RelationshipProvider referenced but it was deleted (see migration-roadmap.md item 4): $violations',
+        );
+      });
+    },
+  );
 
-  group('Item 3 gap-fix Phase 2 -- ThemeProvider is gone; everything depends on ThemeController', () {
-    test('no lib/ file has a live code reference to ThemeProvider', () {
-      // ThemeProvider (lib/providers/theme_provider.dart) was device-local,
-      // not couple-scoped, so it needed a Riverpod controller built from
-      // scratch (ThemeController/ThemeState under lib/features/theme/)
-      // rather than swapping onto an already-existing port, unlike the 12
-      // providers in Phase 1 above. Once every context.watch<ThemeProvider>()/
-      // context.read<ThemeProvider>()/Provider.of<ThemeProvider>() site was
-      // flipped to ref.watch/ref.read on themeControllerProvider, the old
-      // lib/providers/theme_provider.dart file and its main.dart registration
-      // were deleted outright (see migration-roadmap.md's "Corrected on
-      // implementation" note for item 3). Comment lines are skipped
-      // deliberately -- theme_state.dart/theme_controller.dart's own doc
-      // comments accurately narrate this port's history (e.g. "Riverpod port
-      // of ThemeProvider"), which is legitimate documentation, not a
-      // regression -- this rule only catches an actual reintroduced
-      // import/type/constructor reference.
-      final violations = <String>[];
-      for (final file in _dartFilesUnder('lib')) {
-        for (final rawLine in file.readAsLinesSync()) {
-          final line = rawLine.trim();
-          if (line.startsWith('//')) continue;
-          if (line.contains('ThemeProvider')) {
-            violations.add(file.path);
+  group(
+    'Item 3 gap-fix Phase 1 -- the 12 retired domain providers are gone; everything depends on their Riverpod controllers',
+    () {
+      test(
+        'no lib/ file has a live code reference to any of the 12 retired provider class names',
+        () {
+          // The 12 domain providers (TimelineProvider, BucketListProvider,
+          // TimeCapsuleProvider, DailyMoodProvider, GiftReminderProvider,
+          // VaultProvider, CalendarProvider, TopicCardsProvider, NoteitProvider,
+          // LoveChatProvider, CurrentlyProvider, NotificationPreferencesProvider)
+          // each had a complete, faithful Riverpod port under lib/features/<name>/
+          // before their UI call sites were ever converted -- once every
+          // context.watch<X>()/context.read<X>() site was flipped to
+          // ref.watch/ref.read on the corresponding *ControllerProvider, the old
+          // lib/providers/*.dart files and their main.dart registrations were
+          // deleted outright (see migration-roadmap.md's "Corrected on
+          // implementation" note for item 3). Comment lines are skipped
+          // deliberately -- several files' doc comments accurately narrate these
+          // providers' history (e.g. "Riverpod port of TimelineProvider"), which
+          // is legitimate documentation, not a regression -- this rule only
+          // catches an actual reintroduced import/type/constructor reference.
+          const retiredProviderNames = [
+            'TimelineProvider',
+            'BucketListProvider',
+            'TimeCapsuleProvider',
+            'DailyMoodProvider',
+            'GiftReminderProvider',
+            'VaultProvider',
+            'CalendarProvider',
+            'TopicCardsProvider',
+            'NoteitProvider',
+            'LoveChatProvider',
+            'CurrentlyProvider',
+            'NotificationPreferencesProvider',
+          ];
+          final violations = <String>[];
+          for (final file in _dartFilesUnder('lib')) {
+            for (final rawLine in file.readAsLinesSync()) {
+              final line = rawLine.trim();
+              if (line.startsWith('//')) continue;
+              for (final name in retiredProviderNames) {
+                if (line.contains(name)) {
+                  violations.add('${file.path}: $name');
+                  break;
+                }
+              }
+            }
           }
-        }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'ThemeProvider was referenced but it was deleted (see migration-roadmap.md item 3): $violations',
+          expect(
+            violations,
+            isEmpty,
+            reason:
+                'A retired provider class name was referenced but it was deleted (see migration-roadmap.md item 3): $violations',
+          );
+        },
       );
-    });
-  });
+    },
+  );
 
-  group('Item 3 gap-fix Phase 3 -- the provider package is fully removed (item 3 closed)', () {
-    // Front 4, the last of item 3's four fronts: CoupleSession's core moved
-    // off the `provider` package (its ChangeNotifier nature is unchanged --
-    // only who constructs/reads it did, via coupleSessionProvider
-    // constructing the instance itself instead of a provider-package
-    // ChangeNotifierProvider feeding it in). See migration-roadmap.md's
-    // "Corrected on implementation" note for item 3, Phase 3.
-    test('no lib/ or test/ file imports package:provider/', () {
-      // Matches only an actual `import '...package:provider/...';`
-      // statement, not this file's own doc comments/reason strings that
-      // mention the package name in prose (this test's own source is walked
-      // like any other file under test/).
-      final importPattern = RegExp(r'''^import\s+['"]package:provider/''');
-      final violations = <String>[];
-      for (final dir in ['lib', 'test']) {
-        for (final file in _dartFilesUnder(dir)) {
+  group(
+    'Item 3 gap-fix Phase 2 -- ThemeProvider is gone; everything depends on ThemeController',
+    () {
+      test('no lib/ file has a live code reference to ThemeProvider', () {
+        // ThemeProvider (lib/providers/theme_provider.dart) was device-local,
+        // not couple-scoped, so it needed a Riverpod controller built from
+        // scratch (ThemeController/ThemeState under lib/features/theme/)
+        // rather than swapping onto an already-existing port, unlike the 12
+        // providers in Phase 1 above. Once every context.watch<ThemeProvider>()/
+        // context.read<ThemeProvider>()/Provider.of<ThemeProvider>() site was
+        // flipped to ref.watch/ref.read on themeControllerProvider, the old
+        // lib/providers/theme_provider.dart file and its main.dart registration
+        // were deleted outright (see migration-roadmap.md's "Corrected on
+        // implementation" note for item 3). Comment lines are skipped
+        // deliberately -- theme_state.dart/theme_controller.dart's own doc
+        // comments accurately narrate this port's history (e.g. "Riverpod port
+        // of ThemeProvider"), which is legitimate documentation, not a
+        // regression -- this rule only catches an actual reintroduced
+        // import/type/constructor reference.
+        final violations = <String>[];
+        for (final file in _dartFilesUnder('lib')) {
           for (final rawLine in file.readAsLinesSync()) {
             final line = rawLine.trim();
-            if (importPattern.hasMatch(line)) {
+            if (line.startsWith('//')) continue;
+            if (line.contains('ThemeProvider')) {
               violations.add(file.path);
             }
           }
         }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'A file still imports package:provider/, but the provider package was fully removed (see migration-roadmap.md item 3): $violations',
-      );
-    });
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'ThemeProvider was referenced but it was deleted (see migration-roadmap.md item 3): $violations',
+        );
+      });
+    },
+  );
 
-    test('pubspec.yaml no longer lists provider as a dependency', () {
-      final content = File('pubspec.yaml').readAsStringSync();
-      final hasProviderDependency = RegExp(r'^\s*provider:\s', multiLine: true).hasMatch(content);
-      expect(
-        hasProviderDependency,
-        isFalse,
-        reason: 'pubspec.yaml still lists the provider package, but it was fully removed (see migration-roadmap.md item 3)',
-      );
-    });
-  });
+  group(
+    'Item 3 gap-fix Phase 3 -- the provider package is fully removed (item 3 closed)',
+    () {
+      // Front 4, the last of item 3's four fronts: CoupleSession's core moved
+      // off the `provider` package (its ChangeNotifier nature is unchanged --
+      // only who constructs/reads it did, via coupleSessionProvider
+      // constructing the instance itself instead of a provider-package
+      // ChangeNotifierProvider feeding it in). See migration-roadmap.md's
+      // "Corrected on implementation" note for item 3, Phase 3.
+      test('no lib/ or test/ file imports package:provider/', () {
+        // Matches only an actual `import '...package:provider/...';`
+        // statement, not this file's own doc comments/reason strings that
+        // mention the package name in prose (this test's own source is walked
+        // like any other file under test/).
+        final importPattern = RegExp(r'''^import\s+['"]package:provider/''');
+        final violations = <String>[];
+        for (final dir in ['lib', 'test']) {
+          for (final file in _dartFilesUnder(dir)) {
+            for (final rawLine in file.readAsLinesSync()) {
+              final line = rawLine.trim();
+              if (importPattern.hasMatch(line)) {
+                violations.add(file.path);
+              }
+            }
+          }
+        }
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'A file still imports package:provider/, but the provider package was fully removed (see migration-roadmap.md item 3): $violations',
+        );
+      });
+
+      test('pubspec.yaml no longer lists provider as a dependency', () {
+        final content = File('pubspec.yaml').readAsStringSync();
+        final hasProviderDependency = RegExp(
+          r'^\s*provider:\s',
+          multiLine: true,
+        ).hasMatch(content);
+        expect(
+          hasProviderDependency,
+          isFalse,
+          reason:
+              'pubspec.yaml still lists the provider package, but it was fully removed (see migration-roadmap.md item 3)',
+        );
+      });
+    },
+  );
 
   group('Migration Phase 3 -- go_router owns screen-level navigation (ADR-007)', () {
     test('lib/navigator_key.dart no longer exists', () {
@@ -287,56 +319,62 @@ void main() {
       // lib/app/shell/. The rule is unchanged -- notification_service must
       // resolve a payload to a route, never reach into UI -- so it now matches
       // those two locations instead of the retired path.
-      final content =
-          File('lib/core/notifications/notification_service.dart').readAsStringSync();
+      final content = File(
+        'lib/core/notifications/notification_service.dart',
+      ).readAsStringSync();
       final violations = RegExp(
         r"import 'package:days_together/(?:features/[a-z_]+/presentation|app/shell)/[^']+';",
       ).allMatches(content).map((m) => m.group(0)!).toList();
       expect(
         violations,
         isEmpty,
-        reason: 'notification_service.dart must resolve payloads to routes, not import screens directly (ADR-007): $violations',
+        reason:
+            'notification_service.dart must resolve payloads to routes, not import screens directly (ADR-007): $violations',
       );
     });
 
-    test('MaterialPageRoute is confined to the three known dialog-shaped call sites', () {
-      // AddItemDialog, EditItemDialog, and SignatureDrawingDialog are
-      // pushed via Navigator.push rather than showDialog, but are
-      // conceptually dialogs (no deep-link/back-button target of their
-      // own) -- explicitly out of ADR-007's "distinct screens" scope. Every
-      // other MaterialPageRoute site was converted to a named go_router
-      // route.
-      const exceptions = {
-        'lib/app/shell/love_story_screen.dart',
-        'lib/features/timeline/presentation/pages/memory_detail_screen.dart',
-        // TimelineTab's AddItemDialog push, which moved here when
-        // love_story_screen.dart was split -- same call site, new file.
-        'lib/features/timeline/presentation/pages/timeline_tab.dart',
-        // relationship_license_screen.dart's two SignatureDrawingDialog
-        // push sites, post-Phase-8 file split:
-        'lib/features/relationship/presentation/license/license_screen.dart',
-        'lib/features/relationship/presentation/license/edit/edit_license_sheet.dart',
-        // Deliberately preserved as plain Navigator (not dialogs, but a
-        // provably-safe conversion couldn't be made -- see the inline
-        // comments at each site for the specific redirect-fight risk):
-        'lib/features/authentication/presentation/pages/create_couple_code_screen.dart',
-        'lib/features/authentication/presentation/pages/recover_relationship_screen.dart',
-      };
-      final violations = <String>[];
-      for (final file in _dartFilesUnder('lib')) {
-        final normalized = file.path.replaceAll('\\', '/');
-        if (exceptions.any((e) => normalized.endsWith(e))) continue;
-        final content = file.readAsStringSync();
-        if (content.contains('MaterialPageRoute(')) {
-          violations.add(normalized);
+    test(
+      'MaterialPageRoute is confined to the three known dialog-shaped call sites',
+      () {
+        // AddItemDialog, EditItemDialog, and SignatureDrawingDialog are
+        // pushed via Navigator.push rather than showDialog, but are
+        // conceptually dialogs (no deep-link/back-button target of their
+        // own) -- explicitly out of ADR-007's "distinct screens" scope. Every
+        // other MaterialPageRoute site was converted to a named go_router
+        // route.
+        const exceptions = {
+          'lib/app/shell/love_story_screen.dart',
+          'lib/features/timeline/presentation/pages/memory_detail_screen.dart',
+          // TimelineTab's AddItemDialog push, which moved here when
+          // love_story_screen.dart was split -- same call site, new file.
+          'lib/features/timeline/presentation/pages/timeline_tab.dart',
+          // relationship_license_screen.dart's two SignatureDrawingDialog
+          // push sites, post-Phase-8 file split:
+          'lib/features/relationship/presentation/license/license_screen.dart',
+          'lib/features/relationship/presentation/license/edit/edit_license_sheet.dart',
+          // Deliberately preserved as plain Navigator (not dialogs, but a
+          // provably-safe conversion couldn't be made -- see the inline
+          // comments at each site for the specific redirect-fight risk):
+          'lib/features/authentication/presentation/pages/create_couple_code_screen.dart',
+          'lib/features/authentication/presentation/pages/recover_relationship_screen.dart',
+        };
+        final violations = <String>[];
+        for (final file in _dartFilesUnder('lib')) {
+          final normalized = file.path.replaceAll('\\', '/');
+          if (exceptions.any((e) => normalized.endsWith(e))) continue;
+          final content = file.readAsStringSync();
+          if (content.contains('MaterialPageRoute(')) {
+            violations.add(normalized);
+          }
         }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'MaterialPageRoute used outside the known, documented exceptions -- convert to a named Routes.* entry (see migration-roadmap.md Phase 3): $violations',
-      );
-    });
+        expect(
+          violations,
+          isEmpty,
+          reason:
+              'MaterialPageRoute used outside the known, documented exceptions -- convert to a named Routes.* entry (see migration-roadmap.md Phase 3): $violations',
+        );
+      },
+    );
   });
 
   group('Migration Phase 4 -- every model is immutable (ADR-003)', () {
@@ -349,7 +387,9 @@ void main() {
       // recognized as a line ending in `;` with no `(` on it (ruling out
       // method signatures and constructor initializer lists) that doesn't
       // start with `final`/`static`/`const`/an annotation/a comment.
-      final fieldDeclaration = RegExp(r'^[A-Za-z_][\w<>?., ]*\s[A-Za-z_]\w*(\s*=\s*[^;]+)?;$');
+      final fieldDeclaration = RegExp(
+        r'^[A-Za-z_][\w<>?., ]*\s[A-Za-z_]\w*(\s*=\s*[^;]+)?;$',
+      );
       final violations = <String>[];
 
       for (final file in _modelFiles()) {
@@ -375,7 +415,8 @@ void main() {
             violations.add('${file.path}: $line');
           }
 
-          if (RegExp(r'^\s*(?:abstract\s+)?class\s+\w').hasMatch(rawLine) && depth == 0) {
+          if (RegExp(r'^\s*(?:abstract\s+)?class\s+\w').hasMatch(rawLine) &&
+              depth == 0) {
             inClassAtDepth1 = true;
           }
 
@@ -393,92 +434,127 @@ void main() {
       expect(
         violations,
         isEmpty,
-        reason: 'Mutable field found in a model -- add final and convert call sites to copyWith (see migration-roadmap.md Phase 4): $violations',
+        reason:
+            'Mutable field found in a model -- add final and convert call sites to copyWith (see migration-roadmap.md Phase 4): $violations',
       );
     });
   });
 
-  group('Migration Phase 7b -- features depend on each other only through public state (feature-boundaries.md)', () {
-    test('no lib/features/<A>/** file imports a non-controller/non-state file from lib/features/<B>/**', () {
-      // feature-boundaries.md's cross-feature rule: a feature may depend on
-      // another feature only through that feature's public state (a
-      // Riverpod provider intentionally exported), never through a
-      // private/internal file path. This is checkable today because every
-      // feature's public surface follows one of two file-naming
-      // conventions established since Phase 6: `*_controller.dart` (the
-      // NotifierProvider) or `*_state.dart` (the typed state it exposes).
-      final violations = <String>[];
-      final importPattern = RegExp(r"import 'package:days_together/features/([a-z_]+)/([^']+)';");
+  group(
+    'Migration Phase 7b -- features depend on each other only through public state (feature-boundaries.md)',
+    () {
+      test(
+        'no lib/features/<A>/** file imports a non-controller/non-state file from lib/features/<B>/**',
+        () {
+          // feature-boundaries.md's cross-feature rule: a feature may depend on
+          // another feature only through that feature's public state (a
+          // Riverpod provider intentionally exported), never through a
+          // private/internal file path. This is checkable today because every
+          // feature's public surface follows one of two file-naming
+          // conventions established since Phase 6: `*_controller.dart` (the
+          // NotifierProvider) or `*_state.dart` (the typed state it exposes).
+          final violations = <String>[];
+          final importPattern = RegExp(
+            r"import 'package:days_together/features/([a-z_]+)/([^']+)';",
+          );
 
-      for (final file in _dartFilesUnder('lib/features')) {
-        final normalized = file.path.replaceAll('\\', '/');
-        final ownFeatureMatch = RegExp(r'^lib/features/([a-z_]+)/').firstMatch(normalized);
-        if (ownFeatureMatch == null) continue;
-        final ownFeature = ownFeatureMatch.group(1)!;
+          for (final file in _dartFilesUnder('lib/features')) {
+            final normalized = file.path.replaceAll('\\', '/');
+            final ownFeatureMatch = RegExp(
+              r'^lib/features/([a-z_]+)/',
+            ).firstMatch(normalized);
+            if (ownFeatureMatch == null) continue;
+            final ownFeature = ownFeatureMatch.group(1)!;
 
-        final content = file.readAsStringSync();
-        for (final match in importPattern.allMatches(content)) {
-          final targetFeature = match.group(1)!;
-          if (targetFeature == ownFeature) continue;
+            final content = file.readAsStringSync();
+            for (final match in importPattern.allMatches(content)) {
+              final targetFeature = match.group(1)!;
+              if (targetFeature == ownFeature) continue;
 
-          final targetFileName = match.group(2)!.split('/').last;
-          final isPublicSurface =
-              targetFileName.endsWith('_controller.dart') || targetFileName.endsWith('_state.dart');
-          if (!isPublicSurface) {
-            violations.add('$normalized -> ${match.group(0)}');
+              final targetFileName = match.group(2)!.split('/').last;
+              final isPublicSurface =
+                  targetFileName.endsWith('_controller.dart') ||
+                  targetFileName.endsWith('_state.dart');
+              if (!isPublicSurface) {
+                violations.add('$normalized -> ${match.group(0)}');
+              }
+            }
           }
-        }
-      }
 
-      expect(
-        violations,
-        isEmpty,
-        reason: "A feature imported another feature's internal file directly instead of its public controller/state (see feature-boundaries.md's cross-feature rule, migration-roadmap.md Phase 7b): $violations",
+          expect(
+            violations,
+            isEmpty,
+            reason:
+                "A feature imported another feature's internal file directly instead of its public controller/state (see feature-boundaries.md's cross-feature rule, migration-roadmap.md Phase 7b): $violations",
+          );
+        },
       );
-    });
-  });
+    },
+  );
 
-  group('Migration Phase 5/8 -- SharedPreferences keys are centralized in PrefsKeys (item 14)', () {
-    test('no lib/ file outside prefs_keys.dart calls a SharedPreferences getter/setter with a raw string literal', () {
-      // The Definition-of-Done sweep found 2 of 19 in-use keys had never
-      // been added to PrefsKeys at all, and several call sites still used
-      // raw literals even for keys that already had a constant -- see
-      // migration-roadmap.md's Definition-of-Done sweep section. This rule
-      // is the promised guard against that regressing silently again.
-      final rawLiteralCall = RegExp(r"prefs\.(get|set)[A-Za-z]*\('[a-zA-Z_]+'");
-      final violations = <String>[];
+  group(
+    'Migration Phase 5/8 -- SharedPreferences keys are centralized in PrefsKeys (item 14)',
+    () {
+      test(
+        'no lib/ file outside prefs_keys.dart calls a SharedPreferences getter/setter with a raw string literal',
+        () {
+          // The Definition-of-Done sweep found 2 of 19 in-use keys had never
+          // been added to PrefsKeys at all, and several call sites still used
+          // raw literals even for keys that already had a constant -- see
+          // migration-roadmap.md's Definition-of-Done sweep section. This rule
+          // is the promised guard against that regressing silently again.
+          final rawLiteralCall = RegExp(
+            r"prefs\.(get|set)[A-Za-z]*\('[a-zA-Z_]+'",
+          );
+          final violations = <String>[];
 
-      for (final file in _dartFilesUnder('lib')) {
-        final normalized = file.path.replaceAll('\\', '/');
-        if (normalized.endsWith('lib/core/constants/prefs_keys.dart')) continue;
-        final content = file.readAsStringSync();
-        if (rawLiteralCall.hasMatch(content)) {
-          violations.add(normalized);
-        }
-      }
+          for (final file in _dartFilesUnder('lib')) {
+            final normalized = file.path.replaceAll('\\', '/');
+            if (normalized.endsWith('lib/core/constants/prefs_keys.dart')) {
+              continue;
+            }
+            final content = file.readAsStringSync();
+            if (rawLiteralCall.hasMatch(content)) {
+              violations.add(normalized);
+            }
+          }
 
-      expect(
-        violations,
-        isEmpty,
-        reason: 'SharedPreferences call using a raw string literal instead of a PrefsKeys constant (see migration-roadmap.md item 14): $violations',
+          expect(
+            violations,
+            isEmpty,
+            reason:
+                'SharedPreferences call using a raw string literal instead of a PrefsKeys constant (see migration-roadmap.md item 14): $violations',
+          );
+        },
       );
-    });
-  });
+    },
+  );
 
-  group('Architecture Rule 12 -- shared/ and core/ must not depend on features/', () {
-    test('no file under lib/shared/ or lib/core/ imports from lib/features/', () {
-      final violations = <String>[];
-      for (final file in [..._dartFilesUnder('lib/shared'), ..._dartFilesUnder('lib/core')]) {
-        final content = file.readAsStringSync();
-        if (content.contains("package:days_together/features/") || content.contains("../features/")) {
-          violations.add(file.path.replaceAll('\\', '/'));
-        }
-      }
-      expect(
-        violations,
-        isEmpty,
-        reason: 'Files under shared/ or core/ importing from features/ (Architecture Rule 12): $violations',
+  group(
+    'Architecture Rule 12 -- shared/ and core/ must not depend on features/',
+    () {
+      test(
+        'no file under lib/shared/ or lib/core/ imports from lib/features/',
+        () {
+          final violations = <String>[];
+          for (final file in [
+            ..._dartFilesUnder('lib/shared'),
+            ..._dartFilesUnder('lib/core'),
+          ]) {
+            final content = file.readAsStringSync();
+            if (content.contains("package:days_together/features/") ||
+                content.contains("../features/")) {
+              violations.add(file.path.replaceAll('\\', '/'));
+            }
+          }
+          expect(
+            violations,
+            isEmpty,
+            reason:
+                'Files under shared/ or core/ importing from features/ (Architecture Rule 12): $violations',
+          );
+        },
       );
-    });
-  });
+    },
+  );
 }

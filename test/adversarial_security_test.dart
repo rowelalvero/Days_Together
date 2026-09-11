@@ -41,7 +41,11 @@ void main() {
 
       for (final key in maliciousUpdates.keys) {
         final isWhitelisted = allowedKeys.contains(key);
-        expect(isWhitelisted, isFalse, reason: 'Key "$key" MUST NOT be whitelisted');
+        expect(
+          isWhitelisted,
+          isFalse,
+          reason: 'Key "$key" MUST NOT be whitelisted',
+        );
       }
     });
 
@@ -52,28 +56,39 @@ void main() {
       final validCodeGeneratedAt = now.subtract(const Duration(days: 89));
       final expiredCodeGeneratedAt = now.subtract(const Duration(days: 91));
 
-      final isValidAge = validCodeGeneratedAt.isAfter(now.subtract(const Duration(days: maxAgeDays)));
-      final isExpiredAge = expiredCodeGeneratedAt.isBefore(now.subtract(const Duration(days: maxAgeDays)));
+      final isValidAge = validCodeGeneratedAt.isAfter(
+        now.subtract(const Duration(days: maxAgeDays)),
+      );
+      final isExpiredAge = expiredCodeGeneratedAt.isBefore(
+        now.subtract(const Duration(days: maxAgeDays)),
+      );
 
       expect(isValidAge, isTrue, reason: '89-day old code must be valid');
       expect(isExpiredAge, isTrue, reason: '91-day old code must be expired');
     });
 
-    test('TEST 7/8: Rate Limiting Attempt Count Lockout Threshold (5 Attempts)', () {
-      const maxAttempts = 5;
-      int attempts = 0;
-      bool isLockedOut = false;
+    test(
+      'TEST 7/8: Rate Limiting Attempt Count Lockout Threshold (5 Attempts)',
+      () {
+        const maxAttempts = 5;
+        int attempts = 0;
+        bool isLockedOut = false;
 
-      for (int i = 1; i <= 6; i++) {
-        attempts++;
-        if (attempts >= maxAttempts) {
-          isLockedOut = true;
+        for (int i = 1; i <= 6; i++) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            isLockedOut = true;
+          }
         }
-      }
 
-      expect(attempts, 6);
-      expect(isLockedOut, isTrue, reason: 'Account MUST lock out on or after 5 failed attempts');
-    });
+        expect(attempts, 6);
+        expect(
+          isLockedOut,
+          isTrue,
+          reason: 'Account MUST lock out on or after 5 failed attempts',
+        );
+      },
+    );
 
     test('TEST 17: Logout Local Cache Purge & Account Data Isolation', () async {
       // 1. User A logs in, creates local chat and timeline data
@@ -81,13 +96,23 @@ void main() {
       await prefs.setString(
         'love_chat_messages',
         jsonEncode([
-          {'id': 'user-a-msg-1', 'sender_id': 'you', 'sender_name': 'User A', 'content': 'Secret User A Note'}
+          {
+            'id': 'user-a-msg-1',
+            'sender_id': 'you',
+            'sender_name': 'User A',
+            'content': 'Secret User A Note',
+          },
         ]),
       );
       await prefs.setString(
         'timeline_items',
         jsonEncode([
-          {'id': 'user-a-time-1', 'title': 'User A Memory', 'description': 'Private memory', 'date': DateTime.now().toIso8601String()}
+          {
+            'id': 'user-a-time-1',
+            'title': 'User A Memory',
+            'description': 'Private memory',
+            'date': DateTime.now().toIso8601String(),
+          },
         ]),
       );
 

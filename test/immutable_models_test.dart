@@ -35,12 +35,19 @@ void main() {
       expect(restored.scheduledAt, original.scheduledAt);
     });
 
-    test('copyWith can clear scheduledAt with the sentinel-guarded explicit null', () {
-      final original = BucketListItem(title: 'Trip', order: 0, scheduledAt: DateTime(2024, 6, 1));
-      final cleared = original.copyWith(scheduledAt: null);
-      expect(cleared.scheduledAt, isNull);
-      expect(cleared.title, 'Trip');
-    });
+    test(
+      'copyWith can clear scheduledAt with the sentinel-guarded explicit null',
+      () {
+        final original = BucketListItem(
+          title: 'Trip',
+          order: 0,
+          scheduledAt: DateTime(2024, 6, 1),
+        );
+        final cleared = original.copyWith(scheduledAt: null);
+        expect(cleared.scheduledAt, isNull);
+        expect(cleared.title, 'Trip');
+      },
+    );
   });
 
   group('GiftReminder', () {
@@ -62,13 +69,19 @@ void main() {
       expect(restored.isRecurringYearly, false);
     });
 
-    test('copyWith replaces reminderDaysBefore without mutating the original', () {
-      final original = GiftReminder(title: 'Anniversary', date: DateTime(2024, 1, 1));
-      final updated = original.copyWith(reminderDaysBefore: const [7, 1]);
+    test(
+      'copyWith replaces reminderDaysBefore without mutating the original',
+      () {
+        final original = GiftReminder(
+          title: 'Anniversary',
+          date: DateTime(2024, 1, 1),
+        );
+        final updated = original.copyWith(reminderDaysBefore: const [7, 1]);
 
-      expect(original.reminderDaysBefore, const [30, 14, 7]);
-      expect(updated.reminderDaysBefore, const [7, 1]);
-    });
+        expect(original.reminderDaysBefore, const [30, 14, 7]);
+        expect(updated.reminderDaysBefore, const [7, 1]);
+      },
+    );
   });
 
   group('VaultItem', () {
@@ -88,10 +101,13 @@ void main() {
       expect(restored.createdAt, original.createdAt);
     });
 
-    test('fromJson falls back to VaultItemType.photo for an out-of-range type index', () {
-      final restored = VaultItem.fromJson({'type': 99, 'createdAt': null});
-      expect(restored.type, VaultItemType.photo);
-    });
+    test(
+      'fromJson falls back to VaultItemType.photo for an out-of-range type index',
+      () {
+        final restored = VaultItem.fromJson({'type': 99, 'createdAt': null});
+        expect(restored.type, VaultItemType.photo);
+      },
+    );
   });
 
   group('TimeCapsule', () {
@@ -110,23 +126,33 @@ void main() {
       expect(restored.isOpened, false);
     });
 
-    test('copyWith(isOpened: true) is the only supported way to open a capsule', () {
-      // Regression-shaped test: time_capsule_provider.dart opens a capsule
-      // via `capsule.copyWith(isOpened: true)`, never a direct field
-      // assignment -- this is what makes TimeCapsule's all-final conversion
-      // a pure mechanical change with zero call-site risk.
-      final closed = TimeCapsule(message: 'Hi', openDate: DateTime(2024, 1, 1));
-      final opened = closed.copyWith(isOpened: true);
+    test(
+      'copyWith(isOpened: true) is the only supported way to open a capsule',
+      () {
+        // Regression-shaped test: time_capsule_provider.dart opens a capsule
+        // via `capsule.copyWith(isOpened: true)`, never a direct field
+        // assignment -- this is what makes TimeCapsule's all-final conversion
+        // a pure mechanical change with zero call-site risk.
+        final closed = TimeCapsule(
+          message: 'Hi',
+          openDate: DateTime(2024, 1, 1),
+        );
+        final opened = closed.copyWith(isOpened: true);
 
-      expect(closed.isOpened, false);
-      expect(opened.isOpened, true);
-      expect(opened.message, closed.message);
-    });
+        expect(closed.isOpened, false);
+        expect(opened.isOpened, true);
+        expect(opened.message, closed.message);
+      },
+    );
   });
 
   group('DailyMood', () {
     test('round-trips through toJson/fromJson losslessly', () {
-      final original = DailyMood(date: '2024-05-01', moodScore: 8, note: 'Great day');
+      final original = DailyMood(
+        date: '2024-05-01',
+        moodScore: 8,
+        note: 'Great day',
+      );
       final restored = DailyMood.fromJson(original.toJson());
 
       expect(restored.date, '2024-05-01');

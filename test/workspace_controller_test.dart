@@ -21,11 +21,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (MethodCall methodCall) async {
-        return '.';
-      },
-    );
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async {
+            return '.';
+          },
+        );
   });
 
   group('WorkspaceController.updateFromSession mirroring', () {
@@ -53,91 +53,125 @@ void main() {
       addTearDown(container.dispose);
       await Future.delayed(Duration.zero);
 
-      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateFromSession(session);
 
       var notifyCount = 0;
-      container.listen(workspaceControllerProvider, (prev, next) => notifyCount++);
-      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
+      container.listen(
+        workspaceControllerProvider,
+        (prev, next) => notifyCount++,
+      );
+      container
+          .read(workspaceControllerProvider.notifier)
+          .updateFromSession(session);
 
       expect(notifyCount, 0);
     });
 
-    test('mirrors pairing/story/date/premium fields and notifies exactly once when they change', () async {
-      SharedPreferences.setMockInitialValues({
-        'couple_code': 'ABC123',
-        'story_title': 'Us, Forever',
-        'relationship_start_date': DateTime(2022, 6, 15).toIso8601String(),
-        'relationship_start_hour': 9,
-        'relationship_start_minute': 30,
-        'is_premium': true,
-      });
+    test(
+      'mirrors pairing/story/date/premium fields and notifies exactly once when they change',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'couple_code': 'ABC123',
+          'story_title': 'Us, Forever',
+          'relationship_start_date': DateTime(2022, 6, 15).toIso8601String(),
+          'relationship_start_hour': 9,
+          'relationship_start_minute': 30,
+          'is_premium': true,
+        });
 
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
-      var notifyCount = 0;
-      container.listen(workspaceControllerProvider, (prev, next) => notifyCount++);
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
+        var notifyCount = 0;
+        container.listen(
+          workspaceControllerProvider,
+          (prev, next) => notifyCount++,
+        );
 
-      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
+        container
+            .read(workspaceControllerProvider.notifier)
+            .updateFromSession(session);
 
-      final state = container.read(workspaceControllerProvider);
-      expect(notifyCount, 1);
-      expect(state.coupleCode, 'ABC123');
-      expect(state.storyTitle, 'Us, Forever');
-      expect(state.startDate, DateTime(2022, 6, 15));
-      expect(state.startTime, const TimeOfDay(hour: 9, minute: 30));
-      expect(state.isPremium, true);
+        final state = container.read(workspaceControllerProvider);
+        expect(notifyCount, 1);
+        expect(state.coupleCode, 'ABC123');
+        expect(state.storyTitle, 'Us, Forever');
+        expect(state.startDate, DateTime(2022, 6, 15));
+        expect(state.startTime, const TimeOfDay(hour: 9, minute: 30));
+        expect(state.isPremium, true);
 
-      // A second call with unchanged fields must not notify again.
-      container.read(workspaceControllerProvider.notifier).updateFromSession(session);
-      expect(notifyCount, 1);
-    });
+        // A second call with unchanged fields must not notify again.
+        container
+            .read(workspaceControllerProvider.notifier)
+            .updateFromSession(session);
+        expect(notifyCount, 1);
+      },
+    );
   });
 
   group('WorkspaceController write methods delegate to CoupleSession', () {
-    test('setStoryTitle writes through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'setStoryTitle writes through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(workspaceControllerProvider.notifier).setStoryTitle('Us, Forever');
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .setStoryTitle('Us, Forever');
 
-      expect(session.storyTitle, 'Us, Forever');
-    });
+        expect(session.storyTitle, 'Us, Forever');
+      },
+    );
 
-    test('setStartDate and setStartTime write through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'setStartDate and setStartTime write through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(workspaceControllerProvider.notifier).setStartDate(DateTime(2022, 6, 15));
-      await container.read(workspaceControllerProvider.notifier).setStartTime(const TimeOfDay(hour: 9, minute: 30));
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .setStartDate(DateTime(2022, 6, 15));
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .setStartTime(const TimeOfDay(hour: 9, minute: 30));
 
-      expect(session.startDate, DateTime(2022, 6, 15));
-      expect(session.startTime, const TimeOfDay(hour: 9, minute: 30));
-    });
+        expect(session.startDate, DateTime(2022, 6, 15));
+        expect(session.startTime, const TimeOfDay(hour: 9, minute: 30));
+      },
+    );
 
-    test('setPremium writes through to the live CoupleSession instance', () async {
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-      final container = ProviderContainer(
-        overrides: [coupleSessionProvider.overrideWithValue(session)],
-      );
-      addTearDown(container.dispose);
+    test(
+      'setPremium writes through to the live CoupleSession instance',
+      () async {
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+        final container = ProviderContainer(
+          overrides: [coupleSessionProvider.overrideWithValue(session)],
+        );
+        addTearDown(container.dispose);
 
-      await container.read(workspaceControllerProvider.notifier).setPremium(true);
+        await container
+            .read(workspaceControllerProvider.notifier)
+            .setPremium(true);
 
-      expect(session.isPremium, true);
-    });
+        expect(session.isPremium, true);
+      },
+    );
 
     test('clearRecoveryCode clears the live CoupleSession instance', () async {
       final session = CoupleSession();

@@ -45,8 +45,22 @@ void main() {
       // directly; now they do `list[i] = list[i].copyWith(position: i)`.
       // This proves the replacement preserves every other field exactly.
       final items = [
-        TimelineItemData(id: 'a', title: 'A', description: 'D-A', date: DateTime(2024, 1, 1), isImageCard: false, position: 5),
-        TimelineItemData(id: 'b', title: 'B', description: 'D-B', date: DateTime(2024, 1, 2), isImageCard: false, position: 9),
+        TimelineItemData(
+          id: 'a',
+          title: 'A',
+          description: 'D-A',
+          date: DateTime(2024, 1, 1),
+          isImageCard: false,
+          position: 5,
+        ),
+        TimelineItemData(
+          id: 'b',
+          title: 'B',
+          description: 'D-B',
+          date: DateTime(2024, 1, 2),
+          isImageCard: false,
+          position: 9,
+        ),
       ];
 
       final reindexed = [
@@ -81,18 +95,23 @@ void main() {
       expect(cleared.selectedMusicPath, isNull);
     });
 
-    test('favoriteThemes is replaced by copyWith, not shared/mutated in place', () {
-      // Regression test for the Phase 4 immutability migration:
-      // ThemeProvider.toggleFavoriteTheme used to call
-      // settings.favoriteThemes.add/.remove directly. Now it builds a new
-      // list and passes it to copyWith -- this proves the original
-      // instance's list is untouched by that replacement.
-      final original = AppSettings(favoriteThemes: const ['pink', 'blue']);
+    test(
+      'favoriteThemes is replaced by copyWith, not shared/mutated in place',
+      () {
+        // Regression test for the Phase 4 immutability migration:
+        // ThemeProvider.toggleFavoriteTheme used to call
+        // settings.favoriteThemes.add/.remove directly. Now it builds a new
+        // list and passes it to copyWith -- this proves the original
+        // instance's list is untouched by that replacement.
+        final original = AppSettings(favoriteThemes: const ['pink', 'blue']);
 
-      final updated = original.copyWith(favoriteThemes: [...original.favoriteThemes, 'gold']);
+        final updated = original.copyWith(
+          favoriteThemes: [...original.favoriteThemes, 'gold'],
+        );
 
-      expect(original.favoriteThemes, ['pink', 'blue']);
-      expect(updated.favoriteThemes, ['pink', 'blue', 'gold']);
-    });
+        expect(original.favoriteThemes, ['pink', 'blue']);
+        expect(updated.favoriteThemes, ['pink', 'blue', 'gold']);
+      },
+    );
   });
 }

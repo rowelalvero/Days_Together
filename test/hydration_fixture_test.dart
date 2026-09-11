@@ -103,110 +103,126 @@ void main() {
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('plugins.flutter.io/path_provider'),
-      (MethodCall methodCall) async => '.',
-    );
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (MethodCall methodCall) async => '.',
+        );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
-      const MethodChannel('home_widget'),
-      (MethodCall methodCall) async => null,
-    );
+          const MethodChannel('home_widget'),
+          (MethodCall methodCall) async => null,
+        );
   });
 
   group('Hydration fixture -- the 43-key snapshot survives a fresh load', () {
-    test('the fixture itself covers exactly PrefsKeys.all, nothing more or less', () {
-      final snapshot = _realDeviceSnapshot();
-      expect(
-        snapshot.keys.toSet(),
-        PrefsKeys.all.toSet(),
-        reason: 'the fixture must be updated whenever PrefsKeys.all changes, '
-            'or this test stops actually covering all 43 keys',
-      );
-    });
-
-    test('CoupleSession hydrates every currently-owned field from the snapshot', () async {
-      // Originally checked via the RelationshipProvider facade (since
-      // deleted, Definition-of-Done sweep item 4) -- CoupleSession has
-      // always been the real owner of this hydration since Phase 6b-1; see
-      // couple_session_test.dart for the equivalent coverage at the source.
-      SharedPreferences.setMockInitialValues(_realDeviceSnapshot());
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-
-      // Session / pairing identity
-      expect(session.coupleId, 'couple-fixture-1');
-      expect(session.isPaired, true);
-      expect(session.isCreator, true);
-      expect(session.isOnboardingComplete, true);
-
-      // Workspace fields
-      expect(session.coupleCode, 'ABC123');
-      expect(session.isPremium, true);
-      expect(session.storyTitle, 'Our Love Story');
-      expect(session.startDate, DateTime(2022, 6, 15));
-      expect(session.startTime?.hour, 14);
-      expect(session.startTime?.minute, 30);
-
-      // Profile fields
-      expect(session.yourName, 'Ashwel');
-      expect(session.partnerName, 'Rowel');
-      expect(session.yourAvatarPath, 'couples/c1/avatars/u1_1700000000.jpg');
-      expect(session.partnerAvatarPath, 'couples/c1/avatars/u2_1700000001.jpg');
-
-      session.dispose();
-    });
-
-    test('LicenseController hydrates the 24 license fields from the same snapshot', () async {
-      // The 24 license fields moved off RelationshipProvider to
-      // LicenseController in Phase 5 -- see
-      // lib/features/relationship/license_controller.dart. Spot-checked
-      // across the pairs, not exhaustively (exhaustive coverage of these
-      // specific fields lives in test/license_controller_test.dart); this
-      // test's job is proving the full-map hydration path still reaches
-      // LicenseController after the extraction, not per-field behavior.
-      SharedPreferences.setMockInitialValues(_realDeviceSnapshot());
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final license = await container.read(licenseControllerProvider.future);
-
-      expect(license.yourGender, 'Female');
-      expect(license.partnerGender, 'Male');
-      expect(license.yourBloodType, 'O+');
-      expect(license.partnerBloodType, 'A+');
-      expect(license.yourSignature, 'data:image/png;base64,AAA');
-      expect(license.partnerSignature, 'data:image/png;base64,BBB');
-    });
-
-    test('every one of the 43 raw SharedPreferences keys survives a load unchanged', () async {
-      // The controller-agnostic ground truth (see file doc comment): this
-      // must keep passing across every Phase 5 extraction regardless of
-      // which controller currently owns a given field, since none of them
-      // are permitted to rename a PrefsKeys entry.
-      final snapshot = _realDeviceSnapshot();
-      SharedPreferences.setMockInitialValues(snapshot);
-      final session = CoupleSession();
-      await Future.delayed(Duration.zero);
-
-      final prefs = await SharedPreferences.getInstance();
-      for (final key in PrefsKeys.all) {
-        final expected = snapshot[key];
-        final Object? actual;
-        if (expected is bool) {
-          actual = prefs.getBool(key);
-        } else if (expected is int) {
-          actual = prefs.getInt(key);
-        } else {
-          actual = prefs.getString(key);
-        }
+    test(
+      'the fixture itself covers exactly PrefsKeys.all, nothing more or less',
+      () {
+        final snapshot = _realDeviceSnapshot();
         expect(
-          actual,
-          expected,
-          reason: 'key "$key" did not survive hydration unchanged',
+          snapshot.keys.toSet(),
+          PrefsKeys.all.toSet(),
+          reason:
+              'the fixture must be updated whenever PrefsKeys.all changes, '
+              'or this test stops actually covering all 43 keys',
         );
-      }
+      },
+    );
 
-      session.dispose();
-    });
+    test(
+      'CoupleSession hydrates every currently-owned field from the snapshot',
+      () async {
+        // Originally checked via the RelationshipProvider facade (since
+        // deleted, Definition-of-Done sweep item 4) -- CoupleSession has
+        // always been the real owner of this hydration since Phase 6b-1; see
+        // couple_session_test.dart for the equivalent coverage at the source.
+        SharedPreferences.setMockInitialValues(_realDeviceSnapshot());
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+
+        // Session / pairing identity
+        expect(session.coupleId, 'couple-fixture-1');
+        expect(session.isPaired, true);
+        expect(session.isCreator, true);
+        expect(session.isOnboardingComplete, true);
+
+        // Workspace fields
+        expect(session.coupleCode, 'ABC123');
+        expect(session.isPremium, true);
+        expect(session.storyTitle, 'Our Love Story');
+        expect(session.startDate, DateTime(2022, 6, 15));
+        expect(session.startTime?.hour, 14);
+        expect(session.startTime?.minute, 30);
+
+        // Profile fields
+        expect(session.yourName, 'Ashwel');
+        expect(session.partnerName, 'Rowel');
+        expect(session.yourAvatarPath, 'couples/c1/avatars/u1_1700000000.jpg');
+        expect(
+          session.partnerAvatarPath,
+          'couples/c1/avatars/u2_1700000001.jpg',
+        );
+
+        session.dispose();
+      },
+    );
+
+    test(
+      'LicenseController hydrates the 24 license fields from the same snapshot',
+      () async {
+        // The 24 license fields moved off RelationshipProvider to
+        // LicenseController in Phase 5 -- see
+        // lib/features/relationship/license_controller.dart. Spot-checked
+        // across the pairs, not exhaustively (exhaustive coverage of these
+        // specific fields lives in test/license_controller_test.dart); this
+        // test's job is proving the full-map hydration path still reaches
+        // LicenseController after the extraction, not per-field behavior.
+        SharedPreferences.setMockInitialValues(_realDeviceSnapshot());
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+
+        final license = await container.read(licenseControllerProvider.future);
+
+        expect(license.yourGender, 'Female');
+        expect(license.partnerGender, 'Male');
+        expect(license.yourBloodType, 'O+');
+        expect(license.partnerBloodType, 'A+');
+        expect(license.yourSignature, 'data:image/png;base64,AAA');
+        expect(license.partnerSignature, 'data:image/png;base64,BBB');
+      },
+    );
+
+    test(
+      'every one of the 43 raw SharedPreferences keys survives a load unchanged',
+      () async {
+        // The controller-agnostic ground truth (see file doc comment): this
+        // must keep passing across every Phase 5 extraction regardless of
+        // which controller currently owns a given field, since none of them
+        // are permitted to rename a PrefsKeys entry.
+        final snapshot = _realDeviceSnapshot();
+        SharedPreferences.setMockInitialValues(snapshot);
+        final session = CoupleSession();
+        await Future.delayed(Duration.zero);
+
+        final prefs = await SharedPreferences.getInstance();
+        for (final key in PrefsKeys.all) {
+          final expected = snapshot[key];
+          final Object? actual;
+          if (expected is bool) {
+            actual = prefs.getBool(key);
+          } else if (expected is int) {
+            actual = prefs.getInt(key);
+          } else {
+            actual = prefs.getString(key);
+          }
+          expect(
+            actual,
+            expected,
+            reason: 'key "$key" did not survive hydration unchanged',
+          );
+        }
+
+        session.dispose();
+      },
+    );
   });
 }

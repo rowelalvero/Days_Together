@@ -21,10 +21,17 @@ import 'package:days_together/shared/widgets/storage_image.dart';
 
 void main() {
   group('StorageImage -- no ref', () {
-    testWidgets('renders the error widget, never a placeholder spinner', (tester) async {
+    testWidgets('renders the error widget, never a placeholder spinner', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: StorageImage(bucket: 'vault-photos', storageRef: null, width: 40, height: 40),
+          home: StorageImage(
+            bucket: 'vault-photos',
+            storageRef: null,
+            width: 40,
+            height: 40,
+          ),
         ),
       );
 
@@ -36,10 +43,17 @@ void main() {
       expect(find.byIcon(Icons.broken_image_outlined), findsOneWidget);
     });
 
-    testWidgets('offers no retry when there was never anything to resolve', (tester) async {
+    testWidgets('offers no retry when there was never anything to resolve', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: StorageImage(bucket: 'vault-photos', storageRef: '   ', width: 40, height: 40),
+          home: StorageImage(
+            bucket: 'vault-photos',
+            storageRef: '   ',
+            width: 40,
+            height: 40,
+          ),
         ),
       );
 
@@ -65,7 +79,9 @@ void main() {
   });
 
   group('StorageImageBuilder -- status reporting', () {
-    testWidgets('a missing ref resolves synchronously to failed', (tester) async {
+    testWidgets('a missing ref resolves synchronously to failed', (
+      tester,
+    ) async {
       final statuses = <StorageImageStatus>[];
 
       await tester.pumpWidget(
@@ -86,25 +102,29 @@ void main() {
       expect(statuses.last, StorageImageStatus.failed);
     });
 
-    testWidgets('a local ref that does not exist on disk is failed, not resolving', (tester) async {
-      final missing = '${Directory.systemTemp.path}${Platform.pathSeparator}nope_${DateTime.now().microsecondsSinceEpoch}.jpg';
-      StorageImageStatus? last;
+    testWidgets(
+      'a local ref that does not exist on disk is failed, not resolving',
+      (tester) async {
+        final missing =
+            '${Directory.systemTemp.path}${Platform.pathSeparator}nope_${DateTime.now().microsecondsSinceEpoch}.jpg';
+        StorageImageStatus? last;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: StorageImageBuilder(
-            bucket: 'vault-photos',
-            storageRef: missing,
-            builder: (context, image, status, _) {
-              last = status;
-              return const SizedBox();
-            },
+        await tester.pumpWidget(
+          MaterialApp(
+            home: StorageImageBuilder(
+              bucket: 'vault-photos',
+              storageRef: missing,
+              builder: (context, image, status, _) {
+                last = status;
+                return const SizedBox();
+              },
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(last, StorageImageStatus.failed);
-    });
+        expect(last, StorageImageStatus.failed);
+      },
+    );
   });
 
   group('StorageImageBuilder -- local files', () {
@@ -126,7 +146,9 @@ void main() {
       return file;
     }
 
-    testWidgets('localPath wins outright and resolves synchronously', (tester) async {
+    testWidgets('localPath wins outright and resolves synchronously', (
+      tester,
+    ) async {
       final file = writeFile('a.jpg');
       ImageProvider? resolved;
       StorageImageStatus? status;
@@ -150,30 +172,33 @@ void main() {
       expect((resolved as FileImage).file.path, file.path);
     });
 
-    testWidgets('a changed localPath re-resolves instead of keeping the old image', (tester) async {
-      final first = writeFile('first.jpg');
-      final second = writeFile('second.jpg');
-      ImageProvider? resolved;
+    testWidgets(
+      'a changed localPath re-resolves instead of keeping the old image',
+      (tester) async {
+        final first = writeFile('first.jpg');
+        final second = writeFile('second.jpg');
+        ImageProvider? resolved;
 
-      Widget build(String path) => MaterialApp(
-            home: StorageImageBuilder(
-              bucket: 'vault-photos',
-              storageRef: null,
-              localPath: path,
-              builder: (context, image, _, _) {
-                resolved = image;
-                return const SizedBox();
-              },
-            ),
-          );
+        Widget build(String path) => MaterialApp(
+          home: StorageImageBuilder(
+            bucket: 'vault-photos',
+            storageRef: null,
+            localPath: path,
+            builder: (context, image, _, _) {
+              resolved = image;
+              return const SizedBox();
+            },
+          ),
+        );
 
-      await tester.pumpWidget(build(first.path));
-      expect((resolved as FileImage).file.path, first.path);
+        await tester.pumpWidget(build(first.path));
+        expect((resolved as FileImage).file.path, first.path);
 
-      // The same element, pointed at a different object -- what happens when
-      // a list recycles a row.
-      await tester.pumpWidget(build(second.path));
-      expect((resolved as FileImage).file.path, second.path);
-    });
+        // The same element, pointed at a different object -- what happens when
+        // a list recycles a row.
+        await tester.pumpWidget(build(second.path));
+        expect((resolved as FileImage).file.path, second.path);
+      },
+    );
   });
 }

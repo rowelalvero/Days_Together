@@ -45,41 +45,47 @@ void main() {
       expect(state.visibleItems, isEmpty);
     });
 
-    test('setPin sets hasPin and unlocks; verifyPin with the right PIN unlocks', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(vaultControllerProvider.notifier);
+    test(
+      'setPin sets hasPin and unlocks; verifyPin with the right PIN unlocks',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(vaultControllerProvider.notifier);
 
-      await notifier.setPin('1234');
-      expect(container.read(vaultControllerProvider).hasPin, true);
-      expect(container.read(vaultControllerProvider).isUnlocked, true);
+        await notifier.setPin('1234');
+        expect(container.read(vaultControllerProvider).hasPin, true);
+        expect(container.read(vaultControllerProvider).isUnlocked, true);
 
-      await notifier.lock();
-      expect(container.read(vaultControllerProvider).isUnlocked, false);
+        await notifier.lock();
+        expect(container.read(vaultControllerProvider).isUnlocked, false);
 
-      final correct = await notifier.verifyPin('1234');
-      expect(correct, true);
-      expect(container.read(vaultControllerProvider).isUnlocked, true);
-    });
+        final correct = await notifier.verifyPin('1234');
+        expect(correct, true);
+        expect(container.read(vaultControllerProvider).isUnlocked, true);
+      },
+    );
 
-    test('verifyPin with the wrong PIN increments wrongAttempts and triggers decoy mode at 3', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(vaultControllerProvider.notifier);
-      await notifier.setPin('1234');
-      await notifier.lock();
+    test(
+      'verifyPin with the wrong PIN increments wrongAttempts and triggers decoy mode at 3',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(vaultControllerProvider.notifier);
+        await notifier.setPin('1234');
+        await notifier.lock();
 
-      await notifier.verifyPin('0000');
-      await notifier.verifyPin('0000');
-      expect(container.read(vaultControllerProvider).isDecoyMode, false);
+        await notifier.verifyPin('0000');
+        await notifier.verifyPin('0000');
+        expect(container.read(vaultControllerProvider).isDecoyMode, false);
 
-      final result = await notifier.verifyPin('0000');
-      expect(result, false);
-      expect(container.read(vaultControllerProvider).wrongAttempts, 3);
-      expect(container.read(vaultControllerProvider).isDecoyMode, true);
-    });
+        final result = await notifier.verifyPin('0000');
+        expect(result, false);
+        expect(container.read(vaultControllerProvider).wrongAttempts, 3);
+        expect(container.read(vaultControllerProvider).isDecoyMode, true);
+      },
+    );
 
     test('addLetter is a no-op while locked', () async {
       final container = _unpairedContainer();
@@ -125,20 +131,31 @@ void main() {
       expect(container.read(vaultControllerProvider).visibleItems, isEmpty);
     });
 
-    test('lock hides items via visibleItems without clearing the underlying data', () async {
-      final container = _unpairedContainer();
-      addTearDown(container.dispose);
-      await Future.delayed(Duration.zero);
-      final notifier = container.read(vaultControllerProvider.notifier);
-      await notifier.setPin('1234');
-      await notifier.addLetter('Still here');
+    test(
+      'lock hides items via visibleItems without clearing the underlying data',
+      () async {
+        final container = _unpairedContainer();
+        addTearDown(container.dispose);
+        await Future.delayed(Duration.zero);
+        final notifier = container.read(vaultControllerProvider.notifier);
+        await notifier.setPin('1234');
+        await notifier.addLetter('Still here');
 
-      await notifier.lock();
+        await notifier.lock();
 
-      final state = container.read(vaultControllerProvider);
-      expect(state.visibleItems, isEmpty, reason: 'visibleItems is gated by isUnlocked');
-      expect(state.letters, hasLength(1), reason: 'the underlying data is not cleared by locking');
-    });
+        final state = container.read(vaultControllerProvider);
+        expect(
+          state.visibleItems,
+          isEmpty,
+          reason: 'visibleItems is gated by isUnlocked',
+        );
+        expect(
+          state.letters,
+          hasLength(1),
+          reason: 'the underlying data is not cleared by locking',
+        );
+      },
+    );
 
     test('purgeCache clears items and the SharedPreferences cache', () async {
       final container = _unpairedContainer();

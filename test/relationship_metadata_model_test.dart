@@ -27,18 +27,21 @@ void main() {
       expect(metadata.relationshipTitle, 'Together Forever');
     });
 
-    test('fromMap handles a minimal row (only the required couple_id) safely', () {
-      final map = {'couple_id': 'couple-uuid-2'};
+    test(
+      'fromMap handles a minimal row (only the required couple_id) safely',
+      () {
+        final map = {'couple_id': 'couple-uuid-2'};
 
-      final metadata = RelationshipMetadata.fromMap(map);
+        final metadata = RelationshipMetadata.fromMap(map);
 
-      expect(metadata.coupleId, 'couple-uuid-2');
-      expect(metadata.certificateNumber, isNull);
-      expect(metadata.issueDate, isNull);
-      expect(metadata.anniversary, isNull);
-      expect(metadata.theme, isNull);
-      expect(metadata.relationshipTitle, isNull);
-    });
+        expect(metadata.coupleId, 'couple-uuid-2');
+        expect(metadata.certificateNumber, isNull);
+        expect(metadata.issueDate, isNull);
+        expect(metadata.anniversary, isNull);
+        expect(metadata.theme, isNull);
+        expect(metadata.relationshipTitle, isNull);
+      },
+    );
 
     test('toMap converts back to the exact column names the table uses', () {
       final metadata = RelationshipMetadata(
