@@ -354,7 +354,7 @@ class CoupleSession extends ChangeNotifier {
       _validateAvatarRef(yourRef).then((valid) {
         if (valid == null && _yourAvatarPath == yourRef) {
           debugPrint('Clearing stale your_avatar_path (object not found)');
-          _clearStaleAvatarCache('your_avatar_path', yourRef);
+          _clearStaleAvatarCache(PrefsKeys.yourAvatarPath, yourRef);
           _yourAvatarPath = null;
           notifyListeners();
         }
@@ -365,7 +365,7 @@ class CoupleSession extends ChangeNotifier {
       _validateAvatarRef(partnerRef).then((valid) {
         if (valid == null && _partnerAvatarPath == partnerRef) {
           debugPrint('Clearing stale partner_avatar_path (object not found)');
-          _clearStaleAvatarCache('partner_avatar_path', partnerRef);
+          _clearStaleAvatarCache(PrefsKeys.partnerAvatarPath, partnerRef);
           _partnerAvatarPath = null;
           notifyListeners();
         }
@@ -1048,81 +1048,88 @@ class CoupleSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Persists an avatar ref that needs no upload -- either a storage path
+  /// that is already uploaded, or the empty string, which clears the stored
+  /// ref.
+  Future<String> _persistAvatarRef(
+    SharedPreferences prefs,
+    String prefsKey,
+    String ref,
+  ) async {
+    if (ref.isEmpty) {
+      await prefs.remove(prefsKey);
+    } else {
+      await prefs.setString(prefsKey, ref);
+    }
+    return ref;
+  }
+
+  /// Applies one partner's avatar change, uploading first when [path] is a
+  /// real device file, and returns the ref to store on the session.
+  ///
+  /// The "your" and "partner" halves of [setAvatars] were near-identical
+  /// 35-line blocks differing only in which field, prefs key, and owner id
+  /// they used. This is that block, parameterised once.
+  Future<String> _applyAvatarChange({
+    required SharedPreferences prefs,
+    required String path,
+    required String prefsKey,
+    required String? supersededRef,
+    required String ownerId,
+    required String missingFileMessage,
+  }) async {
+    // Only a real device path means "upload this". A bare storage path is an
+    // avatar that is already uploaded.
+    if (!StorageUrlService.isLocalFileRef(path)) {
+      return _persistAvatarRef(prefs, prefsKey, path);
+    }
+
+    if (!await File(path).exists()) {
+      throw Exception(missingFileMessage);
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    // Returns the storage path, not a URL.
+    final ref = await ProfileService.instance.uploadAvatar(
+      bucketName: StorageBuckets.avatars,
+      filePath: path,
+      storagePath: 'couples/$_coupleId/avatars/${ownerId}_$timestamp.jpg',
+    );
+
+    // Reclaim the disk cache held by the superseded object. No cache busting
+    // is needed on the new ref: the path embeds a timestamp, so it is already
+    // a distinct cache key.
+    await _clearStaleAvatarCache(prefsKey, supersededRef);
+
+    await prefs.setString(prefsKey, ref);
+    return ref;
+  }
+
   Future<void> setAvatars({String? yourPath, String? partnerPath}) async {
     final prefs = await SharedPreferences.getInstance();
 
     if (isSupabaseAvailable && _coupleId != null) {
       if (yourPath != null) {
-        // Only a real device path means "upload this". A bare storage path is
-        // an avatar that is already uploaded.
-        if (StorageUrlService.isLocalFileRef(yourPath)) {
-          final file = File(yourPath);
-          if (!await file.exists()) {
-            throw Exception('Selected avatar image file does not exist.');
-          }
-
-          final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final storagePath =
-              'couples/$_coupleId/avatars/${_userId ?? 'user'}_$timestamp.jpg';
-
-          // Returns the storage path, not a URL.
-          final yourRef = await ProfileService.instance.uploadAvatar(
-            bucketName: StorageBuckets.avatars,
-            filePath: yourPath,
-            storagePath: storagePath,
-          );
-
-          // Reclaim the disk cache held by the superseded object. No cache
-          // busting is needed on the new ref: the path embeds a timestamp, so
-          // it is already a distinct cache key.
-          await _clearStaleAvatarCache('your_avatar_path', _yourAvatarPath);
-
-          _yourAvatarPath = yourRef;
-          await prefs.setString(PrefsKeys.yourAvatarPath, yourRef);
-        } else {
-          _yourAvatarPath = yourPath;
-          if (yourPath.isEmpty) {
-            await prefs.remove(PrefsKeys.yourAvatarPath);
-          } else {
-            await prefs.setString(PrefsKeys.yourAvatarPath, yourPath);
-          }
-        }
+        _yourAvatarPath = await _applyAvatarChange(
+          prefs: prefs,
+          path: yourPath,
+          prefsKey: PrefsKeys.yourAvatarPath,
+          supersededRef: _yourAvatarPath,
+          ownerId: _userId ?? 'user',
+          missingFileMessage: 'Selected avatar image file does not exist.',
+        );
       }
 
       if (partnerPath != null) {
-        if (StorageUrlService.isLocalFileRef(partnerPath)) {
-          final file = File(partnerPath);
-          if (!await file.exists()) {
-            throw Exception(
+        _partnerAvatarPath = await _applyAvatarChange(
+          prefs: prefs,
+          path: partnerPath,
+          prefsKey: PrefsKeys.partnerAvatarPath,
+          supersededRef: _partnerAvatarPath,
+          ownerId: _partnerId ?? 'partner',
+          missingFileMessage:
               'Selected partner avatar image file does not exist.',
-            );
-          }
-
-          final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final storagePath =
-              'couples/$_coupleId/avatars/${_partnerId ?? 'partner'}_$timestamp.jpg';
-
-          final partnerRef = await ProfileService.instance.uploadAvatar(
-            bucketName: StorageBuckets.avatars,
-            filePath: partnerPath,
-            storagePath: storagePath,
-          );
-
-          await _clearStaleAvatarCache(
-            'partner_avatar_path',
-            _partnerAvatarPath,
-          );
-
-          _partnerAvatarPath = partnerRef;
-          await prefs.setString(PrefsKeys.partnerAvatarPath, partnerRef);
-        } else {
-          _partnerAvatarPath = partnerPath;
-          if (partnerPath.isEmpty) {
-            await prefs.remove(PrefsKeys.partnerAvatarPath);
-          } else {
-            await prefs.setString(PrefsKeys.partnerAvatarPath, partnerPath);
-          }
-        }
+        );
       }
 
       if (yourPath != null && _yourAvatarPath != null && _userId != null) {
@@ -1150,21 +1157,21 @@ class CoupleSession extends ChangeNotifier {
         );
       }
     } else {
+      // Offline, or not yet in a couple: nothing to upload to, so both sides
+      // are just stored locally.
       if (yourPath != null) {
-        _yourAvatarPath = yourPath;
-        if (yourPath.isEmpty) {
-          await prefs.remove(PrefsKeys.yourAvatarPath);
-        } else {
-          await prefs.setString(PrefsKeys.yourAvatarPath, yourPath);
-        }
+        _yourAvatarPath = await _persistAvatarRef(
+          prefs,
+          PrefsKeys.yourAvatarPath,
+          yourPath,
+        );
       }
       if (partnerPath != null) {
-        _partnerAvatarPath = partnerPath;
-        if (partnerPath.isEmpty) {
-          await prefs.remove(PrefsKeys.partnerAvatarPath);
-        } else {
-          await prefs.setString(PrefsKeys.partnerAvatarPath, partnerPath);
-        }
+        _partnerAvatarPath = await _persistAvatarRef(
+          prefs,
+          PrefsKeys.partnerAvatarPath,
+          partnerPath,
+        );
       }
     }
     notifyListeners();
