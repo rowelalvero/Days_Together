@@ -44,6 +44,32 @@ import 'package:days_together/features/chat/domain/entities/love_chat_model.dart
 /// exactly its job (one physical subscription, two logical consumers) --
 /// see this unit's roadmap entry for the corrections made to ADR-005 and
 /// ADR-013 to stop describing it as one.
+
+/// Orders messages newest-first, breaking ties on the list's existing order.
+///
+/// `List.sort` is documented as **not** stable, and `DateTime.now()` routinely
+/// repeats within the same millisecond for messages created in quick
+/// succession. A plain `sort((a, b) => b.createdAt.compareTo(a.createdAt))`
+/// therefore left same-millisecond messages in an arbitrary order: a
+/// just-prepended message could be pushed out of position 0, and at the
+/// [LoveChatController.maxLocalMessages] boundary it could be truncated away
+/// entirely. Decorating each element with its original index makes the
+/// ordering total, so ties keep the order they arrived in and the result is
+/// deterministic.
+///
+/// This was previously visible only as an intermittent test failure
+/// (`love_chat_controller_test.dart`'s maxLocalMessages cap, ~1 run in 3), but
+/// the same tie affects real sends: two messages posted in the same
+/// millisecond could display in either order.
+List<LoveChatMessage> _sortedNewestFirst(Iterable<LoveChatMessage> messages) {
+  final indexed = messages.toList().indexed.toList();
+  indexed.sort((a, b) {
+    final byRecency = b.$2.createdAt.compareTo(a.$2.createdAt);
+    return byRecency != 0 ? byRecency : a.$1.compareTo(b.$1);
+  });
+  return [for (final entry in indexed) entry.$2];
+}
+
 class LoveChatController extends Notifier<LoveChatState>
     with SupabaseLifecycleNotifier<LoveChatState> {
   static const String _storageKey = 'love_chat_messages';
@@ -87,9 +113,9 @@ class LoveChatController extends Notifier<LoveChatState>
           }
         }
 
-        parsedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        final bool hadExcess = parsedList.length > maxLocalMessages;
-        final bounded = parsedList.take(maxLocalMessages).toList();
+        final sortedList = _sortedNewestFirst(parsedList);
+        final bool hadExcess = sortedList.length > maxLocalMessages;
+        final bounded = sortedList.take(maxLocalMessages).toList();
 
         if (!ref.mounted) return;
         state = state.copyWith(messages: bounded, isLoading: false);
@@ -143,8 +169,7 @@ class LoveChatController extends Notifier<LoveChatState>
           .order('created_at', ascending: false)
           .limit(maxLocalMessages);
 
-      final parsed = res.map((data) => _parseMessage(data)).toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final parsed = _sortedNewestFirst(res.map((data) => _parseMessage(data)));
 
       if (!ref.mounted) return;
       state = state.copyWith(
@@ -175,12 +200,11 @@ class LoveChatController extends Notifier<LoveChatState>
   @override
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     if (!ref.mounted) return;
-    final parsed =
-        dataList
-            .where((data) => data['type'] == 'chat')
-            .map((data) => _parseMessage(data))
-            .toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final parsed = _sortedNewestFirst(
+      dataList
+          .where((data) => data['type'] == 'chat')
+          .map((data) => _parseMessage(data)),
+    );
 
     state = state.copyWith(
       messages: parsed.take(maxLocalMessages).toList(),
@@ -202,11 +226,10 @@ class LoveChatController extends Notifier<LoveChatState>
       content: content,
     );
 
-    final messages =
-        ([newMessage, ...state.messages]
-              ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
-            .take(maxLocalMessages)
-            .toList();
+    final messages = _sortedNewestFirst([
+      newMessage,
+      ...state.messages,
+    ]).take(maxLocalMessages).toList();
     state = state.copyWith(messages: messages);
     await _persist();
 
@@ -275,8 +298,7 @@ class LoveChatController extends Notifier<LoveChatState>
   Future<void> _persistLocalOnly() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final sorted = [...state.messages]
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final sorted = _sortedNewestFirst(state.messages);
       final bounded = sorted.take(maxLocalMessages).toList();
       final jsonList = bounded.map((m) => m.toJson()).toList();
       await prefs.setString(_storageKey, jsonEncode(jsonList));

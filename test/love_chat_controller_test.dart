@@ -93,6 +93,62 @@ void main() {
       expect(state.messages.first.content, 'Message ${LoveChatController.maxLocalMessages + 4}');
     });
 
+    test('messages sharing a createdAt keep a deterministic order', () async {
+      // Regression guard for the unstable-sort bug behind this file's
+      // long-standing ~1-in-3 flake. List.sort is not stable and
+      // DateTime.now() repeats within a millisecond, so a tie used to leave
+      // ordering to the sort's internals -- which could push a just-sent
+      // message out of position 0 or, at the cap, drop it entirely.
+      //
+      // Seeds a cache where every message carries the *same* createdAt, so
+      // the comparator is all ties and nothing depends on wall-clock timing.
+      //
+      // 60 messages, not a handful: Dart's List.sort falls back to insertion
+      // sort (which happens to be stable) below ~32 elements, so a smaller
+      // fixture passes against the unfixed code and guards nothing. This size
+      // forces the dual-pivot quicksort path where the instability is real --
+      // verified by running this test against the pre-fix comparator.
+      final sameInstant = DateTime.utc(2026, 1, 1, 12);
+      final seeded = [
+        for (var i = 0; i < 60; i++)
+          LoveChatMessage(
+            id: 'seed-$i',
+            senderId: 'partner',
+            senderName: 'Partner',
+            content: 'Seeded $i',
+            createdAt: sameInstant,
+          ).toJson(),
+      ];
+      SharedPreferences.setMockInitialValues({
+        'love_chat_messages': jsonEncode(seeded),
+      });
+      final container = _unpairedContainer();
+      addTearDown(container.dispose);
+      await Future.delayed(Duration.zero);
+      final notifier = container.read(loveChatControllerProvider.notifier);
+
+      final before = container
+          .read(loveChatControllerProvider)
+          .messages
+          .map((m) => m.id)
+          .toList();
+
+      await notifier.sendMessage('Newest', 'Me');
+
+      final after = container.read(loveChatControllerProvider).messages;
+      expect(
+        after.first.content,
+        'Newest',
+        reason: 'a freshly sent message must stay at the front even when its '
+            'timestamp ties with every existing message',
+      );
+      expect(
+        after.skip(1).map((m) => m.id).toList(),
+        before,
+        reason: 'tied messages must keep the relative order they already had',
+      );
+    });
+
     test('purgeCache clears messages and the SharedPreferences cache', () async {
       SharedPreferences.setMockInitialValues({'love_chat_messages': '[]'});
       final container = _unpairedContainer();
