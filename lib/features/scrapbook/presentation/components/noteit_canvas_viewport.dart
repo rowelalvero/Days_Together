@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
-import 'package:days_together/features/scrapbook/presentation/raster_canvas.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/raster_canvas.dart';
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_text_properties_panel.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
@@ -119,7 +119,9 @@ class NoteitCanvasViewport extends StatelessWidget {
                             ),
                             Center(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
                                 child: TextField(
                                   controller: inlineTextController,
                                   focusNode: inlineTextFocusNode,
@@ -192,11 +194,16 @@ class NoteitCanvasViewport extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {},
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.backgroundColor.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.15),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.15),
@@ -209,29 +216,44 @@ class NoteitCanvasViewport extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: Icon(
-                          selectedObj.locked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                          selectedObj.locked
+                              ? Icons.lock_rounded
+                              : Icons.lock_open_rounded,
                           color: theme.textColor,
                         ),
                         onPressed: () {
-                          final updated = selectedObj.copyWith(locked: !selectedObj.locked);
+                          final updated = selectedObj.copyWith(
+                            locked: !selectedObj.locked,
+                          );
                           controller.replaceDrawable(selectedObj, updated);
                           controller.selectObjectDrawable(updated);
                         },
-                        tooltip: selectedObj.locked ? 'Unlock Object' : 'Lock Object',
+                        tooltip: selectedObj.locked
+                            ? 'Unlock Object'
+                            : 'Lock Object',
                       ),
                       IconButton(
-                        icon: Icon(Icons.flip_to_back_rounded, color: theme.textColor),
+                        icon: Icon(
+                          Icons.flip_to_back_rounded,
+                          color: theme.textColor,
+                        ),
                         onPressed: () => onSendBackward(selectedObj),
                         tooltip: 'Send Backward',
                       ),
                       IconButton(
-                        icon: Icon(Icons.flip_to_front_rounded, color: theme.textColor),
+                        icon: Icon(
+                          Icons.flip_to_front_rounded,
+                          color: theme.textColor,
+                        ),
                         onPressed: () => onBringForward(selectedObj),
                         tooltip: 'Bring Forward',
                       ),
                       if (selectedObj is TextDrawable)
                         IconButton(
-                          icon: Icon(Icons.edit_rounded, color: theme.textColor),
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            color: theme.textColor,
+                          ),
                           onPressed: () {
                             if (selectedObj is CustomTextDrawable) {
                               onStartInlineEditing(selectedObj);
@@ -293,7 +315,8 @@ class NoteitCanvasViewport extends StatelessWidget {
           ),
 
           // Floating Font Size Slider (Only visible when adding/editing text)
-          if (isPropertiesPanelExpanded && (activeMode == 'text' || selectedObj is TextDrawable))
+          if (isPropertiesPanelExpanded &&
+              (activeMode == 'text' || selectedObj is TextDrawable))
             Positioned(
               left: 12,
               top: 160,
@@ -301,11 +324,16 @@ class NoteitCanvasViewport extends StatelessWidget {
               child: GestureDetector(
                 onTap: () {},
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.backgroundColor.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.15),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.1),
@@ -316,7 +344,11 @@ class NoteitCanvasViewport extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.text_fields_rounded, color: theme.textColor, size: 16),
+                      Icon(
+                        Icons.text_fields_rounded,
+                        color: theme.textColor,
+                        size: 16,
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         '${(selectedObj is TextDrawable ? (selectedObj.style.fontSize ?? fontSize) : fontSize).round()}',
@@ -336,14 +368,21 @@ class NoteitCanvasViewport extends StatelessWidget {
                             min: 10.0,
                             max: 80.0,
                             activeColor: theme.accentColor,
-                            inactiveColor: theme.textColor.withValues(alpha: 0.1),
+                            inactiveColor: theme.textColor.withValues(
+                              alpha: 0.1,
+                            ),
                             onChanged: (val) {
                               onFontSizeChanged(val);
                               if (selectedObj is TextDrawable) {
                                 final updated = selectedObj.copyWith(
-                                  style: selectedObj.style.copyWith(fontSize: val),
+                                  style: selectedObj.style.copyWith(
+                                    fontSize: val,
+                                  ),
                                 );
-                                controller.replaceDrawable(selectedObj, updated);
+                                controller.replaceDrawable(
+                                  selectedObj,
+                                  updated,
+                                );
                                 controller.selectObjectDrawable(updated);
                               }
                             },

@@ -21,7 +21,12 @@ import 'package:days_together/features/settings/notification_preferences_control
 import 'package:days_together/app/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ConsumerStatefulWidget, ConsumerState, ConsumerWidget, WidgetRef, ProviderScope;
+    show
+        ConsumerStatefulWidget,
+        ConsumerState,
+        ConsumerWidget,
+        WidgetRef,
+        ProviderScope;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/home_widgets/data/home_widget_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,7 +41,7 @@ import 'package:days_together/app/router/route_names.dart';
 @pragma('vm:entry-point')
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Handle Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
@@ -159,8 +164,9 @@ Widget buildAppRoot({
   return ProviderScope(
     overrides: [
       if (homeWidgetPrefs != null)
-        homeWidgetRepositoryProvider
-            .overrideWithValue(HomeWidgetRepository(homeWidgetPrefs)),
+        homeWidgetRepositoryProvider.overrideWithValue(
+          HomeWidgetRepository(homeWidgetPrefs),
+        ),
     ],
     child: _CoupleSessionBridge(child: child),
   );
@@ -208,7 +214,8 @@ class _CoupleSessionBridge extends ConsumerStatefulWidget {
   const _CoupleSessionBridge({required this.child});
 
   @override
-  ConsumerState<_CoupleSessionBridge> createState() => _CoupleSessionBridgeState();
+  ConsumerState<_CoupleSessionBridge> createState() =>
+      _CoupleSessionBridgeState();
 }
 
 class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
@@ -272,7 +279,8 @@ class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
       _lastPartnerProfileVersion = session.partnerProfileVersion;
     } else if (userId != _lastUserId || coupleId != _lastCoupleId) {
       final identityCleared =
-          (_lastUserId != null && userId == null) || (_lastCoupleId != null && coupleId == null);
+          (_lastUserId != null && userId == null) ||
+          (_lastCoupleId != null && coupleId == null);
       _lastUserId = userId;
       _lastCoupleId = coupleId;
       if (identityCleared) {
@@ -317,7 +325,9 @@ class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
       ref.read(topicCardsControllerProvider.notifier).updateSession(session);
       ref.read(dailyMoodControllerProvider.notifier).updateSession(session);
       ref.read(currentlyControllerProvider.notifier).updateSession(session);
-      ref.read(notificationPreferencesControllerProvider.notifier).updateSession(session);
+      ref
+          .read(notificationPreferencesControllerProvider.notifier)
+          .updateSession(session);
     });
   }
 

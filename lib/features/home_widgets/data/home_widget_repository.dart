@@ -5,7 +5,9 @@ import 'package:days_together/core/platform/home_widget/home_widget_constants.da
 import 'package:days_together/core/platform/home_widget/home_widget_models.dart';
 
 final homeWidgetRepositoryProvider = Provider<HomeWidgetRepository>((ref) {
-  throw UnimplementedError('homeWidgetRepositoryProvider must be initialized with SharedPreferences');
+  throw UnimplementedError(
+    'homeWidgetRepositoryProvider must be initialized with SharedPreferences',
+  );
 });
 
 class HomeWidgetRepository {

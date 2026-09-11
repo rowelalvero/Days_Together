@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/features/wrapped/presentation/wrapped_animated_counter.dart';
+import 'package:days_together/features/wrapped/presentation/widgets/wrapped_animated_counter.dart';
 
 class WrappedPageCalendar extends StatelessWidget {
   final WrappedData data;

@@ -62,7 +62,9 @@ class WidgetContentEditor extends StatelessWidget {
                   foregroundColor: const Color(0xFFE8477E),
                   side: const BorderSide(color: Color(0xFFE8477E)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -100,11 +102,15 @@ class WidgetContentEditor extends StatelessWidget {
               fillColor: Colors.black.withValues(alpha: 0.25),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -112,7 +118,8 @@ class WidgetContentEditor extends StatelessWidget {
               ),
             ),
             style: const TextStyle(color: Colors.white),
-            onChanged: (val) => onConfigChanged(config.copyWith(customTitle: val)),
+            onChanged: (val) =>
+                onConfigChanged(config.copyWith(customTitle: val)),
           ),
           const SizedBox(height: 12),
           // Custom Milestone Tag
@@ -125,11 +132,15 @@ class WidgetContentEditor extends StatelessWidget {
               fillColor: Colors.black.withValues(alpha: 0.25),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -137,7 +148,8 @@ class WidgetContentEditor extends StatelessWidget {
               ),
             ),
             style: const TextStyle(color: Colors.white),
-            onChanged: (val) => onConfigChanged(config.copyWith(customMilestoneTag: val)),
+            onChanged: (val) =>
+                onConfigChanged(config.copyWith(customMilestoneTag: val)),
           ),
           const SizedBox(height: 14),
           // Counter Format options
@@ -146,16 +158,24 @@ class WidgetContentEditor extends StatelessWidget {
               Expanded(
                 child: _FormatOptionChip(
                   label: 'Total Days',
-                  isSelected: config.counterFormat == DaysCounterFormat.totalDays,
-                  onTap: () => onConfigChanged(config.copyWith(counterFormat: DaysCounterFormat.totalDays)),
+                  isSelected:
+                      config.counterFormat == DaysCounterFormat.totalDays,
+                  onTap: () => onConfigChanged(
+                    config.copyWith(counterFormat: DaysCounterFormat.totalDays),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _FormatOptionChip(
                   label: 'Yrs • Mos • Days',
-                  isSelected: config.counterFormat == DaysCounterFormat.yearsMonthsDays,
-                  onTap: () => onConfigChanged(config.copyWith(counterFormat: DaysCounterFormat.yearsMonthsDays)),
+                  isSelected:
+                      config.counterFormat == DaysCounterFormat.yearsMonthsDays,
+                  onTap: () => onConfigChanged(
+                    config.copyWith(
+                      counterFormat: DaysCounterFormat.yearsMonthsDays,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -164,19 +184,27 @@ class WidgetContentEditor extends StatelessWidget {
           // Toggles
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Show Live Stopwatch Seconds', style: TextStyle(color: Colors.white, fontSize: 14)),
+            title: const Text(
+              'Show Live Stopwatch Seconds',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
             value: config.showSeconds,
             activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFFE8477E),
-            onChanged: (val) => onConfigChanged(config.copyWith(showSeconds: val)),
+            onChanged: (val) =>
+                onConfigChanged(config.copyWith(showSeconds: val)),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Show Milestone Badge', style: TextStyle(color: Colors.white, fontSize: 14)),
+            title: const Text(
+              'Show Milestone Badge',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
             value: config.showMilestone,
             activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFFE8477E),
-            onChanged: (val) => onConfigChanged(config.copyWith(showMilestone: val)),
+            onChanged: (val) =>
+                onConfigChanged(config.copyWith(showMilestone: val)),
           ),
         ],
       ),
@@ -207,14 +235,18 @@ class _FormatOptionChip extends StatelessWidget {
               : Colors.black.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFFE8477E) : Colors.white.withValues(alpha: 0.1),
+            color: isSelected
+                ? const Color(0xFFE8477E)
+                : Colors.white.withValues(alpha: 0.1),
           ),
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.7),
+              color: isSelected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.7),
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),

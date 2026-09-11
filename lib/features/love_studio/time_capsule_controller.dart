@@ -39,8 +39,10 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
       final capsules = jsonString != null
-          ? ((jsonDecode(jsonString) as List).map((json) => TimeCapsule.fromJson(json)).toList()
-            ..sort((a, b) => a.openDate.compareTo(b.openDate)))
+          ? ((jsonDecode(jsonString) as List)
+                .map((json) => TimeCapsule.fromJson(json))
+                .toList()
+              ..sort((a, b) => a.openDate.compareTo(b.openDate)))
           : <TimeCapsule>[];
       if (!ref.mounted) return;
       state = state.copyWith(capsules: capsules, isLoading: false);
@@ -66,19 +68,23 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
     try {
-      final List<dynamic> res =
-          await Supabase.instance.client.from('time_capsules').select().eq('couple_id', coupleId!);
+      final List<dynamic> res = await Supabase.instance.client
+          .from('time_capsules')
+          .select()
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         return TimeCapsule(
           id: data['id'] as String,
           message: data['message'] ?? '',
-          openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String).toLocal() : DateTime.now(),
+          openDate: data['open_date'] != null
+              ? DateTime.parse(data['open_date'] as String).toLocal()
+              : DateTime.now(),
           isOpened: data['is_opened'] ?? false,
-          createdAt:
-              data['created_at'] != null ? DateTime.parse(data['created_at'] as String).toLocal() : DateTime.now(),
+          createdAt: data['created_at'] != null
+              ? DateTime.parse(data['created_at'] as String).toLocal()
+              : DateTime.now(),
         );
-      }).toList()
-        ..sort((a, b) => a.openDate.compareTo(b.openDate));
+      }).toList()..sort((a, b) => a.openDate.compareTo(b.openDate));
 
       if (!ref.mounted) return;
       state = state.copyWith(capsules: parsed, isLoading: false);
@@ -95,18 +101,23 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
       return TimeCapsule(
         id: data['id'] as String,
         message: data['message'] ?? '',
-        openDate: data['open_date'] != null ? DateTime.parse(data['open_date'] as String) : DateTime.now(),
+        openDate: data['open_date'] != null
+            ? DateTime.parse(data['open_date'] as String)
+            : DateTime.now(),
         isOpened: data['is_opened'] ?? false,
-        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+        createdAt: data['created_at'] != null
+            ? DateTime.parse(data['created_at'] as String)
+            : DateTime.now(),
       );
-    }).toList()
-      ..sort((a, b) => a.openDate.compareTo(b.openDate));
+    }).toList()..sort((a, b) => a.openDate.compareTo(b.openDate));
 
     final wasLoading = state.isLoading;
     final oldCapsules = state.capsules;
 
     if (!wasLoading) {
-      final added = incoming.where((inc) => !oldCapsules.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !oldCapsules.any((old) => old.id == inc.id))
+          .toList();
       for (final capsule in added) {
         if (_localMutations.contains(capsule.id)) {
           _localMutations.remove(capsule.id);
@@ -123,7 +134,11 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
       }
 
       final opened = incoming
-          .where((inc) => inc.isOpened && !oldCapsules.any((old) => old.id == inc.id && old.isOpened))
+          .where(
+            (inc) =>
+                inc.isOpened &&
+                !oldCapsules.any((old) => old.id == inc.id && old.isOpened),
+          )
           .toList();
       for (final capsule in opened) {
         if (_localMutations.contains(capsule.id)) {
@@ -168,7 +183,8 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
         final openDateStr = openDate.toLocal().toString().substring(0, 10);
         NotificationService().sendPartnerNotification(
           title: 'Time Capsule Created ⏳',
-          body: 'Your partner locked a new time capsule to be opened on $openDateStr!',
+          body:
+              'Your partner locked a new time capsule to be opened on $openDateStr!',
           feature: 'time_capsule',
           itemId: capsule.id,
         );
@@ -193,7 +209,8 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   }
 
   Future<void> _createLocalCapsule(TimeCapsule capsule) async {
-    final capsules = [...state.capsules, capsule]..sort((a, b) => a.openDate.compareTo(b.openDate));
+    final capsules = [...state.capsules, capsule]
+      ..sort((a, b) => a.openDate.compareTo(b.openDate));
     state = state.copyWith(capsules: capsules);
     await _persist();
   }
@@ -207,7 +224,10 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('time_capsules').update({'is_opened': true}).eq('id', id);
+        await Supabase.instance.client
+            .from('time_capsules')
+            .update({'is_opened': true})
+            .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Time Capsule Opened 🔓',
           body: 'Your partner opened a time capsule!',
@@ -246,7 +266,10 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   Future<void> deleteCapsule(String id) async {
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('time_capsules').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('time_capsules')
+            .delete()
+            .eq('id', id);
       } catch (e) {
         debugPrint('TimeCapsuleController.deleteCapsule Supabase error: $e');
         if (!ref.mounted) return;
@@ -258,7 +281,9 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   }
 
   Future<void> _deleteLocalCapsule(String id) async {
-    state = state.copyWith(capsules: state.capsules.where((c) => c.id != id).toList());
+    state = state.copyWith(
+      capsules: state.capsules.where((c) => c.id != id).toList(),
+    );
     await _persist();
   }
 
@@ -275,7 +300,8 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   }
 }
 
-final timeCapsuleControllerProvider = NotifierProvider.autoDispose<TimeCapsuleController, TimeCapsuleState>(
-  TimeCapsuleController.new,
-  dependencies: [coupleSessionProvider],
-);
+final timeCapsuleControllerProvider =
+    NotifierProvider.autoDispose<TimeCapsuleController, TimeCapsuleState>(
+      TimeCapsuleController.new,
+      dependencies: [coupleSessionProvider],
+    );

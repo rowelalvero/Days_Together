@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/core/utils/date_helper.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -35,7 +35,10 @@ class AnniversaryCountdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nextAnniversaryYear = currentYears + 1;
-    final nextAnniversaryDate = DateHelper.getAnniversaryDate(startDate, nextAnniversaryYear);
+    final nextAnniversaryDate = DateHelper.getAnniversaryDate(
+      startDate,
+      nextAnniversaryYear,
+    );
     final daysUntil = DateHelper.daysUntil(nextAnniversaryDate);
     final label = '${_getOrdinal(nextAnniversaryYear)} Anniversary';
 
@@ -50,7 +53,11 @@ class AnniversaryCountdownCard extends StatelessWidget {
               color: theme.accentColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.favorite_rounded, color: theme.accentColor, size: 24),
+            child: Icon(
+              Icons.favorite_rounded,
+              color: theme.accentColor,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 18),
           Expanded(

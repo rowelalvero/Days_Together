@@ -53,7 +53,10 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
         title: Text(
           widget.title,
 
-          style: AppTypography.heading(fontWeight: FontWeight.bold, color: widget.theme.textColor),
+          style: AppTypography.heading(
+            fontWeight: FontWeight.bold,
+            color: widget.theme.textColor,
+          ),
         ),
 
         backgroundColor: Colors.transparent,
@@ -77,7 +80,10 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
             child: Text(
               'Clear',
 
-              style: AppTypography.body(color: Colors.redAccent, fontWeight: FontWeight.bold),
+              style: AppTypography.body(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
 
@@ -94,7 +100,10 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
               Text(
                 'Draw your signature inside the box below',
 
-                style: AppTypography.body(fontSize: 14, color: widget.theme.textColor.withValues(alpha: 0.6)),
+                style: AppTypography.body(
+                  fontSize: 14,
+                  color: widget.theme.textColor.withValues(alpha: 0.6),
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -176,7 +185,10 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
                   child: Text(
                     'Save Signature',
 
-                    style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: AppTypography.body(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),

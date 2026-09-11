@@ -4,7 +4,7 @@ import 'package:days_together/features/relationship/data/relationship_milestones
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/core/utils/date_helper.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -29,8 +29,18 @@ class JourneyFunFactsGrid extends StatelessWidget {
 
     final totalDays = DateHelper.relationshipTotalDays(workspace.startDate);
     final weekends = DateHelper.countWeekendDays(startDate, today);
-    final valentines = DateHelper.countOccurrencesOfDate(startDate, today, 2, 14);
-    final christmases = DateHelper.countOccurrencesOfDate(startDate, today, 12, 25);
+    final valentines = DateHelper.countOccurrencesOfDate(
+      startDate,
+      today,
+      2,
+      14,
+    );
+    final christmases = DateHelper.countOccurrencesOfDate(
+      startDate,
+      today,
+      12,
+      25,
+    );
     final newYears = DateHelper.countOccurrencesOfDate(startDate, today, 1, 1);
 
     int birthdays = 0;
@@ -60,7 +70,8 @@ class JourneyFunFactsGrid extends StatelessWidget {
         'Months Shared',
         '${DateHelper.relationshipTotalMonths(workspace.startDate)}',
       ),
-      if (birthdays > 0) FunStatItem('🎂', 'Birthdays Celebrated', '$birthdays'),
+      if (birthdays > 0)
+        FunStatItem('🎂', 'Birthdays Celebrated', '$birthdays'),
       FunStatItem('💘', 'Valentine\'s Days', '$valentines'),
       FunStatItem('🎄', 'Christmases Spent', '$christmases'),
       FunStatItem('🎆', 'New Years Together', '$newYears'),
@@ -110,7 +121,10 @@ class JourneyFunFactsGrid extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 0, end: targetValue.toDouble()),
+                          tween: Tween<double>(
+                            begin: 0,
+                            end: targetValue.toDouble(),
+                          ),
                           duration: Duration(milliseconds: 1000 + index * 120),
                           curve: Curves.easeOutCubic,
                           builder: (context, value, _) {

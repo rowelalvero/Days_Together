@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/color_picker_dialog.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/scrapbook/domain/canvas_mapping.dart';
@@ -129,7 +129,8 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
     final Color activeHighlight = selectedText != null
         ? (selectedText!.style.backgroundColor ?? Colors.transparent)
         : highlightColor;
-    final TextAlign activeAlign = (selectedText != null && selectedText is CustomTextDrawable)
+    final TextAlign activeAlign =
+        (selectedText != null && selectedText is CustomTextDrawable)
         ? (selectedText as CustomTextDrawable).textAlign
         : textAlign;
 
@@ -172,16 +173,24 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                 try {
                   fontStyle = GoogleFonts.getFont(
                     font,
-                    color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.8),
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   );
                 } catch (_) {
                   fontStyle = TextStyle(
                     fontFamily: font,
-                    color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.8),
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.8),
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   );
                 }
 
@@ -193,11 +202,16 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                     selectedColor: theme.accentColor.withValues(alpha: 0.15),
                     backgroundColor: Colors.transparent,
                     side: BorderSide(
-                      color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.15),
+                      color: isSelected
+                          ? theme.accentColor
+                          : theme.textColor.withValues(alpha: 0.15),
                       width: isSelected ? 1.5 : 1.0,
                     ),
                     showCheckmark: false,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     onSelected: (selected) {
                       if (selected) {
                         onFontFamilyChanged(font);
@@ -206,9 +220,15 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                             style: getNoteitTextStyle(
                               fontSize: selectedText!.style.fontSize ?? 20.0,
                               color: selectedText!.style.color ?? brushColor,
-                              isBold: selectedText!.style.fontWeight == FontWeight.bold,
-                              isItalic: selectedText!.style.fontStyle == FontStyle.italic,
-                              isUnderline: selectedText!.style.decoration == TextDecoration.underline,
+                              isBold:
+                                  selectedText!.style.fontWeight ==
+                                  FontWeight.bold,
+                              isItalic:
+                                  selectedText!.style.fontStyle ==
+                                  FontStyle.italic,
+                              isUnderline:
+                                  selectedText!.style.decoration ==
+                                  TextDecoration.underline,
                               fontFamily: font,
                               highlightColor: activeHighlight,
                             ),
@@ -258,16 +278,26 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                               if (selectedText != null) {
                                 final updated = selectedText!.copyWith(
                                   style: getNoteitTextStyle(
-                                    fontSize: selectedText!.style.fontSize ?? 20.0,
+                                    fontSize:
+                                        selectedText!.style.fontSize ?? 20.0,
                                     color: pickedColor,
-                                    isBold: selectedText!.style.fontWeight == FontWeight.bold,
-                                    isItalic: selectedText!.style.fontStyle == FontStyle.italic,
-                                    isUnderline: selectedText!.style.decoration == TextDecoration.underline,
+                                    isBold:
+                                        selectedText!.style.fontWeight ==
+                                        FontWeight.bold,
+                                    isItalic:
+                                        selectedText!.style.fontStyle ==
+                                        FontStyle.italic,
+                                    isUnderline:
+                                        selectedText!.style.decoration ==
+                                        TextDecoration.underline,
                                     fontFamily: matchedFont,
                                     highlightColor: activeHighlight,
                                   ),
                                 );
-                                controller.replaceDrawable(selectedText!, updated);
+                                controller.replaceDrawable(
+                                  selectedText!,
+                                  updated,
+                                );
                                 controller.selectObjectDrawable(updated);
                               }
                             }
@@ -301,7 +331,8 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                       }
 
                       final color = paletteColors[i];
-                      final isSelected = activeColor.toARGB32() == color.toARGB32();
+                      final isSelected =
+                          activeColor.toARGB32() == color.toARGB32();
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: GestureDetector(
@@ -310,16 +341,26 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                             if (selectedText != null) {
                               final updated = selectedText!.copyWith(
                                 style: getNoteitTextStyle(
-                                  fontSize: selectedText!.style.fontSize ?? 20.0,
+                                  fontSize:
+                                      selectedText!.style.fontSize ?? 20.0,
                                   color: color,
-                                  isBold: selectedText!.style.fontWeight == FontWeight.bold,
-                                  isItalic: selectedText!.style.fontStyle == FontStyle.italic,
-                                  isUnderline: selectedText!.style.decoration == TextDecoration.underline,
+                                  isBold:
+                                      selectedText!.style.fontWeight ==
+                                      FontWeight.bold,
+                                  isItalic:
+                                      selectedText!.style.fontStyle ==
+                                      FontStyle.italic,
+                                  isUnderline:
+                                      selectedText!.style.decoration ==
+                                      TextDecoration.underline,
                                   fontFamily: matchedFont,
                                   highlightColor: activeHighlight,
                                 ),
                               );
-                              controller.replaceDrawable(selectedText!, updated);
+                              controller.replaceDrawable(
+                                selectedText!,
+                                updated,
+                              );
                               controller.selectObjectDrawable(updated);
                             }
                           },
@@ -330,7 +371,9 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                               color: color,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSelected ? theme.textColor : Colors.transparent,
+                                color: isSelected
+                                    ? theme.textColor
+                                    : Colors.transparent,
                                 width: 1.8,
                               ),
                             ),
@@ -369,7 +412,8 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                             final pickedColor = await showDialog<Color>(
                               context: context,
                               builder: (ctx2) => ColorPickerDialog(
-                                initialColor: activeHighlight == Colors.transparent
+                                initialColor:
+                                    activeHighlight == Colors.transparent
                                     ? Colors.yellow.withValues(alpha: 0.3)
                                     : activeHighlight,
                                 theme: theme,
@@ -380,16 +424,26 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                               if (selectedText != null) {
                                 final updated = selectedText!.copyWith(
                                   style: getNoteitTextStyle(
-                                    fontSize: selectedText!.style.fontSize ?? 20.0,
+                                    fontSize:
+                                        selectedText!.style.fontSize ?? 20.0,
                                     color: activeColor,
-                                    isBold: selectedText!.style.fontWeight == FontWeight.bold,
-                                    isItalic: selectedText!.style.fontStyle == FontStyle.italic,
-                                    isUnderline: selectedText!.style.decoration == TextDecoration.underline,
+                                    isBold:
+                                        selectedText!.style.fontWeight ==
+                                        FontWeight.bold,
+                                    isItalic:
+                                        selectedText!.style.fontStyle ==
+                                        FontStyle.italic,
+                                    isUnderline:
+                                        selectedText!.style.decoration ==
+                                        TextDecoration.underline,
                                     fontFamily: matchedFont,
                                     highlightColor: pickedColor,
                                   ),
                                 );
-                                controller.replaceDrawable(selectedText!, updated);
+                                controller.replaceDrawable(
+                                  selectedText!,
+                                  updated,
+                                );
                                 controller.selectObjectDrawable(updated);
                               }
                             }
@@ -423,7 +477,8 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                       }
 
                       final color = highlightColors[i];
-                      final isSelected = activeHighlight.toARGB32() == color.toARGB32();
+                      final isSelected =
+                          activeHighlight.toARGB32() == color.toARGB32();
                       final isTransparent = color == Colors.transparent;
 
                       return Padding(
@@ -434,16 +489,26 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                             if (selectedText != null) {
                               final updated = selectedText!.copyWith(
                                 style: getNoteitTextStyle(
-                                  fontSize: selectedText!.style.fontSize ?? 20.0,
+                                  fontSize:
+                                      selectedText!.style.fontSize ?? 20.0,
                                   color: activeColor,
-                                  isBold: selectedText!.style.fontWeight == FontWeight.bold,
-                                  isItalic: selectedText!.style.fontStyle == FontStyle.italic,
-                                  isUnderline: selectedText!.style.decoration == TextDecoration.underline,
+                                  isBold:
+                                      selectedText!.style.fontWeight ==
+                                      FontWeight.bold,
+                                  isItalic:
+                                      selectedText!.style.fontStyle ==
+                                      FontStyle.italic,
+                                  isUnderline:
+                                      selectedText!.style.decoration ==
+                                      TextDecoration.underline,
                                   fontFamily: matchedFont,
                                   highlightColor: color,
                                 ),
                               );
-                              controller.replaceDrawable(selectedText!, updated);
+                              controller.replaceDrawable(
+                                selectedText!,
+                                updated,
+                              );
                               controller.selectObjectDrawable(updated);
                             }
                           },
@@ -451,10 +516,14 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                             width: 28,
                             height: 28,
                             decoration: BoxDecoration(
-                              color: isTransparent ? Colors.grey.withValues(alpha: 0.2) : color,
+                              color: isTransparent
+                                  ? Colors.grey.withValues(alpha: 0.2)
+                                  : color,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSelected ? theme.textColor : Colors.transparent,
+                                color: isSelected
+                                    ? theme.textColor
+                                    : Colors.transparent,
                                 width: 1.8,
                               ),
                             ),
@@ -462,7 +531,9 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                                 ? Icon(
                                     Icons.format_color_reset_rounded,
                                     size: 14,
-                                    color: theme.textColor.withValues(alpha: 0.6),
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.6,
+                                    ),
                                   )
                                 : null,
                           ),
@@ -482,7 +553,9 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.format_bold,
-                  color: textIsBold ? theme.accentColor : theme.textColor.withValues(alpha: 0.6),
+                  color: textIsBold
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.6),
                 ),
                 onPressed: () {
                   onToggleBold();
@@ -506,7 +579,9 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.format_italic,
-                  color: textIsItalic ? theme.accentColor : theme.textColor.withValues(alpha: 0.6),
+                  color: textIsItalic
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.6),
                 ),
                 onPressed: () {
                   onToggleItalic();
@@ -530,7 +605,9 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   Icons.format_underlined,
-                  color: textIsUnderline ? theme.accentColor : theme.textColor.withValues(alpha: 0.6),
+                  color: textIsUnderline
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.6),
                 ),
                 onPressed: () {
                   onToggleUnderline();
@@ -553,14 +630,21 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: Icon(_getAlignIcon(activeAlign), color: theme.accentColor),
+                icon: Icon(
+                  _getAlignIcon(activeAlign),
+                  color: theme.accentColor,
+                ),
                 onPressed: () {
                   final nextAlign = _getNextAlign(activeAlign);
                   onAlignmentChanged(nextAlign);
-                  if (selectedText != null && selectedText is CustomTextDrawable) {
-                    final renderBox = controller.painterKey.currentContext?.findRenderObject() as RenderBox?;
+                  if (selectedText != null &&
+                      selectedText is CustomTextDrawable) {
+                    final renderBox =
+                        controller.painterKey.currentContext?.findRenderObject()
+                            as RenderBox?;
                     final canvasWidth = renderBox?.size.width ?? 600.0;
-                    final textWidth = selectedText!.getSize().width * selectedText!.scale;
+                    final textWidth =
+                        selectedText!.getSize().width * selectedText!.scale;
 
                     double newX = selectedText!.position.dx;
                     const double margin = 20.0;
@@ -573,10 +657,11 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                       newX = canvasWidth - (textWidth / 2) - margin;
                     }
 
-                    final updated = (selectedText as CustomTextDrawable).copyWith(
-                      textAlign: nextAlign,
-                      position: Offset(newX, selectedText!.position.dy),
-                    );
+                    final updated = (selectedText as CustomTextDrawable)
+                        .copyWith(
+                          textAlign: nextAlign,
+                          position: Offset(newX, selectedText!.position.dy),
+                        );
                     controller.replaceDrawable(selectedText!, updated);
                     controller.selectObjectDrawable(updated);
                   }

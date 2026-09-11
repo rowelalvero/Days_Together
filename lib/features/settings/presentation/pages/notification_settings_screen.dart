@@ -2,14 +2,19 @@ import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/settings/notification_preferences_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NotificationSettingsScreen extends ConsumerWidget {
   const NotificationSettingsScreen({super.key});
 
-  Future<void> _selectTime(BuildContext context, NotificationPreferencesController notifier, String key, String currentTime) async {
+  Future<void> _selectTime(
+    BuildContext context,
+    NotificationPreferencesController notifier,
+    String key,
+    String currentTime,
+  ) async {
     final parts = currentTime.split(':');
     final initialHour = parts.isNotEmpty ? int.tryParse(parts[0]) ?? 0 : 0;
     final initialMin = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
@@ -31,7 +36,9 @@ class NotificationSettingsScreen extends ConsumerWidget {
     final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final state = ref.watch(notificationPreferencesControllerProvider);
-    final notifier = ref.read(notificationPreferencesControllerProvider.notifier);
+    final notifier = ref.read(
+      notificationPreferencesControllerProvider.notifier,
+    );
     final prefs = state.preferences;
 
     return Scaffold(
@@ -59,7 +66,10 @@ class NotificationSettingsScreen extends ConsumerWidget {
             ? const Center(child: CircularProgressIndicator())
             : SafeArea(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -75,7 +85,8 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Mute All Notifications',
                               subtitle: 'Silence all notifications temporarily',
                               value: prefs.muteAll,
-                              onChanged: (_) => notifier.togglePreference('mute_all'),
+                              onChanged: (_) =>
+                                  notifier.togglePreference('mute_all'),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -83,7 +94,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Play Sound',
                               subtitle: 'Play alert sound on arrival',
                               value: prefs.soundEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('sound_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'sound_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -91,7 +106,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Vibrate',
                               subtitle: 'Haptic feedback on alerts',
                               value: prefs.vibrationEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('vibration_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'vibration_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -99,7 +118,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'App Badge Count',
                               subtitle: 'Show unread message badge count',
                               value: prefs.badgeCountEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('badge_count_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'badge_count_enabled',
+                                    ),
                               theme: theme,
                             ),
                           ],
@@ -119,7 +142,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Enable Quiet Hours',
                               subtitle: 'Silence alerts during specific hours',
                               value: prefs.quietHoursEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('quiet_hours_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'quiet_hours_enabled',
+                                    ),
                               theme: theme,
                             ),
                             if (prefs.quietHoursEnabled && !prefs.muteAll) ...[
@@ -127,7 +154,10 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               ListTile(
                                 title: Text(
                                   'Start Time',
-                                  style: AppTypography.body(fontSize: 15, color: theme.textColor),
+                                  style: AppTypography.body(
+                                    fontSize: 15,
+                                    color: theme.textColor,
+                                  ),
                                 ),
                                 trailing: Text(
                                   prefs.quietHoursStart,
@@ -137,13 +167,21 @@ class NotificationSettingsScreen extends ConsumerWidget {
                                     color: theme.accentColor,
                                   ),
                                 ),
-                                onTap: () => _selectTime(context, notifier, 'quiet_hours_start', prefs.quietHoursStart),
+                                onTap: () => _selectTime(
+                                  context,
+                                  notifier,
+                                  'quiet_hours_start',
+                                  prefs.quietHoursStart,
+                                ),
                               ),
                               const Divider(height: 1),
                               ListTile(
                                 title: Text(
                                   'End Time',
-                                  style: AppTypography.body(fontSize: 15, color: theme.textColor),
+                                  style: AppTypography.body(
+                                    fontSize: 15,
+                                    color: theme.textColor,
+                                  ),
                                 ),
                                 trailing: Text(
                                   prefs.quietHoursEnd,
@@ -153,7 +191,12 @@ class NotificationSettingsScreen extends ConsumerWidget {
                                     color: theme.accentColor,
                                   ),
                                 ),
-                                onTap: () => _selectTime(context, notifier, 'quiet_hours_end', prefs.quietHoursEnd),
+                                onTap: () => _selectTime(
+                                  context,
+                                  notifier,
+                                  'quiet_hours_end',
+                                  prefs.quietHoursEnd,
+                                ),
                               ),
                             ],
                           ],
@@ -173,7 +216,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Chat',
                               subtitle: 'Private messaging notes',
                               value: prefs.chatEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('chat_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'chat_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -181,7 +228,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Bucket List',
                               subtitle: 'Completed, updated, or added items',
                               value: prefs.bucketListEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('bucket_list_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'bucket_list_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -189,7 +240,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Love Meter',
                               subtitle: 'Mood updates and feeling shares',
                               value: prefs.loveMeterEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('love_meter_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'love_meter_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -197,7 +252,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Daily Prompt',
                               subtitle: 'Sync prompt completed alerts',
                               value: prefs.dailyPromptEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('daily_prompt_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'daily_prompt_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -205,7 +264,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Scrapbook',
                               subtitle: 'New shared drawings, text & photos',
                               value: prefs.doodleNotesEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('doodle_notes_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'doodle_notes_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -213,7 +276,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Timeline',
                               subtitle: 'New memory additions and comments',
                               value: prefs.timelineEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('timeline_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'timeline_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -221,7 +288,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Time Capsule',
                               subtitle: 'Lock and ready-to-open alerts',
                               value: prefs.timeCapsuleEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('time_capsule_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'time_capsule_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -229,7 +300,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Calendar',
                               subtitle: 'Events, anniversaries, and reminders',
                               value: prefs.calendarEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('calendar_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'calendar_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -237,7 +312,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Love Notes',
                               subtitle: 'Voice, photo, or handwritten notes',
                               value: prefs.loveNotesEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('love_notes_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'love_notes_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -245,7 +324,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Vault',
                               subtitle: 'Secure uploads (details kept private)',
                               value: prefs.vaultEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('vault_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'vault_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -253,7 +336,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Gifts',
                               subtitle: 'Gifts ideas and reminders',
                               value: prefs.giftsEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('gifts_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'gifts_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -261,7 +348,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Relationship',
                               subtitle: 'License or profile changes',
                               value: prefs.relationshipEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('relationship_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'relationship_enabled',
+                                    ),
                               theme: theme,
                             ),
                             const Divider(height: 1),
@@ -269,7 +360,11 @@ class NotificationSettingsScreen extends ConsumerWidget {
                               title: 'Memories',
                               subtitle: 'Shared album updates',
                               value: prefs.memoriesEnabled,
-                              onChanged: prefs.muteAll ? null : (_) => notifier.togglePreference('memories_enabled'),
+                              onChanged: prefs.muteAll
+                                  ? null
+                                  : (_) => notifier.togglePreference(
+                                      'memories_enabled',
+                                    ),
                               theme: theme,
                             ),
                           ],
@@ -308,11 +403,18 @@ class NotificationSettingsScreen extends ConsumerWidget {
     return SwitchListTile(
       title: Text(
         title,
-        style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.w600, color: theme.textColor),
+        style: AppTypography.body(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: theme.textColor,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style: AppTypography.caption(fontSize: 12, color: theme.textColor.withValues(alpha: 0.54)),
+        style: AppTypography.caption(
+          fontSize: 12,
+          color: theme.textColor.withValues(alpha: 0.54),
+        ),
       ),
       value: value,
       onChanged: onChanged,

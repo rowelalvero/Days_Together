@@ -19,8 +19,8 @@ import 'package:days_together/features/love_studio/time_capsule_controller.dart'
 import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/shared/cached_avatar.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/shared/widgets/cached_avatar.dart';
 import 'package:days_together/features/wrapped/data/wrapped_service.dart';
 
 class SettingsTab extends ConsumerWidget {

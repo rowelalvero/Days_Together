@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -18,7 +18,9 @@ class TimeCapsuleBentoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        final lockedCapsules = ref.watch(timeCapsuleControllerProvider).lockedCapsules;
+        final lockedCapsules = ref
+            .watch(timeCapsuleControllerProvider)
+            .lockedCapsules;
         final hasCapsules = lockedCapsules.isNotEmpty;
 
         final latestLockedMessage = hasCapsules
@@ -55,7 +57,10 @@ class TimeCapsuleBentoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -138,9 +143,14 @@ class TimeCapsuleBentoCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: theme.accentColor.withValues(alpha: 0.1),
+                                    color: theme.accentColor.withValues(
+                                      alpha: 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -176,7 +186,9 @@ class TimeCapsuleBentoCard extends StatelessWidget {
                                       style: AppTypography.captionMono(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
-                                        color: theme.textColor.withValues(alpha: 0.35),
+                                        color: theme.textColor.withValues(
+                                          alpha: 0.35,
+                                        ),
                                       ).copyWith(letterSpacing: 0.5),
                                     ),
                                   ],

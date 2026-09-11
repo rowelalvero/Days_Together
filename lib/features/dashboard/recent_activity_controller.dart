@@ -19,15 +19,22 @@ class RecentActivityState {
   final List<LocalActivity> activities;
   final bool isLoading;
 
-  const RecentActivityState({this.activities = const [], this.isLoading = false});
+  const RecentActivityState({
+    this.activities = const [],
+    this.isLoading = false,
+  });
 }
 
 class RecentActivityController extends Notifier<RecentActivityState> {
   @override
   RecentActivityState build() {
-    RecentActivityService.instance.activitiesNotifier.addListener(_onServiceActivitiesChanged);
+    RecentActivityService.instance.activitiesNotifier.addListener(
+      _onServiceActivitiesChanged,
+    );
     ref.onDispose(() {
-      RecentActivityService.instance.activitiesNotifier.removeListener(_onServiceActivitiesChanged);
+      RecentActivityService.instance.activitiesNotifier.removeListener(
+        _onServiceActivitiesChanged,
+      );
     });
     _initService();
     // isLoading starts true directly in this returned value, not via a
@@ -59,5 +66,5 @@ class RecentActivityController extends Notifier<RecentActivityState> {
 
 final recentActivityControllerProvider =
     NotifierProvider<RecentActivityController, RecentActivityState>(
-  RecentActivityController.new,
-);
+      RecentActivityController.new,
+    );

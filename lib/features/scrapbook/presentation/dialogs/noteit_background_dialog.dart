@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/color_picker_dialog.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -54,7 +54,9 @@ class _NoteitBackgroundDialogState extends State<NoteitBackgroundDialog> {
         backgroundColor: isSelected ? theme.accentColor : Colors.transparent,
         foregroundColor: isSelected ? Colors.white : theme.textColor,
         side: BorderSide(
-          color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.2),
+          color: isSelected
+              ? theme.accentColor
+              : theme.textColor.withValues(alpha: 0.2),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -94,7 +96,11 @@ class _NoteitBackgroundDialogState extends State<NoteitBackgroundDialog> {
               _buildBgOptionButton('color', 'Solid color', Colors.white),
               _buildBgOptionButton('grid', 'Grid Lines', Colors.white),
               _buildBgOptionButton('dots', 'Dot Grid', Colors.white),
-              _buildBgOptionButton('notebook', 'Notebook', const Color(0xFFF9F9FB)),
+              _buildBgOptionButton(
+                'notebook',
+                'Notebook',
+                const Color(0xFFF9F9FB),
+              ),
               _buildBgOptionButton('gradient', 'Gradient', Colors.white),
             ],
           ),
@@ -112,7 +118,9 @@ class _NoteitBackgroundDialogState extends State<NoteitBackgroundDialog> {
             runSpacing: 8,
             children: [
               ...widget.paletteColors.map((color) {
-                final isSelectedColor = _bgType == 'color' && _bgColor.toARGB32() == color.toARGB32();
+                final isSelectedColor =
+                    _bgType == 'color' &&
+                    _bgColor.toARGB32() == color.toARGB32();
                 return GestureDetector(
                   onTap: () => _applyChange('color', color),
                   child: Container(
@@ -122,7 +130,9 @@ class _NoteitBackgroundDialogState extends State<NoteitBackgroundDialog> {
                       color: color,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelectedColor ? theme.textColor : Colors.grey.withValues(alpha: 0.3),
+                        color: isSelectedColor
+                            ? theme.textColor
+                            : Colors.grey.withValues(alpha: 0.3),
                         width: isSelectedColor ? 2.5 : 1.0,
                       ),
                     ),
@@ -133,10 +143,8 @@ class _NoteitBackgroundDialogState extends State<NoteitBackgroundDialog> {
                 onTap: () async {
                   final pickedColor = await showDialog<Color>(
                     context: context,
-                    builder: (ctx2) => ColorPickerDialog(
-                      initialColor: _bgColor,
-                      theme: theme,
-                    ),
+                    builder: (ctx2) =>
+                        ColorPickerDialog(initialColor: _bgColor, theme: theme),
                   );
                   if (pickedColor != null) {
                     _applyChange('color', pickedColor);

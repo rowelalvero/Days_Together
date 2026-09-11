@@ -2,9 +2,9 @@ import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/presentation/pages/memory_detail_screen.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,8 +13,9 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:intl/intl.dart';
 
 /// Shown while a memory's image is resolving, or when it has none.
-const AssetImage _kTimelineFallbackImage =
-    AssetImage('assets/images/app_icon.png');
+const AssetImage _kTimelineFallbackImage = AssetImage(
+  'assets/images/app_icon.png',
+);
 
 class TimelineItemWidget extends ConsumerStatefulWidget {
   final TimelineItemData item;
@@ -32,7 +33,8 @@ class TimelineItemWidget extends ConsumerStatefulWidget {
   ConsumerState<TimelineItemWidget> createState() => _TimelineItemWidgetState();
 }
 
-class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with SingleTickerProviderStateMixin {
+class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
   @override
@@ -60,7 +62,13 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
     return FadeTransition(
       opacity: _animationController,
       child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)),
+        position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: _animationController,
+                curve: Curves.easeOutCubic,
+              ),
+            ),
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: IntrinsicHeight(
@@ -74,7 +82,10 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: _buildDetailContent(theme, CrossAxisAlignment.end),
+                            children: _buildDetailContent(
+                              theme,
+                              CrossAxisAlignment.end,
+                            ),
                           ),
                         )
                       : _buildGlassCard(theme),
@@ -87,7 +98,10 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: _buildDetailContent(theme, CrossAxisAlignment.start),
+                            children: _buildDetailContent(
+                              theme,
+                              CrossAxisAlignment.start,
+                            ),
                           ),
                         )
                       : _buildGlassCard(theme),
@@ -100,7 +114,10 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
     );
   }
 
-  List<Widget> _buildDetailContent(LoveStoryTheme theme, CrossAxisAlignment alignment) {
+  List<Widget> _buildDetailContent(
+    LoveStoryTheme theme,
+    CrossAxisAlignment alignment,
+  ) {
     return [
       Row(
         mainAxisSize: MainAxisSize.min,
@@ -108,7 +125,11 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
           if (alignment == CrossAxisAlignment.end) ...[
             Text(
               DateFormat('MMM dd, yyyy • h:mm a').format(widget.item.date),
-              style: AppTypography.bodyLarge(fontSize: 11, color: theme.accentColor, fontWeight: FontWeight.w600),
+              style: AppTypography.bodyLarge(
+                fontSize: 11,
+                color: theme.accentColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(width: 6),
             Icon(Icons.access_time_rounded, size: 12, color: theme.accentColor),
@@ -117,7 +138,11 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
             const SizedBox(width: 6),
             Text(
               DateFormat('MMM dd, yyyy • h:mm a').format(widget.item.date),
-              style: AppTypography.bodyLarge(fontSize: 11, color: theme.accentColor, fontWeight: FontWeight.w600),
+              style: AppTypography.bodyLarge(
+                fontSize: 11,
+                color: theme.accentColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ],
@@ -131,20 +156,34 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
               Flexible(
                 child: Text(
                   widget.item.location!,
-                  style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.7)),
+                  style: AppTypography.bodyMedium(
+                    fontSize: 11,
+                    color: theme.textColor.withValues(alpha: 0.7),
+                  ),
                   textAlign: TextAlign.right,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 6),
-              Icon(Icons.location_on_rounded, size: 12, color: theme.textColor.withValues(alpha: 0.7)),
+              Icon(
+                Icons.location_on_rounded,
+                size: 12,
+                color: theme.textColor.withValues(alpha: 0.7),
+              ),
             ] else ...[
-              Icon(Icons.location_on_rounded, size: 12, color: theme.textColor.withValues(alpha: 0.7)),
+              Icon(
+                Icons.location_on_rounded,
+                size: 12,
+                color: theme.textColor.withValues(alpha: 0.7),
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   widget.item.location!,
-                  style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.7)),
+                  style: AppTypography.bodyMedium(
+                    fontSize: 11,
+                    color: theme.textColor.withValues(alpha: 0.7),
+                  ),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -187,7 +226,7 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
                       color: theme.accentColor.withValues(alpha: 0.3),
                       blurRadius: 6,
                       spreadRadius: 1,
-                    )
+                    ),
                   ],
           ),
         ),
@@ -202,14 +241,18 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
       openColor: Colors.transparent,
       closedElevation: 0,
       openElevation: 0,
-      closedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      closedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
       closedBuilder: (context, action) => GestureDetector(
         onTap: action,
         child: GlassContainer(
           padding: const EdgeInsets.all(12),
           borderRadius: 24,
           opacity: 0.1,
-          child: widget.item.isImageCard ? _buildImageContent(theme) : _buildTextContent(theme),
+          child: widget.item.isImageCard
+              ? _buildImageContent(theme)
+              : _buildTextContent(theme),
         ),
       ),
       openBuilder: (context, action) => MemoryDetailScreen(item: widget.item),
@@ -237,7 +280,10 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
                     height: 120,
                     width: double.infinity,
                     color: theme.textColor.withValues(alpha: 0.1),
-                    child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2)),
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      color: theme.textColor.withValues(alpha: 0.2),
+                    ),
                   ),
                 ),
               ),
@@ -248,7 +294,10 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
                   borderRadius: 12,
                   padding: const EdgeInsets.all(6),
                   blur: 5,
-                  child: Text(widget.item.mood, style: AppTypography.body(fontSize: 16)),
+                  child: Text(
+                    widget.item.mood,
+                    style: AppTypography.body(fontSize: 16),
+                  ),
                 ),
               ),
             ],
@@ -257,14 +306,22 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
         const SizedBox(height: 12),
         Text(
           widget.item.title,
-          style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textColor),
+          style: AppTypography.bodyLarge(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: theme.textColor,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
         Text(
           widget.item.description,
-          style: AppTypography.bodyMedium(fontSize: 11, color: theme.textColor.withValues(alpha: 0.6), height: 1.4),
+          style: AppTypography.bodyMedium(
+            fontSize: 11,
+            color: theme.textColor.withValues(alpha: 0.6),
+            height: 1.4,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -282,7 +339,11 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
             Expanded(
               child: Text(
                 widget.item.title,
-                style: AppTypography.bodyLarge(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textColor),
+                style: AppTypography.bodyLarge(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: theme.textColor,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -294,13 +355,15 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget> with Si
         const SizedBox(height: 8),
         Text(
           widget.item.description,
-          style: AppTypography.heading(fontSize: 13, color: theme.textColor.withValues(alpha: 0.7), height: 1.5).copyWith(fontStyle: FontStyle.italic),
+          style: AppTypography.heading(
+            fontSize: 13,
+            color: theme.textColor.withValues(alpha: 0.7),
+            height: 1.5,
+          ).copyWith(fontStyle: FontStyle.italic),
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
-
 }
-

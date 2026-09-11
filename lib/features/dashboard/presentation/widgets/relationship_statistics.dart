@@ -1,7 +1,7 @@
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
@@ -13,10 +13,7 @@ import 'package:days_together/features/relationship/workspace_controller.dart';
 class RelationshipStatistics extends ConsumerWidget {
   final LoveStoryTheme theme;
 
-  const RelationshipStatistics({
-    super.key,
-    required this.theme,
-  });
+  const RelationshipStatistics({super.key, required this.theme});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -96,11 +93,21 @@ class RelationshipStatistics extends ConsumerWidget {
                   children: [
                     Text(
                       'Synced Relationship',
-                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
+                      style: AppTypography.body(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textColor,
+                        height: 1.2,
+                      ),
                     ),
                     Text(
                       'Statistics',
-                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w700, color: theme.textColor, height: 1.2),
+                      style: AppTypography.body(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textColor,
+                        height: 1.2,
+                      ),
                     ),
                   ],
                 ),
@@ -110,12 +117,20 @@ class RelationshipStatistics extends ConsumerWidget {
                 children: [
                   Text(
                     'METRICS SYNC',
-                    style: AppTypography.caption(fontSize: 8, fontWeight: FontWeight.w800, color: theme.textColor.withValues(alpha: 0.38)).copyWith(letterSpacing: 1.2),
+                    style: AppTypography.caption(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      color: theme.textColor.withValues(alpha: 0.38),
+                    ).copyWith(letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '100%',
-                    style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w700, color: theme.textColor.withValues(alpha: 0.38)),
+                    style: AppTypography.caption(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: theme.textColor.withValues(alpha: 0.38),
+                    ),
                   ),
                 ],
               ),
@@ -136,7 +151,10 @@ class RelationshipStatistics extends ConsumerWidget {
               final item = stats[index];
               final numericValue = double.tryParse(item.value);
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: theme.textColor.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(20),
@@ -160,7 +178,11 @@ class RelationshipStatistics extends ConsumerWidget {
                               : value.toInt().toString();
                           return Text(
                             display,
-                            style: AppTypography.body(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
+                            style: AppTypography.body(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: item.color,
+                            ),
                           );
                         },
                       )
@@ -174,7 +196,11 @@ class RelationshipStatistics extends ConsumerWidget {
                             opacity: value,
                             child: Text(
                               item.value,
-                              style: AppTypography.body(fontSize: 26, fontWeight: FontWeight.w800, color: item.color),
+                              style: AppTypography.body(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                color: item.color,
+                              ),
                             ),
                           );
                         },
@@ -182,7 +208,11 @@ class RelationshipStatistics extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       item.label,
-                      style: AppTypography.caption(fontSize: 11, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.54)),
+                      style: AppTypography.caption(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textColor.withValues(alpha: 0.54),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

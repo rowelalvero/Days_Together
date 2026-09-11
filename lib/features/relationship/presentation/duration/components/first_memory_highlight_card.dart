@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -57,7 +57,11 @@ class FirstMemoryHighlightCard extends StatelessWidget {
                     color: theme.accentColor.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.favorite_rounded, color: theme.accentColor, size: 32),
+                  child: Icon(
+                    Icons.favorite_rounded,
+                    color: theme.accentColor,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -87,7 +91,8 @@ class FirstMemoryHighlightCard extends StatelessWidget {
 
   Widget _buildMemoryCard(TimelineItemData memory, LoveStoryTheme theme) {
     final formattedDate = DateFormat('MMMM dd, yyyy').format(memory.date);
-    final photoUrl = memory.networkImageUrl ??
+    final photoUrl =
+        memory.networkImageUrl ??
         (memory.photoUrls.isNotEmpty ? memory.photoUrls.first : null);
     final localPath = memory.imagePath;
 
@@ -145,7 +150,10 @@ class FirstMemoryHighlightCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -171,7 +179,9 @@ class FirstMemoryHighlightCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  memory.title.isNotEmpty ? memory.title : 'Our First Day Together',
+                  memory.title.isNotEmpty
+                      ? memory.title
+                      : 'Our First Day Together',
                   style: AppTypography.title(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,

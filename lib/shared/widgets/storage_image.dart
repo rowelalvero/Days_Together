@@ -20,12 +20,19 @@ import 'package:days_together/core/storage/storage_url_service.dart';
 class _EncryptedPhotoCacheManager extends CacheManager {
   static const key = 'storageImageCache';
 
-  static final _EncryptedPhotoCacheManager _instance = _EncryptedPhotoCacheManager._();
+  static final _EncryptedPhotoCacheManager _instance =
+      _EncryptedPhotoCacheManager._();
 
   factory _EncryptedPhotoCacheManager() => _instance;
 
   _EncryptedPhotoCacheManager._()
-      : super(Config(key, stalePeriod: const Duration(days: 30), maxNrOfCacheObjects: 500));
+    : super(
+        Config(
+          key,
+          stalePeriod: const Duration(days: 30),
+          maxNrOfCacheObjects: 500,
+        ),
+      );
 }
 
 /// A small in-memory (never disk) LRU cache of already-decrypted image bytes,
@@ -75,7 +82,10 @@ class _DecryptedBytesCache {
 /// This replaced direct `CachedNetworkImage.evictFromCache` calls once
 /// [StorageImageBuilder] stopped using `CachedNetworkImageProvider` --
 /// evicting that cache no longer has any effect on what this widget renders.
-Future<void> evictStorageImageCache({required String bucket, required String? ref}) async {
+Future<void> evictStorageImageCache({
+  required String bucket,
+  required String? ref,
+}) async {
   final key = StorageUrlService.cacheKeyFor(bucket: bucket, ref: ref);
   if (key.isEmpty) return;
   _DecryptedBytesCache.instance.remove(key);
@@ -195,9 +205,9 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
   }
 
   String get _cacheKey => StorageUrlService.cacheKeyFor(
-        bucket: widget.bucket,
-        ref: widget.storageRef,
-      );
+    bucket: widget.bucket,
+    ref: widget.storageRef,
+  );
 
   void _retry() {
     if (!mounted) return;
@@ -253,8 +263,15 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
   }
 
   Future<void> _resolveAsync(String ref, int token) async {
-    final url = StorageUrlService.instance.resolveCached(bucket: widget.bucket, ref: ref) ??
-        await StorageUrlService.instance.resolve(bucket: widget.bucket, ref: ref);
+    final url =
+        StorageUrlService.instance.resolveCached(
+          bucket: widget.bucket,
+          ref: ref,
+        ) ??
+        await StorageUrlService.instance.resolve(
+          bucket: widget.bucket,
+          ref: ref,
+        );
 
     ImageProvider? resolvedImage;
     if (url != null) {
@@ -277,7 +294,10 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
 
   Future<ImageProvider?> _fetchAndDecrypt(String url) async {
     try {
-      final file = await _EncryptedPhotoCacheManager().getSingleFile(url, key: _cacheKey);
+      final file = await _EncryptedPhotoCacheManager().getSingleFile(
+        url,
+        key: _cacheKey,
+      );
       return _decryptFile(file);
     } catch (_) {
       return null;
@@ -310,11 +330,16 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
   Future<ImageProvider?> _decryptFile(dynamic file) async {
     final rawBytes = await file.readAsBytes() as Uint8List;
     final userId = AuthService.instance.currentUserId;
-    final coupleKey = userId == null ? null : await KeyManagementService.instance.loadCoupleKey(userId);
+    final coupleKey = userId == null
+        ? null
+        : await KeyManagementService.instance.loadCoupleKey(userId);
 
     if (coupleKey != null) {
       try {
-        final plaintext = await PhotoEncryptionService.instance.decryptBytes(rawBytes, coupleKey);
+        final plaintext = await PhotoEncryptionService.instance.decryptBytes(
+          rawBytes,
+          coupleKey,
+        );
         _DecryptedBytesCache.instance.put(_cacheKey, plaintext);
         return _imageFromBytes(plaintext);
       } catch (_) {
@@ -337,11 +362,16 @@ class _StorageImageBuilderState extends State<StorageImageBuilder> {
   ImageProvider _imageFromBytes(Uint8List bytes) {
     final ImageProvider provider = MemoryImage(bytes);
     if (widget.maxWidth == null && widget.maxHeight == null) return provider;
-    return ResizeImage(provider, width: widget.maxWidth, height: widget.maxHeight);
+    return ResizeImage(
+      provider,
+      width: widget.maxWidth,
+      height: widget.maxHeight,
+    );
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, _image, _status, _retry);
+  Widget build(BuildContext context) =>
+      widget.builder(context, _image, _status, _retry);
 }
 
 /// Whether [bytes] begin with the magic number of an image format Flutter can
@@ -353,11 +383,17 @@ bool _looksLikeImageBytes(Uint8List bytes) {
   // JPEG
   if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return true;
   // PNG
-  if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) {
+  if (bytes[0] == 0x89 &&
+      bytes[1] == 0x50 &&
+      bytes[2] == 0x4E &&
+      bytes[3] == 0x47) {
     return true;
   }
   // GIF87a / GIF89a
-  if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38) {
+  if (bytes[0] == 0x47 &&
+      bytes[1] == 0x49 &&
+      bytes[2] == 0x46 &&
+      bytes[3] == 0x38) {
     return true;
   }
   // BMP
@@ -374,7 +410,10 @@ bool _looksLikeImageBytes(Uint8List bytes) {
     return true;
   }
   // ISO base media (HEIC/AVIF): "ftyp" at offset 4.
-  if (bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
+  if (bytes[4] == 0x66 &&
+      bytes[5] == 0x74 &&
+      bytes[6] == 0x79 &&
+      bytes[7] == 0x70) {
     return true;
   }
   return false;
@@ -419,8 +458,12 @@ class StorageImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveMaxWidth = maxWidth ?? (width != null && width!.isFinite ? (width! * 2.5).toInt() : 800);
-    final effectiveMaxHeight = maxHeight ?? (height != null && height!.isFinite ? (height! * 2.5).toInt() : null);
+    final effectiveMaxWidth =
+        maxWidth ??
+        (width != null && width!.isFinite ? (width! * 2.5).toInt() : 800);
+    final effectiveMaxHeight =
+        maxHeight ??
+        (height != null && height!.isFinite ? (height! * 2.5).toInt() : null);
 
     return StorageImageBuilder(
       bucket: bucket,
@@ -439,8 +482,9 @@ class StorageImage extends StatelessWidget {
           child = switch (status) {
             StorageImageStatus.resolving =>
               placeholder?.call(context) ?? _defaultPlaceholder(context),
-            _ => errorWidget?.call(context) ??
-                _defaultError(context, hasRef ? retry : null),
+            _ =>
+              errorWidget?.call(context) ??
+                  _defaultError(context, hasRef ? retry : null),
           };
         } else {
           child = Image(

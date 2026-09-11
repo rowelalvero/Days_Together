@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show TimeOfDay;
 
-import 'package:days_together/core/session/couple_session.dart' show RelationshipStatus;
+import 'package:days_together/core/session/couple_session.dart'
+    show RelationshipStatus;
 
 /// The 7 workspace fields `WorkspaceController` mirrors from `CoupleSession`
 /// (Phase 6b-1 of the architecture migration, unit 3). See
@@ -44,12 +45,12 @@ class WorkspaceState {
 
   @override
   int get hashCode => Object.hash(
-        coupleCode,
-        storyTitle,
-        startDate,
-        startTime,
-        isPremium,
-        status,
-        recoveryCode,
-      );
+    coupleCode,
+    storyTitle,
+    startDate,
+    startTime,
+    isPremium,
+    status,
+    recoveryCode,
+  );
 }

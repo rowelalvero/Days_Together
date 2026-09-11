@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
@@ -26,7 +27,8 @@ class LicenseCardPreview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
+    final license =
+        ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
     // Names, avatars, and the start date used to arrive as a prop-drilled
     // `CoupleSession` handle threaded down from `LicenseScreen`. Read through
     // their own controllers instead: the same three hops that carried the
@@ -47,26 +49,48 @@ class LicenseCardPreview extends ConsumerWidget {
 
     final name = isYourLicense ? myName : partnerName;
     final gender = isYourLicense ? license.yourGender : license.partnerGender;
-    final avatar = isYourLicense ? profile.yourAvatarPath : profile.partnerAvatarPath;
-    final birthdate = isYourLicense ? license.yourBirthdate : license.partnerBirthdate;
-    final address = isYourLicense ? license.yourAddress : license.partnerAddress;
+    final avatar = isYourLicense
+        ? profile.yourAvatarPath
+        : profile.partnerAvatarPath;
+    final birthdate = isYourLicense
+        ? license.yourBirthdate
+        : license.partnerBirthdate;
+    final address = isYourLicense
+        ? license.yourAddress
+        : license.partnerAddress;
     final nationality = isYourLicense
         ? (license.yourNationality ?? 'Love Land')
         : (license.partnerNationality ?? 'Love Land');
-    final weight = isYourLicense ? (license.yourWeight ?? '—') : (license.partnerWeight ?? '—');
-    final height = isYourLicense ? (license.yourHeight ?? '—') : (license.partnerHeight ?? '—');
-    final bloodType = isYourLicense ? (license.yourBloodType ?? '—') : (license.partnerBloodType ?? '—');
-    final eyeColor = isYourLicense ? (license.yourEyeColor ?? '—') : (license.partnerEyeColor ?? '—');
-    final conditions = isYourLicense ? (license.yourConditions ?? 'Madly in Love') : (license.partnerConditions ?? 'Madly in Love');
-    final dateIssued = isYourLicense ? license.yourDateIssued : license.partnerDateIssued;
-    final signature = isYourLicense ? license.yourSignature : license.partnerSignature;
+    final weight = isYourLicense
+        ? (license.yourWeight ?? '—')
+        : (license.partnerWeight ?? '—');
+    final height = isYourLicense
+        ? (license.yourHeight ?? '—')
+        : (license.partnerHeight ?? '—');
+    final bloodType = isYourLicense
+        ? (license.yourBloodType ?? '—')
+        : (license.partnerBloodType ?? '—');
+    final eyeColor = isYourLicense
+        ? (license.yourEyeColor ?? '—')
+        : (license.partnerEyeColor ?? '—');
+    final conditions = isYourLicense
+        ? (license.yourConditions ?? 'Madly in Love')
+        : (license.partnerConditions ?? 'Madly in Love');
+    final dateIssued = isYourLicense
+        ? license.yourDateIssued
+        : license.partnerDateIssued;
+    final signature = isYourLicense
+        ? license.yourSignature
+        : license.partnerSignature;
 
     final age = isYourLicense
         ? DateHelper.calculateAge(license.yourBirthdate)
         : DateHelper.calculateAge(license.partnerBirthdate);
     final emergencyN = isYourLicense ? partnerName : myName;
     final emergencyP = isYourLicense ? partnerPhone : myPhone;
-    final emergencyA = isYourLicense ? license.partnerAddress : license.yourAddress;
+    final emergencyA = isYourLicense
+        ? license.partnerAddress
+        : license.yourAddress;
 
     if (showFront) {
       return LicenseFront(

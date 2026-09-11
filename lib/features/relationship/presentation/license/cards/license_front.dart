@@ -6,7 +6,7 @@ import 'package:days_together/features/relationship/presentation/license/cards/c
 import 'package:days_together/features/relationship/presentation/license/license_widgets.dart';
 import 'package:days_together/features/relationship/presentation/license/painters/signature_painter.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
 /// The relationship license card's front face -- photo ID layout with
@@ -215,7 +215,11 @@ class LicenseFront extends StatelessWidget {
                     const SizedBox(height: 1),
                     Text(
                       'SIGNATURE',
-                      style: AppTypography.body(fontSize: 5, fontWeight: FontWeight.w900, color: Colors.white.withValues(alpha: 0.35)).copyWith(letterSpacing: 0.5),
+                      style: AppTypography.body(
+                        fontSize: 5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ).copyWith(letterSpacing: 0.5),
                     ),
                   ],
                 ),
@@ -233,7 +237,11 @@ class LicenseFront extends StatelessWidget {
                   children: [
                     Text(
                       holderName.toUpperCase(),
-                      style: AppTypography.heading(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 0.5),
+                      style: AppTypography.heading(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ).copyWith(letterSpacing: 0.5),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -368,7 +376,11 @@ class LicenseFront extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'OFFICIAL RELATIONSHIP ID CARD',
-              style: AppTypography.body(fontSize: isCompact ? 8 : 9, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: isCompact ? 2 : 3),
+              style: AppTypography.body(
+                fontSize: isCompact ? 8 : 9,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFFD4AF37),
+              ).copyWith(letterSpacing: isCompact ? 2 : 3),
             ),
             const SizedBox(width: 8),
             Icon(
@@ -381,7 +393,11 @@ class LicenseFront extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           'CERTIFIED BY THE DEPARTMENT OF LOVE',
-          style: AppTypography.body(fontSize: isCompact ? 6 : 7, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37).withValues(alpha: 0.6)).copyWith(letterSpacing: 1),
+          style: AppTypography.body(
+            fontSize: isCompact ? 6 : 7,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+          ).copyWith(letterSpacing: 1),
         ),
       ],
     );
@@ -393,12 +409,20 @@ class LicenseFront extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: AppTypography.body(fontSize: isCompact ? 5.5 : 7, fontWeight: FontWeight.w800, color: const Color(0xFFD4AF37).withValues(alpha: 0.65)).copyWith(letterSpacing: 0.6),
+          style: AppTypography.body(
+            fontSize: isCompact ? 5.5 : 7,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.65),
+          ).copyWith(letterSpacing: 0.6),
         ),
         const SizedBox(height: 1),
         Text(
           value.toUpperCase(),
-          style: AppTypography.body(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.white),
+          style: AppTypography.body(
+            fontSize: 10.5,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/core/utils/date_helper.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -18,7 +18,10 @@ class DurationBreakdownSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final age = DateHelper.relationshipPreciseAge(workspace.startDate, workspace.startTime);
+    final age = DateHelper.relationshipPreciseAge(
+      workspace.startDate,
+      workspace.startTime,
+    );
     final years = age['years'] ?? 0;
     final months = age['months'] ?? 0;
     final days = age['days'] ?? 0;
@@ -30,10 +33,7 @@ class DurationBreakdownSection extends StatelessWidget {
           borderRadius: 20,
           child: Column(
             children: [
-              Text(
-                icon,
-                style: const TextStyle(fontSize: 22),
-              ),
+              Text(icon, style: const TextStyle(fontSize: 22)),
               const SizedBox(height: 8),
               TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 0, end: targetValue.toDouble()),

@@ -17,7 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 void main() {
   group('StorageImage -- no ref', () {

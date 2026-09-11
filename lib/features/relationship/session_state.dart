@@ -48,13 +48,13 @@ class SessionState {
 
   @override
   int get hashCode => Object.hash(
-        isInitialized,
-        userId,
-        coupleId,
-        partnerId,
-        isPaired,
-        isCreator,
-        onboardingCompleted,
-        showPartnerDeletedNotice,
-      );
+    isInitialized,
+    userId,
+    coupleId,
+    partnerId,
+    isPaired,
+    isCreator,
+    onboardingCompleted,
+    showPartnerDeletedNotice,
+  );
 }

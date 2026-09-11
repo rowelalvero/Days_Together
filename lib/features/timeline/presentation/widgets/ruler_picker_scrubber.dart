@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
@@ -23,7 +23,8 @@ class RulerPickerScrubber extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<RulerPickerScrubber> createState() => _RulerPickerScrubberState();
+  ConsumerState<RulerPickerScrubber> createState() =>
+      _RulerPickerScrubberState();
 }
 
 class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
@@ -94,7 +95,10 @@ class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
     }
   }
 
-  void _onScrollNotification(ScrollNotification notification, List<TimelineItemData> chronoItems) {
+  void _onScrollNotification(
+    ScrollNotification notification,
+    List<TimelineItemData> chronoItems,
+  ) {
     if (chronoItems.isEmpty) return;
 
     if (notification is ScrollStartNotification) {
@@ -107,11 +111,17 @@ class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
         targetChronoIndex = targetChronoIndex.clamp(0, chronoItems.length - 1);
 
         if (targetChronoIndex != _lastNotifiedChronoIndex) {
-          final direction = targetChronoIndex > _lastNotifiedChronoIndex ? 1 : -1;
+          final direction = targetChronoIndex > _lastNotifiedChronoIndex
+              ? 1
+              : -1;
           final start = _lastNotifiedChronoIndex;
           final end = targetChronoIndex;
 
-          for (int i = start + direction; i != end + direction; i += direction) {
+          for (
+            int i = start + direction;
+            i != end + direction;
+            i += direction
+          ) {
             final mainIndex = widget.isAscending
                 ? i
                 : widget.items.length - 1 - i;
@@ -198,7 +208,7 @@ class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
                                 color: theme.accentColor.withValues(alpha: 0.6),
                                 blurRadius: 6,
                                 spreadRadius: 1,
-                              )
+                              ),
                             ]
                           : null,
                     ),
@@ -212,8 +222,12 @@ class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
                             '${item.date.year}',
                             style: AppTypography.caption(
                               fontSize: 9,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? theme.accentColor : Colors.white70,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? theme.accentColor
+                                  : Colors.white70,
                             ),
                           )
                         : const SizedBox.shrink(),

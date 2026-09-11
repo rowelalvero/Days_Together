@@ -34,11 +34,11 @@ class ProfileState {
 
   @override
   int get hashCode => Object.hash(
-        yourName,
-        partnerName,
-        yourAvatarPath,
-        partnerAvatarPath,
-        yourJoinDate,
-        partnerJoinDate,
-      );
+    yourName,
+    partnerName,
+    yourAvatarPath,
+    partnerAvatarPath,
+    yourJoinDate,
+    partnerJoinDate,
+  );
 }

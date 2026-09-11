@@ -48,7 +48,11 @@ class WidgetPinButton extends StatelessWidget {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add_to_home_screen_rounded, color: Colors.white, size: 22),
+                      const Icon(
+                        Icons.add_to_home_screen_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                       const SizedBox(width: 10),
                       Text(
                         label,

@@ -38,7 +38,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     super.dispose();
   }
 
-  void _showEventSheet(BuildContext context, {CalendarEvent? existingEvent, DateTime? initialDate}) {
+  void _showEventSheet(
+    BuildContext context, {
+    CalendarEvent? existingEvent,
+    DateTime? initialDate,
+  }) {
     _titleController.text = existingEvent?.title ?? '';
     _descController.text = existingEvent?.description ?? '';
     _selectedType = existingEvent?.type ?? CalendarEventType.other;
@@ -53,281 +57,395 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         final themeState = ref.watch(themeControllerProvider);
         final theme = themeState.currentLoveTheme;
 
-        return StatefulBuilder(builder: (context, setModalState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.primaryColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(32),
-                  topRight: Radius.circular(32),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.primaryColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
+                  ),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
                 ),
-                border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        existingEvent == null ? '✨ New Event' : '📝 Edit Event',
-                        style: AppTypography.display(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textColor,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, color: theme.textColor.withValues(alpha: 0.7)),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  InkWell(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: eventDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                        builder: (context, child) {
-                          final isDark = theme.isDark;
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: isDark
-                                  ? ColorScheme.dark(
-                                      primary: theme.accentColor,
-                                      onPrimary: Colors.white,
-                                      surface: theme.secondaryColor,
-                                      onSurface: theme.textColor,
-                                    )
-                                  : ColorScheme.light(
-                                      primary: theme.accentColor,
-                                      onPrimary: Colors.white,
-                                      surface: theme.primaryColor,
-                                      onSurface: theme.textColor,
-                                    ),
-                              dialogTheme: DialogThemeData(backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor),
-                              datePickerTheme: DatePickerThemeData(
-                                backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor,
-                                headerForegroundColor: theme.textColor,
-                                weekdayStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
-                                dayForegroundColor: WidgetStateProperty.resolveWith((states) {
-                                  if (states.contains(WidgetState.selected)) {
-                                    return Colors.white;
-                                  }
-                                  return theme.textColor;
-                                }),
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (picked != null) setModalState(() => eventDate = picked);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Date: ${DateFormat('MMMM dd, yyyy').format(eventDate)}',
-                            style: AppTypography.body(color: theme.textColor),
-                          ),
-                          Icon(Icons.calendar_today_rounded, color: theme.textColor.withValues(alpha: 0.7)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _titleController,
-                    style: AppTypography.body(color: theme.textColor),
-                    decoration: _inputDecoration('Event Title (e.g. First Date)', theme.accentColor, theme),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _descController,
-                    maxLines: 2,
-                    style: AppTypography.body(color: theme.textColor),
-                    decoration: _inputDecoration('Description (optional)', theme.accentColor, theme),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Event Type', style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14)),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 45,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: CalendarEventType.values.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final type = CalendarEventType.values[index];
-                        final isSelected = _selectedType == type;
-                        return ChoiceChip(
-                          label: Text(_getEventTypeName(type)),
-                          selected: isSelected,
-                          onSelected: (val) => setModalState(() => _selectedType = type),
-                          selectedColor: theme.accentColor,
-                          backgroundColor: theme.textColor.withValues(alpha: 0.05),
-                          labelStyle: AppTypography.button(
-                            color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.7),
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          side: BorderSide.none,
-                          showCheckmark: false,
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () async {
-                      final picked = await showTimePicker(
-                        context: context,
-                        initialTime: _selectedTime ?? TimeOfDay.now(),
-                        builder: (context, child) {
-                          final isDark = theme.isDark;
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: isDark
-                                  ? ColorScheme.dark(
-                                      primary: theme.accentColor,
-                                      onPrimary: Colors.white,
-                                      surface: theme.secondaryColor,
-                                      onSurface: theme.textColor,
-                                    )
-                                  : ColorScheme.light(
-                                      primary: theme.accentColor,
-                                      onPrimary: Colors.white,
-                                      surface: theme.primaryColor,
-                                      onSurface: theme.textColor,
-                                    ),
-                              dialogTheme: DialogThemeData(backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor),
-                              timePickerTheme: TimePickerThemeData(
-                                backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor,
-                                hourMinuteTextColor: theme.textColor,
-                                hourMinuteColor: theme.textColor.withValues(alpha: 0.08),
-                                dayPeriodTextColor: theme.textColor,
-                                dayPeriodColor: theme.textColor.withValues(alpha: 0.08),
-                                dialTextColor: theme.textColor,
-                                dialBackgroundColor: theme.textColor.withValues(alpha: 0.08),
-                                dialHandColor: theme.accentColor,
-                                entryModeIconColor: theme.accentColor,
-                                helpTextStyle: TextStyle(color: theme.textColor.withValues(alpha: 0.7)),
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (picked != null) setModalState(() => _selectedTime = picked);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _selectedTime == null ? 'Set Time (Optional)' : _selectedTime!.format(context),
-                            style: AppTypography.body(
-                              color: _selectedTime == null ? theme.textColor.withValues(alpha: 0.3) : theme.textColor,
-                            ),
-                          ),
-                          Icon(Icons.access_time_rounded, color: theme.textColor.withValues(alpha: 0.7)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      if (existingEvent != null)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: OutlinedButton(
-                              onPressed: () {
-                                ref.read(calendarControllerProvider.notifier).deleteEvent(existingEvent.id);
-                                Navigator.pop(context);
-                              },
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.redAccent,
-                                side: const BorderSide(color: Colors.redAccent),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                                padding: const EdgeInsets.symmetric(vertical: 15),
-                              ),
-                              child: const Text('Delete'),
-                            ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          existingEvent == null
+                              ? '✨ New Event'
+                              : '📝 Edit Event',
+                          style: AppTypography.display(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textColor,
                           ),
                         ),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_titleController.text.trim().isNotEmpty) {
-                              final event = CalendarEvent(
-                                id: existingEvent?.id,
-                                title: _titleController.text.trim(),
-                                description: _descController.text.trim(),
-                                date: eventDate,
-                                type: _selectedType,
-                                time: _selectedTime,
-                              );
-                              if (existingEvent == null) {
-                                ref.read(calendarControllerProvider.notifier).addEvent(event);
-                              } else {
-                                ref.read(calendarControllerProvider.notifier).updateEvent(event);
-                              }
-                              Navigator.pop(context);
-                            }
+                        IconButton(
+                          icon: Icon(
+                            Icons.close,
+                            color: theme.textColor.withValues(alpha: 0.7),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: eventDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          builder: (context, child) {
+                            final isDark = theme.isDark;
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: isDark
+                                    ? ColorScheme.dark(
+                                        primary: theme.accentColor,
+                                        onPrimary: Colors.white,
+                                        surface: theme.secondaryColor,
+                                        onSurface: theme.textColor,
+                                      )
+                                    : ColorScheme.light(
+                                        primary: theme.accentColor,
+                                        onPrimary: Colors.white,
+                                        surface: theme.primaryColor,
+                                        onSurface: theme.textColor,
+                                      ),
+                                dialogTheme: DialogThemeData(
+                                  backgroundColor: isDark
+                                      ? theme.secondaryColor
+                                      : theme.primaryColor,
+                                ),
+                                datePickerTheme: DatePickerThemeData(
+                                  backgroundColor: isDark
+                                      ? theme.secondaryColor
+                                      : theme.primaryColor,
+                                  headerForegroundColor: theme.textColor,
+                                  weekdayStyle: TextStyle(
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                  dayForegroundColor:
+                                      WidgetStateProperty.resolveWith((states) {
+                                        if (states.contains(
+                                          WidgetState.selected,
+                                        )) {
+                                          return Colors.white;
+                                        }
+                                        return theme.textColor;
+                                      }),
+                                ),
+                              ),
+                              child: child!,
+                            );
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.accentColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                          ),
-                          child: Text(
-                            existingEvent == null ? 'Add Event' : 'Save Changes',
-                            style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
+                        );
+                        if (picked != null) {
+                          setModalState(() => eventDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.textColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.1),
                           ),
                         ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Date: ${DateFormat('MMMM dd, yyyy').format(eventDate)}',
+                              style: AppTypography.body(color: theme.textColor),
+                            ),
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              color: theme.textColor.withValues(alpha: 0.7),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _titleController,
+                      style: AppTypography.body(color: theme.textColor),
+                      decoration: _inputDecoration(
+                        'Event Title (e.g. First Date)',
+                        theme.accentColor,
+                        theme,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _descController,
+                      maxLines: 2,
+                      style: AppTypography.body(color: theme.textColor),
+                      decoration: _inputDecoration(
+                        'Description (optional)',
+                        theme.accentColor,
+                        theme,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Event Type',
+                      style: AppTypography.caption(
+                        color: theme.textColor.withValues(alpha: 0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 45,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: CalendarEventType.values.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final type = CalendarEventType.values[index];
+                          final isSelected = _selectedType == type;
+                          return ChoiceChip(
+                            label: Text(_getEventTypeName(type)),
+                            selected: isSelected,
+                            onSelected: (val) =>
+                                setModalState(() => _selectedType = type),
+                            selectedColor: theme.accentColor,
+                            backgroundColor: theme.textColor.withValues(
+                              alpha: 0.05,
+                            ),
+                            labelStyle: AppTypography.button(
+                              color: isSelected
+                                  ? Colors.white
+                                  : theme.textColor.withValues(alpha: 0.7),
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide.none,
+                            showCheckmark: false,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: _selectedTime ?? TimeOfDay.now(),
+                          builder: (context, child) {
+                            final isDark = theme.isDark;
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: isDark
+                                    ? ColorScheme.dark(
+                                        primary: theme.accentColor,
+                                        onPrimary: Colors.white,
+                                        surface: theme.secondaryColor,
+                                        onSurface: theme.textColor,
+                                      )
+                                    : ColorScheme.light(
+                                        primary: theme.accentColor,
+                                        onPrimary: Colors.white,
+                                        surface: theme.primaryColor,
+                                        onSurface: theme.textColor,
+                                      ),
+                                dialogTheme: DialogThemeData(
+                                  backgroundColor: isDark
+                                      ? theme.secondaryColor
+                                      : theme.primaryColor,
+                                ),
+                                timePickerTheme: TimePickerThemeData(
+                                  backgroundColor: isDark
+                                      ? theme.secondaryColor
+                                      : theme.primaryColor,
+                                  hourMinuteTextColor: theme.textColor,
+                                  hourMinuteColor: theme.textColor.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                  dayPeriodTextColor: theme.textColor,
+                                  dayPeriodColor: theme.textColor.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                  dialTextColor: theme.textColor,
+                                  dialBackgroundColor: theme.textColor
+                                      .withValues(alpha: 0.08),
+                                  dialHandColor: theme.accentColor,
+                                  entryModeIconColor: theme.accentColor,
+                                  helpTextStyle: TextStyle(
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          setModalState(() => _selectedTime = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.textColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedTime == null
+                                  ? 'Set Time (Optional)'
+                                  : _selectedTime!.format(context),
+                              style: AppTypography.body(
+                                color: _selectedTime == null
+                                    ? theme.textColor.withValues(alpha: 0.3)
+                                    : theme.textColor,
+                              ),
+                            ),
+                            Icon(
+                              Icons.access_time_rounded,
+                              color: theme.textColor.withValues(alpha: 0.7),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        if (existingEvent != null)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  ref
+                                      .read(calendarControllerProvider.notifier)
+                                      .deleteEvent(existingEvent.id);
+                                  Navigator.pop(context);
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.redAccent,
+                                  side: const BorderSide(
+                                    color: Colors.redAccent,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 15,
+                                  ),
+                                ),
+                                child: const Text('Delete'),
+                              ),
+                            ),
+                          ),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_titleController.text.trim().isNotEmpty) {
+                                final event = CalendarEvent(
+                                  id: existingEvent?.id,
+                                  title: _titleController.text.trim(),
+                                  description: _descController.text.trim(),
+                                  date: eventDate,
+                                  type: _selectedType,
+                                  time: _selectedTime,
+                                );
+                                if (existingEvent == null) {
+                                  ref
+                                      .read(calendarControllerProvider.notifier)
+                                      .addEvent(event);
+                                } else {
+                                  ref
+                                      .read(calendarControllerProvider.notifier)
+                                      .updateEvent(event);
+                                }
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.accentColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            child: Text(
+                              existingEvent == null
+                                  ? 'Add Event'
+                                  : 'Save Changes',
+                              style: AppTypography.button(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
 
-  InputDecoration _inputDecoration(String hint, Color accent, LoveStoryTheme theme) {
+  InputDecoration _inputDecoration(
+    String hint,
+    Color accent,
+    LoveStoryTheme theme,
+  ) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
+      hintStyle: AppTypography.body(
+        color: theme.textColor.withValues(alpha: 0.3),
+      ),
       filled: true,
       fillColor: theme.textColor.withValues(alpha: 0.05),
       border: OutlineInputBorder(
@@ -343,11 +461,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   String _getEventTypeName(CalendarEventType type) {
     switch (type) {
-      case CalendarEventType.anniversary: return 'Anniversary';
-      case CalendarEventType.birthday: return 'Birthday';
-      case CalendarEventType.date: return 'Date';
-      case CalendarEventType.travel: return 'Travel';
-      case CalendarEventType.other: return 'Other';
+      case CalendarEventType.anniversary:
+        return 'Anniversary';
+      case CalendarEventType.birthday:
+        return 'Birthday';
+      case CalendarEventType.date:
+        return 'Date';
+      case CalendarEventType.travel:
+        return 'Travel';
+      case CalendarEventType.other:
+        return 'Other';
     }
   }
 
@@ -369,9 +492,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 _buildHeader(context),
                 _buildCalendar(theme, calendarState),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: _buildEventList(theme, calendarState),
-                ),
+                Expanded(child: _buildEventList(theme, calendarState)),
               ],
             ),
           ),
@@ -393,7 +514,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           Text(
@@ -408,11 +532,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             children: [
               IconButton(
                 icon: Icon(Icons.chevron_left, color: theme.textColor),
-                onPressed: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1)),
+                onPressed: () => setState(
+                  () => _focusedDay = DateTime(
+                    _focusedDay.year,
+                    _focusedDay.month - 1,
+                  ),
+                ),
               ),
               IconButton(
                 icon: Icon(Icons.chevron_right, color: theme.textColor),
-                onPressed: () => setState(() => _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1)),
+                onPressed: () => setState(
+                  () => _focusedDay = DateTime(
+                    _focusedDay.year,
+                    _focusedDay.month + 1,
+                  ),
+                ),
               ),
             ],
           ),
@@ -447,7 +581,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekDays.map((d) => Text(d, style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.38), fontSize: 12, fontWeight: FontWeight.bold))).toList(),
+            children: weekDays
+                .map(
+                  (d) => Text(
+                    d,
+                    style: AppTypography.caption(
+                      color: theme.textColor.withValues(alpha: 0.38),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 12),
           GridView.builder(
@@ -461,33 +606,63 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             itemCount: ((firstDayOfWeek + daysInMonth) / 7).ceil() * 7,
             itemBuilder: (context, index) {
               final dayNum = index - firstDayOfWeek + 1;
-              if (dayNum < 1 || dayNum > daysInMonth) return const SizedBox.shrink();
+              if (dayNum < 1 || dayNum > daysInMonth) {
+                return const SizedBox.shrink();
+              }
 
-              final date = DateTime(_focusedDay.year, _focusedDay.month, dayNum);
+              final date = DateTime(
+                _focusedDay.year,
+                _focusedDay.month,
+                dayNum,
+              );
               final isSelected = _isSameDay(date, _selectedDay);
               final isToday = _isSameDay(date, DateTime.now());
-              
+
               // Event checking
               final calendarEvents = calendar.eventsForDay(date);
-              final hasTimeline = timelineProvider.items.any((i) => _isSameDay(i.date, date));
-              final hasBucket = bucketProvider.items.any((i) => i.scheduledAt != null && _isSameDay(i.scheduledAt!, date));
-              final hasGift = giftProvider.reminders.any((i) => _isSameDay(i.nextOccurrence, date));
-              final hasVault = vaultProvider.visibleItems.any((i) => _isSameDay(i.createdAt, date));
-              
+              final hasTimeline = timelineProvider.items.any(
+                (i) => _isSameDay(i.date, date),
+              );
+              final hasBucket = bucketProvider.items.any(
+                (i) =>
+                    i.scheduledAt != null && _isSameDay(i.scheduledAt!, date),
+              );
+              final hasGift = giftProvider.reminders.any(
+                (i) => _isSameDay(i.nextOccurrence, date),
+              );
+              final hasVault = vaultProvider.visibleItems.any(
+                (i) => _isSameDay(i.createdAt, date),
+              );
+
               final startDate = relProvider.startDate;
-              final isAnniversary = startDate != null && 
-                  startDate.month == date.month && 
+              final isAnniversary =
+                  startDate != null &&
+                  startDate.month == date.month &&
                   startDate.day == date.day;
 
-              final hasAnyEvent = calendarEvents.isNotEmpty || isAnniversary || hasTimeline || hasBucket || hasGift || hasVault;
+              final hasAnyEvent =
+                  calendarEvents.isNotEmpty ||
+                  isAnniversary ||
+                  hasTimeline ||
+                  hasBucket ||
+                  hasGift ||
+                  hasVault;
 
               return GestureDetector(
                 onTap: () => setState(() => _selectedDay = date),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? theme.accentColor : (isToday ? theme.accentColor.withValues(alpha: 0.2) : Colors.transparent),
+                    color: isSelected
+                        ? theme.accentColor
+                        : (isToday
+                              ? theme.accentColor.withValues(alpha: 0.2)
+                              : Colors.transparent),
                     borderRadius: BorderRadius.circular(12),
-                    border: isToday && !isSelected ? Border.all(color: theme.accentColor.withValues(alpha: 0.5)) : null,
+                    border: isToday && !isSelected
+                        ? Border.all(
+                            color: theme.accentColor.withValues(alpha: 0.5),
+                          )
+                        : null,
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -495,8 +670,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       Text(
                         '$dayNum',
                         style: AppTypography.body(
-                          color: isSelected ? Colors.white : (isToday ? theme.accentColor : theme.textColor.withValues(alpha: 0.7)),
-                          fontWeight: (isSelected || isToday) ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? Colors.white
+                              : (isToday
+                                    ? theme.accentColor
+                                    : theme.textColor.withValues(alpha: 0.7)),
+                          fontWeight: (isSelected || isToday)
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                       if (hasAnyEvent && !isSelected)
@@ -506,7 +687,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             width: 4,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: isAnniversary ? Colors.pinkAccent : theme.accentColor,
+                              color: isAnniversary
+                                  ? Colors.pinkAccent
+                                  : theme.accentColor,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -530,21 +713,38 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final vaultProvider = ref.watch(vaultControllerProvider);
 
     final events = calendar.eventsForDay(_selectedDay);
-    
+
     // Check for other types
-    final timelineItems = timelineProvider.items.where((i) => _isSameDay(i.date, _selectedDay)).toList();
-    final bucketItems = bucketProvider.items.where((i) => i.scheduledAt != null && _isSameDay(i.scheduledAt!, _selectedDay)).toList();
-    final giftItems = giftProvider.reminders.where((i) => _isSameDay(i.nextOccurrence, _selectedDay)).toList();
-    final vaultItems = vaultProvider.visibleItems.where((i) => _isSameDay(i.createdAt, _selectedDay)).toList();
+    final timelineItems = timelineProvider.items
+        .where((i) => _isSameDay(i.date, _selectedDay))
+        .toList();
+    final bucketItems = bucketProvider.items
+        .where(
+          (i) =>
+              i.scheduledAt != null && _isSameDay(i.scheduledAt!, _selectedDay),
+        )
+        .toList();
+    final giftItems = giftProvider.reminders
+        .where((i) => _isSameDay(i.nextOccurrence, _selectedDay))
+        .toList();
+    final vaultItems = vaultProvider.visibleItems
+        .where((i) => _isSameDay(i.createdAt, _selectedDay))
+        .toList();
 
     // Check for anniversary
     final startDate = relProvider.startDate;
-    final isAnniversary = startDate != null && 
-        startDate.month == _selectedDay.month && 
+    final isAnniversary =
+        startDate != null &&
+        startDate.month == _selectedDay.month &&
         startDate.day == _selectedDay.day;
 
-    final hasAny = events.isNotEmpty || isAnniversary || timelineItems.isNotEmpty || 
-                  bucketItems.isNotEmpty || giftItems.isNotEmpty || vaultItems.isNotEmpty;
+    final hasAny =
+        events.isNotEmpty ||
+        isAnniversary ||
+        timelineItems.isNotEmpty ||
+        bucketItems.isNotEmpty ||
+        giftItems.isNotEmpty ||
+        vaultItems.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -553,7 +753,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           Text(
             DateFormat('MMMM dd, yyyy').format(_selectedDay),
-            style: AppTypography.heading(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 18),
+            style: AppTypography.heading(
+              color: theme.textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
           const SizedBox(height: 8),
           if (!hasAny)
@@ -561,7 +765,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: Center(
                 child: Text(
                   'No events for this day.',
-                  style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)).copyWith(fontStyle: FontStyle.italic),
+                  style: AppTypography.body(
+                    color: theme.textColor.withValues(alpha: 0.3),
+                  ).copyWith(fontStyle: FontStyle.italic),
                 ),
               ),
             )
@@ -570,42 +776,61 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: ListView(
                 children: [
                   if (isAnniversary)
-                    _buildAnniversaryCard(theme, _selectedDay.year - startDate.year),
+                    _buildAnniversaryCard(
+                      theme,
+                      _selectedDay.year - startDate.year,
+                    ),
                   ...events.map((event) => _buildEventCard(event, theme)),
-                  ...timelineItems.map((item) => _buildIntegratedCard(
-                    title: item.title,
-                    subtitle: 'Story Entry • ${DateFormat.jm().format(item.date)}${item.location != null ? ' • ${item.location}' : ''}',
-                    emoji: '📖',
-                    color: Colors.blueAccent,
-                    // Was Navigator.push(... LoveStoryScreen()) -- pushed a
-                    // second, redundant instance of the app's own shell on
-                    // top of the stack, since CalendarScreen is already
-                    // reached from inside it (ADR-007's confirmed duplicate-
-                    // shell finding). context.go returns to the existing
-                    // shell instead of stacking a new one.
-                    onTap: () => context.go(Routes.home),
-                  )),
-                  ...bucketItems.map((item) => _buildIntegratedCard(
-                    title: item.title,
-                    subtitle: 'Bucket List Goal${item.scheduledAt!.hour != 0 || item.scheduledAt!.minute != 0 ? ' • ${DateFormat.jm().format(item.scheduledAt!)}' : ''}',
-                    emoji: '✅',
-                    color: Colors.greenAccent,
-                    onTap: () => context.push(Routes.bucketList),
-                  )),
-                  ...giftItems.map((item) => _buildIntegratedCard(
-                    title: item.title,
-                    subtitle: 'Gift Reminder${item.date.hour != 0 || item.date.minute != 0 ? ' • ${DateFormat.jm().format(item.date)}' : ''}',
-                    emoji: '🎁',
-                    color: Colors.orangeAccent,
-                    onTap: () => context.push(Routes.gifts),
-                  )),
-                  ...vaultItems.map((item) => _buildIntegratedCard(
-                    title: vaultProvider.isUnlocked ? (item.type == VaultItemType.letter ? 'Private Letter' : 'Private Photo') : 'Locked Memory',
-                    subtitle: 'The Vault • ${DateFormat.jm().format(item.createdAt)}',
-                    emoji: '🔒',
-                    color: Colors.purpleAccent,
-                    onTap: () => context.push(Routes.vault),
-                  )),
+                  ...timelineItems.map(
+                    (item) => _buildIntegratedCard(
+                      title: item.title,
+                      subtitle:
+                          'Story Entry • ${DateFormat.jm().format(item.date)}${item.location != null ? ' • ${item.location}' : ''}',
+                      emoji: '📖',
+                      color: Colors.blueAccent,
+                      // Was Navigator.push(... LoveStoryScreen()) -- pushed a
+                      // second, redundant instance of the app's own shell on
+                      // top of the stack, since CalendarScreen is already
+                      // reached from inside it (ADR-007's confirmed duplicate-
+                      // shell finding). context.go returns to the existing
+                      // shell instead of stacking a new one.
+                      onTap: () => context.go(Routes.home),
+                    ),
+                  ),
+                  ...bucketItems.map(
+                    (item) => _buildIntegratedCard(
+                      title: item.title,
+                      subtitle:
+                          'Bucket List Goal${item.scheduledAt!.hour != 0 || item.scheduledAt!.minute != 0 ? ' • ${DateFormat.jm().format(item.scheduledAt!)}' : ''}',
+                      emoji: '✅',
+                      color: Colors.greenAccent,
+                      onTap: () => context.push(Routes.bucketList),
+                    ),
+                  ),
+                  ...giftItems.map(
+                    (item) => _buildIntegratedCard(
+                      title: item.title,
+                      subtitle:
+                          'Gift Reminder${item.date.hour != 0 || item.date.minute != 0 ? ' • ${DateFormat.jm().format(item.date)}' : ''}',
+                      emoji: '🎁',
+                      color: Colors.orangeAccent,
+                      onTap: () => context.push(Routes.gifts),
+                    ),
+                  ),
+                  ...vaultItems.map(
+                    (item) => _buildIntegratedCard(
+                      title: vaultProvider.isUnlocked
+                          ? (item.type == VaultItemType.letter
+                                ? 'Private Letter'
+                                : 'Private Photo')
+                          : 'Locked Memory',
+                      subtitle:
+                          'The Vault • ${DateFormat.jm().format(item.createdAt)}',
+                      emoji: '🔒',
+                      color: Colors.purpleAccent,
+                      onTap: () => context.push(Routes.vault),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -651,16 +876,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   children: [
                     Text(
                       title,
-                      style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold),
+                      style: AppTypography.body(
+                        color: theme.textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Row(
                       children: [
                         Text(
                           subtitle,
-                          style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                          style: AppTypography.caption(
+                            color: theme.textColor.withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 8, color: color.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 8,
+                          color: color.withValues(alpha: 0.5),
+                        ),
                       ],
                     ),
                   ],
@@ -679,7 +914,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [theme.accentColor.withValues(alpha: 0.3), theme.accentColor.withValues(alpha: 0.1)],
+          colors: [
+            theme.accentColor.withValues(alpha: 0.3),
+            theme.accentColor.withValues(alpha: 0.1),
+          ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.accentColor.withValues(alpha: 0.3)),
@@ -701,11 +939,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               children: [
                 Text(
                   years == 0 ? 'The Day We Met' : '$years Year Anniversary',
-                  style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold),
+                  style: AppTypography.body(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   'A very special day in our story.',
-                  style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                  style: AppTypography.caption(
+                    color: theme.textColor.withValues(alpha: 0.6),
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -734,7 +978,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 color: _getEventColor(event.type, theme).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(_getEventEmoji(event.type), style: AppTypography.body(fontSize: 18)),
+              child: Text(
+                _getEventEmoji(event.type),
+                style: AppTypography.body(fontSize: 18),
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -743,12 +990,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 children: [
                   Text(
                     event.title,
-                    style: AppTypography.body(color: theme.textColor, fontWeight: FontWeight.bold),
+                    style: AppTypography.body(
+                      color: theme.textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   if (event.description?.isNotEmpty ?? false)
                     Text(
                       event.description!,
-                      style: AppTypography.caption(color: theme.textColor.withValues(alpha: 0.6), fontSize: 12),
+                      style: AppTypography.caption(
+                        color: theme.textColor.withValues(alpha: 0.6),
+                        fontSize: 12,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -758,7 +1011,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             if (event.time != null)
               Text(
                 event.time!.format(context),
-                style: AppTypography.caption(color: theme.accentColor, fontWeight: FontWeight.bold, fontSize: 12),
+                style: AppTypography.caption(
+                  color: theme.accentColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
           ],
         ),
@@ -772,21 +1029,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Color _getEventColor(CalendarEventType type, LoveStoryTheme theme) {
     switch (type) {
-      case CalendarEventType.anniversary: return Colors.pinkAccent;
-      case CalendarEventType.birthday: return Colors.orangeAccent;
-      case CalendarEventType.date: return Colors.redAccent;
-      case CalendarEventType.travel: return Colors.lightBlueAccent;
-      case CalendarEventType.other: return theme.accentColor;
+      case CalendarEventType.anniversary:
+        return Colors.pinkAccent;
+      case CalendarEventType.birthday:
+        return Colors.orangeAccent;
+      case CalendarEventType.date:
+        return Colors.redAccent;
+      case CalendarEventType.travel:
+        return Colors.lightBlueAccent;
+      case CalendarEventType.other:
+        return theme.accentColor;
     }
   }
 
   String _getEventEmoji(CalendarEventType type) {
     switch (type) {
-      case CalendarEventType.anniversary: return '💑';
-      case CalendarEventType.birthday: return '🎂';
-      case CalendarEventType.date: return '🌹';
-      case CalendarEventType.travel: return '✈️';
-      case CalendarEventType.other: return '✨';
+      case CalendarEventType.anniversary:
+        return '💑';
+      case CalendarEventType.birthday:
+        return '🎂';
+      case CalendarEventType.date:
+        return '🌹';
+      case CalendarEventType.travel:
+        return '✈️';
+      case CalendarEventType.other:
+        return '✨';
     }
   }
 }

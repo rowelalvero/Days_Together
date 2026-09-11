@@ -12,7 +12,8 @@ class GiftRemindersScreen extends ConsumerStatefulWidget {
   const GiftRemindersScreen({super.key});
 
   @override
-  ConsumerState<GiftRemindersScreen> createState() => _GiftRemindersScreenState();
+  ConsumerState<GiftRemindersScreen> createState() =>
+      _GiftRemindersScreenState();
 }
 
 class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
@@ -296,10 +297,12 @@ class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
                             );
 
                             if (existingReminder == null) {
-                              ref.read(giftReminderControllerProvider.notifier).addReminder(
-                                _titleController.text.trim(),
-                                combinedDate,
-                              );
+                              ref
+                                  .read(giftReminderControllerProvider.notifier)
+                                  .addReminder(
+                                    _titleController.text.trim(),
+                                    combinedDate,
+                                  );
                             } else {
                               ref
                                   .read(giftReminderControllerProvider.notifier)
@@ -420,7 +423,11 @@ class _GiftRemindersScreenState extends ConsumerState<GiftRemindersScreen> {
     );
   }
 
-  Widget _buildListView(GiftReminderState state, GiftReminderController notifier, LoveStoryTheme theme) {
+  Widget _buildListView(
+    GiftReminderState state,
+    GiftReminderController notifier,
+    LoveStoryTheme theme,
+  ) {
     final sortedList = state.upcomingReminders;
     return ListView.builder(
       itemCount: sortedList.length,

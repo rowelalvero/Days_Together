@@ -24,7 +24,8 @@ import 'package:days_together/core/activity/recent_activity_service.dart';
 /// `topic_card_likes`), exactly as the original did. [onRealtimeData] stays
 /// a no-op, matching the original's own comment that it's "handled by
 /// overriding initRealtime due to multiple tables."
-class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecycleNotifier<TopicCardsState> {
+class TopicCardsController extends Notifier<TopicCardsState>
+    with SupabaseLifecycleNotifier<TopicCardsState> {
   static const String _customCardsKey = 'topic_cards_custom';
   static const String _likedCardIdsKey = 'topic_cards_liked_ids';
   static const String _pendingLikesKey = 'topic_cards_pending_likes';
@@ -113,8 +114,10 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
     try {
-      final List<dynamic> cardsRes =
-          await Supabase.instance.client.from('topic_cards').select().eq('couple_id', coupleId!);
+      final List<dynamic> cardsRes = await Supabase.instance.client
+          .from('topic_cards')
+          .select()
+          .eq('couple_id', coupleId!);
       final parsedCards = cardsRes.map((data) {
         return TopicCard(
           id: data['id'] as String,
@@ -125,8 +128,10 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
         );
       }).toList();
 
-      final List<dynamic> likesRes =
-          await Supabase.instance.client.from('topic_card_likes').select().eq('couple_id', coupleId!);
+      final List<dynamic> likesRes = await Supabase.instance.client
+          .from('topic_card_likes')
+          .select()
+          .eq('couple_id', coupleId!);
       final myLikes = <String>{};
       final partnerLikes = <String>{};
       for (final data in likesRes) {
@@ -169,118 +174,140 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
     });
 
     _syncCardsSub?.cancel();
-    _syncCardsSub = RealtimeSubscriptionManager.instance.getStream(tableName: 'topic_cards', coupleId: coupleId!).listen(
-      (dataList) {
-        if (!ref.mounted) return;
-        final newCustoms = <TopicCard>[];
-        for (final data in dataList) {
-          final docId = data['id'] as String;
-          final isCustom = data['is_custom'] as bool? ?? false;
-          if (isCustom) {
-            newCustoms.add(
-              TopicCard(
-                id: docId,
-                category: data['category'] ?? '',
-                question: data['question'] ?? '',
-                isCustom: true,
-                isLiked: state.likedCardIds.contains(docId),
+    _syncCardsSub = RealtimeSubscriptionManager.instance
+        .getStream(tableName: 'topic_cards', coupleId: coupleId!)
+        .listen(
+          (dataList) {
+            if (!ref.mounted) return;
+            final newCustoms = <TopicCard>[];
+            for (final data in dataList) {
+              final docId = data['id'] as String;
+              final isCustom = data['is_custom'] as bool? ?? false;
+              if (isCustom) {
+                newCustoms.add(
+                  TopicCard(
+                    id: docId,
+                    category: data['category'] ?? '',
+                    question: data['question'] ?? '',
+                    isCustom: true,
+                    isLiked: state.likedCardIds.contains(docId),
+                  ),
+                );
+              }
+            }
+
+            if (!state.isLoading) {
+              final added = newCustoms
+                  .where(
+                    (inc) => !state.customCards.any((old) => old.id == inc.id),
+                  )
+                  .toList();
+              for (final card in added) {
+                if (_localMutations.contains(card.id)) {
+                  _localMutations.remove(card.id);
+                  continue;
+                }
+                RecentActivityService.instance.logActivity(
+                  activityType: 'created',
+                  title: 'Partner added custom card 🎴',
+                  description: 'Added: "${card.question}"',
+                  icon: '🎴',
+                  referenceId: card.id,
+                  route: 'topic_cards',
+                );
+              }
+            }
+
+            state = state.copyWith(
+              customCards: newCustoms,
+              isLoading: false,
+              currentIndex: _clampedIndex(
+                _deckFor(state.copyWith(customCards: newCustoms)),
+                state.currentIndex,
               ),
             );
-          }
-        }
-
-        if (!state.isLoading) {
-          final added = newCustoms.where((inc) => !state.customCards.any((old) => old.id == inc.id)).toList();
-          for (final card in added) {
-            if (_localMutations.contains(card.id)) {
-              _localMutations.remove(card.id);
-              continue;
-            }
-            RecentActivityService.instance.logActivity(
-              activityType: 'created',
-              title: 'Partner added custom card 🎴',
-              description: 'Added: "${card.question}"',
-              icon: '🎴',
-              referenceId: card.id,
-              route: 'topic_cards',
-            );
-          }
-        }
-
-        state = state.copyWith(
-          customCards: newCustoms,
-          isLoading: false,
-          currentIndex: _clampedIndex(_deckFor(state.copyWith(customCards: newCustoms)), state.currentIndex),
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('TopicCardsController: Supabase cards sync error: $err');
+            _loadFromCache();
+          },
         );
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('TopicCardsController: Supabase cards sync error: $err');
-        _loadFromCache();
-      },
-    );
 
     _syncLikesSub?.cancel();
-    _syncLikesSub =
-        RealtimeSubscriptionManager.instance.getStream(tableName: 'topic_card_likes', coupleId: coupleId!).listen(
-      (dataList) {
-        if (!ref.mounted) return;
-        final newLikes = <String>{};
-        final newPartnerLikes = <String>{};
-        for (final data in dataList) {
-          final cardId = data['card_id'] as String;
-          final likedByUserId = data['user_id'] as String;
-          if (likedByUserId == sessionUserId) {
-            newLikes.add(cardId);
-          } else {
-            newPartnerLikes.add(cardId);
-          }
-        }
-
-        if (!state.isLoading) {
-          final addedLikes = newPartnerLikes.difference(state.partnerLikedCardIds);
-          for (final cardId in addedLikes) {
-            final card = state.allCards.firstWhere(
-              (c) => c.id == cardId,
-              orElse: () => TopicCard(id: cardId, category: 'All', question: '', isCustom: false),
-            );
-            if (card.question.isNotEmpty) {
-              RecentActivityService.instance.logActivity(
-                activityType: 'updated',
-                title: 'Partner liked card 💖',
-                description: 'Liked: "${card.question}"',
-                icon: '💖',
-                referenceId: cardId,
-                route: 'topic_cards',
-              );
+    _syncLikesSub = RealtimeSubscriptionManager.instance
+        .getStream(tableName: 'topic_card_likes', coupleId: coupleId!)
+        .listen(
+          (dataList) {
+            if (!ref.mounted) return;
+            final newLikes = <String>{};
+            final newPartnerLikes = <String>{};
+            for (final data in dataList) {
+              final cardId = data['card_id'] as String;
+              final likedByUserId = data['user_id'] as String;
+              if (likedByUserId == sessionUserId) {
+                newLikes.add(cardId);
+              } else {
+                newPartnerLikes.add(cardId);
+              }
             }
-          }
-        }
 
-        // Apply local pending overrides to maintain visual consistency.
-        final effectiveLikes = {...newLikes};
-        for (final entry in state.pendingLikes.entries) {
-          if (entry.value) {
-            effectiveLikes.add(entry.key);
-          } else {
-            effectiveLikes.remove(entry.key);
-          }
-        }
+            if (!state.isLoading) {
+              final addedLikes = newPartnerLikes.difference(
+                state.partnerLikedCardIds,
+              );
+              for (final cardId in addedLikes) {
+                final card = state.allCards.firstWhere(
+                  (c) => c.id == cardId,
+                  orElse: () => TopicCard(
+                    id: cardId,
+                    category: 'All',
+                    question: '',
+                    isCustom: false,
+                  ),
+                );
+                if (card.question.isNotEmpty) {
+                  RecentActivityService.instance.logActivity(
+                    activityType: 'updated',
+                    title: 'Partner liked card 💖',
+                    description: 'Liked: "${card.question}"',
+                    icon: '💖',
+                    referenceId: cardId,
+                    route: 'topic_cards',
+                  );
+                }
+              }
+            }
 
-        state = state.copyWith(
-          partnerLikedCardIds: newPartnerLikes,
-          likedCardIds: effectiveLikes,
-          currentIndex: _clampedIndex(
-            _deckFor(state.copyWith(partnerLikedCardIds: newPartnerLikes, likedCardIds: effectiveLikes)),
-            state.currentIndex,
-          ),
+            // Apply local pending overrides to maintain visual consistency.
+            final effectiveLikes = {...newLikes};
+            for (final entry in state.pendingLikes.entries) {
+              if (entry.value) {
+                effectiveLikes.add(entry.key);
+              } else {
+                effectiveLikes.remove(entry.key);
+              }
+            }
+
+            state = state.copyWith(
+              partnerLikedCardIds: newPartnerLikes,
+              likedCardIds: effectiveLikes,
+              currentIndex: _clampedIndex(
+                _deckFor(
+                  state.copyWith(
+                    partnerLikedCardIds: newPartnerLikes,
+                    likedCardIds: effectiveLikes,
+                  ),
+                ),
+                state.currentIndex,
+              ),
+            );
+            _persistLocalOnly();
+          },
+          onError: (err) {
+            debugPrint('TopicCardsController: Supabase likes sync error: $err');
+          },
         );
-        _persistLocalOnly();
-      },
-      onError: (err) {
-        debugPrint('TopicCardsController: Supabase likes sync error: $err');
-      },
-    );
 
     _syncPendingLikes();
   }
@@ -310,13 +337,17 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
   void nextCard() {
     final deck = state.activeDeck;
     if (deck.isEmpty) return;
-    state = state.copyWith(currentIndex: (state.currentIndex + 1) % deck.length);
+    state = state.copyWith(
+      currentIndex: (state.currentIndex + 1) % deck.length,
+    );
   }
 
   void previousCard() {
     final deck = state.activeDeck;
     if (deck.isEmpty) return;
-    state = state.copyWith(currentIndex: (state.currentIndex - 1 + deck.length) % deck.length);
+    state = state.copyWith(
+      currentIndex: (state.currentIndex - 1 + deck.length) % deck.length,
+    );
   }
 
   void setCurrentIndex(int index) {
@@ -337,7 +368,13 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
   }
 
   Future<void> addCustomCard(String question, String category) async {
-    final newCard = TopicCard(id: const Uuid().v4(), category: category, question: question, isCustom: true, isLiked: false);
+    final newCard = TopicCard(
+      id: const Uuid().v4(),
+      category: category,
+      question: question,
+      isCustom: true,
+      isLiked: false,
+    );
     _localMutations.add(newCard.id);
 
     if (coupleId != null) {
@@ -359,13 +396,19 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
       } catch (e) {
         debugPrint('TopicCardsController.addCustomCard Supabase error: $e');
         if (!ref.mounted) return;
-        final next = state.copyWith(customCards: [...state.customCards, newCard]);
-        state = next.copyWith(currentIndex: _clampedIndex(next.activeDeck, state.currentIndex));
+        final next = state.copyWith(
+          customCards: [...state.customCards, newCard],
+        );
+        state = next.copyWith(
+          currentIndex: _clampedIndex(next.activeDeck, state.currentIndex),
+        );
         await _saveCustomCards();
       }
     } else {
       final next = state.copyWith(customCards: [...state.customCards, newCard]);
-      state = next.copyWith(currentIndex: _clampedIndex(next.activeDeck, state.currentIndex));
+      state = next.copyWith(
+        currentIndex: _clampedIndex(next.activeDeck, state.currentIndex),
+      );
       await _saveCustomCards();
     }
 
@@ -383,7 +426,10 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
   Future<void> deleteCard(String id) async {
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('topic_cards').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('topic_cards')
+            .delete()
+            .eq('id', id);
         await Supabase.instance.client
             .from('topic_card_likes')
             .delete()
@@ -408,7 +454,9 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
       likedCardIds: likedCardIds,
       pendingLikes: pendingLikes,
     );
-    state = next.copyWith(currentIndex: _clampedIndex(next.activeDeck, state.currentIndex));
+    state = next.copyWith(
+      currentIndex: _clampedIndex(next.activeDeck, state.currentIndex),
+    );
     await _saveCustomCards();
     await _saveLikedCardIds();
     await _savePendingLikes();
@@ -443,7 +491,8 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
     if (nextLiked) {
       final card = state.allCards.firstWhere(
         (c) => c.id == id,
-        orElse: () => TopicCard(id: id, category: 'All', question: '', isCustom: false),
+        orElse: () =>
+            TopicCard(id: id, category: 'All', question: '', isCustom: false),
       );
       await RecentActivityService.instance.logActivity(
         activityType: 'updated',
@@ -464,7 +513,9 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
     _isSyncingLikes = true;
     try {
       final completedIds = <String>[];
-      for (final entry in List<MapEntry<String, bool>>.from(state.pendingLikes.entries)) {
+      for (final entry in List<MapEntry<String, bool>>.from(
+        state.pendingLikes.entries,
+      )) {
         final cardId = entry.key;
         final targetLiked = entry.value;
         try {
@@ -484,7 +535,9 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
           }
           completedIds.add(cardId);
         } catch (e) {
-          debugPrint('TopicCardsController: Failed to sync pending like for $cardId: $e');
+          debugPrint(
+            'TopicCardsController: Failed to sync pending like for $cardId: $e',
+          );
           break;
         }
       }
@@ -537,7 +590,8 @@ class TopicCardsController extends Notifier<TopicCardsState> with SupabaseLifecy
   }
 }
 
-final topicCardsControllerProvider = NotifierProvider.autoDispose<TopicCardsController, TopicCardsState>(
-  TopicCardsController.new,
-  dependencies: [coupleSessionProvider],
-);
+final topicCardsControllerProvider =
+    NotifierProvider.autoDispose<TopicCardsController, TopicCardsState>(
+      TopicCardsController.new,
+      dependencies: [coupleSessionProvider],
+    );

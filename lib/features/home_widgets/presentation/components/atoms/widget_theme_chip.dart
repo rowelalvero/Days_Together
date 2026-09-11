@@ -26,7 +26,9 @@ class WidgetThemeChip extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? theme.accentColor : Colors.white.withValues(alpha: 0.15),
+            color: isSelected
+                ? theme.accentColor
+                : Colors.white.withValues(alpha: 0.15),
             width: isSelected ? 2 : 1,
           ),
           gradient: LinearGradient(
@@ -61,7 +63,9 @@ class WidgetThemeChip extends StatelessWidget {
             Text(
               theme.name,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.75),
+                color: isSelected
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.75),
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),

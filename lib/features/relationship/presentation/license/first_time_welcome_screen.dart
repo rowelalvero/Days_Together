@@ -27,7 +27,11 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: AppTypography.cormorant(fontSize: 28, fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.cormorant(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: theme.textColor,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -40,7 +44,9 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
+        decoration: BoxDecoration(
+          gradient: ref.watch(themeControllerProvider).currentGradient,
+        ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -87,7 +93,11 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
                               const SizedBox(height: 12),
                               Text(
                                 'OFFICIAL LOVE LICENSE',
-                                style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 2),
+                                style: AppTypography.body(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFFD4AF37),
+                                ).copyWith(letterSpacing: 2),
                               ),
                             ],
                           ),
@@ -98,7 +108,11 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
                   const SizedBox(height: 40),
                   Text(
                     'No License Found',
-                    style: AppTypography.heading(fontSize: 26, fontWeight: FontWeight.bold, color: theme.textColor),
+                    style: AppTypography.heading(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textColor,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Padding(
@@ -106,7 +120,12 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
                     child: Text(
                       'Create your official Relationship License to certify your bond! Fill in your details, draw your signatures, and generate printable & shareable license cards.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.body(fontSize: 14, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.6), height: 1.5),
+                      style: AppTypography.body(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textColor.withValues(alpha: 0.6),
+                        height: 1.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -118,7 +137,10 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
                       icon: const Icon(Icons.add_card_rounded, size: 22),
                       label: Text(
                         'Create License ID',
-                        style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: AppTypography.body(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.accentColor,

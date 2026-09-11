@@ -177,10 +177,12 @@ class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen> {
                         onPressed: () {
                           if (_messageController.text.trim().isNotEmpty &&
                               _selectedDate != null) {
-                            ref.read(timeCapsuleControllerProvider.notifier).createCapsule(
-                              _messageController.text.trim(),
-                              _selectedDate!,
-                            );
+                            ref
+                                .read(timeCapsuleControllerProvider.notifier)
+                                .createCapsule(
+                                  _messageController.text.trim(),
+                                  _selectedDate!,
+                                );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -307,7 +309,11 @@ class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : capsuleState.capsules.isEmpty
                       ? _buildEmptyState(theme)
-                      : _buildCapsuleLists(capsuleState, capsuleNotifier, theme),
+                      : _buildCapsuleLists(
+                          capsuleState,
+                          capsuleNotifier,
+                          theme,
+                        ),
                 ),
               ],
             ),
@@ -362,7 +368,11 @@ class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen> {
     );
   }
 
-  Widget _buildCapsuleLists(TimeCapsuleState state, TimeCapsuleController notifier, LoveStoryTheme theme) {
+  Widget _buildCapsuleLists(
+    TimeCapsuleState state,
+    TimeCapsuleController notifier,
+    LoveStoryTheme theme,
+  ) {
     final openable = state.openableCapsules;
     final locked = state.lockedCapsules;
     final opened = state.openedCapsules;

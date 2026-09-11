@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -61,7 +61,10 @@ class BucketListBentoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -136,7 +139,9 @@ class BucketListBentoCard extends StatelessWidget {
                                   style: AppTypography.captionMono(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
-                                    color: theme.textColor.withValues(alpha: 0.35),
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.35,
+                                    ),
                                   ).copyWith(letterSpacing: 0.5),
                                 ),
                                 Text(
@@ -155,8 +160,12 @@ class BucketListBentoCard extends StatelessWidget {
                               child: LinearProgressIndicator(
                                 value: progress,
                                 minHeight: 6,
-                                backgroundColor: theme.textColor.withValues(alpha: 0.05),
-                                valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                                backgroundColor: theme.textColor.withValues(
+                                  alpha: 0.05,
+                                ),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.accentColor,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 12),

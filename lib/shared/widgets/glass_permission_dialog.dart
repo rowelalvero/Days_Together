@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 
 class GlassPermissionDialog extends StatelessWidget {
   final String title;
@@ -19,7 +19,8 @@ class GlassPermissionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveAccentColor = accentColor ?? Theme.of(context).colorScheme.primary;
+    final effectiveAccentColor =
+        accentColor ?? Theme.of(context).colorScheme.primary;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -89,7 +90,9 @@ class GlassPermissionDialog extends StatelessWidget {
                     ),
                     child: Text(
                       'Settings',
-                      style: AppTypography.bodyLarge(fontWeight: FontWeight.bold),
+                      style: AppTypography.bodyLarge(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

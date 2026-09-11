@@ -19,7 +19,8 @@ import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/permissions/permission_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart' show evictStorageImageCache;
+import 'package:days_together/shared/widgets/storage_image.dart'
+    show evictStorageImageCache;
 
 /// Riverpod port of `TimelineProvider` (Phase 6a of the architecture
 /// migration -- the widest UI consumer surface of the 12, 18 files).
@@ -32,7 +33,8 @@ import 'package:days_together/shared/storage_image.dart' show evictStorageImageC
 /// just-deleted item via `_locallyDeletedIds` -- exactly as the original
 /// does, for the same reason (instant delete feedback matters more than a
 /// round-trip).
-class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleNotifier<TimelineState> {
+class TimelineController extends Notifier<TimelineState>
+    with SupabaseLifecycleNotifier<TimelineState> {
   final LocalPersistenceService _repository = LocalPersistenceService();
   final ImagePicker _picker = ImagePicker();
   final Set<String> _locallyDeletedIds = {};
@@ -61,7 +63,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
 
   List<TimelineItemData> _sorted(List<TimelineItemData> items, bool ascending) {
     final sorted = List<TimelineItemData>.from(items)
-      ..sort((a, b) => ascending ? a.date.compareTo(b.date) : b.date.compareTo(a.date));
+      ..sort(
+        (a, b) =>
+            ascending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+      );
     for (var i = 0; i < sorted.length; i++) {
       sorted[i] = sorted[i].copyWith(position: i);
     }
@@ -69,7 +74,8 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
   }
 
   Future<void> toggleSortOrder() async {
-    final oldItem = state.items.isNotEmpty && state.currentScrubIndex < state.items.length
+    final oldItem =
+        state.items.isNotEmpty && state.currentScrubIndex < state.items.length
         ? state.items[state.currentScrubIndex]
         : null;
     final nextAscending = !state.isAscending;
@@ -111,12 +117,16 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     List<CommentData> parsedComments = [];
     if (rawComments != null) {
       if (rawComments is List) {
-        parsedComments = rawComments.map((c) => CommentData.fromJson(c as Map<String, dynamic>)).toList();
+        parsedComments = rawComments
+            .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+            .toList();
       } else if (rawComments is String) {
         try {
           final decoded = jsonDecode(rawComments);
           if (decoded is List) {
-            parsedComments = decoded.map((c) => CommentData.fromJson(c as Map<String, dynamic>)).toList();
+            parsedComments = decoded
+                .map((c) => CommentData.fromJson(c as Map<String, dynamic>))
+                .toList();
           }
         } catch (e) {
           debugPrint('TimelineController._parseItem comments decode error: $e');
@@ -130,7 +140,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
       location: data['location'] as String?,
       imagePath: data['image_path'] as String?,
       networkImageUrl: data['network_image_url'] as String?,
-      date: data['date'] != null ? DateTime.parse(data['date'] as String).toLocal() : DateTime.now(),
+      date: data['date'] != null
+          ? DateTime.parse(data['date'] as String).toLocal()
+          : DateTime.now(),
       isImageCard: data['is_image_card'] ?? false,
       position: data['position'] ?? 0,
       mood: data['mood'] ?? '😍',
@@ -151,7 +163,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           .order('date', ascending: false)
           .limit(100);
       if (!ref.mounted) return;
-      final parsed = _sorted(res.map((data) => _parseItem(data)).toList(), state.isAscending);
+      final parsed = _sorted(
+        res.map((data) => _parseItem(data)).toList(),
+        state.isAscending,
+      );
 
       state = state.copyWith(items: parsed, isLoading: false);
       await _repository.saveTimelineItems(state.items);
@@ -164,13 +179,20 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     if (!ref.mounted) return;
     // Filter out locally deleted items to handle stream filter/delete timing issues.
-    final activeDataList = dataList.where((data) => !_locallyDeletedIds.contains(data['id'] as String)).toList();
-    final incoming = _sorted(activeDataList.map((data) => _parseItem(data)).toList(), state.isAscending);
+    final activeDataList = dataList
+        .where((data) => !_locallyDeletedIds.contains(data['id'] as String))
+        .toList();
+    final incoming = _sorted(
+      activeDataList.map((data) => _parseItem(data)).toList(),
+      state.isAscending,
+    );
     final wasLoading = state.isLoading;
     final oldItems = state.items;
 
     if (!wasLoading) {
-      final added = incoming.where((inc) => !oldItems.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !oldItems.any((old) => old.id == inc.id))
+          .toList();
       for (final item in added) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -210,7 +232,11 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
       }
 
       final deleted = oldItems
-          .where((old) => !incoming.any((inc) => inc.id == old.id) && !_locallyDeletedIds.contains(old.id))
+          .where(
+            (old) =>
+                !incoming.any((inc) => inc.id == old.id) &&
+                !_locallyDeletedIds.contains(old.id),
+          )
           .toList();
       for (final item in deleted) {
         if (_localMutations.contains(item.id)) {
@@ -231,7 +257,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     state = state.copyWith(
       items: incoming,
       isLoading: false,
-      currentScrubIndex: TimelineState.clampIndex(incoming, state.currentScrubIndex),
+      currentScrubIndex: TimelineState.clampIndex(
+        incoming,
+        state.currentScrubIndex,
+      ),
     );
     _persistLocalOnly();
   }
@@ -250,7 +279,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
       state = state.copyWith(
         items: sorted,
         isLoading: false,
-        currentScrubIndex: TimelineState.clampIndex(sorted, state.currentScrubIndex),
+        currentScrubIndex: TimelineState.clampIndex(
+          sorted,
+          state.currentScrubIndex,
+        ),
       );
     } catch (e, st) {
       debugPrint('TimelineController._loadFromCache failed: $e\n$st');
@@ -281,7 +313,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
 
         final sortedList = List<TimelineItemData>.from(state.items)..add(item);
         sortedList.sort(
-          (a, b) => state.isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+          (a, b) => state.isAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date),
         );
         final calculatedPosition = sortedList.indexOf(item);
 
@@ -306,8 +340,11 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           await Supabase.instance.client.from('timeline_items').upsert(dbData);
         } catch (e) {
           if (_isMissingCommentsColumn(e)) {
-            final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
-            await Supabase.instance.client.from('timeline_items').upsert(fallbackData);
+            final fallbackData = Map<String, dynamic>.from(dbData)
+              ..remove('comments');
+            await Supabase.instance.client
+                .from('timeline_items')
+                .upsert(fallbackData);
           } else {
             rethrow;
           }
@@ -321,7 +358,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
             itemId: item.id,
           );
         } catch (fcmError) {
-          debugPrint('TimelineController: Failed to trigger push notification: $fcmError');
+          debugPrint(
+            'TimelineController: Failed to trigger push notification: $fcmError',
+          );
         }
         // No local apply on success, matching the original: relies on the
         // realtime echo.
@@ -331,7 +370,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
         final resorted = _sorted([...state.items, item], state.isAscending);
         state = state.copyWith(
           items: resorted,
-          currentScrubIndex: TimelineState.clampIndex(resorted, state.currentScrubIndex),
+          currentScrubIndex: TimelineState.clampIndex(
+            resorted,
+            state.currentScrubIndex,
+          ),
         );
         await _persist();
       }
@@ -339,7 +381,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
       final resorted = _sorted([...state.items, item], state.isAscending);
       state = state.copyWith(
         items: resorted,
-        currentScrubIndex: TimelineState.clampIndex(resorted, state.currentScrubIndex),
+        currentScrubIndex: TimelineState.clampIndex(
+          resorted,
+          state.currentScrubIndex,
+        ),
       );
       await _persist();
     }
@@ -364,7 +409,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
             errorStr.contains('not found'));
   }
 
-  Future<void> updateTimelineItem(String id, TimelineItemData updatedItem) async {
+  Future<void> updateTimelineItem(
+    String id,
+    TimelineItemData updatedItem,
+  ) async {
     _localMutations.add(id);
     final index = state.items.indexWhere((item) => item.id == id);
     if (index == -1) {
@@ -375,10 +423,12 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     if (coupleId != null) {
       try {
         String? imageRef = updatedItem.networkImageUrl;
-        if (updatedItem.imagePath != null && updatedItem.imagePath != state.items[index].imagePath) {
+        if (updatedItem.imagePath != null &&
+            updatedItem.imagePath != state.items[index].imagePath) {
           final file = File(updatedItem.imagePath!);
           if (await file.exists()) {
-            final storagePath = 'couples/$coupleId/timeline/${updatedItem.id}.jpg';
+            final storagePath =
+                'couples/$coupleId/timeline/${updatedItem.id}.jpg';
             await EncryptedStorageService.instance.encryptAndUpload(
               bucket: StorageBuckets.timeline,
               storagePath: storagePath,
@@ -387,8 +437,14 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
             imageRef = storagePath;
             // The object is overwritten in place (same path, upsert), so any
             // signed URL and cached bytes for it are now stale.
-            await StorageUrlService.instance.evict(bucket: StorageBuckets.timeline, ref: storagePath);
-            await evictStorageImageCache(bucket: StorageBuckets.timeline, ref: storagePath);
+            await StorageUrlService.instance.evict(
+              bucket: StorageBuckets.timeline,
+              ref: storagePath,
+            );
+            await evictStorageImageCache(
+              bucket: StorageBuckets.timeline,
+              ref: storagePath,
+            );
           }
         }
 
@@ -400,7 +456,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           sortedList.add(updatedItem);
         }
         sortedList.sort(
-          (a, b) => state.isAscending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
+          (a, b) => state.isAscending
+              ? a.date.compareTo(b.date)
+              : b.date.compareTo(a.date),
         );
         final calculatedPosition = sortedList.indexOf(updatedItem);
 
@@ -425,8 +483,11 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           await Supabase.instance.client.from('timeline_items').upsert(dbData);
         } catch (e) {
           if (_isMissingCommentsColumn(e)) {
-            final fallbackData = Map<String, dynamic>.from(dbData)..remove('comments');
-            await Supabase.instance.client.from('timeline_items').upsert(fallbackData);
+            final fallbackData = Map<String, dynamic>.from(dbData)
+              ..remove('comments');
+            await Supabase.instance.client
+                .from('timeline_items')
+                .upsert(fallbackData);
           } else {
             rethrow;
           }
@@ -462,7 +523,10 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     final resorted = _sorted(items, state.isAscending);
     state = state.copyWith(
       items: resorted,
-      currentScrubIndex: TimelineState.clampIndex(resorted, state.currentScrubIndex),
+      currentScrubIndex: TimelineState.clampIndex(
+        resorted,
+        state.currentScrubIndex,
+      ),
     );
   }
 
@@ -496,24 +560,37 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     }
     state = state.copyWith(
       items: remaining,
-      currentScrubIndex: TimelineState.clampIndex(remaining, state.currentScrubIndex),
+      currentScrubIndex: TimelineState.clampIndex(
+        remaining,
+        state.currentScrubIndex,
+      ),
     );
     await _persist();
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('timeline_items').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('timeline_items')
+            .delete()
+            .eq('id', id);
 
         try {
           final storagePath = 'couples/$coupleId/timeline/$id.jpg';
-          await Supabase.instance.client.storage.from('timeline').remove([storagePath]);
+          await Supabase.instance.client.storage.from('timeline').remove([
+            storagePath,
+          ]);
         } catch (e) {
-          debugPrint('TimelineController.deleteTimelineItem storage remove error: $e');
+          debugPrint(
+            'TimelineController.deleteTimelineItem storage remove error: $e',
+          );
         }
 
         final currentRemaining = List<TimelineItemData>.from(state.items);
         for (var i = 0; i < currentRemaining.length; i++) {
-          await Supabase.instance.client.from('timeline_items').update({'position': i}).eq('id', currentRemaining[i].id);
+          await Supabase.instance.client
+              .from('timeline_items')
+              .update({'position': i})
+              .eq('id', currentRemaining[i].id);
           if (!ref.mounted) return;
         }
       } catch (e) {
@@ -545,36 +622,62 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     if (coupleId != null) {
       try {
         for (var i = 0; i < state.items.length; i++) {
-          await Supabase.instance.client.from('timeline_items').update({'position': i}).eq('id', state.items[i].id);
+          await Supabase.instance.client
+              .from('timeline_items')
+              .update({'position': i})
+              .eq('id', state.items[i].id);
           if (!ref.mounted) return;
         }
-        state = state.copyWith(currentScrubIndex: TimelineState.clampIndex(state.items, state.currentScrubIndex));
+        state = state.copyWith(
+          currentScrubIndex: TimelineState.clampIndex(
+            state.items,
+            state.currentScrubIndex,
+          ),
+        );
       } catch (e) {
-        debugPrint('TimelineController.reorderTimelineItems Supabase error: $e');
+        debugPrint(
+          'TimelineController.reorderTimelineItems Supabase error: $e',
+        );
         if (!ref.mounted) return;
-        final reindexed = [for (var i = 0; i < state.items.length; i++) state.items[i].copyWith(position: i)];
+        final reindexed = [
+          for (var i = 0; i < state.items.length; i++)
+            state.items[i].copyWith(position: i),
+        ];
         state = state.copyWith(
           items: reindexed,
-          currentScrubIndex: TimelineState.clampIndex(reindexed, state.currentScrubIndex),
+          currentScrubIndex: TimelineState.clampIndex(
+            reindexed,
+            state.currentScrubIndex,
+          ),
         );
         await _persist();
       }
     } else {
-      final reindexed = [for (var i = 0; i < state.items.length; i++) state.items[i].copyWith(position: i)];
+      final reindexed = [
+        for (var i = 0; i < state.items.length; i++)
+          state.items[i].copyWith(position: i),
+      ];
       state = state.copyWith(
         items: reindexed,
-        currentScrubIndex: TimelineState.clampIndex(reindexed, state.currentScrubIndex),
+        currentScrubIndex: TimelineState.clampIndex(
+          reindexed,
+          state.currentScrubIndex,
+        ),
       );
       await _persist();
     }
   }
 
   void setCurrentScrubIndex(int index) {
-    state = state.copyWith(currentScrubIndex: TimelineState.clampIndex(state.items, index));
+    state = state.copyWith(
+      currentScrubIndex: TimelineState.clampIndex(state.items, index),
+    );
   }
 
   Future<String?> pickImage(BuildContext context) async {
-    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
     if (!hasPermission) return null;
 
     try {
@@ -609,12 +712,22 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     }
   }
 
-  Future<void> addCommentToItem(String itemId, String content, String authorName) async {
+  Future<void> addCommentToItem(
+    String itemId,
+    String content,
+    String authorName,
+  ) async {
     final index = state.items.indexWhere((item) => item.id == itemId);
     if (index == -1) return;
 
     final updatedComments = List<CommentData>.from(state.items[index].comments)
-      ..add(CommentData(authorName: authorName, content: content, date: DateTime.now()));
+      ..add(
+        CommentData(
+          authorName: authorName,
+          content: content,
+          date: DateTime.now(),
+        ),
+      );
 
     final updatedItem = state.items[index].copyWith(comments: updatedComments);
     await updateTimelineItem(itemId, updatedItem);
@@ -628,7 +741,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
           itemId: itemId,
         );
       } catch (e) {
-        debugPrint('TimelineController: Failed to send comment notification: $e');
+        debugPrint(
+          'TimelineController: Failed to send comment notification: $e',
+        );
       }
     }
   }
@@ -637,7 +752,9 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
     final index = state.items.indexWhere((item) => item.id == itemId);
     if (index == -1) return;
 
-    final updatedComments = state.items[index].comments.where((c) => c.id != commentId).toList();
+    final updatedComments = state.items[index].comments
+        .where((c) => c.id != commentId)
+        .toList();
     final updatedItem = state.items[index].copyWith(comments: updatedComments);
     await updateTimelineItem(itemId, updatedItem);
   }
@@ -654,7 +771,8 @@ class TimelineController extends Notifier<TimelineState> with SupabaseLifecycleN
   }
 }
 
-final timelineControllerProvider = NotifierProvider.autoDispose<TimelineController, TimelineState>(
-  TimelineController.new,
-  dependencies: [coupleSessionProvider],
-);
+final timelineControllerProvider =
+    NotifierProvider.autoDispose<TimelineController, TimelineState>(
+      TimelineController.new,
+      dependencies: [coupleSessionProvider],
+    );

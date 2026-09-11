@@ -5,11 +5,7 @@ class RasterCanvas extends StatefulWidget {
   final PainterController controller;
   final VoidCallback? onUpdate;
 
-  const RasterCanvas({
-    super.key,
-    required this.controller,
-    this.onUpdate,
-  });
+  const RasterCanvas({super.key, required this.controller, this.onUpdate});
 
   @override
   State<RasterCanvas> createState() => RasterCanvasState();
@@ -45,10 +41,6 @@ class RasterCanvasState extends State<RasterCanvas> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      child: FlutterPainter(
-        controller: widget.controller,
-      ),
-    );
+    return ClipRect(child: FlutterPainter(controller: widget.controller));
   }
 }

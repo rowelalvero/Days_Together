@@ -22,5 +22,6 @@ class PresenceState {
   }
 
   @override
-  int get hashCode => Object.hash(isPartnerOnline, yourActivity, partnerActivity);
+  int get hashCode =>
+      Object.hash(isPartnerOnline, yourActivity, partnerActivity);
 }

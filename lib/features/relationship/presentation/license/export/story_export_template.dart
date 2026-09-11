@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/presentation/license/export/license_card_preview.dart';
@@ -121,13 +122,21 @@ class StoryExportTemplate extends ConsumerWidget {
                 Text(
                   'OFFICIAL RELATIONSHIP LICENSE',
                   textAlign: TextAlign.center,
-                  style: AppTypography.body(fontSize: 22, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 4),
+                  style: AppTypography.body(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFD4AF37),
+                  ).copyWith(letterSpacing: 4),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   'CERTIFIED BY THE DEPARTMENT OF LOVE',
                   textAlign: TextAlign.center,
-                  style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFD4AF37).withValues(alpha: 0.6)).copyWith(letterSpacing: 1.5),
+                  style: AppTypography.body(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+                  ).copyWith(letterSpacing: 1.5),
                 ),
                 const Spacer(),
                 showBoth
@@ -199,14 +208,22 @@ class StoryExportTemplate extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Text(
                       'STATUS: VALID FOREVER',
-                      style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 2),
+                      style: AppTypography.body(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFFD4AF37),
+                      ).copyWith(letterSpacing: 2),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'TOGETHER SINCE $startDateStr',
-                  style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.5)).copyWith(letterSpacing: 1.5),
+                  style: AppTypography.body(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.5),
+                  ).copyWith(letterSpacing: 1.5),
                 ),
                 const SizedBox(height: 30),
               ],

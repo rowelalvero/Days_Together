@@ -3,7 +3,7 @@ import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/app/theme/app_typography.dart';
@@ -53,7 +53,10 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
               _buildAppBar(context, theme),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -67,11 +70,27 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                         const SizedBox(height: 32),
                         _buildMoodSelector(theme),
                         const SizedBox(height: 32),
-                        _buildTextField('Title', _titleController, theme, hint: 'e.g., Our First Date'),
+                        _buildTextField(
+                          'Title',
+                          _titleController,
+                          theme,
+                          hint: 'e.g., Our First Date',
+                        ),
                         const SizedBox(height: 24),
-                        _buildTextField('Where did it happen?', _locationController, theme, hint: 'e.g., Central Park, NYC'),
+                        _buildTextField(
+                          'Where did it happen?',
+                          _locationController,
+                          theme,
+                          hint: 'e.g., Central Park, NYC',
+                        ),
                         const SizedBox(height: 24),
-                        _buildTextField('Description', _descriptionController, theme, hint: 'Write the story...', maxLines: 4),
+                        _buildTextField(
+                          'Description',
+                          _descriptionController,
+                          theme,
+                          hint: 'Write the story...',
+                          maxLines: 4,
+                        ),
                         const SizedBox(height: 32),
                         if (_isImageCard) _buildImageButton(theme),
                         const SizedBox(height: 96),
@@ -99,12 +118,23 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
           ),
           Text(
             'New Memory',
-            style: AppTypography.display(color: theme.textColor, fontSize: 22, fontWeight: FontWeight.bold),
+            style: AppTypography.display(
+              color: theme.textColor,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           IconButton(
             onPressed: _isSaving ? null : _saveItem,
             icon: _isSaving
-                ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: theme.accentColor))
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.accentColor,
+                    ),
+                  )
                 : Icon(Icons.check_rounded, color: theme.accentColor, size: 28),
           ),
         ],
@@ -118,7 +148,9 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
       width: double.infinity,
       borderRadius: 28,
       padding: EdgeInsets.zero,
-      child: _isImageCard ? _buildImagePreview(theme) : _buildTextPreview(theme),
+      child: _isImageCard
+          ? _buildImagePreview(theme)
+          : _buildTextPreview(theme),
     );
   }
 
@@ -133,7 +165,10 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                 ? Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      image: DecorationImage(image: FileImage(File(_imagePath!)), fit: BoxFit.cover),
+                      image: DecorationImage(
+                        image: FileImage(File(_imagePath!)),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   )
                 : Container(
@@ -143,11 +178,18 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_photo_alternate_outlined, color: theme.textColor.withValues(alpha: 0.3), size: 40),
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: theme.textColor.withValues(alpha: 0.3),
+                            size: 40,
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'No photo selected',
-                            style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.3), fontSize: 12),
+                            style: AppTypography.bodyMedium(
+                              color: theme.textColor.withValues(alpha: 0.3),
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -162,14 +204,25 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _titleController.text.isEmpty ? 'Title' : _titleController.text,
-                  style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 14),
+                  _titleController.text.isEmpty
+                      ? 'Title'
+                      : _titleController.text,
+                  style: AppTypography.bodyLarge(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                   maxLines: 1,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _descriptionController.text.isEmpty ? 'Description...' : _descriptionController.text,
-                  style: AppTypography.bodyMedium(color: theme.textColor.withValues(alpha: 0.6), fontSize: 11),
+                  _descriptionController.text.isEmpty
+                      ? 'Description...'
+                      : _descriptionController.text,
+                  style: AppTypography.bodyMedium(
+                    color: theme.textColor.withValues(alpha: 0.6),
+                    fontSize: 11,
+                  ),
                   maxLines: 2,
                 ),
               ],
@@ -188,12 +241,22 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
         children: [
           Text(
             _titleController.text.isEmpty ? 'Title' : _titleController.text,
-            style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.bold, fontSize: 16),
+            style: AppTypography.bodyLarge(
+              color: theme.textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
-            _descriptionController.text.isEmpty ? 'Your beautiful story goes here...' : _descriptionController.text,
-            style: AppTypography.lora(color: theme.textColor.withValues(alpha: 0.7), fontSize: 14, height: 1.5).copyWith(fontStyle: FontStyle.italic),
+            _descriptionController.text.isEmpty
+                ? 'Your beautiful story goes here...'
+                : _descriptionController.text,
+            style: AppTypography.lora(
+              color: theme.textColor.withValues(alpha: 0.7),
+              fontSize: 14,
+              height: 1.5,
+            ).copyWith(fontStyle: FontStyle.italic),
             maxLines: 5,
           ),
         ],
@@ -205,7 +268,14 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('WHEN DID IT HAPPEN?', style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
+        Text(
+          'WHEN DID IT HAPPEN?',
+          style: AppTypography.bodyLarge(
+            color: theme.textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ).copyWith(letterSpacing: 1.5),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -222,7 +292,9 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                         data: Theme.of(context).copyWith(
                           colorScheme: ColorScheme.fromSeed(
                             seedColor: theme.accentColor,
-                            brightness: theme.isDark ? Brightness.dark : Brightness.light,
+                            brightness: theme.isDark
+                                ? Brightness.dark
+                                : Brightness.light,
                           ),
                         ),
                         child: child!,
@@ -233,14 +305,24 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                 },
                 child: GlassContainer(
                   borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded, size: 18, color: theme.accentColor),
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 18,
+                        color: theme.accentColor,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         DateFormat('MMM dd, yyyy').format(_selectedDate),
-                        style: AppTypography.body(color: theme.textColor, fontSize: 13),
+                        style: AppTypography.body(
+                          color: theme.textColor,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -259,7 +341,9 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                         data: Theme.of(context).copyWith(
                           colorScheme: ColorScheme.fromSeed(
                             seedColor: theme.accentColor,
-                            brightness: theme.isDark ? Brightness.dark : Brightness.light,
+                            brightness: theme.isDark
+                                ? Brightness.dark
+                                : Brightness.light,
                           ),
                         ),
                         child: child!,
@@ -270,14 +354,24 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                 },
                 child: GlassContainer(
                   borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.access_time_rounded, size: 18, color: theme.accentColor),
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 18,
+                        color: theme.accentColor,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         _selectedTime.format(context),
-                        style: AppTypography.body(color: theme.textColor, fontSize: 13),
+                        style: AppTypography.body(
+                          color: theme.textColor,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -297,7 +391,13 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Include a Photo', style: AppTypography.bodyLarge(color: theme.textColor, fontWeight: FontWeight.w600)),
+          Text(
+            'Include a Photo',
+            style: AppTypography.bodyLarge(
+              color: theme.textColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           Switch.adaptive(
             value: _isImageCard,
             activeTrackColor: theme.accentColor,
@@ -312,7 +412,14 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('HOW DID IT FEEL?', style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
+        Text(
+          'HOW DID IT FEEL?',
+          style: AppTypography.bodyLarge(
+            color: theme.textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ).copyWith(letterSpacing: 1.5),
+        ),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -324,9 +431,14 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.05),
+                  color: isSelected
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
-                  border: Border.all(color: isSelected ? theme.textColor : Colors.transparent, width: 2),
+                  border: Border.all(
+                    color: isSelected ? theme.textColor : Colors.transparent,
+                    width: 2,
+                  ),
                 ),
                 child: Text(m, style: AppTypography.body(fontSize: 24)),
               ),
@@ -337,11 +449,24 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, LoveStoryTheme theme, {int maxLines = 1, String? hint}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    LoveStoryTheme theme, {
+    int maxLines = 1,
+    String? hint,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: AppTypography.bodyLarge(color: theme.textColor.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold).copyWith(letterSpacing: 1.5)),
+        Text(
+          label.toUpperCase(),
+          style: AppTypography.bodyLarge(
+            color: theme.textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ).copyWith(letterSpacing: 1.5),
+        ),
         const SizedBox(height: 12),
         GlassContainer(
           borderRadius: 20,
@@ -353,7 +478,9 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.24)),
+              hintStyle: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.24),
+              ),
               border: InputBorder.none,
             ),
           ),
@@ -371,14 +498,19 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
         backgroundColor: theme.textColor.withValues(alpha: 0.05),
         foregroundColor: theme.textColor,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: theme.textColor.withValues(alpha: 0.1))),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+        ),
         elevation: 0,
       ),
     );
   }
 
   Future<void> _pickImage() async {
-    final path = await ref.read(timelineControllerProvider.notifier).pickImage(context);
+    final path = await ref
+        .read(timelineControllerProvider.notifier)
+        .pickImage(context);
     if (path != null) setState(() => _imagePath = path);
   }
 
@@ -396,14 +528,18 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
       final newItem = TimelineItemData(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        location: _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+        location: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
         imagePath: _imagePath,
         date: combinedDate,
         isImageCard: _isImageCard,
         position: ref.read(timelineControllerProvider).items.length,
         mood: _selectedMood,
       );
-      await ref.read(timelineControllerProvider.notifier).addTimelineItem(newItem);
+      await ref
+          .read(timelineControllerProvider.notifier)
+          .addTimelineItem(newItem);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       setState(() => _isSaving = false);

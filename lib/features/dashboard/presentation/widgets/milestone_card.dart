@@ -2,7 +2,7 @@ import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/core/utils/date_helper.dart';
 
@@ -44,21 +44,38 @@ class _MilestoneCardState extends State<MilestoneCard> {
 
   @override
   Widget build(BuildContext context) {
-    final rawMilestones = DateHelper.nextRelationshipMilestones(widget.workspace.startDate, widget.workspace.startTime);
+    final rawMilestones = DateHelper.nextRelationshipMilestones(
+      widget.workspace.startDate,
+      widget.workspace.startTime,
+    );
     final startDate = widget.workspace.startDate;
-    final daysTogether = DateHelper.relationshipTotalDays(widget.workspace.startDate);
+    final daysTogether = DateHelper.relationshipTotalDays(
+      widget.workspace.startDate,
+    );
 
     final isPaired = widget.isPaired;
     // Ensure we always have milestones to show, fallback to mock data if empty and paired
     final milestones = rawMilestones.isNotEmpty
         ? rawMilestones
         : (isPaired
-            ? [
-                const MilestoneInfo(title: '1500 Days', daysUntil: 265, progress: 0.82),
-                const MilestoneInfo(title: '2000 Days', daysUntil: 765, progress: 0.62),
-                const MilestoneInfo(title: '5th Anniversary', daysUntil: 591, progress: 0.70),
-              ]
-            : <MilestoneInfo>[]);
+              ? [
+                  const MilestoneInfo(
+                    title: '1500 Days',
+                    daysUntil: 265,
+                    progress: 0.82,
+                  ),
+                  const MilestoneInfo(
+                    title: '2000 Days',
+                    daysUntil: 765,
+                    progress: 0.62,
+                  ),
+                  const MilestoneInfo(
+                    title: '5th Anniversary',
+                    daysUntil: 591,
+                    progress: 0.70,
+                  ),
+                ]
+              : <MilestoneInfo>[]);
 
     if (milestones.isEmpty) {
       return GlassContainer(
@@ -94,7 +111,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
                 const SizedBox(width: 8),
                 Text(
                   'Next Milestone',
-                  style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: widget.theme.textColor.withValues(alpha: 0.95)),
+                  style: AppTypography.bodyLarge(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: widget.theme.textColor.withValues(alpha: 0.95),
+                  ),
                 ),
               ],
             ),
@@ -105,7 +126,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
               child: Text(
                 'Connect with your partner to start tracking milestones! 💖',
                 textAlign: TextAlign.center,
-                style: AppTypography.bodyMedium(fontSize: 12.5, color: widget.theme.textColor.withValues(alpha: 0.7), height: 1.4),
+                style: AppTypography.bodyMedium(
+                  fontSize: 12.5,
+                  color: widget.theme.textColor.withValues(alpha: 0.7),
+                  height: 1.4,
+                ),
               ),
             ),
           ],
@@ -114,7 +139,10 @@ class _MilestoneCardState extends State<MilestoneCard> {
     }
 
     // Safely clamp selection index if the milestones list size changes
-    final selectedIndex = _selectedMilestoneIndex.clamp(0, milestones.length - 1);
+    final selectedIndex = _selectedMilestoneIndex.clamp(
+      0,
+      milestones.length - 1,
+    );
     final milestone = milestones[selectedIndex];
 
     final targetDays = _getTargetDaysForMilestone(milestone, startDate);
@@ -129,8 +157,8 @@ class _MilestoneCardState extends State<MilestoneCard> {
 
     // Calculations based on day 0 to the milestone target days
     final isCompleted = daysTogether >= targetDays;
-    final progress = targetDays > 0 
-        ? (daysTogether / targetDays).clamp(0.0, 1.0) 
+    final progress = targetDays > 0
+        ? (daysTogether / targetDays).clamp(0.0, 1.0)
         : 0.0;
     final percentComplete = (progress * 100).round();
     final daysRemaining = isCompleted ? 0 : targetDays - daysTogether;
@@ -173,7 +201,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   const SizedBox(width: 8),
                   Text(
                     'Next Milestone',
-                    style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: widget.theme.textColor.withValues(alpha: 0.95)),
+                    style: AppTypography.bodyLarge(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: widget.theme.textColor.withValues(alpha: 0.95),
+                    ),
                   ),
                 ],
               ),
@@ -202,7 +234,10 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? widget.theme.textColor.withValues(alpha: 0.1)
@@ -211,9 +246,13 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         ),
                         child: Text(
                           '$target',
-                          style: AppTypography.button(fontSize: 10.5, fontWeight: FontWeight.w700, color: isSelected 
-                                ? widget.theme.textColor 
-                                : widget.theme.textColor.withValues(alpha: 0.3)),
+                          style: AppTypography.button(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected
+                                ? widget.theme.textColor
+                                : widget.theme.textColor.withValues(alpha: 0.3),
+                          ),
                         ),
                       ),
                     );
@@ -234,7 +273,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
                   children: [
                     Text(
                       milestoneHeadingText,
-                      style: AppTypography.heading(fontSize: 20, fontWeight: FontWeight.w700, color: widget.theme.textColor),
+                      style: AppTypography.heading(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: widget.theme.textColor,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -250,7 +293,11 @@ class _MilestoneCardState extends State<MilestoneCard> {
                           const SizedBox(width: 6),
                           Text(
                             'Milestone Achieved! 🎉',
-                            style: AppTypography.body(fontSize: 12.5, fontWeight: FontWeight.w700, color: const Color(0xFF10B981)),
+                            style: AppTypography.body(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF10B981),
+                            ),
                           ),
                         ],
                       )
@@ -260,27 +307,46 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0, end: daysRemaining.toDouble()),
+                            tween: Tween<double>(
+                              begin: 0,
+                              end: daysRemaining.toDouble(),
+                            ),
                             duration: const Duration(milliseconds: 1400),
                             curve: Curves.easeOutCubic,
                             builder: (context, value, _) {
                               return Text(
                                 NumberFormat('#,###').format(value.toInt()),
-                                style: AppTypography.heading(fontSize: 24, fontWeight: FontWeight.w700, color: widget.theme.textColor.withValues(alpha: 0.9)),
+                                style: AppTypography.heading(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: widget.theme.textColor.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                ),
                               );
                             },
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'days remain',
-                            style: AppTypography.body(fontSize: 12, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                            style: AppTypography.body(
+                              fontSize: 12,
+                              color: widget.theme.textColor.withValues(
+                                alpha: 0.4,
+                              ),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
                     const SizedBox(height: 4),
                     Text(
                       'Target: ${NumberFormat('#,###').format(targetDays)} days total',
-                      style: AppTypography.caption(fontSize: 10, color: widget.theme.textColor.withValues(alpha: 0.4), fontWeight: FontWeight.w500),
+                      style: AppTypography.caption(
+                        fontSize: 10,
+                        color: widget.theme.textColor.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -301,9 +367,13 @@ class _MilestoneCardState extends State<MilestoneCard> {
                         return CircularProgressIndicator(
                           value: value,
                           strokeWidth: 7,
-                          backgroundColor: widget.theme.textColor.withValues(alpha: 0.05),
+                          backgroundColor: widget.theme.textColor.withValues(
+                            alpha: 0.05,
+                          ),
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
+                            isCompleted
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFF43F5E),
                           ),
                         );
                       },
@@ -313,19 +383,32 @@ class _MilestoneCardState extends State<MilestoneCard> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0, end: percentComplete.toDouble()),
+                        tween: Tween<double>(
+                          begin: 0,
+                          end: percentComplete.toDouble(),
+                        ),
                         duration: const Duration(milliseconds: 1400),
                         curve: Curves.easeOutCubic,
                         builder: (context, value, _) {
                           return Text(
                             '${value.toInt()}%',
-                            style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.w800, color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E)),
+                            style: AppTypography.body(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: isCompleted
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFF43F5E),
+                            ),
                           );
                         },
                       ),
                       Text(
                         'DONE',
-                        style: AppTypography.body(fontSize: 8, fontWeight: FontWeight.w800, color: widget.theme.textColor.withValues(alpha: 0.3)).copyWith(letterSpacing: 0.5),
+                        style: AppTypography.body(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: widget.theme.textColor.withValues(alpha: 0.3),
+                        ).copyWith(letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -343,15 +426,21 @@ class _MilestoneCardState extends State<MilestoneCard> {
             children: [
               Icon(
                 Icons.auto_awesome,
-                color: isCompleted ? const Color(0xFF10B981) : const Color(0xFFF43F5E), // Pink/Green Sparkle
+                color: isCompleted
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFF43F5E), // Pink/Green Sparkle
                 size: 13,
               ),
               const SizedBox(width: 8),
               Text(
-                isCompleted 
-                    ? 'A grand celebration awaits!' 
+                isCompleted
+                    ? 'A grand celebration awaits!'
                     : 'You are $percentComplete% of the way there',
-                style: AppTypography.button(fontSize: 10.5, color: widget.theme.textColor.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
+                style: AppTypography.button(
+                  fontSize: 10.5,
+                  color: widget.theme.textColor.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),

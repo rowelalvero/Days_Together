@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/core/utils/date_helper.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -18,7 +18,10 @@ class NextMilestoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final milestones = DateHelper.nextRelationshipMilestones(workspace.startDate, workspace.startTime);
+    final milestones = DateHelper.nextRelationshipMilestones(
+      workspace.startDate,
+      workspace.startTime,
+    );
     if (milestones.isEmpty) return const SizedBox.shrink();
 
     final next = milestones.first;
@@ -70,7 +73,10 @@ class NextMilestoneCard extends StatelessWidget {
                 curve: Curves.easeOutCubic,
                 builder: (context, value, _) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),

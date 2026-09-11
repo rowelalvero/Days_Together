@@ -52,29 +52,38 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  Future<void> setStoryTitle(String title) => ref.read(coupleSessionProvider).setStoryTitle(title);
+  Future<void> setStoryTitle(String title) =>
+      ref.read(coupleSessionProvider).setStoryTitle(title);
 
-  Future<void> setStartDate(DateTime date) => ref.read(coupleSessionProvider).setStartDate(date);
+  Future<void> setStartDate(DateTime date) =>
+      ref.read(coupleSessionProvider).setStartDate(date);
 
-  Future<void> setStartTime(TimeOfDay time) => ref.read(coupleSessionProvider).setStartTime(time);
+  Future<void> setStartTime(TimeOfDay time) =>
+      ref.read(coupleSessionProvider).setStartTime(time);
 
-  Future<void> setPremium(bool value) => ref.read(coupleSessionProvider).setPremium(value);
+  Future<void> setPremium(bool value) =>
+      ref.read(coupleSessionProvider).setPremium(value);
 
   Future<void> createRelationshipWorkspace() =>
       ref.read(coupleSessionProvider).createRelationshipWorkspace();
 
-  String generateCoupleCode({bool forceRegenerate = false}) =>
-      ref.read(coupleSessionProvider).generateCoupleCode(forceRegenerate: forceRegenerate);
+  String generateCoupleCode({bool forceRegenerate = false}) => ref
+      .read(coupleSessionProvider)
+      .generateCoupleCode(forceRegenerate: forceRegenerate);
 
-  Future<String?> refreshPairingCode({bool forceRotate = false}) =>
-      ref.read(coupleSessionProvider).refreshPairingCode(forceRotate: forceRotate);
+  Future<String?> refreshPairingCode({bool forceRotate = false}) => ref
+      .read(coupleSessionProvider)
+      .refreshPairingCode(forceRotate: forceRotate);
 
-  Future<void> regenerateRecoveryCode() => ref.read(coupleSessionProvider).regenerateRecoveryCode();
+  Future<void> regenerateRecoveryCode() =>
+      ref.read(coupleSessionProvider).regenerateRecoveryCode();
 
-  void clearRecoveryCode() => ref.read(coupleSessionProvider).clearRecoveryCode();
+  void clearRecoveryCode() =>
+      ref.read(coupleSessionProvider).clearRecoveryCode();
 }
 
-final workspaceControllerProvider = NotifierProvider<WorkspaceController, WorkspaceState>(
-  WorkspaceController.new,
-  dependencies: [coupleSessionProvider],
-);
+final workspaceControllerProvider =
+    NotifierProvider<WorkspaceController, WorkspaceState>(
+      WorkspaceController.new,
+      dependencies: [coupleSessionProvider],
+    );

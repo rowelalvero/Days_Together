@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 
 import 'package:days_together/features/relationship/session_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -29,16 +30,15 @@ class UnlinkConfirmationDialog extends ConsumerWidget {
   static void show(BuildContext context, LoveStoryTheme theme) {
     showDialog(
       context: context,
-      builder: (dialogContext) => UnlinkConfirmationDialog(
-        profileContext: context,
-        theme: theme,
-      ),
+      builder: (dialogContext) =>
+          UnlinkConfirmationDialog(profileContext: context, theme: theme),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final partnerJoined = ref.watch(sessionControllerProvider).partnerId != null;
+    final partnerJoined =
+        ref.watch(sessionControllerProvider).partnerId != null;
 
     return Dialog(
       backgroundColor: Colors.transparent,

@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/calendar/calendar_state.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -36,7 +36,10 @@ class SharedCalendarBentoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),

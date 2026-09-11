@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget;
 
 import 'package:days_together/features/relationship/data/signature_codec.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
@@ -23,7 +24,7 @@ import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/core/permissions/permission_service.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -37,7 +38,8 @@ class RelationshipLicenseScreen extends ConsumerStatefulWidget {
       _RelationshipLicenseScreenState();
 }
 
-class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseScreen> {
+class _RelationshipLicenseScreenState
+    extends ConsumerState<RelationshipLicenseScreen> {
   final GlobalKey _licenseKey = GlobalKey();
 
   bool _isYourLicense =
@@ -62,7 +64,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     'Filing relationship credentials...',
     'Engraving digital gold seal...',
     'Generating QR verification modules...',
-    'License Issued Successfully! ❤️'
+    'License Issued Successfully! ❤️',
   ];
 
   // Onboarding controllers
@@ -73,7 +75,9 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
   final _createYourAddressCtrl = TextEditingController();
   final _createPartnerAddressCtrl = TextEditingController();
   final _createYourNationalityCtrl = TextEditingController(text: 'Love Land');
-  final _createPartnerNationalityCtrl = TextEditingController(text: 'Love Land');
+  final _createPartnerNationalityCtrl = TextEditingController(
+    text: 'Love Land',
+  );
   final _createYourWeightCtrl = TextEditingController(text: '—');
   final _createPartnerWeightCtrl = TextEditingController(text: '—');
   final _createYourHeightCtrl = TextEditingController(text: '—');
@@ -82,8 +86,12 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
   final _createPartnerBloodCtrl = TextEditingController(text: '—');
   final _createYourEyeColorCtrl = TextEditingController(text: '—');
   final _createPartnerEyeColorCtrl = TextEditingController(text: '—');
-  final _createYourConditionsCtrl = TextEditingController(text: 'Madly in Love');
-  final _createPartnerConditionsCtrl = TextEditingController(text: 'Madly in Love');
+  final _createYourConditionsCtrl = TextEditingController(
+    text: 'Madly in Love',
+  );
+  final _createPartnerConditionsCtrl = TextEditingController(
+    text: 'Madly in Love',
+  );
 
   String _createYourGender = 'Male';
   String _createPartnerGender = 'Female';
@@ -107,7 +115,9 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
   }
 
   Future<void> _pickAvatar(bool isYou) async {
-    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
     if (!hasPermission) return;
 
     final picker = ImagePicker();
@@ -147,7 +157,6 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     }
   }
 
-
   void _showEnlargedDialog() {
     showDialog(
       context: context,
@@ -159,8 +168,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileControllerProvider);
     final workspaceState = ref.watch(workspaceControllerProvider);
-    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
-    final partnerJoined = ref.watch(sessionControllerProvider).partnerId != null;
+    final license =
+        ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
+    final partnerJoined =
+        ref.watch(sessionControllerProvider).partnerId != null;
 
     if (!partnerJoined) {
       _showBoth = false;
@@ -193,7 +204,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     final partnerSetupCompleted = license.partnerDateIssued != null;
 
     if (!partnerJoined || !partnerSetupCompleted) {
-      return WaitingForPartnerScreen(theme: theme, partnerJoined: partnerJoined);
+      return WaitingForPartnerScreen(
+        theme: theme,
+        partnerJoined: partnerJoined,
+      );
     }
 
     return Scaffold(
@@ -203,7 +217,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
         title: Text(
           'Relationship License',
 
-          style: AppTypography.cormorant(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.cormorant(
+            fontWeight: FontWeight.bold,
+            color: theme.textColor,
+          ),
         ),
 
         backgroundColor: Colors.transparent,
@@ -290,7 +307,11 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                         Text(
                           'Configure License Details',
 
-                          style: AppTypography.body(fontSize: 14, color: theme.textColor.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
+                          style: AppTypography.body(
+                            fontSize: 14,
+                            color: theme.textColor.withValues(alpha: 0.8),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -347,7 +368,11 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                 Text(
                   '💡 Tap any license card directly to flip it!',
 
-                  style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w500, color: theme.textColor.withValues(alpha: 0.5)),
+                  style: AppTypography.body(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textColor.withValues(alpha: 0.5),
+                  ),
                 ),
 
                 const SizedBox(height: 16),
@@ -368,7 +393,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                         label: Text(
                           'Flip Cards',
 
-                          style: AppTypography.body(fontWeight: FontWeight.w700, color: theme.textColor),
+                          style: AppTypography.body(
+                            fontWeight: FontWeight.w700,
+                            color: theme.textColor,
+                          ),
                         ),
 
                         style: OutlinedButton.styleFrom(
@@ -400,7 +428,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                         label: Text(
                           'Enlarge ID',
 
-                          style: AppTypography.body(fontWeight: FontWeight.w700, color: theme.textColor),
+                          style: AppTypography.body(
+                            fontWeight: FontWeight.w700,
+                            color: theme.textColor,
+                          ),
                         ),
 
                         style: OutlinedButton.styleFrom(
@@ -448,7 +479,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                     label: Text(
                       'Share License',
 
-                      style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: AppTypography.body(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
 
                     style: ElevatedButton.styleFrom(
@@ -529,21 +563,27 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     // Split across the two controllers that used to be one updateLicense
     // call: yourName is ProfileController's field (untouched by this
     // extraction), the rest are LicenseController's.
-    ref.read(profileControllerProvider.notifier).setYourName(_createYourNameCtrl.text.trim());
-    ref.read(licenseControllerProvider.notifier).updateFields(
-      yourGender: _createYourGender,
-      yourPhone: _createYourPhoneCtrl.text.trim(),
-      yourBirthdate: _createYourBirthdate,
-      yourAddress: _createYourAddressCtrl.text.trim(),
-      yourNationality: _createYourNationalityCtrl.text.trim(),
-      yourWeight: _createYourWeightCtrl.text.trim(),
-      yourHeight: _createYourHeightCtrl.text.trim(),
-      yourBloodType: _createYourBloodCtrl.text.trim(),
-      yourEyeColor: _createYourEyeColorCtrl.text.trim(),
-      yourConditions: _createYourConditionsCtrl.text.trim(),
-      yourDateIssued: now,
-      yourSignature: _createYourSignatureStr.isNotEmpty ? _createYourSignatureStr : null,
-    );
+    ref
+        .read(profileControllerProvider.notifier)
+        .setYourName(_createYourNameCtrl.text.trim());
+    ref
+        .read(licenseControllerProvider.notifier)
+        .updateFields(
+          yourGender: _createYourGender,
+          yourPhone: _createYourPhoneCtrl.text.trim(),
+          yourBirthdate: _createYourBirthdate,
+          yourAddress: _createYourAddressCtrl.text.trim(),
+          yourNationality: _createYourNationalityCtrl.text.trim(),
+          yourWeight: _createYourWeightCtrl.text.trim(),
+          yourHeight: _createYourHeightCtrl.text.trim(),
+          yourBloodType: _createYourBloodCtrl.text.trim(),
+          yourEyeColor: _createYourEyeColorCtrl.text.trim(),
+          yourConditions: _createYourConditionsCtrl.text.trim(),
+          yourDateIssued: now,
+          yourSignature: _createYourSignatureStr.isNotEmpty
+              ? _createYourSignatureStr
+              : null,
+        );
 
     setState(() {
       _isLoading = false;
@@ -557,7 +597,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
       appBar: AppBar(
         title: Text(
           'License Application',
-          style: AppTypography.heading(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.heading(
+            fontWeight: FontWeight.bold,
+            color: theme.textColor,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -574,7 +617,9 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
+        decoration: BoxDecoration(
+          gradient: ref.watch(themeControllerProvider).currentGradient,
+        ),
         child: SafeArea(
           child: Column(
             children: [
@@ -623,7 +668,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                     ),
                     child: Text(
                       'Generate Relationship License ID',
-                      style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: AppTypography.body(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -635,7 +683,10 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
     );
   }
 
-  List<Widget> _buildFormFields({required bool isYou, required LoveStoryTheme theme}) {
+  List<Widget> _buildFormFields({
+    required bool isYou,
+    required LoveStoryTheme theme,
+  }) {
     return [
       CreationLicenseForm(
         isYou: isYou,
@@ -643,12 +694,16 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
         nameCtrl: isYou ? _createYourNameCtrl : _createPartnerNameCtrl,
         phoneCtrl: isYou ? _createYourPhoneCtrl : _createPartnerPhoneCtrl,
         addressCtrl: isYou ? _createYourAddressCtrl : _createPartnerAddressCtrl,
-        nationalityCtrl: isYou ? _createYourNationalityCtrl : _createPartnerNationalityCtrl,
+        nationalityCtrl: isYou
+            ? _createYourNationalityCtrl
+            : _createPartnerNationalityCtrl,
         weightCtrl: isYou ? _createYourWeightCtrl : _createPartnerWeightCtrl,
         heightCtrl: isYou ? _createYourHeightCtrl : _createPartnerHeightCtrl,
         bloodCtrl: isYou ? _createYourBloodCtrl : _createPartnerBloodCtrl,
         eyeCtrl: isYou ? _createYourEyeColorCtrl : _createPartnerEyeColorCtrl,
-        conditionsCtrl: isYou ? _createYourConditionsCtrl : _createPartnerConditionsCtrl,
+        conditionsCtrl: isYou
+            ? _createYourConditionsCtrl
+            : _createPartnerConditionsCtrl,
         gender: isYou ? _createYourGender : _createPartnerGender,
         onGenderChanged: (val) {
           setState(() {
@@ -661,10 +716,16 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
         },
         birthdate: isYou ? _createYourBirthdate : _createPartnerBirthdate,
         onBirthdateTap: () => _selectCreateDate(context, isYou),
-        signatureStr: isYou ? _createYourSignatureStr : _createPartnerSignatureStr,
+        signatureStr: isYou
+            ? _createYourSignatureStr
+            : _createPartnerSignatureStr,
         onSignatureTap: () async {
-          final signatureStr = isYou ? _createYourSignatureStr : _createPartnerSignatureStr;
-          final strokes = SignatureCodec.decode(signatureStr.isNotEmpty ? signatureStr : null);
+          final signatureStr = isYou
+              ? _createYourSignatureStr
+              : _createPartnerSignatureStr;
+          final strokes = SignatureCodec.decode(
+            signatureStr.isNotEmpty ? signatureStr : null,
+          );
           // SignatureDrawingDialog stays a plain Navigator.push (both sites
           // in this file): it's a dialog with a typed return value, not a
           // navigational destination -- ADR-007's scope only covers "distinct
@@ -729,7 +790,11 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                     surface: theme.primaryColor,
                     onSurface: theme.textColor,
                   ),
-            dialogTheme: DialogThemeData(backgroundColor: isDark ? theme.secondaryColor : theme.primaryColor),
+            dialogTheme: DialogThemeData(
+              backgroundColor: isDark
+                  ? theme.secondaryColor
+                  : theme.primaryColor,
+            ),
           ),
           child: child!,
         );
@@ -745,5 +810,4 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
       });
     }
   }
-
 }

@@ -128,15 +128,14 @@ class PersonLicenseForm extends StatelessWidget {
                         ? DateFormat('MMMM dd, yyyy').format(birthdate!)
                         : 'Select Birthdate',
 
-                    style: AppTypography.body(color: birthdate != null
+                    style: AppTypography.body(
+                      color: birthdate != null
                           ? theme.textColor
-                          : theme.textColor.withValues(alpha: 0.5)),
+                          : theme.textColor.withValues(alpha: 0.5),
+                    ),
                   ),
 
-                  Icon(
-                    Icons.calendar_month_rounded,
-                    color: theme.accentColor,
-                  ),
+                  Icon(Icons.calendar_month_rounded, color: theme.accentColor),
                 ],
               ),
             ),
@@ -245,16 +244,14 @@ class PersonLicenseForm extends StatelessWidget {
                         ? DateFormat('MMMM dd, yyyy').format(dateIssued!)
                         : 'Default (Relationship Date)',
 
-                    style: AppTypography.body(color:
-                          dateIssued != null
+                    style: AppTypography.body(
+                      color: dateIssued != null
                           ? theme.textColor
-                          : theme.textColor.withValues(alpha: 0.5)),
+                          : theme.textColor.withValues(alpha: 0.5),
+                    ),
                   ),
 
-                  Icon(
-                    Icons.calendar_month_rounded,
-                    color: theme.accentColor,
-                  ),
+                  Icon(Icons.calendar_month_rounded, color: theme.accentColor),
                 ],
               ),
             ),
@@ -307,7 +304,10 @@ class PersonLicenseForm extends StatelessWidget {
                     Text(
                       'Tap to draw signature',
 
-                      style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4), fontSize: 14),
+                      style: AppTypography.body(
+                        color: theme.textColor.withValues(alpha: 0.4),
+                        fontSize: 14,
+                      ),
                     ),
 
                   if (signatureStr.isNotEmpty)
@@ -413,7 +413,11 @@ class PersonLicenseForm extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
 
-        style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.6)).copyWith(letterSpacing: 1),
+        style: AppTypography.body(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: theme.textColor.withValues(alpha: 0.6),
+        ).copyWith(letterSpacing: 1),
       ),
     );
   }
@@ -469,9 +473,10 @@ class PersonLicenseForm extends StatelessWidget {
               Text(
                 value,
 
-                style: AppTypography.body(fontWeight: FontWeight.bold, color: isSelected
-                      ? theme.accentColor
-                      : theme.textColor),
+                style: AppTypography.body(
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? theme.accentColor : theme.textColor,
+                ),
               ),
             ],
           ),
@@ -484,7 +489,9 @@ class PersonLicenseForm extends StatelessWidget {
     return InputDecoration(
       hintText: hint,
 
-      hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4)),
+      hintStyle: AppTypography.body(
+        color: theme.textColor.withValues(alpha: 0.4),
+      ),
 
       filled: true,
 

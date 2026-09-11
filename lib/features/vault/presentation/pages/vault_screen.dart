@@ -7,7 +7,7 @@ import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/vault/vault_state.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 class VaultScreen extends ConsumerWidget {
   const VaultScreen({super.key});
@@ -25,14 +25,23 @@ class VaultScreen extends ConsumerWidget {
     }
 
     if (!vault.hasPin) {
-      return _SetPinScreen(theme: theme, gradient: themeProvider.currentGradient);
+      return _SetPinScreen(
+        theme: theme,
+        gradient: themeProvider.currentGradient,
+      );
     }
 
     if (!vault.isUnlocked) {
-      return _PinEntryScreen(theme: theme, gradient: themeProvider.currentGradient);
+      return _PinEntryScreen(
+        theme: theme,
+        gradient: themeProvider.currentGradient,
+      );
     }
 
-    return _VaultContentScreen(theme: theme, gradient: themeProvider.currentGradient);
+    return _VaultContentScreen(
+      theme: theme,
+      gradient: themeProvider.currentGradient,
+    );
   }
 }
 
@@ -63,12 +72,19 @@ class _SetPinScreenState extends ConsumerState<_SetPinScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: widget.theme.textColor),
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: widget.theme.textColor,
+                    ),
                   ),
                 ],
               ),
               const Spacer(),
-              Icon(Icons.lock_outline_rounded, color: widget.theme.textColor, size: 48),
+              Icon(
+                Icons.lock_outline_rounded,
+                color: widget.theme.textColor,
+                size: 48,
+              ),
               const SizedBox(height: 20),
               Text(
                 'Create Your Secret PIN',
@@ -81,7 +97,9 @@ class _SetPinScreenState extends ConsumerState<_SetPinScreen> {
               const SizedBox(height: 8),
               Text(
                 'Keep your private memories, letters, and photos secure.',
-                style: AppTypography.body(color: widget.theme.textColor.withValues(alpha: 0.6)),
+                style: AppTypography.body(
+                  color: widget.theme.textColor.withValues(alpha: 0.6),
+                ),
               ),
               const SizedBox(height: 40),
               _buildPinDots(_pin, textColor: widget.theme.textColor),
@@ -137,12 +155,19 @@ class _PinEntryScreenState extends ConsumerState<_PinEntryScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: widget.theme.textColor),
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: widget.theme.textColor,
+                    ),
                   ),
                 ],
               ),
               const Spacer(),
-              Icon(Icons.lock_outline_rounded, color: widget.theme.textColor, size: 48),
+              Icon(
+                Icons.lock_outline_rounded,
+                color: widget.theme.textColor,
+                size: 48,
+              ),
               const SizedBox(height: 20),
               Text(
                 'Enter your Secret PIN',
@@ -154,13 +179,21 @@ class _PinEntryScreenState extends ConsumerState<_PinEntryScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _error ? '❌ Incorrect PIN. Please try again.' : 'This keeps your private memories safe.',
+                _error
+                    ? '❌ Incorrect PIN. Please try again.'
+                    : 'This keeps your private memories safe.',
                 style: AppTypography.body(
-                  color: _error ? Colors.redAccent : widget.theme.textColor.withValues(alpha: 0.6),
+                  color: _error
+                      ? Colors.redAccent
+                      : widget.theme.textColor.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: 40),
-              _buildPinDots(_pin, isError: _error, textColor: widget.theme.textColor),
+              _buildPinDots(
+                _pin,
+                isError: _error,
+                textColor: widget.theme.textColor,
+              ),
               const SizedBox(height: 40),
               _buildKeypad(
                 onDigit: (d) async {
@@ -171,7 +204,9 @@ class _PinEntryScreenState extends ConsumerState<_PinEntryScreen> {
                     });
                   }
                   if (_pin.length == 4) {
-                    final success = await ref.read(vaultControllerProvider.notifier).verifyPin(_pin);
+                    final success = await ref
+                        .read(vaultControllerProvider.notifier)
+                        .verifyPin(_pin);
                     if (!success && mounted) {
                       setState(() {
                         _error = true;
@@ -226,7 +261,10 @@ class _VaultContentScreen extends ConsumerWidget {
                           vaultNotifier.lock();
                           Navigator.pop(context);
                         },
-                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+                        icon: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: theme.textColor,
+                        ),
                       ),
                       Expanded(
                         child: Text(
@@ -243,7 +281,11 @@ class _VaultContentScreen extends ConsumerWidget {
                         onPressed: () {
                           vaultNotifier.lock();
                         },
-                        icon: Icon(Icons.lock_rounded, color: theme.textColor, size: 20),
+                        icon: Icon(
+                          Icons.lock_rounded,
+                          color: theme.textColor,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
@@ -273,20 +315,39 @@ class _VaultContentScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPhotosTab(BuildContext context, VaultState vault, VaultController vaultNotifier) {
+  Widget _buildPhotosTab(
+    BuildContext context,
+    VaultState vault,
+    VaultController vaultNotifier,
+  ) {
     if (vault.photos.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_library_outlined, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
+            Icon(
+              Icons.photo_library_outlined,
+              size: 48,
+              color: theme.textColor.withValues(alpha: 0.3),
+            ),
             const SizedBox(height: 16),
-            Text('Nothing here yet.', style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.5))),
+            Text(
+              'Nothing here yet.',
+              style: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.5),
+              ),
+            ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => vaultNotifier.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
-              label: Text('Add Photo', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: Text(
+                'Add Photo',
+                style: AppTypography.button(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
@@ -317,10 +378,27 @@ class _VaultContentScreen extends ConsumerWidget {
                       context: context,
                       builder: (ctx) => AlertDialog(
                         backgroundColor: theme.primaryColor,
-                        title: Text('Delete Photo?', style: AppTypography.title(color: theme.textColor)),
+                        title: Text(
+                          'Delete Photo?',
+                          style: AppTypography.title(color: theme.textColor),
+                        ),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.5)))),
-                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: AppTypography.button(color: Colors.red))),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text(
+                              'Cancel',
+                              style: AppTypography.button(
+                                color: theme.textColor.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: Text(
+                              'Delete',
+                              style: AppTypography.button(color: Colors.red),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -328,19 +406,26 @@ class _VaultContentScreen extends ConsumerWidget {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: item.imagePath != null && File(item.imagePath!).existsSync()
+                    child:
+                        item.imagePath != null &&
+                            File(item.imagePath!).existsSync()
                         ? Image.file(File(item.imagePath!), fit: BoxFit.cover)
                         : (item.imageUrl != null
-                            ? StorageImage(
-                                bucket: StorageBuckets.vaultPhotos,
-                                storageRef: item.imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context) =>
-                                    const Center(child: CircularProgressIndicator()),
-                                errorWidget: (context) => const Center(
-                                    child: Icon(Icons.broken_image, color: Colors.grey)),
-                              )
-                            : Container(color: Colors.grey)),
+                              ? StorageImage(
+                                  bucket: StorageBuckets.vaultPhotos,
+                                  storageRef: item.imageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                  errorWidget: (context) => const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                )
+                              : Container(color: Colors.grey)),
                   ),
                 );
               },
@@ -352,11 +437,19 @@ class _VaultContentScreen extends ConsumerWidget {
             child: ElevatedButton.icon(
               onPressed: () => vaultNotifier.addPhoto(context),
               icon: const Icon(Icons.add_photo_alternate_rounded),
-              label: Text('Add Photo', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: Text(
+                'Add Photo',
+                style: AppTypography.button(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
@@ -365,7 +458,11 @@ class _VaultContentScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLettersTab(BuildContext context, VaultState vault, VaultController vaultNotifier) {
+  Widget _buildLettersTab(
+    BuildContext context,
+    VaultState vault,
+    VaultController vaultNotifier,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -376,9 +473,18 @@ class _VaultContentScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.mail_outline_rounded, size: 48, color: theme.textColor.withValues(alpha: 0.3)),
+                        Icon(
+                          Icons.mail_outline_rounded,
+                          size: 48,
+                          color: theme.textColor.withValues(alpha: 0.3),
+                        ),
                         const SizedBox(height: 16),
-                        Text('No love letters yet.', style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.5))),
+                        Text(
+                          'No love letters yet.',
+                          style: AppTypography.body(
+                            color: theme.textColor.withValues(alpha: 0.5),
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -392,7 +498,9 @@ class _VaultContentScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: theme.textColor.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.1),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,8 +521,13 @@ class _VaultContentScreen extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                  onPressed: () => vaultNotifier.deleteItem(letter.id),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                  onPressed: () =>
+                                      vaultNotifier.deleteItem(letter.id),
                                 ),
                               ],
                             ),
@@ -429,11 +542,19 @@ class _VaultContentScreen extends ConsumerWidget {
             child: ElevatedButton.icon(
               onPressed: () => _showWriteLetterDialog(context, vaultNotifier),
               icon: const Icon(Icons.edit_rounded),
-              label: Text('Write a Letter', style: AppTypography.button(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: Text(
+                'Write a Letter',
+                style: AppTypography.button(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
           ),
@@ -442,7 +563,10 @@ class _VaultContentScreen extends ConsumerWidget {
     );
   }
 
-  void _showWriteLetterDialog(BuildContext context, VaultController vaultNotifier) {
+  void _showWriteLetterDialog(
+    BuildContext context,
+    VaultController vaultNotifier,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -450,10 +574,8 @@ class _VaultContentScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => _WriteLetterBottomSheet(
-        theme: theme,
-        vaultNotifier: vaultNotifier,
-      ),
+      builder: (ctx) =>
+          _WriteLetterBottomSheet(theme: theme, vaultNotifier: vaultNotifier),
     );
   }
 }
@@ -468,7 +590,8 @@ class _WriteLetterBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_WriteLetterBottomSheet> createState() => _WriteLetterBottomSheetState();
+  State<_WriteLetterBottomSheet> createState() =>
+      _WriteLetterBottomSheetState();
 }
 
 class _WriteLetterBottomSheetState extends State<_WriteLetterBottomSheet> {
@@ -502,10 +625,7 @@ class _WriteLetterBottomSheetState extends State<_WriteLetterBottomSheet> {
         children: [
           Text(
             '💌 Write a Love Letter',
-            style: AppTypography.title(
-              color: theme.textColor,
-              fontSize: 20,
-            ),
+            style: AppTypography.title(color: theme.textColor, fontSize: 20),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -514,12 +634,16 @@ class _WriteLetterBottomSheetState extends State<_WriteLetterBottomSheet> {
             style: AppTypography.lora(color: theme.textColor),
             decoration: InputDecoration(
               hintText: 'Dear love...',
-              hintStyle: AppTypography.lora(color: theme.textColor.withValues(alpha: 0.3)),
+              hintStyle: AppTypography.lora(
+                color: theme.textColor.withValues(alpha: 0.3),
+              ),
               filled: true,
               fillColor: theme.textColor.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+                borderSide: BorderSide(
+                  color: theme.textColor.withValues(alpha: 0.1),
+                ),
               ),
             ),
           ),
@@ -536,9 +660,14 @@ class _WriteLetterBottomSheetState extends State<_WriteLetterBottomSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.accentColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-              child: Text('Save Letter', style: AppTypography.button(color: Colors.white, fontSize: 14)),
+              child: Text(
+                'Save Letter',
+                style: AppTypography.button(color: Colors.white, fontSize: 14),
+              ),
             ),
           ),
         ],
@@ -573,7 +702,10 @@ class _DecoyWeatherScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -583,12 +715,20 @@ class _DecoyWeatherScreen extends StatelessWidget {
                   onReset();
                   Navigator.pop(context);
                 },
-                child: const Icon(Icons.wb_sunny_rounded, size: 80, color: Colors.yellow),
+                child: const Icon(
+                  Icons.wb_sunny_rounded,
+                  size: 80,
+                  color: Colors.yellow,
+                ),
               ),
               const SizedBox(height: 20),
               Text(
                 '28°C',
-                style: AppTypography.body(fontSize: 60, fontWeight: FontWeight.w200, color: Colors.white),
+                style: AppTypography.body(
+                  fontSize: 60,
+                  fontWeight: FontWeight.w200,
+                  color: Colors.white,
+                ),
               ),
               Text(
                 'Sunny',
@@ -609,7 +749,11 @@ class _DecoyWeatherScreen extends StatelessWidget {
 }
 
 // ── SHARED WIDGETS ──
-Widget _buildPinDots(String pin, {bool isError = false, Color textColor = Colors.white}) {
+Widget _buildPinDots(
+  String pin, {
+  bool isError = false,
+  Color textColor = Colors.white,
+}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: List.generate(4, (index) {
@@ -624,7 +768,9 @@ Widget _buildPinDots(String pin, {bool isError = false, Color textColor = Colors
               ? (isError ? Colors.redAccent : textColor)
               : Colors.transparent,
           border: Border.all(
-            color: isError ? Colors.redAccent : textColor.withValues(alpha: 0.5),
+            color: isError
+                ? Colors.redAccent
+                : textColor.withValues(alpha: 0.5),
             width: 2,
           ),
         ),

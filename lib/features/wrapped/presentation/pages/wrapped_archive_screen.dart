@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/features/wrapped/data/wrapped_service.dart';
 

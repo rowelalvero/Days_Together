@@ -12,7 +12,8 @@ import 'package:days_together/core/session/couple_session.dart';
 /// (`updateSession`, mirroring the original, to capture `partnerId` for
 /// the deterministic partner1/partner2 ordering) -- otherwise a
 /// straightforward `SupabaseLifecycleNotifier` port.
-class CurrentlyController extends Notifier<CurrentlyState> with SupabaseLifecycleNotifier<CurrentlyState> {
+class CurrentlyController extends Notifier<CurrentlyState>
+    with SupabaseLifecycleNotifier<CurrentlyState> {
   String? _partnerId;
 
   @override
@@ -72,9 +73,13 @@ class CurrentlyController extends Notifier<CurrentlyState> with SupabaseLifecycl
       if (p1Tapped && p2Tapped) {
         nextState = LoveTapState.mutual;
       } else if (_isPartner1) {
-        nextState = p1Tapped ? LoveTapState.sent : (p2Tapped ? LoveTapState.received : LoveTapState.idle);
+        nextState = p1Tapped
+            ? LoveTapState.sent
+            : (p2Tapped ? LoveTapState.received : LoveTapState.idle);
       } else {
-        nextState = p2Tapped ? LoveTapState.sent : (p1Tapped ? LoveTapState.received : LoveTapState.idle);
+        nextState = p2Tapped
+            ? LoveTapState.sent
+            : (p1Tapped ? LoveTapState.received : LoveTapState.idle);
       }
     }
 
@@ -153,13 +158,16 @@ class CurrentlyController extends Notifier<CurrentlyState> with SupabaseLifecycl
 
       int longestStreak = 0;
       if (completedDates.isNotEmpty) {
-        final sortedCompletedDates = completedDates.map((d) => DateTime.parse(d)).toList()
-          ..sort((a, b) => a.compareTo(b));
+        final sortedCompletedDates =
+            completedDates.map((d) => DateTime.parse(d)).toList()
+              ..sort((a, b) => a.compareTo(b));
 
         int tempStreak = 1;
         longestStreak = 1;
         for (int i = 1; i < sortedCompletedDates.length; i++) {
-          final diff = sortedCompletedDates[i].difference(sortedCompletedDates[i - 1]).inDays;
+          final diff = sortedCompletedDates[i]
+              .difference(sortedCompletedDates[i - 1])
+              .inDays;
           if (diff == 1) {
             tempStreak++;
             if (tempStreak > longestStreak) longestStreak = tempStreak;
@@ -217,7 +225,8 @@ class CurrentlyController extends Notifier<CurrentlyState> with SupabaseLifecycl
   }
 }
 
-final currentlyControllerProvider = NotifierProvider.autoDispose<CurrentlyController, CurrentlyState>(
-  CurrentlyController.new,
-  dependencies: [coupleSessionProvider],
-);
+final currentlyControllerProvider =
+    NotifierProvider.autoDispose<CurrentlyController, CurrentlyState>(
+      CurrentlyController.new,
+      dependencies: [coupleSessionProvider],
+    );

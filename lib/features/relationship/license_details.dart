@@ -105,38 +105,78 @@ class LicenseDetails {
     Object? partnerSignature = _unset,
   }) {
     return LicenseDetails(
-      yourGender: identical(yourGender, _unset) ? this.yourGender : yourGender as String?,
-      partnerGender: identical(partnerGender, _unset) ? this.partnerGender : partnerGender as String?,
-      yourPhone: identical(yourPhone, _unset) ? this.yourPhone : yourPhone as String?,
-      partnerPhone: identical(partnerPhone, _unset) ? this.partnerPhone : partnerPhone as String?,
-      yourBirthdate: identical(yourBirthdate, _unset) ? this.yourBirthdate : yourBirthdate as DateTime?,
-      partnerBirthdate:
-          identical(partnerBirthdate, _unset) ? this.partnerBirthdate : partnerBirthdate as DateTime?,
-      yourAddress: identical(yourAddress, _unset) ? this.yourAddress : yourAddress as String?,
-      partnerAddress: identical(partnerAddress, _unset) ? this.partnerAddress : partnerAddress as String?,
-      yourNationality:
-          identical(yourNationality, _unset) ? this.yourNationality : yourNationality as String?,
+      yourGender: identical(yourGender, _unset)
+          ? this.yourGender
+          : yourGender as String?,
+      partnerGender: identical(partnerGender, _unset)
+          ? this.partnerGender
+          : partnerGender as String?,
+      yourPhone: identical(yourPhone, _unset)
+          ? this.yourPhone
+          : yourPhone as String?,
+      partnerPhone: identical(partnerPhone, _unset)
+          ? this.partnerPhone
+          : partnerPhone as String?,
+      yourBirthdate: identical(yourBirthdate, _unset)
+          ? this.yourBirthdate
+          : yourBirthdate as DateTime?,
+      partnerBirthdate: identical(partnerBirthdate, _unset)
+          ? this.partnerBirthdate
+          : partnerBirthdate as DateTime?,
+      yourAddress: identical(yourAddress, _unset)
+          ? this.yourAddress
+          : yourAddress as String?,
+      partnerAddress: identical(partnerAddress, _unset)
+          ? this.partnerAddress
+          : partnerAddress as String?,
+      yourNationality: identical(yourNationality, _unset)
+          ? this.yourNationality
+          : yourNationality as String?,
       partnerNationality: identical(partnerNationality, _unset)
           ? this.partnerNationality
           : partnerNationality as String?,
-      yourWeight: identical(yourWeight, _unset) ? this.yourWeight : yourWeight as String?,
-      partnerWeight: identical(partnerWeight, _unset) ? this.partnerWeight : partnerWeight as String?,
-      yourHeight: identical(yourHeight, _unset) ? this.yourHeight : yourHeight as String?,
-      partnerHeight: identical(partnerHeight, _unset) ? this.partnerHeight : partnerHeight as String?,
-      yourBloodType: identical(yourBloodType, _unset) ? this.yourBloodType : yourBloodType as String?,
-      partnerBloodType:
-          identical(partnerBloodType, _unset) ? this.partnerBloodType : partnerBloodType as String?,
-      yourEyeColor: identical(yourEyeColor, _unset) ? this.yourEyeColor : yourEyeColor as String?,
-      partnerEyeColor: identical(partnerEyeColor, _unset) ? this.partnerEyeColor : partnerEyeColor as String?,
-      yourConditions: identical(yourConditions, _unset) ? this.yourConditions : yourConditions as String?,
-      partnerConditions:
-          identical(partnerConditions, _unset) ? this.partnerConditions : partnerConditions as String?,
-      yourDateIssued: identical(yourDateIssued, _unset) ? this.yourDateIssued : yourDateIssued as DateTime?,
-      partnerDateIssued:
-          identical(partnerDateIssued, _unset) ? this.partnerDateIssued : partnerDateIssued as DateTime?,
-      yourSignature: identical(yourSignature, _unset) ? this.yourSignature : yourSignature as String?,
-      partnerSignature:
-          identical(partnerSignature, _unset) ? this.partnerSignature : partnerSignature as String?,
+      yourWeight: identical(yourWeight, _unset)
+          ? this.yourWeight
+          : yourWeight as String?,
+      partnerWeight: identical(partnerWeight, _unset)
+          ? this.partnerWeight
+          : partnerWeight as String?,
+      yourHeight: identical(yourHeight, _unset)
+          ? this.yourHeight
+          : yourHeight as String?,
+      partnerHeight: identical(partnerHeight, _unset)
+          ? this.partnerHeight
+          : partnerHeight as String?,
+      yourBloodType: identical(yourBloodType, _unset)
+          ? this.yourBloodType
+          : yourBloodType as String?,
+      partnerBloodType: identical(partnerBloodType, _unset)
+          ? this.partnerBloodType
+          : partnerBloodType as String?,
+      yourEyeColor: identical(yourEyeColor, _unset)
+          ? this.yourEyeColor
+          : yourEyeColor as String?,
+      partnerEyeColor: identical(partnerEyeColor, _unset)
+          ? this.partnerEyeColor
+          : partnerEyeColor as String?,
+      yourConditions: identical(yourConditions, _unset)
+          ? this.yourConditions
+          : yourConditions as String?,
+      partnerConditions: identical(partnerConditions, _unset)
+          ? this.partnerConditions
+          : partnerConditions as String?,
+      yourDateIssued: identical(yourDateIssued, _unset)
+          ? this.yourDateIssued
+          : yourDateIssued as DateTime?,
+      partnerDateIssued: identical(partnerDateIssued, _unset)
+          ? this.partnerDateIssued
+          : partnerDateIssued as DateTime?,
+      yourSignature: identical(yourSignature, _unset)
+          ? this.yourSignature
+          : yourSignature as String?,
+      partnerSignature: identical(partnerSignature, _unset)
+          ? this.partnerSignature
+          : partnerSignature as String?,
     );
   }
 }

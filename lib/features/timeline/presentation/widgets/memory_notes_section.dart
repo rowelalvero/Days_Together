@@ -7,8 +7,8 @@ import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/shared/cached_avatar.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/shared/widgets/cached_avatar.dart';
 
 /// A premium, warm inline section replacing the Sidebar Chat.
 /// Displays thoughts, letters, and reflections about a specific memory.
@@ -50,7 +50,8 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     } else if (difference.inHours < 24) {
       final hours = difference.inHours;
       return '$hours ${hours == 1 ? "hour" : "hours"} ago';
-    } else if (difference.inDays == 1 || (difference.inDays < 2 && now.day != dateTime.day)) {
+    } else if (difference.inDays == 1 ||
+        (difference.inDays < 2 && now.day != dateTime.day)) {
       return 'Yesterday';
     } else if (difference.inDays < 7) {
       return '${difference.inDays} days ago';
@@ -116,10 +117,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
       children: [
         const SizedBox(height: 12),
         // Section Divider
-        Divider(
-          color: Colors.white.withValues(alpha: 0.12),
-          thickness: 1.5,
-        ),
+        Divider(color: Colors.white.withValues(alpha: 0.12), thickness: 1.5),
         const SizedBox(height: 12),
 
         // Section Title
@@ -165,10 +163,12 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
             itemBuilder: (context, index) {
               final note = sortedNotes[index];
               final isMe = note.authorName == yourName;
-              
+
               // Resolve name and avatar path
               final authorDisplayName = isMe ? yourName : note.authorName;
-              final avatarPath = isMe ? profile.yourAvatarPath : profile.partnerAvatarPath;
+              final avatarPath = isMe
+                  ? profile.yourAvatarPath
+                  : profile.partnerAvatarPath;
 
               return TweenAnimationBuilder<double>(
                 key: ValueKey(note.id),
@@ -215,19 +215,19 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     // Adaptive Colors based on light/dark mode
     final cardBgColor = note.isPinned
         ? (isDark
-            ? theme.accentColor.withValues(alpha: 0.12)
-            : theme.accentColor.withValues(alpha: 0.08))
+              ? theme.accentColor.withValues(alpha: 0.12)
+              : theme.accentColor.withValues(alpha: 0.08))
         : (isDark
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.white); // Solid white for better contrast in light mode
+              ? Colors.white.withValues(alpha: 0.04)
+              : Colors.white); // Solid white for better contrast in light mode
 
     final cardBorderColor = note.isPinned
         ? (isDark
-            ? theme.accentColor.withValues(alpha: 0.45)
-            : theme.accentColor.withValues(alpha: 0.35))
+              ? theme.accentColor.withValues(alpha: 0.45)
+              : theme.accentColor.withValues(alpha: 0.35))
         : (isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.12)); // Darker border
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.12)); // Darker border
 
     final paperLineColor = isDark
         ? Colors.white.withValues(alpha: 0.05)
@@ -300,7 +300,9 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                                 borderWidth: 1,
                                 borderColor: note.isPinned
                                     ? theme.accentColor
-                                    : (isDark ? Colors.white24 : Colors.black26),
+                                    : (isDark
+                                          ? Colors.white24
+                                          : Colors.black26),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -312,7 +314,9 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                                       style: AppTypography.bodyLarge(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: note.isPinned ? theme.accentColor : theme.textColor,
+                                        color: note.isPinned
+                                            ? theme.accentColor
+                                            : theme.textColor,
                                       ),
                                     ),
                                     if (note.isPinned) ...[
@@ -372,7 +376,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                           color: Colors.black26,
                           blurRadius: 2,
                           offset: Offset(1, 1),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -401,7 +405,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                               color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 1,
                               offset: const Offset(0, 1),
-                            )
+                            ),
                           ],
                         ),
                       ),
@@ -415,7 +419,11 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     );
   }
 
-  Widget _buildComposer(TimelineController provider, String yourName, LoveStoryTheme theme) {
+  Widget _buildComposer(
+    TimelineController provider,
+    String yourName,
+    LoveStoryTheme theme,
+  ) {
     final isDark = theme.isDark;
     final composerBgColor = isDark
         ? Colors.white.withValues(alpha: 0.03)
@@ -440,10 +448,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
               maxLines: null,
               keyboardType: TextInputType.multiline,
               textCapitalization: TextCapitalization.sentences,
-              style: AppTypography.body(
-                color: theme.textColor,
-                fontSize: 14.5,
-              ),
+              style: AppTypography.body(color: theme.textColor, fontSize: 14.5),
               decoration: InputDecoration(
                 hintText: 'Share what this memory means to you...',
                 hintStyle: AppTypography.body(
@@ -451,7 +456,10 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                   fontSize: 14,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 8,
+                ),
               ),
             ),
           ),
@@ -510,7 +518,9 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
             children: [
               ListTile(
                 leading: Icon(
-                  note.isPinned ? Icons.pin_end_rounded : Icons.push_pin_rounded,
+                  note.isPinned
+                      ? Icons.pin_end_rounded
+                      : Icons.push_pin_rounded,
                   color: theme.accentColor,
                 ),
                 title: Text(
@@ -523,7 +533,10 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                leading: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                ),
                 title: Text(
                   'Delete Note',
                   style: AppTypography.body(color: Colors.redAccent),

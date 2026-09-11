@@ -7,14 +7,19 @@ class NotificationPreferencesState {
   final NotificationPreferences? preferences;
   final bool isLoading;
 
-  const NotificationPreferencesState({this.preferences, this.isLoading = false});
+  const NotificationPreferencesState({
+    this.preferences,
+    this.isLoading = false,
+  });
 
   NotificationPreferencesState copyWith({
     Object? preferences = _unset,
     bool? isLoading,
   }) {
     return NotificationPreferencesState(
-      preferences: identical(preferences, _unset) ? this.preferences : preferences as NotificationPreferences?,
+      preferences: identical(preferences, _unset)
+          ? this.preferences
+          : preferences as NotificationPreferences?,
       isLoading: isLoading ?? this.isLoading,
     );
   }

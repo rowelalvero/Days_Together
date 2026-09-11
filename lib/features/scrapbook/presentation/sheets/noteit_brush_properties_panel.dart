@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/color_picker_dialog.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -67,7 +67,10 @@ class NoteitBrushPropertiesPanel extends StatelessWidget {
                   style: AppTypography.body(color: theme.textColor),
                   underline: const SizedBox.shrink(),
                   items: const [
-                    DropdownMenuItem(value: 'rectangle', child: Text('Rectangle')),
+                    DropdownMenuItem(
+                      value: 'rectangle',
+                      child: Text('Rectangle'),
+                    ),
                     DropdownMenuItem(value: 'oval', child: Text('Oval')),
                     DropdownMenuItem(value: 'line', child: Text('Line')),
                     DropdownMenuItem(value: 'arrow', child: Text('Arrow')),
@@ -143,7 +146,9 @@ class NoteitBrushPropertiesPanel extends StatelessWidget {
                           color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? theme.textColor : Colors.transparent,
+                            color: isSelected
+                                ? theme.textColor
+                                : Colors.transparent,
                             width: 2.0,
                           ),
                         ),

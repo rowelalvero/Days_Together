@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 
 import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
@@ -39,7 +40,8 @@ class FlippableLicensePreview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
+    final license =
+        ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
     final myName = profileState.yourName ?? 'You';
     final partnerName = profileState.partnerName ?? 'Partner';
     final myPhone = license.yourPhone?.isNotEmpty == true

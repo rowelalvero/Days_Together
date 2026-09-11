@@ -8,9 +8,9 @@ import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/shared/scale_drawing_painter.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/shared/widgets/scale_drawing_painter.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/core/utils/date_helper.dart';
@@ -77,7 +77,10 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: widget.theme.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
@@ -97,7 +100,9 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: widget.theme.accentColor.withValues(alpha: 0.3),
+                          color: widget.theme.accentColor.withValues(
+                            alpha: 0.3,
+                          ),
                           width: 1,
                         ),
                       ),
@@ -248,31 +253,29 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
       previewText = 'Shared Photo 📸';
       canvasContent =
           latest.imagePath != null && _cachedFileExists(latest.imagePath!)
-              ? Image.file(
-                  File(latest.imagePath!),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                )
-              : latest.imageUrl != null && latest.imageUrl!.isNotEmpty
-              ? StorageImage(
-                  bucket: StorageBuckets.loveNotes,
-                  storageRef: latest.imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorWidget: (context) => const Icon(
-                    Icons.photo_rounded,
-                    color: Colors.grey,
-                  ),
-                )
-              : Center(
-                  child: Icon(
-                    Icons.photo_rounded,
-                    color: widget.theme.textColor.withValues(alpha: 0.6),
-                    size: 32,
-                  ),
-                );
+          ? Image.file(
+              File(latest.imagePath!),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            )
+          : latest.imageUrl != null && latest.imageUrl!.isNotEmpty
+          ? StorageImage(
+              bucket: StorageBuckets.loveNotes,
+              storageRef: latest.imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorWidget: (context) =>
+                  const Icon(Icons.photo_rounded, color: Colors.grey),
+            )
+          : Center(
+              child: Icon(
+                Icons.photo_rounded,
+                color: widget.theme.textColor.withValues(alpha: 0.6),
+                size: 32,
+              ),
+            );
     }
 
     return Column(
@@ -283,7 +286,9 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
           child: Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: latest.backgroundColor ?? widget.theme.accentColor.withValues(alpha: 0.1),
+              color:
+                  latest.backgroundColor ??
+                  widget.theme.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: widget.theme.textColor.withValues(alpha: 0.1),

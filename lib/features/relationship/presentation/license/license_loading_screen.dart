@@ -31,7 +31,9 @@ class LicenseLoadingScreen extends ConsumerWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
+        decoration: BoxDecoration(
+          gradient: ref.watch(themeControllerProvider).currentGradient,
+        ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -43,7 +45,9 @@ class LicenseLoadingScreen extends ConsumerWidget {
                     width: 90,
                     height: 90,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(theme.accentColor),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.accentColor,
+                      ),
                       strokeWidth: 3.5,
                     ),
                   ),
@@ -61,7 +65,11 @@ class LicenseLoadingScreen extends ConsumerWidget {
                   loadingMessage,
                   key: ValueKey<int>(loadingStep),
                   textAlign: TextAlign.center,
-                  style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textColor),
+                  style: AppTypography.body(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

@@ -47,7 +47,8 @@ import 'package:days_together/core/platform/home_widget/home_widget_service.dart
 /// caller. Until then, an item created directly through this controller
 /// (nothing does today) would visibly stay "sending" forever in its own
 /// state, even though the underlying data synced fine.
-class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotifier<NoteitState> {
+class NoteitController extends Notifier<NoteitState>
+    with SupabaseLifecycleNotifier<NoteitState> {
   static const String _storageKey = 'love_notes_items';
 
   @override
@@ -139,14 +140,19 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
     try {
-      final List<dynamic> res =
-          await Supabase.instance.client.from('love_notes').select().eq('couple_id', coupleId!);
+      final List<dynamic> res = await Supabase.instance.client
+          .from('love_notes')
+          .select()
+          .eq('couple_id', coupleId!);
       if (!ref.mounted) return;
       final filteredList = res.where((data) => data['type'] != 'chat').toList();
-      final parsed = filteredList.map((data) => NoteitItem.fromSupabase(data, sessionUserId!)).toList();
+      final parsed = filteredList
+          .map((data) => NoteitItem.fromSupabase(data, sessionUserId!))
+          .toList();
 
-      final localUnsynced =
-          state.notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
+      final localUnsynced = state.notes
+          .where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you')
+          .toList();
       final Map<String, NoteitItem> mergedMap = {};
       for (final note in parsed) {
         mergedMap[note.id] = note;
@@ -155,7 +161,8 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
         mergedMap.putIfAbsent(note.id, () => note);
       }
 
-      final merged = mergedMap.values.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final merged = mergedMap.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       state = state.copyWith(notes: merged, isLoading: false);
       await _persistLocalOnly();
     } catch (e) {
@@ -166,11 +173,16 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
   @override
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     if (!ref.mounted) return;
-    final localUnsynced =
-        state.notes.where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you').toList();
+    final localUnsynced = state.notes
+        .where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you')
+        .toList();
 
-    final filteredList = dataList.where((data) => data['type'] != 'chat').toList();
-    final serverNotes = filteredList.map((data) => NoteitItem.fromSupabase(data, sessionUserId!)).toList();
+    final filteredList = dataList
+        .where((data) => data['type'] != 'chat')
+        .toList();
+    final serverNotes = filteredList
+        .map((data) => NoteitItem.fromSupabase(data, sessionUserId!))
+        .toList();
 
     final Map<String, NoteitItem> mergedMap = {};
     for (final note in serverNotes) {
@@ -184,8 +196,13 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     final oldNotes = state.notes;
 
     if (!wasLoading) {
-      final added =
-          serverNotes.where((srv) => srv.sender == 'partner' && !oldNotes.any((old) => old.id == srv.id)).toList();
+      final added = serverNotes
+          .where(
+            (srv) =>
+                srv.sender == 'partner' &&
+                !oldNotes.any((old) => old.id == srv.id),
+          )
+          .toList();
       for (final note in added) {
         String title = 'Partner sent a love note 💌';
         String desc = 'Shared a new text love note';
@@ -214,21 +231,33 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
         );
       }
 
-      final deleted =
-          oldNotes.where((old) => old.sender == 'partner' && !serverNotes.any((srv) => srv.id == old.id)).toList();
+      final deleted = oldNotes
+          .where(
+            (old) =>
+                old.sender == 'partner' &&
+                !serverNotes.any((srv) => srv.id == old.id),
+          )
+          .toList();
       for (final note in deleted) {
         RecentActivityService.instance.logActivity(
           activityType: 'deleted',
-          title: note.type == NoteitType.drawing ? "Partner's doodle deleted 🗑️" : "Partner's love note deleted 🗑️",
-          description: note.type == NoteitType.drawing ? 'Partner deleted a doodle' : 'Partner deleted a love note',
+          title: note.type == NoteitType.drawing
+              ? "Partner's doodle deleted 🗑️"
+              : "Partner's love note deleted 🗑️",
+          description: note.type == NoteitType.drawing
+              ? 'Partner deleted a doodle'
+              : 'Partner deleted a love note',
           icon: '🗑️',
           referenceId: note.id,
-          route: note.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+          route: note.type == NoteitType.drawing
+              ? 'doodle_notes'
+              : 'love_notes',
         );
       }
     }
 
-    final merged = mergedMap.values.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final merged = mergedMap.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     state = state.copyWith(notes: merged, isLoading: false);
     _persistLocalOnly();
   }
@@ -249,15 +278,26 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
   }
 
   Future<void> sendDrawing(String strokes, Color bgColor) async {
-    final newItem =
-        NoteitItem(type: NoteitType.drawing, content: strokes, sender: 'you', backgroundColor: bgColor, syncStatus: SyncStatus.sending);
+    final newItem = NoteitItem(
+      type: NoteitType.drawing,
+      content: strokes,
+      sender: 'you',
+      backgroundColor: bgColor,
+      syncStatus: SyncStatus.sending,
+    );
 
     state = state.copyWith(notes: [newItem, ...state.notes]);
     await _persist();
 
     if (coupleId != null && sessionUserId != null) {
       await NoteitSyncManager.instance.enqueue(
-        NoteitSyncTask(id: newItem.id, type: NoteitType.drawing, content: strokes, backgroundColor: bgColor, createdAt: newItem.createdAt),
+        NoteitSyncTask(
+          id: newItem.id,
+          type: NoteitType.drawing,
+          content: strokes,
+          backgroundColor: bgColor,
+          createdAt: newItem.createdAt,
+        ),
       );
     } else {
       updateItemSyncStatus(newItem.id, SyncStatus.failed);
@@ -275,15 +315,26 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
   }
 
   Future<void> sendText(String text, Color bgColor) async {
-    final newItem =
-        NoteitItem(type: NoteitType.text, content: text, sender: 'you', backgroundColor: bgColor, syncStatus: SyncStatus.sending);
+    final newItem = NoteitItem(
+      type: NoteitType.text,
+      content: text,
+      sender: 'you',
+      backgroundColor: bgColor,
+      syncStatus: SyncStatus.sending,
+    );
 
     state = state.copyWith(notes: [newItem, ...state.notes]);
     await _persist();
 
     if (coupleId != null && sessionUserId != null) {
       await NoteitSyncManager.instance.enqueue(
-        NoteitSyncTask(id: newItem.id, type: NoteitType.text, content: text, backgroundColor: bgColor, createdAt: newItem.createdAt),
+        NoteitSyncTask(
+          id: newItem.id,
+          type: NoteitType.text,
+          content: text,
+          backgroundColor: bgColor,
+          createdAt: newItem.createdAt,
+        ),
       );
     } else {
       updateItemSyncStatus(newItem.id, SyncStatus.failed);
@@ -309,14 +360,25 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
       await File(originalPath).copy(newPath);
       if (!ref.mounted) return;
 
-      final newItem = NoteitItem(id: noteId, type: NoteitType.photo, imagePath: newPath, sender: 'you', syncStatus: SyncStatus.sending);
+      final newItem = NoteitItem(
+        id: noteId,
+        type: NoteitType.photo,
+        imagePath: newPath,
+        sender: 'you',
+        syncStatus: SyncStatus.sending,
+      );
 
       state = state.copyWith(notes: [newItem, ...state.notes]);
       await _persist();
 
       if (coupleId != null && sessionUserId != null) {
         await NoteitSyncManager.instance.enqueue(
-          NoteitSyncTask(id: noteId, type: NoteitType.photo, imagePath: newPath, createdAt: newItem.createdAt),
+          NoteitSyncTask(
+            id: noteId,
+            type: NoteitType.photo,
+            imagePath: newPath,
+            createdAt: newItem.createdAt,
+          ),
         );
       } else {
         updateItemSyncStatus(noteId, SyncStatus.failed);
@@ -336,14 +398,18 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     }
   }
 
-  Future<NoteitItem> sendCanvas(String jsonContent, String? localImagePath) async {
+  Future<NoteitItem> sendCanvas(
+    String jsonContent,
+    String? localImagePath,
+  ) async {
     final noteId = const Uuid().v4();
     String? finalLocalPath;
 
     if (localImagePath != null) {
       try {
         final directory = await getApplicationDocumentsDirectory();
-        final fileName = 'noteit_canvas_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final fileName =
+            'noteit_canvas_${DateTime.now().millisecondsSinceEpoch}.jpg';
         finalLocalPath = '${directory.path}/$fileName';
         await File(localImagePath).copy(finalLocalPath);
       } catch (e) {
@@ -366,7 +432,13 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
 
     if (coupleId != null && sessionUserId != null) {
       await NoteitSyncManager.instance.enqueue(
-        NoteitSyncTask(id: noteId, type: NoteitType.drawing, content: jsonContent, imagePath: finalLocalPath, createdAt: newItem.createdAt),
+        NoteitSyncTask(
+          id: noteId,
+          type: NoteitType.drawing,
+          content: jsonContent,
+          imagePath: finalLocalPath,
+          createdAt: newItem.createdAt,
+        ),
       );
     } else {
       updateItemSyncStatus(noteId, SyncStatus.failed);
@@ -406,7 +478,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
         if (noteToDelete.type == NoteitType.photo) {
           try {
             final storagePath = 'couples/$coupleId/love_notes/$id.jpg';
-            await Supabase.instance.client.storage.from('love-notes').remove([storagePath]);
+            await Supabase.instance.client.storage.from('love-notes').remove([
+              storagePath,
+            ]);
           } catch (e) {
             debugPrint('NoteitController.deleteNote storage remove error: $e');
           }
@@ -425,11 +499,17 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     if (!ref.mounted) return;
     await RecentActivityService.instance.logActivity(
       activityType: 'deleted',
-      title: noteToDelete.type == NoteitType.drawing ? 'Doodle deleted 🗑️' : 'Love note deleted 🗑️',
-      description: noteToDelete.type == NoteitType.drawing ? 'Deleted a doodle' : 'Deleted a love note',
+      title: noteToDelete.type == NoteitType.drawing
+          ? 'Doodle deleted 🗑️'
+          : 'Love note deleted 🗑️',
+      description: noteToDelete.type == NoteitType.drawing
+          ? 'Deleted a doodle'
+          : 'Deleted a love note',
       icon: '🗑️',
       referenceId: id,
-      route: noteToDelete.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+      route: noteToDelete.type == NoteitType.drawing
+          ? 'doodle_notes'
+          : 'love_notes',
     );
   }
 
@@ -438,7 +518,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
     final List<Offset> stroke = [];
     for (double t = 0; t <= 2 * pi; t += 0.08) {
       double x = 150 + 70 * pow(sin(t), 3).toDouble();
-      double y = 150 - (55 * cos(t) - 22 * cos(2 * t) - 9 * cos(3 * t) - 4 * cos(4 * t));
+      double y =
+          150 -
+          (55 * cos(t) - 22 * cos(2 * t) - 9 * cos(3 * t) - 4 * cos(4 * t));
       stroke.add(Offset(x, y));
     }
     strokes.add(stroke);
@@ -447,7 +529,13 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
 
   String _serializeStrokes(List<List<Offset>> strokes) {
     return strokes
-        .map((stroke) => stroke.map((p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}').join(';'))
+        .map(
+          (stroke) => stroke
+              .map(
+                (p) => '${p.dx.toStringAsFixed(1)},${p.dy.toStringAsFixed(1)}',
+              )
+              .join(';'),
+        )
         .join('|');
   }
 
@@ -466,7 +554,9 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
 
   void _syncHomeWidget() {
     try {
-      final drawingNotes = state.notes.where((n) => n.type == NoteitType.drawing).toList();
+      final drawingNotes = state.notes
+          .where((n) => n.type == NoteitType.drawing)
+          .toList();
       if (drawingNotes.isNotEmpty) {
         final latest = drawingNotes.first;
         HomeWidgetService.instance.renderAndSyncNoteit(
@@ -480,7 +570,8 @@ class NoteitController extends Notifier<NoteitState> with SupabaseLifecycleNotif
   }
 }
 
-final noteitControllerProvider = NotifierProvider.autoDispose<NoteitController, NoteitState>(
-  NoteitController.new,
-  dependencies: [coupleSessionProvider],
-);
+final noteitControllerProvider =
+    NotifierProvider.autoDispose<NoteitController, NoteitState>(
+      NoteitController.new,
+      dependencies: [coupleSessionProvider],
+    );

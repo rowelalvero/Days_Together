@@ -43,7 +43,9 @@ class GiftReminderController extends Notifier<GiftReminderState>
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
       final reminders = jsonString != null
-          ? (jsonDecode(jsonString) as List).map((json) => GiftReminder.fromJson(json)).toList()
+          ? (jsonDecode(jsonString) as List)
+                .map((json) => GiftReminder.fromJson(json))
+                .toList()
           : <GiftReminder>[];
       if (!ref.mounted) return;
       state = state.copyWith(reminders: reminders, isLoading: false);
@@ -69,13 +71,17 @@ class GiftReminderController extends Notifier<GiftReminderState>
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
     try {
-      final List<dynamic> res =
-          await Supabase.instance.client.from('gift_reminders').select().eq('couple_id', coupleId!);
+      final List<dynamic> res = await Supabase.instance.client
+          .from('gift_reminders')
+          .select()
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) {
         return GiftReminder(
           id: data['id'] as String,
           title: data['title'] ?? '',
-          date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
+          date: data['date'] != null
+              ? DateTime.parse(data['date'] as String)
+              : DateTime.now(),
         );
       }).toList();
 
@@ -94,11 +100,17 @@ class GiftReminderController extends Notifier<GiftReminderState>
       return GiftReminder(
         id: data['id'] as String,
         title: data['title'] ?? '',
-        date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-        reminderDaysBefore: List<int>.from(data['reminder_days_before'] ?? [30, 14, 7]),
+        date: data['date'] != null
+            ? DateTime.parse(data['date'] as String)
+            : DateTime.now(),
+        reminderDaysBefore: List<int>.from(
+          data['reminder_days_before'] ?? [30, 14, 7],
+        ),
         isEnabled: data['is_enabled'] ?? true,
         isRecurringYearly: data['is_recurring_yearly'] ?? true,
-        createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+        createdAt: data['created_at'] != null
+            ? DateTime.parse(data['created_at'] as String)
+            : DateTime.now(),
       );
     }).toList();
 
@@ -106,7 +118,9 @@ class GiftReminderController extends Notifier<GiftReminderState>
     final oldReminders = state.reminders;
 
     if (!wasLoading) {
-      final added = incoming.where((inc) => !oldReminders.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !oldReminders.any((old) => old.id == inc.id))
+          .toList();
       for (final reminder in added) {
         if (_localMutations.contains(reminder.id)) {
           _localMutations.remove(reminder.id);
@@ -123,10 +137,16 @@ class GiftReminderController extends Notifier<GiftReminderState>
       }
 
       final completed = incoming
-          .where((inc) => !inc.isEnabled && !oldReminders.any((old) => old.id == inc.id && !old.isEnabled))
+          .where(
+            (inc) =>
+                !inc.isEnabled &&
+                !oldReminders.any((old) => old.id == inc.id && !old.isEnabled),
+          )
           .toList();
       for (final reminder in completed) {
-        final existedAndWasEnabled = oldReminders.any((old) => old.id == reminder.id && old.isEnabled);
+        final existedAndWasEnabled = oldReminders.any(
+          (old) => old.id == reminder.id && old.isEnabled,
+        );
         if (existedAndWasEnabled) {
           if (_localMutations.contains(reminder.id)) {
             _localMutations.remove(reminder.id);
@@ -143,7 +163,9 @@ class GiftReminderController extends Notifier<GiftReminderState>
         }
       }
 
-      final deleted = oldReminders.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = oldReminders
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (final reminder in deleted) {
         if (_localMutations.contains(reminder.id)) {
           _localMutations.remove(reminder.id);
@@ -214,7 +236,11 @@ class GiftReminderController extends Notifier<GiftReminderState>
     );
   }
 
-  Future<void> updateReminder(String id, {String? title, DateTime? date}) async {
+  Future<void> updateReminder(
+    String id, {
+    String? title,
+    DateTime? date,
+  }) async {
     _localMutations.add(id);
     final index = state.reminders.indexWhere((r) => r.id == id);
     if (index == -1) return;
@@ -225,10 +251,14 @@ class GiftReminderController extends Notifier<GiftReminderState>
         if (title != null) updates['title'] = title;
         if (date != null) updates['date'] = date.toIso8601String();
 
-        await Supabase.instance.client.from('gift_reminders').update(updates).eq('id', id);
+        await Supabase.instance.client
+            .from('gift_reminders')
+            .update(updates)
+            .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Gift Reminder Updated 🎁',
-          body: 'Your partner updated the gift reminder: "${title ?? 'Reminder'}"',
+          body:
+              'Your partner updated the gift reminder: "${title ?? 'Reminder'}"',
           feature: 'gifts',
           itemId: id,
         );
@@ -262,7 +292,10 @@ class GiftReminderController extends Notifier<GiftReminderState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('gift_reminders').update({'is_enabled': nextEnabled}).eq('id', id);
+        await Supabase.instance.client
+            .from('gift_reminders')
+            .update({'is_enabled': nextEnabled})
+            .eq('id', id);
       } catch (e) {
         debugPrint('GiftReminderController.toggleReminder Supabase error: $e');
         if (!ref.mounted) return;
@@ -302,7 +335,10 @@ class GiftReminderController extends Notifier<GiftReminderState>
     _localMutations.add(id);
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('gift_reminders').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('gift_reminders')
+            .delete()
+            .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Gift Reminder Deleted 🎁',
           body: 'Your partner removed a gift reminder.',
@@ -314,11 +350,15 @@ class GiftReminderController extends Notifier<GiftReminderState>
       } catch (e) {
         debugPrint('GiftReminderController.deleteReminder Supabase error: $e');
         if (!ref.mounted) return;
-        state = state.copyWith(reminders: state.reminders.where((r) => r.id != id).toList());
+        state = state.copyWith(
+          reminders: state.reminders.where((r) => r.id != id).toList(),
+        );
         await _persist();
       }
     } else {
-      state = state.copyWith(reminders: state.reminders.where((r) => r.id != id).toList());
+      state = state.copyWith(
+        reminders: state.reminders.where((r) => r.id != id).toList(),
+      );
       await _persist();
     }
   }
@@ -336,7 +376,8 @@ class GiftReminderController extends Notifier<GiftReminderState>
   }
 }
 
-final giftReminderControllerProvider = NotifierProvider.autoDispose<GiftReminderController, GiftReminderState>(
-  GiftReminderController.new,
-  dependencies: [coupleSessionProvider],
-);
+final giftReminderControllerProvider =
+    NotifierProvider.autoDispose<GiftReminderController, GiftReminderState>(
+      GiftReminderController.new,
+      dependencies: [coupleSessionProvider],
+    );

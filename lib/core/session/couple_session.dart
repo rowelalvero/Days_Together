@@ -18,7 +18,7 @@ import 'package:days_together/core/session/couple_key_exchange.dart';
 import 'package:days_together/core/security/key_management_service.dart';
 import 'package:days_together/core/session/partner_presence.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart'
+import 'package:days_together/shared/widgets/storage_image.dart'
     show evictStorageImageCache;
 
 enum RelationshipStatus { waiting, active, disconnected, archived }

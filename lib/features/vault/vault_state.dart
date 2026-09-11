@@ -42,8 +42,11 @@ class VaultState {
     );
   }
 
-  List<VaultItem> get visibleItems => isUnlocked ? List.unmodifiable(items) : const [];
-  List<VaultItem> get photos => items.where((i) => i.type == VaultItemType.photo).toList();
-  List<VaultItem> get letters => items.where((i) => i.type == VaultItemType.letter).toList();
+  List<VaultItem> get visibleItems =>
+      isUnlocked ? List.unmodifiable(items) : const [];
+  List<VaultItem> get photos =>
+      items.where((i) => i.type == VaultItemType.photo).toList();
+  List<VaultItem> get letters =>
+      items.where((i) => i.type == VaultItemType.letter).toList();
   bool get isDecoyMode => wrongAttempts >= 3;
 }

@@ -30,12 +30,15 @@ class DailyMoodState {
     return DailyMoodState(
       moods: moods ?? this.moods,
       partnerMoods: partnerMoods ?? this.partnerMoods,
-      todayQuestion: identical(todayQuestion, _unset) ? this.todayQuestion : todayQuestion as DailySyncQuestion?,
+      todayQuestion: identical(todayQuestion, _unset)
+          ? this.todayQuestion
+          : todayQuestion as DailySyncQuestion?,
       isLoading: isLoading ?? this.isLoading,
     );
   }
 
-  static String get todayString => DateFormat('yyyy-MM-dd').format(DateTime.now());
+  static String get todayString =>
+      DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   bool get hasLoggedToday => moods.any((m) => m.date == todayString);
 
@@ -56,7 +59,8 @@ class DailyMoodState {
   List<DailyMood> get recentMoods {
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
     final cutoffStr = DateFormat('yyyy-MM-dd').format(cutoff);
-    return moods.where((m) => m.date.compareTo(cutoffStr) >= 0).toList()..sort((a, b) => a.date.compareTo(b.date));
+    return moods.where((m) => m.date.compareTo(cutoffStr) >= 0).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
   }
 
   List<DailyMood> get partnerRecentMoods {

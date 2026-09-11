@@ -8,7 +8,7 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/shared/safe_loading_dialog.dart';
+import 'package:days_together/shared/widgets/safe_loading_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 
 class CreateCoupleCodeScreen extends ConsumerStatefulWidget {

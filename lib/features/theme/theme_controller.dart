@@ -39,13 +39,17 @@ class ThemeController extends Notifier<ThemeState> {
       // check sees this as a genuine change and does notify, mirroring the
       // original's unconditional `notifyListeners()` in this catch branch.
       if (ref.mounted) {
-        state = ThemeState(currentTheme: state.currentTheme, settings: state.settings);
+        state = ThemeState(
+          currentTheme: state.currentTheme,
+          settings: state.settings,
+        );
       }
     }
   }
 
   Future<void> changeTheme(ThemeType newTheme) async {
-    if (state.currentTheme == newTheme && state.settings.currentTheme == newTheme) {
+    if (state.currentTheme == newTheme &&
+        state.settings.currentTheme == newTheme) {
       return;
     }
     final newSettings = state.settings.copyWith(currentTheme: newTheme);

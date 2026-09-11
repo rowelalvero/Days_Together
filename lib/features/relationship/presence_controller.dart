@@ -40,7 +40,8 @@ class PresenceController extends Notifier<PresenceState> {
       ref.read(coupleSessionProvider).updateCurrentActivity(activity);
 }
 
-final presenceControllerProvider = NotifierProvider<PresenceController, PresenceState>(
-  PresenceController.new,
-  dependencies: [coupleSessionProvider],
-);
+final presenceControllerProvider =
+    NotifierProvider<PresenceController, PresenceState>(
+      PresenceController.new,
+      dependencies: [coupleSessionProvider],
+    );

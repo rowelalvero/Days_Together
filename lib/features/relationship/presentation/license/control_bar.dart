@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
 /// The you/both toggle shown above the license card. Extracted out of

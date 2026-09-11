@@ -96,9 +96,7 @@ class CreationLicenseForm extends StatelessWidget {
             decoration: BoxDecoration(
               color: theme.textColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.textColor.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -107,14 +105,13 @@ class CreationLicenseForm extends StatelessWidget {
                   birthdate != null
                       ? DateFormat('MMMM dd, yyyy').format(birthdate!)
                       : 'Select Birthdate',
-                  style: AppTypography.body(color: birthdate != null
+                  style: AppTypography.body(
+                    color: birthdate != null
                         ? theme.textColor
-                        : theme.textColor.withValues(alpha: 0.5)),
+                        : theme.textColor.withValues(alpha: 0.5),
+                  ),
                 ),
-                Icon(
-                  Icons.calendar_month_rounded,
-                  color: theme.accentColor,
-                ),
+                Icon(Icons.calendar_month_rounded, color: theme.accentColor),
               ],
             ),
           ),
@@ -236,9 +233,7 @@ class CreationLicenseForm extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.textColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: theme.textColor.withValues(alpha: 0.1),
-          ),
+          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
         ),
         child: Stack(
           alignment: Alignment.center,
@@ -258,7 +253,10 @@ class CreationLicenseForm extends StatelessWidget {
             if (signatureStr.isEmpty)
               Text(
                 'Tap to draw signature',
-                style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4), fontSize: 14),
+                style: AppTypography.body(
+                  color: theme.textColor.withValues(alpha: 0.4),
+                  fontSize: 14,
+                ),
               ),
             if (signatureStr.isNotEmpty)
               Positioned(
@@ -279,7 +277,9 @@ class CreationLicenseForm extends StatelessWidget {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.4)),
+      hintStyle: AppTypography.body(
+        color: theme.textColor.withValues(alpha: 0.4),
+      ),
       filled: true,
       fillColor: theme.textColor.withValues(alpha: 0.05),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -313,15 +313,24 @@ class CreationLicenseForm extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.05),
+            color: isSelected
+                ? theme.accentColor
+                : theme.textColor.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? theme.accentColor : theme.textColor.withValues(alpha: 0.1),
+              color: isSelected
+                  ? theme.accentColor
+                  : theme.textColor.withValues(alpha: 0.1),
             ),
           ),
           child: Text(
             value,
-            style: AppTypography.body(fontWeight: FontWeight.bold, color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.8)),
+            style: AppTypography.body(
+              fontWeight: FontWeight.bold,
+              color: isSelected
+                  ? Colors.white
+                  : theme.textColor.withValues(alpha: 0.8),
+            ),
           ),
         ),
       ),
@@ -333,7 +342,11 @@ class CreationLicenseForm extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6, left: 4),
       child: Text(
         label.toUpperCase(),
-        style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.bold, color: theme.textColor.withValues(alpha: 0.6)).copyWith(letterSpacing: 1),
+        style: AppTypography.body(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: theme.textColor.withValues(alpha: 0.6),
+        ).copyWith(letterSpacing: 1),
       ),
     );
   }

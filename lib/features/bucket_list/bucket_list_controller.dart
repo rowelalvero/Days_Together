@@ -80,7 +80,8 @@ class BucketListController extends Notifier<BucketListState>
           .from('bucket_list')
           .select()
           .eq('couple_id', coupleId!);
-      final parsed = res.map(_parseItem).toList()..sort((a, b) => a.order.compareTo(b.order));
+      final parsed = res.map(_parseItem).toList()
+        ..sort((a, b) => a.order.compareTo(b.order));
 
       if (!ref.mounted) return;
       state = state.copyWith(items: parsed, isLoading: false);
@@ -95,22 +96,31 @@ class BucketListController extends Notifier<BucketListState>
       id: data['id'] as String,
       title: data['title'] ?? '',
       isCompleted: data['is_completed'] ?? false,
-      completedAt: data['completed_at'] != null ? DateTime.parse(data['completed_at'] as String) : null,
+      completedAt: data['completed_at'] != null
+          ? DateTime.parse(data['completed_at'] as String)
+          : null,
       order: data['order_index'] ?? 0,
-      createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
-      scheduledAt: data['scheduled_at'] != null ? DateTime.parse(data['scheduled_at'] as String) : null,
+      createdAt: data['created_at'] != null
+          ? DateTime.parse(data['created_at'] as String)
+          : DateTime.now(),
+      scheduledAt: data['scheduled_at'] != null
+          ? DateTime.parse(data['scheduled_at'] as String)
+          : null,
     );
   }
 
   @override
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     if (!ref.mounted) return;
-    final incoming = dataList.map(_parseItem).toList()..sort((a, b) => a.order.compareTo(b.order));
+    final incoming = dataList.map(_parseItem).toList()
+      ..sort((a, b) => a.order.compareTo(b.order));
     final wasLoading = state.isLoading;
     final oldItems = state.items;
 
     if (!wasLoading) {
-      final added = incoming.where((inc) => !oldItems.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !oldItems.any((old) => old.id == inc.id))
+          .toList();
       for (final item in added) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -127,10 +137,16 @@ class BucketListController extends Notifier<BucketListState>
       }
 
       final completed = incoming
-          .where((inc) => inc.isCompleted && !oldItems.any((old) => old.id == inc.id && old.isCompleted))
+          .where(
+            (inc) =>
+                inc.isCompleted &&
+                !oldItems.any((old) => old.id == inc.id && old.isCompleted),
+          )
           .toList();
       for (final item in completed) {
-        final existedAndNotCompleted = oldItems.any((old) => old.id == item.id && !old.isCompleted);
+        final existedAndNotCompleted = oldItems.any(
+          (old) => old.id == item.id && !old.isCompleted,
+        );
         if (existedAndNotCompleted) {
           if (_localMutations.contains(item.id)) {
             _localMutations.remove(item.id);
@@ -147,7 +163,9 @@ class BucketListController extends Notifier<BucketListState>
         }
       }
 
-      final deleted = oldItems.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = oldItems
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (final item in deleted) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -175,7 +193,11 @@ class BucketListController extends Notifier<BucketListState>
   }
 
   Future<void> addItem(String title, {DateTime? scheduledAt}) async {
-    final item = BucketListItem(title: title, order: state.items.length, scheduledAt: scheduledAt);
+    final item = BucketListItem(
+      title: title,
+      order: state.items.length,
+      scheduledAt: scheduledAt,
+    );
     _localMutations.add(item.id);
 
     if (coupleId != null) {
@@ -218,7 +240,12 @@ class BucketListController extends Notifier<BucketListState>
     );
   }
 
-  Future<void> updateItem(String id, {String? title, DateTime? scheduledAt, bool clearDate = false}) async {
+  Future<void> updateItem(
+    String id, {
+    String? title,
+    DateTime? scheduledAt,
+    bool clearDate = false,
+  }) async {
     _localMutations.add(id);
     if (coupleId != null) {
       try {
@@ -229,10 +256,14 @@ class BucketListController extends Notifier<BucketListState>
         } else if (scheduledAt != null) {
           updates['scheduled_at'] = scheduledAt.toIso8601String();
         }
-        await Supabase.instance.client.from('bucket_list').update(updates).eq('id', id);
+        await Supabase.instance.client
+            .from('bucket_list')
+            .update(updates)
+            .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Bucket List Updated',
-          body: '📝 Your partner updated the bucket list item:\n"${title ?? 'Item'}"',
+          body:
+              '📝 Your partner updated the bucket list item:\n"${title ?? 'Item'}"',
           feature: 'bucket_list',
           itemId: id,
         );
@@ -240,7 +271,12 @@ class BucketListController extends Notifier<BucketListState>
         debugPrint('BucketListController.updateItem Supabase error: $e');
       }
       if (!ref.mounted) return;
-      _applyItemUpdate(id, title: title, scheduledAt: scheduledAt, clearDate: clearDate);
+      _applyItemUpdate(
+        id,
+        title: title,
+        scheduledAt: scheduledAt,
+        clearDate: clearDate,
+      );
       await _persist();
     }
 
@@ -259,7 +295,12 @@ class BucketListController extends Notifier<BucketListState>
     );
   }
 
-  void _applyItemUpdate(String id, {String? title, DateTime? scheduledAt, bool clearDate = false}) {
+  void _applyItemUpdate(
+    String id, {
+    String? title,
+    DateTime? scheduledAt,
+    bool clearDate = false,
+  }) {
     final index = state.items.indexWhere((i) => i.id == id);
     if (index == -1) return;
     final items = [...state.items];
@@ -283,7 +324,10 @@ class BucketListController extends Notifier<BucketListState>
     final item = state.items[index];
     final newCompleted = !item.isCompleted;
     final newCompletedAt = newCompleted ? DateTime.now() : null;
-    final updatedItem = item.copyWith(isCompleted: newCompleted, completedAt: newCompletedAt);
+    final updatedItem = item.copyWith(
+      isCompleted: newCompleted,
+      completedAt: newCompletedAt,
+    );
 
     final items = [...state.items];
     items[index] = updatedItem;
@@ -293,12 +337,16 @@ class BucketListController extends Notifier<BucketListState>
       try {
         await Supabase.instance.client
             .from('bucket_list')
-            .update({'is_completed': newCompleted, 'completed_at': newCompletedAt?.toIso8601String()})
+            .update({
+              'is_completed': newCompleted,
+              'completed_at': newCompletedAt?.toIso8601String(),
+            })
             .eq('id', id);
         if (newCompleted) {
           NotificationService().sendPartnerNotification(
             title: 'Bucket List Completed!',
-            body: '🎉 Your partner completed a bucket list item:\n"${item.title}"',
+            body:
+                '🎉 Your partner completed a bucket list item:\n"${item.title}"',
             feature: 'bucket_list',
             itemId: id,
           );
@@ -313,8 +361,12 @@ class BucketListController extends Notifier<BucketListState>
     if (!ref.mounted) return;
     await RecentActivityService.instance.logActivity(
       activityType: updatedItem.isCompleted ? 'completed' : 'updated',
-      title: updatedItem.isCompleted ? 'Bucket List item completed' : 'Bucket List item updated',
-      description: updatedItem.isCompleted ? 'We did: "${updatedItem.title}" 🎉' : 'Marked active: "${updatedItem.title}"',
+      title: updatedItem.isCompleted
+          ? 'Bucket List item completed'
+          : 'Bucket List item updated',
+      description: updatedItem.isCompleted
+          ? 'We did: "${updatedItem.title}" 🎉'
+          : 'Marked active: "${updatedItem.title}"',
       icon: updatedItem.isCompleted ? '🎉' : '🪣',
       referenceId: id,
       route: 'bucket_list',
@@ -331,7 +383,10 @@ class BucketListController extends Notifier<BucketListState>
 
       if (coupleId != null) {
         try {
-          await Supabase.instance.client.from('bucket_list').update({'title': newTitle}).eq('id', id);
+          await Supabase.instance.client
+              .from('bucket_list')
+              .update({'title': newTitle})
+              .eq('id', id);
         } catch (e) {
           debugPrint('BucketListController.updateItemTitle Supabase error: $e');
         }
@@ -349,7 +404,10 @@ class BucketListController extends Notifier<BucketListState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('bucket_list').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('bucket_list')
+            .delete()
+            .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Bucket List Item Deleted',
           body: '🗑️ Your partner deleted a bucket list item.',
@@ -360,7 +418,10 @@ class BucketListController extends Notifier<BucketListState>
         final remaining = state.items.where((i) => i.id != id).toList();
         for (var i = 0; i < remaining.length; i++) {
           if (remaining[i].order != i) {
-            await Supabase.instance.client.from('bucket_list').update({'order_index': i}).eq('id', remaining[i].id);
+            await Supabase.instance.client
+                .from('bucket_list')
+                .update({'order_index': i})
+                .eq('id', remaining[i].id);
           }
           if (!ref.mounted) return;
         }
@@ -408,18 +469,27 @@ class BucketListController extends Notifier<BucketListState>
     if (coupleId != null) {
       try {
         for (var i = 0; i < state.items.length; i++) {
-          await Supabase.instance.client.from('bucket_list').update({'order_index': i}).eq('id', state.items[i].id);
+          await Supabase.instance.client
+              .from('bucket_list')
+              .update({'order_index': i})
+              .eq('id', state.items[i].id);
           if (!ref.mounted) return;
         }
       } catch (e) {
         debugPrint('BucketListController.reorderItems Supabase error: $e');
         if (!ref.mounted) return;
-        final reindexed = [for (var i = 0; i < state.items.length; i++) state.items[i].copyWith(order: i)];
+        final reindexed = [
+          for (var i = 0; i < state.items.length; i++)
+            state.items[i].copyWith(order: i),
+        ];
         state = state.copyWith(items: reindexed);
         await _persist();
       }
     } else {
-      final reindexed = [for (var i = 0; i < state.items.length; i++) state.items[i].copyWith(order: i)];
+      final reindexed = [
+        for (var i = 0; i < state.items.length; i++)
+          state.items[i].copyWith(order: i),
+      ];
       state = state.copyWith(items: reindexed);
       await _persist();
     }
@@ -438,7 +508,8 @@ class BucketListController extends Notifier<BucketListState>
   }
 }
 
-final bucketListControllerProvider = NotifierProvider.autoDispose<BucketListController, BucketListState>(
-  BucketListController.new,
-  dependencies: [coupleSessionProvider],
-);
+final bucketListControllerProvider =
+    NotifierProvider.autoDispose<BucketListController, BucketListState>(
+      BucketListController.new,
+      dependencies: [coupleSessionProvider],
+    );

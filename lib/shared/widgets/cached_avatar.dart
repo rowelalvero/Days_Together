@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 /// A reusable, cached avatar widget that handles:
 /// - Storage refs (bare object paths, signed on demand and disk-cached)
@@ -59,7 +59,8 @@ class CachedAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor =
-        backgroundColor ?? Theme.of(context).colorScheme.surfaceContainerHighest;
+        backgroundColor ??
+        Theme.of(context).colorScheme.surfaceContainerHighest;
     final fallbackIconSize = iconSize ?? radius;
 
     final Widget avatar = CircleAvatar(
@@ -76,7 +77,8 @@ class CachedAvatar extends StatelessWidget {
               width: radius * 2,
               height: radius * 2,
               fit: BoxFit.cover,
-              errorBuilder: (context, _, _) => _placeholder(bgColor, fallbackIconSize),
+              errorBuilder: (context, _, _) =>
+                  _placeholder(bgColor, fallbackIconSize),
             );
           },
         ),

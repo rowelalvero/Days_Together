@@ -25,14 +25,18 @@ class WidgetSizeBadge extends StatelessWidget {
               ? const Color(0xFFE8477E).withValues(alpha: 0.25)
               : Colors.white.withValues(alpha: 0.06),
           border: Border.all(
-            color: isSelected ? const Color(0xFFE8477E) : Colors.white.withValues(alpha: 0.15),
+            color: isSelected
+                ? const Color(0xFFE8477E)
+                : Colors.white.withValues(alpha: 0.15),
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Text(
           sizeLabel,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.65),
+            color: isSelected
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.65),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             fontSize: 13,
           ),

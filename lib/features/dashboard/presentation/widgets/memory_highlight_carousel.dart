@@ -6,10 +6,10 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 class MemoryHighlightCarousel extends StatefulWidget {
   final TimelineState timelineProvider;
@@ -22,7 +22,8 @@ class MemoryHighlightCarousel extends StatefulWidget {
   });
 
   @override
-  State<MemoryHighlightCarousel> createState() => _MemoryHighlightCarouselState();
+  State<MemoryHighlightCarousel> createState() =>
+      _MemoryHighlightCarouselState();
 }
 
 class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
@@ -61,13 +62,20 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             const SizedBox(height: 16),
             Text(
               'No memories captured yet',
-              style: AppTypography.bodyLarge(fontSize: 14, fontWeight: FontWeight.w600, color: theme.textColor.withValues(alpha: 0.7)),
+              style: AppTypography.bodyLarge(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: theme.textColor.withValues(alpha: 0.7),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Start documenting your milestones and daily stories.',
               textAlign: TextAlign.center,
-              style: AppTypography.bodyMedium(fontSize: 12, color: theme.textColor.withValues(alpha: 0.38)),
+              style: AppTypography.bodyMedium(
+                fontSize: 12,
+                color: theme.textColor.withValues(alpha: 0.38),
+              ),
             ),
           ],
         ),
@@ -92,9 +100,12 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             itemCount: displayItems.length,
             itemBuilder: (context, index) {
               final item = displayItems[index];
-              final hasImage = item.isImageCard &&
-                  ((item.imagePath != null && File(item.imagePath!).existsSync()) ||
-                      (item.networkImageUrl != null && item.networkImageUrl!.isNotEmpty));
+              final hasImage =
+                  item.isImageCard &&
+                  ((item.imagePath != null &&
+                          File(item.imagePath!).existsSync()) ||
+                      (item.networkImageUrl != null &&
+                          item.networkImageUrl!.isNotEmpty));
 
               return AnimatedBuilder(
                 animation: _pageController,
@@ -107,7 +118,9 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                   return Center(
                     child: SizedBox(
                       height: Curves.easeOut.transform(value) * 180,
-                      width: Curves.easeOut.transform(value) * MediaQuery.of(context).size.width,
+                      width:
+                          Curves.easeOut.transform(value) *
+                          MediaQuery.of(context).size.width,
                       child: child,
                     ),
                   );
@@ -172,7 +185,11 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                 errorBuilder: (context, error, stackTrace) => Container(
                   color: theme.textColor.withValues(alpha: 0.1),
                   child: Center(
-                    child: Icon(Icons.broken_image_rounded, color: theme.textColor.withValues(alpha: 0.2), size: 40),
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      color: theme.textColor.withValues(alpha: 0.2),
+                      size: 40,
+                    ),
                   ),
                 ),
               ),
@@ -203,16 +220,27 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                           color: Colors.black38,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(item.mood, style: AppTypography.body(fontSize: 14)),
+                        child: Text(
+                          item.mood,
+                          style: AppTypography.body(fontSize: 14),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      if (item.location != null && item.location!.isNotEmpty) ...[
-                        Icon(Icons.location_on_rounded, size: 12, color: theme.accentColor),
+                      if (item.location != null &&
+                          item.location!.isNotEmpty) ...[
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: 12,
+                          color: theme.accentColor,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             item.location!,
-                            style: AppTypography.caption(fontSize: 11, color: Colors.white70),
+                            style: AppTypography.caption(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -223,14 +251,21 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
                   const SizedBox(height: 8),
                   Text(
                     item.title,
-                    style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: AppTypography.body(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     DateFormat('MMMM dd, yyyy').format(item.date),
-                    style: AppTypography.caption(fontSize: 10, color: Colors.white54),
+                    style: AppTypography.caption(
+                      fontSize: 10,
+                      color: Colors.white54,
+                    ),
                   ),
                 ],
               ),
@@ -255,7 +290,11 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
               Expanded(
                 child: Text(
                   item.title,
-                  style: AppTypography.body(fontSize: 15, fontWeight: FontWeight.bold, color: theme.textColor),
+                  style: AppTypography.body(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -275,7 +314,11 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
           Expanded(
             child: Text(
               item.description,
-              style: AppTypography.heading(fontSize: 12, color: theme.textColor.withValues(alpha: 0.7), height: 1.4).copyWith(fontStyle: FontStyle.italic),
+              style: AppTypography.heading(
+                fontSize: 12,
+                color: theme.textColor.withValues(alpha: 0.7),
+                height: 1.4,
+              ).copyWith(fontStyle: FontStyle.italic),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
@@ -286,17 +329,27 @@ class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
             children: [
               Text(
                 DateFormat('MMMM dd, yyyy').format(item.date),
-                style: AppTypography.caption(fontSize: 10, color: theme.textColor.withValues(alpha: 0.38)),
+                style: AppTypography.caption(
+                  fontSize: 10,
+                  color: theme.textColor.withValues(alpha: 0.38),
+                ),
               ),
               if (item.location != null && item.location!.isNotEmpty)
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.location_on_rounded, size: 10, color: theme.accentColor),
+                    Icon(
+                      Icons.location_on_rounded,
+                      size: 10,
+                      color: theme.accentColor,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       item.location!,
-                      style: AppTypography.caption(fontSize: 10, color: theme.textColor.withValues(alpha: 0.38)),
+                      style: AppTypography.caption(
+                        fontSize: 10,
+                        color: theme.textColor.withValues(alpha: 0.38),
+                      ),
                     ),
                   ],
                 ),

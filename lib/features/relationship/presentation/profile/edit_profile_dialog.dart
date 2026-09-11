@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/core/permissions/permission_service.dart';
-import 'package:days_together/shared/cached_avatar.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/cached_avatar.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:image_picker/image_picker.dart';
@@ -63,7 +63,8 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
     // previously left the old one on screen because nothing marked this
     // dialog dirty after `setAvatars` resolved.
     final profile = ref.watch(profileControllerProvider);
-    final partnerJoined = ref.watch(sessionControllerProvider).partnerId != null;
+    final partnerJoined =
+        ref.watch(sessionControllerProvider).partnerId != null;
 
     return GlassContainer(
       borderRadius: 32,
@@ -114,14 +115,18 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
-                      final controller = ref.read(profileControllerProvider.notifier);
+                      final controller = ref.read(
+                        profileControllerProvider.notifier,
+                      );
                       if (partnerJoined) {
                         await controller.setNames(
                           _yourController.text.trim(),
                           _partnerController.text.trim(),
                         );
                       } else {
-                        await controller.setYourName(_yourController.text.trim());
+                        await controller.setYourName(
+                          _yourController.text.trim(),
+                        );
                       }
                       if (context.mounted) Navigator.pop(context);
                     },

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerState, ConsumerStatefulWidget;
 
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -39,8 +39,9 @@ class _NewRecoveryCodeDialogState extends ConsumerState<NewRecoveryCodeDialog> {
   /// Captured once, deliberately not watched: the Continue button clears
   /// the code from workspace state, so a watching build would repaint this
   /// dialog with an em dash in the instant between that clear and the pop.
-  late final String? _recoveryCode =
-      ref.read(workspaceControllerProvider).recoveryCode;
+  late final String? _recoveryCode = ref
+      .read(workspaceControllerProvider)
+      .recoveryCode;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +84,9 @@ class _NewRecoveryCodeDialogState extends ConsumerState<NewRecoveryCodeDialog> {
               decoration: BoxDecoration(
                 color: theme.textColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
+                border: Border.all(
+                  color: theme.textColor.withValues(alpha: 0.15),
+                ),
               ),
               child: Center(
                 child: SelectableText(
@@ -111,17 +114,22 @@ class _NewRecoveryCodeDialogState extends ConsumerState<NewRecoveryCodeDialog> {
             Center(
               child: TextButton.icon(
                 onPressed: () {
-                  Clipboard.setData(
-                    ClipboardData(text: _recoveryCode ?? ''),
-                  );
+                  Clipboard.setData(ClipboardData(text: _recoveryCode ?? ''));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Recovery code copied!')),
                   );
                 },
-                icon: Icon(Icons.copy_rounded, color: theme.textColor, size: 16),
+                icon: Icon(
+                  Icons.copy_rounded,
+                  color: theme.textColor,
+                  size: 16,
+                ),
                 label: Text(
                   'Copy Code',
-                  style: AppTypography.body(color: theme.textColor, fontSize: 14),
+                  style: AppTypography.body(
+                    color: theme.textColor,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
@@ -136,7 +144,10 @@ class _NewRecoveryCodeDialogState extends ConsumerState<NewRecoveryCodeDialog> {
                 Expanded(
                   child: Text(
                     'I have saved my recovery code securely.',
-                    style: AppTypography.body(color: theme.textColor, fontSize: 13),
+                    style: AppTypography.body(
+                      color: theme.textColor,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],

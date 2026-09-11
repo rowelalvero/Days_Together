@@ -1,7 +1,7 @@
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/models/app_settings.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/app/theme/app_typography.dart';
@@ -64,7 +64,9 @@ class ThemeSelectorScreen extends ConsumerWidget {
                       theme: previewTheme,
                       isSelected: isSelected,
                       parentTheme: theme,
-                      onTap: () => ref.read(themeControllerProvider.notifier).changeTheme(themeType),
+                      onTap: () => ref
+                          .read(themeControllerProvider.notifier)
+                          .changeTheme(themeType),
                     );
                   },
                 ),
@@ -179,7 +181,9 @@ class _ThemeCard extends StatelessWidget {
                           color: theme.accentColor,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: theme.isDark ? Colors.white24 : Colors.black12,
+                            color: theme.isDark
+                                ? Colors.white24
+                                : Colors.black12,
                             width: 1,
                           ),
                         ),
@@ -233,7 +237,8 @@ class _CustomThemeDesigner extends ConsumerStatefulWidget {
   const _CustomThemeDesigner({required this.parentTheme});
 
   @override
-  ConsumerState<_CustomThemeDesigner> createState() => _CustomThemeDesignerState();
+  ConsumerState<_CustomThemeDesigner> createState() =>
+      _CustomThemeDesignerState();
 }
 
 class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
@@ -242,12 +247,36 @@ class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
 
   // Curated romantic color palette
   static const List<int> _paletteColors = [
-    0xFFFF4D6D, 0xFFC9184A, 0xFFFF85A1, 0xFFFFC4D6, 0xFFFF6B9D,
-    0xFF7B2CBF, 0xFF9D4EDD, 0xFFE0AAFF, 0xFFBB86FC, 0xFF6200EA,
-    0xFF00B4D8, 0xFF0077B6, 0xFFADE8F4, 0xFF48CAE4, 0xFF03045E,
-    0xFF2D6A4F, 0xFF52B788, 0xFF95D5B2, 0xFFFFB703, 0xFFE8477E,
-    0xFF10122B, 0xFF1A1B41, 0xFF0A0B1A, 0xFF2C003E, 0xFF590D22,
-    0xFFFFF0F5, 0xFFFFE4EC, 0xFFFFF8FA, 0xFFF8EDEB, 0xFFE8E0D8,
+    0xFFFF4D6D,
+    0xFFC9184A,
+    0xFFFF85A1,
+    0xFFFFC4D6,
+    0xFFFF6B9D,
+    0xFF7B2CBF,
+    0xFF9D4EDD,
+    0xFFE0AAFF,
+    0xFFBB86FC,
+    0xFF6200EA,
+    0xFF00B4D8,
+    0xFF0077B6,
+    0xFFADE8F4,
+    0xFF48CAE4,
+    0xFF03045E,
+    0xFF2D6A4F,
+    0xFF52B788,
+    0xFF95D5B2,
+    0xFFFFB703,
+    0xFFE8477E,
+    0xFF10122B,
+    0xFF1A1B41,
+    0xFF0A0B1A,
+    0xFF2C003E,
+    0xFF590D22,
+    0xFFFFF0F5,
+    0xFFFFE4EC,
+    0xFFFFF8FA,
+    0xFFF8EDEB,
+    0xFFE8E0D8,
   ];
 
   int _getActiveColor(AppSettings settings) {
@@ -472,7 +501,13 @@ class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
                 border: InputBorder.none,
               ),
               maxLength: 6,
-              buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+              buildCounter:
+                  (
+                    _, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) => null,
               onSubmitted: (value) {
                 final hex = value.replaceAll('#', '').trim();
                 if (hex.length == 6) {
@@ -496,10 +531,7 @@ class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
                 }
               }
             },
-            icon: Icon(
-              Icons.check_circle_rounded,
-              color: theme.accentColor,
-            ),
+            icon: Icon(Icons.check_circle_rounded, color: theme.accentColor),
           ),
         ],
       ),
@@ -523,7 +555,9 @@ class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
               icon: Icons.dark_mode_rounded,
               isSelected: settings.customIsDark,
               theme: theme,
-              onTap: () => ref.read(themeControllerProvider.notifier).setCustomIsDark(true),
+              onTap: () => ref
+                  .read(themeControllerProvider.notifier)
+                  .setCustomIsDark(true),
             ),
           ),
           const SizedBox(width: 8),
@@ -533,7 +567,9 @@ class _CustomThemeDesignerState extends ConsumerState<_CustomThemeDesigner> {
               icon: Icons.light_mode_rounded,
               isSelected: !settings.customIsDark,
               theme: theme,
-              onTap: () => ref.read(themeControllerProvider.notifier).setCustomIsDark(false),
+              onTap: () => ref
+                  .read(themeControllerProvider.notifier)
+                  .setCustomIsDark(false),
             ),
           ),
         ],

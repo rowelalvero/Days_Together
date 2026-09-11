@@ -20,12 +20,16 @@ class HomeWidgetStudioScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final studioState = ref.watch(homeWidgetStudioControllerProvider);
-    final studioController = ref.read(homeWidgetStudioControllerProvider.notifier);
+    final studioController = ref.read(
+      homeWidgetStudioControllerProvider.notifier,
+    );
     final coupleSession = ref.watch(coupleSessionProvider);
     final profile = ref.watch(profileControllerProvider);
 
     final theme = ThemeManager.getTheme(studioState.config.themeType);
-    final startDate = coupleSession.startDate ?? DateTime.now().subtract(const Duration(days: 1468));
+    final startDate =
+        coupleSession.startDate ??
+        DateTime.now().subtract(const Duration(days: 1468));
     final partner1Name = profile.yourName ?? 'Ashley';
     final partner2Name = profile.partnerName ?? 'Rowel';
 
@@ -40,7 +44,9 @@ class HomeWidgetStudioScreen extends ConsumerWidget {
     final hours = ((totalSeconds % 86400) ~/ 3600).toString().padLeft(2, '0');
     final minutes = ((totalSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
-    final timeText = studioState.config.showSeconds ? '$hours:$minutes:$seconds' : '$hours:$minutes';
+    final timeText = studioState.config.showSeconds
+        ? '$hours:$minutes:$seconds'
+        : '$hours:$minutes';
 
     return Scaffold(
       backgroundColor: const Color(0xFF070814),
@@ -69,20 +75,32 @@ class HomeWidgetStudioScreen extends ConsumerWidget {
                   children: [
                     WidgetSizeBadge(
                       sizeLabel: 'NoteIt (2x2)',
-                      isSelected: studioState.selectedWidgetType == HomeWidgetType.noteit2x2,
-                      onTap: () => studioController.setWidgetType(HomeWidgetType.noteit2x2),
+                      isSelected:
+                          studioState.selectedWidgetType ==
+                          HomeWidgetType.noteit2x2,
+                      onTap: () => studioController.setWidgetType(
+                        HomeWidgetType.noteit2x2,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     WidgetSizeBadge(
                       sizeLabel: 'Days Counter (2x2)',
-                      isSelected: studioState.selectedWidgetType == HomeWidgetType.daysTogether2x2,
-                      onTap: () => studioController.setWidgetType(HomeWidgetType.daysTogether2x2),
+                      isSelected:
+                          studioState.selectedWidgetType ==
+                          HomeWidgetType.daysTogether2x2,
+                      onTap: () => studioController.setWidgetType(
+                        HomeWidgetType.daysTogether2x2,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     WidgetSizeBadge(
                       sizeLabel: 'Days Counter (4x2)',
-                      isSelected: studioState.selectedWidgetType == HomeWidgetType.daysTogether4x2,
-                      onTap: () => studioController.setWidgetType(HomeWidgetType.daysTogether4x2),
+                      isSelected:
+                          studioState.selectedWidgetType ==
+                          HomeWidgetType.daysTogether4x2,
+                      onTap: () => studioController.setWidgetType(
+                        HomeWidgetType.daysTogether4x2,
+                      ),
                     ),
                   ],
                 ),
@@ -161,7 +179,9 @@ class HomeWidgetStudioScreen extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('All widgets refreshed and synced with home screen! ✨'),
+                          content: Text(
+                            'All widgets refreshed and synced with home screen! ✨',
+                          ),
                           backgroundColor: Color(0xFF10B981),
                         ),
                       );
@@ -182,7 +202,9 @@ class HomeWidgetStudioScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

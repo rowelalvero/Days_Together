@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/app/theme/app_typography.dart';
@@ -28,7 +29,9 @@ class LicenseSelector extends ConsumerWidget {
     // this widget dirty. Watching `profileControllerProvider` directly makes
     // the labels track renames and drops the prop.
     final profile = ref.watch(profileControllerProvider);
-    final myName = profile.yourName?.isNotEmpty == true ? profile.yourName! : "My";
+    final myName = profile.yourName?.isNotEmpty == true
+        ? profile.yourName!
+        : "My";
     final partnerName = profile.partnerName?.isNotEmpty == true
         ? profile.partnerName!
         : "Partner";
@@ -94,9 +97,13 @@ class LicenseSelector extends ConsumerWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.bold, color: isActive
+            style: AppTypography.body(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isActive
                   ? Colors.white
-                  : theme.textColor.withValues(alpha: 0.6)),
+                  : theme.textColor.withValues(alpha: 0.6),
+            ),
           ),
         ),
       ),

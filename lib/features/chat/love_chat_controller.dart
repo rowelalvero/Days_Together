@@ -44,7 +44,8 @@ import 'package:days_together/features/chat/domain/entities/love_chat_model.dart
 /// exactly its job (one physical subscription, two logical consumers) --
 /// see this unit's roadmap entry for the corrections made to ADR-005 and
 /// ADR-013 to stop describing it as one.
-class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleNotifier<LoveChatState> {
+class LoveChatController extends Notifier<LoveChatState>
+    with SupabaseLifecycleNotifier<LoveChatState> {
   static const String _storageKey = 'love_chat_messages';
   static const int maxLocalMessages = 200;
 
@@ -75,10 +76,14 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
             if (item is Map<String, dynamic>) {
               parsedList.add(LoveChatMessage.fromJson(item));
             } else if (item is Map) {
-              parsedList.add(LoveChatMessage.fromJson(Map<String, dynamic>.from(item)));
+              parsedList.add(
+                LoveChatMessage.fromJson(Map<String, dynamic>.from(item)),
+              );
             }
           } catch (itemErr) {
-            debugPrint('LoveChatController: skipping malformed chat item: $itemErr');
+            debugPrint(
+              'LoveChatController: skipping malformed chat item: $itemErr',
+            );
           }
         }
 
@@ -108,7 +113,8 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
       LoveChatMessage(
         senderId: 'partner',
         senderName: 'Partner',
-        content: 'Hi honey! Welcome to our private Love Chat! 💬 Type a message to chat with me.',
+        content:
+            'Hi honey! Welcome to our private Love Chat! 💬 Type a message to chat with me.',
         createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
       ),
     ];
@@ -141,7 +147,10 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
       if (!ref.mounted) return;
-      state = state.copyWith(messages: parsed.take(maxLocalMessages).toList(), isLoading: false);
+      state = state.copyWith(
+        messages: parsed.take(maxLocalMessages).toList(),
+        isLoading: false,
+      );
       await _persistLocalOnly();
     } catch (e) {
       debugPrint('LoveChatController.syncInitialData error: $e');
@@ -156,7 +165,9 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
       senderId: senderType,
       senderName: (senderType == 'you') ? 'Me' : 'Partner',
       content: data['content'] as String? ?? '',
-      createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String).toLocal() : DateTime.now(),
+      createdAt: data['created_at'] != null
+          ? DateTime.parse(data['created_at'] as String).toLocal()
+          : DateTime.now(),
       isPinned: false,
     );
   }
@@ -164,10 +175,17 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
   @override
   void onRealtimeData(List<Map<String, dynamic>> dataList) {
     if (!ref.mounted) return;
-    final parsed = dataList.where((data) => data['type'] == 'chat').map((data) => _parseMessage(data)).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final parsed =
+        dataList
+            .where((data) => data['type'] == 'chat')
+            .map((data) => _parseMessage(data))
+            .toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-    state = state.copyWith(messages: parsed.take(maxLocalMessages).toList(), isLoading: false);
+    state = state.copyWith(
+      messages: parsed.take(maxLocalMessages).toList(),
+      isLoading: false,
+    );
     _persistLocalOnly();
   }
 
@@ -178,11 +196,17 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
   }
 
   Future<void> sendMessage(String content, String senderName) async {
-    final newMessage = LoveChatMessage(senderId: 'you', senderName: senderName, content: content);
+    final newMessage = LoveChatMessage(
+      senderId: 'you',
+      senderName: senderName,
+      content: content,
+    );
 
-    final messages = ([newMessage, ...state.messages]..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
-        .take(maxLocalMessages)
-        .toList();
+    final messages =
+        ([newMessage, ...state.messages]
+              ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+            .take(maxLocalMessages)
+            .toList();
     state = state.copyWith(messages: messages);
     await _persist();
 
@@ -203,13 +227,17 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
             body: {
               'sender_id': sessionUserId,
               'title': 'New Love Note 💖',
-              'body': content.length > 50 ? '${content.substring(0, 47)}...' : content,
+              'body': content.length > 50
+                  ? '${content.substring(0, 47)}...'
+                  : content,
             },
           );
         } catch (fcmError) {
           // The message itself is stored; only the partner's push failed.
           // Genuinely non-fatal, so it stays swallowed.
-          debugPrint('LoveChatController: Failed to trigger push notification: $fcmError');
+          debugPrint(
+            'LoveChatController: Failed to trigger push notification: $fcmError',
+          );
         }
       } catch (e) {
         // Rethrown rather than swallowed: the local optimistic write above has
@@ -225,12 +253,17 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
   }
 
   Future<void> deleteMessage(String messageId) async {
-    state = state.copyWith(messages: state.messages.where((m) => m.id != messageId).toList());
+    state = state.copyWith(
+      messages: state.messages.where((m) => m.id != messageId).toList(),
+    );
     await _persist();
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('love_notes').delete().eq('id', messageId);
+        await Supabase.instance.client
+            .from('love_notes')
+            .delete()
+            .eq('id', messageId);
       } catch (e) {
         debugPrint('LoveChatController.deleteMessage Supabase error: $e');
       }
@@ -242,7 +275,8 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
   Future<void> _persistLocalOnly() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final sorted = [...state.messages]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final sorted = [...state.messages]
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       final bounded = sorted.take(maxLocalMessages).toList();
       final jsonList = bounded.map((m) => m.toJson()).toList();
       await prefs.setString(_storageKey, jsonEncode(jsonList));
@@ -252,7 +286,8 @@ class LoveChatController extends Notifier<LoveChatState> with SupabaseLifecycleN
   }
 }
 
-final loveChatControllerProvider = NotifierProvider.autoDispose<LoveChatController, LoveChatState>(
-  LoveChatController.new,
-  dependencies: [coupleSessionProvider],
-);
+final loveChatControllerProvider =
+    NotifierProvider.autoDispose<LoveChatController, LoveChatState>(
+      LoveChatController.new,
+      dependencies: [coupleSessionProvider],
+    );

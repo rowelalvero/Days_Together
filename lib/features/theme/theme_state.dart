@@ -18,10 +18,8 @@ class ThemeState {
   final ThemeType currentTheme;
   final AppSettings settings;
 
-  ThemeState({
-    this.currentTheme = ThemeType.offWhite,
-    AppSettings? settings,
-  }) : settings = settings ?? AppSettings();
+  ThemeState({this.currentTheme = ThemeType.offWhite, AppSettings? settings})
+    : settings = settings ?? AppSettings();
 
   LoveStoryTheme get currentLoveTheme =>
       ThemeManager.resolveTheme(currentTheme, settings);
@@ -29,10 +27,7 @@ class ThemeState {
   LinearGradient get currentGradient =>
       ThemeManager.getGradient(currentTheme, settings: settings);
 
-  ThemeState copyWith({
-    ThemeType? currentTheme,
-    AppSettings? settings,
-  }) {
+  ThemeState copyWith({ThemeType? currentTheme, AppSettings? settings}) {
     return ThemeState(
       currentTheme: currentTheme ?? this.currentTheme,
       settings: settings ?? this.settings,

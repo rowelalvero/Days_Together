@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -26,7 +26,10 @@ class WaitingForPartnerScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           'Relationship License',
-          style: AppTypography.heading(fontWeight: FontWeight.bold, color: theme.textColor),
+          style: AppTypography.heading(
+            fontWeight: FontWeight.bold,
+            color: theme.textColor,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -39,7 +42,9 @@ class WaitingForPartnerScreen extends ConsumerWidget {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(gradient: ref.watch(themeControllerProvider).currentGradient),
+        decoration: BoxDecoration(
+          gradient: ref.watch(themeControllerProvider).currentGradient,
+        ),
         child: SafeArea(
           child: Center(
             child: Padding(
@@ -65,8 +70,14 @@ class WaitingForPartnerScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      partnerJoined ? 'Waiting for Partner' : 'Waiting for Partner to Join',
-                      style: AppTypography.heading(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textColor),
+                      partnerJoined
+                          ? 'Waiting for Partner'
+                          : 'Waiting for Partner to Join',
+                      style: AppTypography.heading(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textColor,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -74,7 +85,11 @@ class WaitingForPartnerScreen extends ConsumerWidget {
                       partnerJoined
                           ? "We are waiting for your partner to complete their license setup before details can be shared and viewed."
                           : "Please connect with your partner first. Once they join and complete their setup, your licenses will be synced and visible here.",
-                      style: AppTypography.body(fontSize: 14, color: theme.textColor.withValues(alpha: 0.7), height: 1.5),
+                      style: AppTypography.body(
+                        fontSize: 14,
+                        color: theme.textColor.withValues(alpha: 0.7),
+                        height: 1.5,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -83,7 +98,9 @@ class WaitingForPartnerScreen extends ConsumerWidget {
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.textColor.withValues(alpha: 0.5)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.textColor.withValues(alpha: 0.5),
+                        ),
                       ),
                     ),
                   ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget;
 
 import 'package:days_together/features/relationship/data/image_export_service.dart';
 import 'package:days_together/features/relationship/presentation/license/export/post_export_template.dart';
@@ -38,7 +39,8 @@ class ExportStudioBottomSheet extends ConsumerStatefulWidget {
 
 enum ExportTemplate { transparent, story, post }
 
-class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomSheet> {
+class _ExportStudioBottomSheetState
+    extends ConsumerState<ExportStudioBottomSheet> {
   ExportTemplate _selectedTemplate = ExportTemplate.story;
   bool _exportFront = true;
   bool _isSharing = false;
@@ -55,7 +57,6 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
         ? widget.myShowingFront
         : widget.partnerShowingFront;
   }
-
 
   GlobalKey _activeKeyFor(ExportTemplate template) {
     switch (template) {
@@ -229,12 +230,20 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
           const SizedBox(height: 16),
           Text(
             'LICENSE EXPORT STUDIO',
-            style: AppTypography.body(fontSize: 16, fontWeight: FontWeight.w900, color: widget.theme.textColor).copyWith(letterSpacing: 2),
+            style: AppTypography.body(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: widget.theme.textColor,
+            ).copyWith(letterSpacing: 2),
           ),
           const SizedBox(height: 4),
           Text(
             'Choose a style and share your license card',
-            style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w500, color: widget.theme.textColor.withValues(alpha: 0.5)),
+            style: AppTypography.body(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: widget.theme.textColor.withValues(alpha: 0.5),
+            ),
           ),
           const SizedBox(height: 20),
           ConstrainedBox(
@@ -247,7 +256,11 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
             children: [
               Text(
                 'Show Card Side:',
-                style: AppTypography.body(fontSize: 13, fontWeight: FontWeight.bold, color: widget.theme.textColor.withValues(alpha: 0.7)),
+                style: AppTypography.body(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: widget.theme.textColor.withValues(alpha: 0.7),
+                ),
               ),
               Row(
                 children: [
@@ -311,7 +324,10 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
                         : const Icon(Icons.save_alt_rounded, size: 20),
                     label: Text(
                       _isSaving ? 'Saving...' : 'Save Photo',
-                      style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: AppTypography.body(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: widget.theme.accentColor,
@@ -344,7 +360,10 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
                         : const Icon(Icons.share_rounded, size: 20),
                     label: Text(
                       _isSharing ? 'Sharing...' : 'Share',
-                      style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: AppTypography.body(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: widget.theme.accentColor,
@@ -388,9 +407,13 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
         ),
         child: Text(
           label,
-          style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.bold, color: isActive
+          style: AppTypography.body(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isActive
                 ? Colors.white
-                : widget.theme.textColor.withValues(alpha: 0.7)),
+                : widget.theme.textColor.withValues(alpha: 0.7),
+          ),
         ),
       ),
     );
@@ -431,9 +454,13 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
             const SizedBox(height: 6),
             Text(
               title,
-              style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.bold, color: isSelected
+              style: AppTypography.body(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: isSelected
                     ? widget.theme.accentColor
-                    : widget.theme.textColor),
+                    : widget.theme.textColor,
+              ),
             ),
           ],
         ),

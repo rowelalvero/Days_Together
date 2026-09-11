@@ -17,7 +17,8 @@ class GiftReminderState {
   }
 
   List<GiftReminder> get upcomingReminders {
-    final sorted = List<GiftReminder>.from(reminders)..sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
+    final sorted = List<GiftReminder>.from(reminders)
+      ..sort((a, b) => a.daysUntil.compareTo(b.daysUntil));
     return sorted;
   }
 }

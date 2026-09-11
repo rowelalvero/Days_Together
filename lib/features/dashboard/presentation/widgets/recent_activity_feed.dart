@@ -1,11 +1,12 @@
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget;
 import 'package:go_router/go_router.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 
 // Providers & Models
 import 'package:days_together/features/dashboard/recent_activity_controller.dart';
@@ -28,10 +29,7 @@ import 'package:days_together/app/shell/love_story_screen.dart';
 class RecentActivityFeed extends ConsumerStatefulWidget {
   final LoveStoryTheme theme;
 
-  const RecentActivityFeed({
-    super.key,
-    required this.theme,
-  });
+  const RecentActivityFeed({super.key, required this.theme});
 
   @override
   ConsumerState<RecentActivityFeed> createState() => _RecentActivityFeedState();
@@ -183,7 +181,9 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
     if (!exists) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('The selected item no longer exists. Opening section...'),
+          content: Text(
+            'The selected item no longer exists. Opening section...',
+          ),
           duration: Duration(seconds: 2),
         ),
       );
@@ -219,7 +219,9 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(theme.textColor.withValues(alpha: 0.3)),
+                    valueColor: AlwaysStoppedAnimation(
+                      theme.textColor.withValues(alpha: 0.3),
+                    ),
                   ),
                 ),
               ),
@@ -244,10 +246,7 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(
                   children: [
-                    const Text(
-                      '✨',
-                      style: TextStyle(fontSize: 28),
-                    ),
+                    const Text('✨', style: TextStyle(fontSize: 28)),
                     const SizedBox(height: 8),
                     Text(
                       'Your story is just beginning',
@@ -289,7 +288,12 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
             itemCount: displayActivities.length,
             itemBuilder: (context, index) {
               final activity = displayActivities[index];
-              return _buildActivityRow(theme, activity, index, displayActivities.length);
+              return _buildActivityRow(
+                theme,
+                activity,
+                index,
+                displayActivities.length,
+              );
             },
           ),
           Divider(color: theme.textColor.withValues(alpha: 0.1), height: 24),
@@ -363,7 +367,12 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
     );
   }
 
-  Widget _buildActivityRow(LoveStoryTheme theme, LocalActivity activity, int index, int totalCount) {
+  Widget _buildActivityRow(
+    LoveStoryTheme theme,
+    LocalActivity activity,
+    int index,
+    int totalCount,
+  ) {
     final featureColor = _featureColor(activity.route ?? '');
     final icon = activity.icon;
 
@@ -415,7 +424,10 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
               splashColor: featureColor.withValues(alpha: 0.1),
               highlightColor: featureColor.withValues(alpha: 0.05),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8.0,
+                  horizontal: 8.0,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -435,10 +447,7 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
                         ),
                       ),
                       child: Center(
-                        child: Text(
-                          icon,
-                          style: const TextStyle(fontSize: 18),
-                        ),
+                        child: Text(icon, style: const TextStyle(fontSize: 18)),
                       ),
                     ),
                     const SizedBox(width: 12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/license_controller.dart';
@@ -29,14 +30,17 @@ class RelationshipDurationScreen extends ConsumerWidget {
     final theme = themeProvider.currentLoveTheme;
     final workspace = ref.watch(workspaceControllerProvider);
     final tp = ref.watch(timelineControllerProvider);
-    final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
+    final license =
+        ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
 
     final startDate = workspace.startDate ?? DateTime.now();
     final totalDays = DateHelper.relationshipTotalDays(workspace.startDate);
-    final currentYears = DateHelper.relationshipPreciseAge(
-      workspace.startDate,
-      workspace.startTime,
-    )['years'] ?? 0;
+    final currentYears =
+        DateHelper.relationshipPreciseAge(
+          workspace.startDate,
+          workspace.startTime,
+        )['years'] ??
+        0;
 
     return Scaffold(
       body: Container(
@@ -69,7 +73,11 @@ class RelationshipDurationScreen extends ConsumerWidget {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back_rounded, color: theme.textColor, size: 20),
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    color: theme.textColor,
+                    size: 20,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -100,7 +108,11 @@ class RelationshipDurationScreen extends ConsumerWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.favorite_rounded, color: theme.accentColor, size: 16),
+                            Icon(
+                              Icons.favorite_rounded,
+                              color: theme.accentColor,
+                              size: 16,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'TOGETHER FOR',
@@ -115,7 +127,10 @@ class RelationshipDurationScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 8),
                         TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 0, end: totalDays.toDouble()),
+                          tween: Tween<double>(
+                            begin: 0,
+                            end: totalDays.toDouble(),
+                          ),
                           duration: const Duration(milliseconds: 1600),
                           curve: Curves.easeOutCubic,
                           builder: (context, value, child) {
@@ -144,7 +159,10 @@ class RelationshipDurationScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: theme.textColor.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),

@@ -34,7 +34,11 @@ class CurrentlyState {
     this.history = const LoveTapHistory(),
   });
 
-  CurrentlyState copyWith({bool? isLoading, LoveTapState? state, LoveTapHistory? history}) {
+  CurrentlyState copyWith({
+    bool? isLoading,
+    LoveTapState? state,
+    LoveTapHistory? history,
+  }) {
     return CurrentlyState(
       isLoading: isLoading ?? this.isLoading,
       state: state ?? this.state,

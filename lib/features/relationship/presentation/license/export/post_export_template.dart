@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/presentation/license/export/license_card_preview.dart';
@@ -74,12 +75,20 @@ class PostExportTemplate extends ConsumerWidget {
                   children: [
                     Text(
                       'DEPARTMENT OF LOVE',
-                      style: AppTypography.body(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 5),
+                      style: AppTypography.body(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFFD4AF37),
+                      ).copyWith(letterSpacing: 5),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'OFFICIAL RELATIONSHIP CERTIFICATE',
-                      style: AppTypography.body(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.4)).copyWith(letterSpacing: 2),
+                      style: AppTypography.body(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ).copyWith(letterSpacing: 2),
                     ),
                   ],
                 ),
@@ -151,7 +160,11 @@ class PostExportTemplate extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Text(
                           'VALID FOREVER',
-                          style: AppTypography.body(fontSize: 11, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 3),
+                          style: AppTypography.body(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFFD4AF37),
+                          ).copyWith(letterSpacing: 3),
                         ),
                         const SizedBox(width: 8),
                         const Icon(
@@ -164,7 +177,11 @@ class PostExportTemplate extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       'ANNIVERSARY DATE: $startDateStr',
-                      style: AppTypography.body(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.4)).copyWith(letterSpacing: 1.5),
+                      style: AppTypography.body(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ).copyWith(letterSpacing: 1.5),
                     ),
                   ],
                 ),

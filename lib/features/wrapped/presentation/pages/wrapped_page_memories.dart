@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/features/wrapped/presentation/wrapped_animated_counter.dart';
+import 'package:days_together/features/wrapped/presentation/widgets/wrapped_animated_counter.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 class WrappedPageMemories extends StatelessWidget {
   final WrappedData data;

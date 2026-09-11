@@ -7,7 +7,7 @@ import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
 import 'package:days_together/features/topic_cards/domain/entities/topic_card_model.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 
 class TopicCardsScreen extends ConsumerStatefulWidget {
   const TopicCardsScreen({super.key});
@@ -458,7 +458,13 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
               // Main deck view area
               Expanded(
                 child: isDeckEmpty
-                    ? Center(child: _buildEmptyState(theme, cardsState.activeCategory, cardsNotifier))
+                    ? Center(
+                        child: _buildEmptyState(
+                          theme,
+                          cardsState.activeCategory,
+                          cardsNotifier,
+                        ),
+                      )
                     : _buildCardDeck(
                         activeDeck,
                         activeIndex,
@@ -536,7 +542,11 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
     );
   }
 
-  Widget _buildEmptyState(LoveStoryTheme theme, String activeCategory, TopicCardsController notifier) {
+  Widget _buildEmptyState(
+    LoveStoryTheme theme,
+    String activeCategory,
+    TopicCardsController notifier,
+  ) {
     final isFav = activeCategory == 'Favorites';
     return GlassContainer(
       borderRadius: 24,
@@ -920,9 +930,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                               content: Text(
                                 'Are you sure you want to delete this custom topic card?',
                                 style: AppTypography.body(
-                                  color: theme.textColor.withValues(
-                                    alpha: 0.8,
-                                  ),
+                                  color: theme.textColor.withValues(alpha: 0.8),
                                 ),
                               ),
                               actions: [
@@ -933,7 +941,9 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                                 TextButton(
                                   child: Text(
                                     'Delete',
-                                    style: AppTypography.button(color: Colors.redAccent),
+                                    style: AppTypography.button(
+                                      color: Colors.redAccent,
+                                    ),
                                   ),
                                   onPressed: () {
                                     Navigator.pop(ctx);

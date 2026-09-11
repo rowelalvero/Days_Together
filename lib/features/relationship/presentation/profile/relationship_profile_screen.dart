@@ -13,12 +13,12 @@ import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/core/utils/date_helper.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/relationship/presentation/profile/delete_account_confirmation_dialog.dart';
 import 'package:days_together/features/relationship/presentation/profile/edit_profile_dialog.dart';
 import 'package:days_together/features/relationship/presentation/profile/regenerate_recovery_code_dialog.dart';
 import 'package:days_together/features/relationship/presentation/profile/unlink_confirmation_dialog.dart';
-import 'package:days_together/shared/cached_avatar.dart';
+import 'package:days_together/shared/widgets/cached_avatar.dart';
 
 class RelationshipProfileScreen extends ConsumerWidget {
   const RelationshipProfileScreen({super.key});
@@ -51,11 +51,23 @@ class RelationshipProfileScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeaderSection(context, sessionState, profileState, theme),
+                      _buildHeaderSection(
+                        context,
+                        sessionState,
+                        profileState,
+                        theme,
+                      ),
                       const SizedBox(height: 32),
-                      _buildInfoCard(context, ref, workspaceState, profileState, theme),
+                      _buildInfoCard(
+                        context,
+                        ref,
+                        workspaceState,
+                        profileState,
+                        theme,
+                      ),
                       const SizedBox(height: 32),
-                      if (!partnerJoined && workspaceState.coupleCode != null) ...[
+                      if (!partnerJoined &&
+                          workspaceState.coupleCode != null) ...[
                         PairingOptionsSection(theme: theme),
                         const SizedBox(height: 32),
                       ],
@@ -307,7 +319,10 @@ class RelationshipProfileScreen extends ConsumerWidget {
     final formattedTime = workspaceState.startTime != null
         ? workspaceState.startTime!.format(context)
         : '12:00 AM';
-    final ageStr = DateHelper.relationshipAgeLabel(workspaceState.startDate, workspaceState.startTime);
+    final ageStr = DateHelper.relationshipAgeLabel(
+      workspaceState.startDate,
+      workspaceState.startTime,
+    );
 
     return Column(
       children: [
@@ -354,7 +369,9 @@ class RelationshipProfileScreen extends ConsumerWidget {
               icon: Icons.person_pin_rounded,
               label: 'Your Join Date',
               value: profileState.yourJoinDate != null
-                  ? DateFormat('MMM dd, yyyy').format(profileState.yourJoinDate!)
+                  ? DateFormat(
+                      'MMM dd, yyyy',
+                    ).format(profileState.yourJoinDate!)
                   : '...',
               theme: theme,
             ),
@@ -362,7 +379,9 @@ class RelationshipProfileScreen extends ConsumerWidget {
               icon: Icons.people_outline_rounded,
               label: 'Partner Join Date',
               value: profileState.partnerJoinDate != null
-                  ? DateFormat('MMM dd, yyyy').format(profileState.partnerJoinDate!)
+                  ? DateFormat(
+                      'MMM dd, yyyy',
+                    ).format(profileState.partnerJoinDate!)
                   : 'Waiting...',
               theme: theme,
             ),
@@ -461,9 +480,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
     }
   }
 
-
-
-    Widget _buildRegenerateRecoveryCodeButton(
+  Widget _buildRegenerateRecoveryCodeButton(
     BuildContext context,
     LoveStoryTheme theme,
   ) {
@@ -494,7 +511,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
     );
   }
 
-Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
+  Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
     return Row(
       children: [
         Expanded(
@@ -570,10 +587,7 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
     );
   }
 
-  Widget _buildDeleteAccountButton(
-    BuildContext context,
-    LoveStoryTheme theme,
-  ) {
+  Widget _buildDeleteAccountButton(BuildContext context, LoveStoryTheme theme) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -599,7 +613,6 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
       ),
     );
   }
-
 }
 
 class _StatTile extends StatelessWidget {
@@ -678,13 +691,11 @@ class _StatTile extends StatelessWidget {
 class PairingOptionsSection extends ConsumerStatefulWidget {
   final LoveStoryTheme theme;
 
-  const PairingOptionsSection({
-    super.key,
-    required this.theme,
-  });
+  const PairingOptionsSection({super.key, required this.theme});
 
   @override
-  ConsumerState<PairingOptionsSection> createState() => _PairingOptionsSectionState();
+  ConsumerState<PairingOptionsSection> createState() =>
+      _PairingOptionsSectionState();
 }
 
 class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
@@ -713,7 +724,9 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
     });
 
     try {
-      final success = await ref.read(sessionControllerProvider.notifier).joinWithCode(code);
+      final success = await ref
+          .read(sessionControllerProvider.notifier)
+          .joinWithCode(code);
       if (!mounted) return;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -724,14 +737,16 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
         );
       } else {
         setState(() {
-          _errorMessage = 'Invalid connection code. Please check with your partner.';
+          _errorMessage =
+              'Invalid connection code. Please check with your partner.';
           _isLinking = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Connection error: ${e.toString().replaceAll('Exception: ', '')}';
+          _errorMessage =
+              'Connection error: ${e.toString().replaceAll('Exception: ', '')}';
           _isLinking = false;
         });
       }
@@ -779,11 +794,16 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
                   color: theme.textColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -923,8 +943,9 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.accentColor,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            theme.accentColor.withValues(alpha: 0.3),
+                        disabledBackgroundColor: theme.accentColor.withValues(
+                          alpha: 0.3,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -986,4 +1007,3 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
     );
   }
 }
-

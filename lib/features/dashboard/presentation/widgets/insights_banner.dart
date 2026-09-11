@@ -2,7 +2,7 @@ import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
@@ -65,7 +65,10 @@ class _InsightsBannerState extends State<InsightsBanner> {
   void _generateInsights() {
     final memCount = widget.timelineProvider.items.length;
     final bucketPercent = widget.bucketProvider.progress * 100;
-    final years = DateHelper.relationshipPreciseAge(widget.workspace.startDate, widget.workspace.startTime)['years']!;
+    final years = DateHelper.relationshipPreciseAge(
+      widget.workspace.startDate,
+      widget.workspace.startTime,
+    )['years']!;
     final partnerName = widget.profile.partnerName ?? 'Partner';
     final isOnline = widget.presence.isPartnerOnline;
 
@@ -95,7 +98,11 @@ class _InsightsBannerState extends State<InsightsBanner> {
               color: Colors.pinkAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.auto_awesome, color: Colors.pinkAccent, size: 16),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.pinkAccent,
+              size: 16,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -105,7 +112,11 @@ class _InsightsBannerState extends State<InsightsBanner> {
               children: [
                 Text(
                   'RELATIONSHIP INSIGHTS',
-                  style: AppTypography.caption(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.pinkAccent).copyWith(letterSpacing: 1),
+                  style: AppTypography.caption(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.pinkAccent,
+                  ).copyWith(letterSpacing: 1),
                 ),
                 const SizedBox(height: 2),
                 AnimatedSwitcher(
@@ -118,14 +129,19 @@ class _InsightsBannerState extends State<InsightsBanner> {
                     style: AppTypography.bodyLarge(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: widget.theme.textColor.withValues(alpha: 0.9),),
+                      color: widget.theme.textColor.withValues(alpha: 0.9),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           IconButton(
-              icon: Icon(Icons.chevron_left_rounded, color: widget.theme.textColor.withValues(alpha: 0.3), size: 18),
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              color: widget.theme.textColor.withValues(alpha: 0.3),
+              size: 18,
+            ),
             onPressed: () {
               setState(() {
                 _index = (_index - 1 + _insights.length) % _insights.length;
@@ -133,7 +149,11 @@ class _InsightsBannerState extends State<InsightsBanner> {
             },
           ),
           IconButton(
-              icon: Icon(Icons.chevron_right_rounded, color: widget.theme.textColor.withValues(alpha: 0.3), size: 18),
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              color: widget.theme.textColor.withValues(alpha: 0.3),
+              size: 18,
+            ),
             onPressed: () {
               setState(() {
                 _index = (_index + 1) % _insights.length;

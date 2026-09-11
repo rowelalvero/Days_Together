@@ -56,7 +56,8 @@ class ProfileController extends Notifier<ProfileState> {
     }
   }
 
-  Future<void> setYourName(String name) => ref.read(coupleSessionProvider).setYourName(name);
+  Future<void> setYourName(String name) =>
+      ref.read(coupleSessionProvider).setYourName(name);
 
   Future<void> setNames(String yours, String partner) =>
       ref.read(coupleSessionProvider).setNames(yours, partner);
@@ -66,7 +67,8 @@ class ProfileController extends Notifier<ProfileState> {
       .setAvatars(yourPath: yourPath, partnerPath: partnerPath);
 }
 
-final profileControllerProvider = NotifierProvider<ProfileController, ProfileState>(
-  ProfileController.new,
-  dependencies: [coupleSessionProvider],
-);
+final profileControllerProvider =
+    NotifierProvider<ProfileController, ProfileState>(
+      ProfileController.new,
+      dependencies: [coupleSessionProvider],
+    );

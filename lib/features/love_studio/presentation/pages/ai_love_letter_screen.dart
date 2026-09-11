@@ -29,12 +29,16 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
 
     if (_selectedMemoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a memory to inspire your love letter.')),
+        const SnackBar(
+          content: Text('Please select a memory to inspire your love letter.'),
+        ),
       );
       return;
     }
 
-    final selectedMemory = timelineProvider.items.firstWhere((item) => item.id == _selectedMemoryId);
+    final selectedMemory = timelineProvider.items.firstWhere(
+      (item) => item.id == _selectedMemoryId,
+    );
 
     setState(() {
       _isGenerating = true;
@@ -54,7 +58,11 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('We couldn\'t generate your letter. Please check your connection and try again.')),
+          SnackBar(
+            content: const Text(
+              'We couldn\'t generate your letter. Please check your connection and try again.',
+            ),
+          ),
         );
       }
     } finally {
@@ -76,15 +84,23 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: theme.primaryColor,
-          title: Text('Vault Locked', style: AppTypography.title(color: theme.textColor)),
+          title: Text(
+            'Vault Locked',
+            style: AppTypography.title(color: theme.textColor),
+          ),
           content: Text(
             'Please set up a Secret Vault PIN under the Together tab first to save your letters securely.',
-            style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.7)),
+            style: AppTypography.body(
+              color: theme.textColor.withValues(alpha: 0.7),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Okay', style: AppTypography.button(color: theme.accentColor)),
+              child: Text(
+                'Okay',
+                style: AppTypography.button(color: theme.accentColor),
+              ),
             ),
           ],
         ),
@@ -146,7 +162,7 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
                     if (_isGenerating)
                       _buildGeneratingState(theme)
                     else if (_generatedLetter != null)
-                      _buildLetterCard(theme)
+                      _buildLetterCard(theme),
                   ],
                 ],
               ),
@@ -163,7 +179,10 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
@@ -201,7 +220,11 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
         child: Column(
           children: [
             const SizedBox(height: 40),
-            Icon(Icons.palette_outlined, size: 64, color: theme.textColor.withValues(alpha: 0.3)),
+            Icon(
+              Icons.palette_outlined,
+              size: 64,
+              color: theme.textColor.withValues(alpha: 0.3),
+            ),
             const SizedBox(height: 24),
             Text(
               'No memories logged yet',
@@ -211,7 +234,9 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
             Text(
               'Share a memory in the Timeline first, and we\'ll help you turn it into a beautiful love letter.',
               textAlign: TextAlign.center,
-              style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.54)),
+              style: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.54),
+              ),
             ),
           ],
         ),
@@ -328,7 +353,10 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                icon: Icon(Icons.copy_rounded, color: theme.textColor.withValues(alpha: 0.7)),
+                icon: Icon(
+                  Icons.copy_rounded,
+                  color: theme.textColor.withValues(alpha: 0.7),
+                ),
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: _generatedLetter!));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -337,13 +365,19 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.share_rounded, color: theme.textColor.withValues(alpha: 0.7)),
+                icon: Icon(
+                  Icons.share_rounded,
+                  color: theme.textColor.withValues(alpha: 0.7),
+                ),
                 onPressed: () {
                   Share.share(_generatedLetter!);
                 },
               ),
               IconButton(
-                icon: Icon(Icons.lock_outline_rounded, color: theme.textColor.withValues(alpha: 0.7)),
+                icon: Icon(
+                  Icons.lock_outline_rounded,
+                  color: theme.textColor.withValues(alpha: 0.7),
+                ),
                 onPressed: () => _saveToVault(context, theme),
               ),
             ],
@@ -398,24 +432,41 @@ class _PinPromptDialogState extends State<_PinPromptDialog> {
     final theme = widget.theme;
     return AlertDialog(
       backgroundColor: theme.primaryColor,
-      title: Text('Enter Vault PIN', style: AppTypography.title(color: theme.textColor)),
+      title: Text(
+        'Enter Vault PIN',
+        style: AppTypography.title(color: theme.textColor),
+      ),
       content: TextField(
         controller: _pinController,
         keyboardType: TextInputType.number,
         obscureText: true,
         maxLength: 4,
-        style: AppTypography.bodyMono(color: theme.textColor, fontSize: 24).copyWith(letterSpacing: 16),
+        style: AppTypography.bodyMono(
+          color: theme.textColor,
+          fontSize: 24,
+        ).copyWith(letterSpacing: 16),
         textAlign: TextAlign.center,
         decoration: InputDecoration(
           counterText: '',
-          enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.38))),
-          focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.accentColor)),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: theme.textColor.withValues(alpha: 0.38),
+            ),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: theme.accentColor),
+          ),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: AppTypography.button(color: theme.textColor.withValues(alpha: 0.7))),
+          child: Text(
+            'Cancel',
+            style: AppTypography.button(
+              color: theme.textColor.withValues(alpha: 0.7),
+            ),
+          ),
         ),
         TextButton(
           onPressed: () async {
@@ -449,7 +500,10 @@ class _PinPromptDialogState extends State<_PinPromptDialog> {
               );
             }
           },
-          child: Text('Unlock & Save', style: AppTypography.button(color: theme.accentColor)),
+          child: Text(
+            'Unlock & Save',
+            style: AppTypography.button(color: theme.accentColor),
+          ),
         ),
       ],
     );

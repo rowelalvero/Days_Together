@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerWidget, WidgetRef;
 
 import 'package:days_together/features/relationship/presentation/profile/new_recovery_code_dialog.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/shared/safe_loading_dialog.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/shared/widgets/safe_loading_dialog.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -31,10 +32,8 @@ class RegenerateRecoveryCodeDialog extends ConsumerWidget {
   static void show(BuildContext context, LoveStoryTheme theme) {
     showDialog(
       context: context,
-      builder: (dialogContext) => RegenerateRecoveryCodeDialog(
-        profileContext: context,
-        theme: theme,
-      ),
+      builder: (dialogContext) =>
+          RegenerateRecoveryCodeDialog(profileContext: context, theme: theme),
     );
   }
 

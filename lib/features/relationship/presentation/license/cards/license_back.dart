@@ -111,14 +111,22 @@ class LicenseBack extends StatelessWidget {
                 children: [
                   Text(
                     'EMERGENCY INFORMATION',
-                    style: AppTypography.body(fontSize: 8, fontWeight: FontWeight.w900, color: const Color(0xFFD4AF37)).copyWith(letterSpacing: 1.2),
+                    style: AppTypography.body(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFFD4AF37),
+                    ).copyWith(letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 4),
                   goldDivider(),
                   const SizedBox(height: 4),
                   Text(
                     'IN CASE OF EMERGENCY CONTACT:',
-                    style: AppTypography.body(fontSize: 7, fontWeight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.5)),
+                    style: AppTypography.body(
+                      fontSize: 7,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   _emergencyContact(
@@ -239,7 +247,11 @@ class LicenseBack extends StatelessWidget {
                 Text(
                   name.toUpperCase(),
 
-                  style: AppTypography.body(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white).copyWith(letterSpacing: 1),
+                  style: AppTypography.body(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ).copyWith(letterSpacing: 1),
                 ),
 
                 if (address != null && address.isNotEmpty) ...[
@@ -247,7 +259,11 @@ class LicenseBack extends StatelessWidget {
                   Text(
                     address.toUpperCase(),
 
-                    style: AppTypography.body(fontSize: 8, fontWeight: FontWeight.w500, color: Colors.white.withValues(alpha: 0.6)),
+                    style: AppTypography.body(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
 
@@ -256,7 +272,11 @@ class LicenseBack extends StatelessWidget {
                 Text(
                   phone,
 
-                  style: AppTypography.bodyMono(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFFD4AF37)),
+                  style: AppTypography.bodyMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFD4AF37),
+                  ),
                 ),
               ],
             ),

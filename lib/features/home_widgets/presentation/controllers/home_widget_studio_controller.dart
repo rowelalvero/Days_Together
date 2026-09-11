@@ -35,8 +35,8 @@ class HomeWidgetStudioState {
 
 final homeWidgetStudioControllerProvider =
     NotifierProvider<HomeWidgetStudioNotifier, HomeWidgetStudioState>(
-  HomeWidgetStudioNotifier.new,
-);
+      HomeWidgetStudioNotifier.new,
+    );
 
 class HomeWidgetStudioNotifier extends Notifier<HomeWidgetStudioState> {
   late final HomeWidgetRepository _repository;
@@ -68,7 +68,10 @@ class HomeWidgetStudioNotifier extends Notifier<HomeWidgetStudioState> {
     String? partner2Name,
     String? latestDrawing,
   }) async {
-    state = state.copyWith(isSyncing: true, statusMessage: 'Syncing widgets...');
+    state = state.copyWith(
+      isSyncing: true,
+      statusMessage: 'Syncing widgets...',
+    );
     try {
       final theme = ThemeManager.getTheme(state.config.themeType);
 
@@ -94,14 +97,13 @@ class HomeWidgetStudioNotifier extends Notifier<HomeWidgetStudioState> {
         statusMessage: 'Widgets updated successfully! ✨',
       );
     } catch (e) {
-      state = state.copyWith(
-        isSyncing: false,
-        statusMessage: 'Sync error: $e',
-      );
+      state = state.copyWith(isSyncing: false, statusMessage: 'Sync error: $e');
     }
   }
 
   Future<bool> pinCurrentWidget() async {
-    return await HomeWidgetService.instance.requestPin(state.selectedWidgetType);
+    return await HomeWidgetService.instance.requestPin(
+      state.selectedWidgetType,
+    );
   }
 }

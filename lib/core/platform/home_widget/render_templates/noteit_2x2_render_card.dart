@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/shared/scale_drawing_painter.dart';
+import 'package:days_together/shared/widgets/scale_drawing_painter.dart';
 
 class Noteit2x2RenderCard extends StatelessWidget {
   final LoveStoryTheme theme;

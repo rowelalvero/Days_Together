@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/features/relationship/data/relationship_milestones.dart';
 import 'package:days_together/core/utils/date_helper.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -52,7 +52,11 @@ class MilestonesAchievedTimeline extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.emoji_events_rounded, color: theme.accentColor, size: 16),
+            Icon(
+              Icons.emoji_events_rounded,
+              color: theme.accentColor,
+              size: 16,
+            ),
             const SizedBox(width: 8),
             Text(
               'Milestones Achieved',
@@ -96,7 +100,11 @@ class MilestonesAchievedTimeline extends StatelessWidget {
                           ],
                         ),
                         child: const Center(
-                          child: Icon(Icons.check, color: Colors.white, size: 8),
+                          child: Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 8,
+                          ),
                         ),
                       ),
                       if (!isLast)
@@ -114,7 +122,10 @@ class MilestonesAchievedTimeline extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: GlassContainer(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         borderRadius: 16,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -136,14 +147,19 @@ class MilestonesAchievedTimeline extends StatelessWidget {
                                     formattedDate,
                                     style: AppTypography.caption(
                                       fontSize: 10.5,
-                                      color: theme.textColor.withValues(alpha: 0.4),
+                                      color: theme.textColor.withValues(
+                                        alpha: 0.4,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: theme.textColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(8),

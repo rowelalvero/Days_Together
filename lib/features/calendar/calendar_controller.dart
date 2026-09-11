@@ -17,7 +17,8 @@ import 'package:days_together/core/activity/recent_activity_service.dart';
 /// unlike `BucketListController`), none of the three write methods apply
 /// locally on the Supabase success path -- they rely entirely on the
 /// realtime echo, matching the original exactly.
-class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleNotifier<CalendarState> {
+class CalendarController extends Notifier<CalendarState>
+    with SupabaseLifecycleNotifier<CalendarState> {
   static const String _storageKey = 'calendar_events';
   final Set<String> _localMutations = {};
 
@@ -36,7 +37,9 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
       final events = jsonString != null
-          ? (jsonDecode(jsonString) as List).map((json) => CalendarEvent.fromJson(json)).toList()
+          ? (jsonDecode(jsonString) as List)
+                .map((json) => CalendarEvent.fromJson(json))
+                .toList()
           : <CalendarEvent>[];
       if (!ref.mounted) return;
       state = state.copyWith(events: events, isLoading: false);
@@ -70,8 +73,12 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
       id: data['id'] as String,
       title: data['title'] ?? '',
       description: data['description'] as String?,
-      date: data['date'] != null ? DateTime.parse(data['date'] as String) : DateTime.now(),
-      time: (hour != null && minute != null) ? TimeOfDay(hour: hour, minute: minute) : null,
+      date: data['date'] != null
+          ? DateTime.parse(data['date'] as String)
+          : DateTime.now(),
+      time: (hour != null && minute != null)
+          ? TimeOfDay(hour: hour, minute: minute)
+          : null,
       type: type,
       isRecurringYearly: data['is_recurring_yearly'] ?? false,
     );
@@ -81,8 +88,10 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
     try {
-      final List<dynamic> res =
-          await Supabase.instance.client.from('calendar_events').select().eq('couple_id', coupleId!);
+      final List<dynamic> res = await Supabase.instance.client
+          .from('calendar_events')
+          .select()
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) => _parseEvent(data)).toList();
 
       if (!ref.mounted) return;
@@ -101,7 +110,9 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
     final oldEvents = state.events;
 
     if (!wasLoading) {
-      final added = incoming.where((inc) => !oldEvents.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !oldEvents.any((old) => old.id == inc.id))
+          .toList();
       for (final event in added) {
         if (_localMutations.contains(event.id)) {
           _localMutations.remove(event.id);
@@ -120,10 +131,17 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
       final updated = incoming.where((inc) {
         final match = oldEvents.firstWhere(
           (old) => old.id == inc.id,
-          orElse: () => CalendarEvent(id: '', title: '', date: DateTime.now(), type: CalendarEventType.other),
+          orElse: () => CalendarEvent(
+            id: '',
+            title: '',
+            date: DateTime.now(),
+            type: CalendarEventType.other,
+          ),
         );
         return match.id.isNotEmpty &&
-            (match.title != inc.title || match.description != inc.description || match.date != inc.date);
+            (match.title != inc.title ||
+                match.description != inc.description ||
+                match.date != inc.date);
       }).toList();
       for (final event in updated) {
         if (_localMutations.contains(event.id)) {
@@ -140,7 +158,9 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
         );
       }
 
-      final deleted = oldEvents.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = oldEvents
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (final event in deleted) {
         if (_localMutations.contains(event.id)) {
           _localMutations.remove(event.id);
@@ -216,15 +236,18 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
     _localMutations.add(updatedEvent.id);
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('calendar_events').update({
-          'title': updatedEvent.title,
-          'description': updatedEvent.description,
-          'date': updatedEvent.date.toIso8601String(),
-          'hour': updatedEvent.time?.hour,
-          'minute': updatedEvent.time?.minute,
-          'type': updatedEvent.type.index,
-          'is_recurring_yearly': updatedEvent.isRecurringYearly,
-        }).eq('id', updatedEvent.id);
+        await Supabase.instance.client
+            .from('calendar_events')
+            .update({
+              'title': updatedEvent.title,
+              'description': updatedEvent.description,
+              'date': updatedEvent.date.toIso8601String(),
+              'hour': updatedEvent.time?.hour,
+              'minute': updatedEvent.time?.minute,
+              'type': updatedEvent.type.index,
+              'is_recurring_yearly': updatedEvent.isRecurringYearly,
+            })
+            .eq('id', updatedEvent.id);
         NotificationService().sendPartnerNotification(
           title: 'Calendar Event Updated 📅',
           body: 'Your partner updated the event: "${updatedEvent.title}"',
@@ -266,11 +289,19 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
     _localMutations.add(id);
     final eventToDelete = state.events.firstWhere(
       (e) => e.id == id,
-      orElse: () => CalendarEvent(id: id, title: 'Event', date: DateTime.now(), type: CalendarEventType.date),
+      orElse: () => CalendarEvent(
+        id: id,
+        title: 'Event',
+        date: DateTime.now(),
+        type: CalendarEventType.date,
+      ),
     );
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('calendar_events').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('calendar_events')
+            .delete()
+            .eq('id', id);
         NotificationService().sendPartnerNotification(
           title: 'Calendar Event Deleted 📅',
           body: 'Your partner removed a calendar event.',
@@ -280,11 +311,15 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
       } catch (e) {
         debugPrint('CalendarController.deleteEvent Supabase error: $e');
         if (!ref.mounted) return;
-        state = state.copyWith(events: state.events.where((e) => e.id != id).toList());
+        state = state.copyWith(
+          events: state.events.where((e) => e.id != id).toList(),
+        );
         await _persist();
       }
     } else {
-      state = state.copyWith(events: state.events.where((e) => e.id != id).toList());
+      state = state.copyWith(
+        events: state.events.where((e) => e.id != id).toList(),
+      );
       await _persist();
     }
 
@@ -312,7 +347,8 @@ class CalendarController extends Notifier<CalendarState> with SupabaseLifecycleN
   }
 }
 
-final calendarControllerProvider = NotifierProvider.autoDispose<CalendarController, CalendarState>(
-  CalendarController.new,
-  dependencies: [coupleSessionProvider],
-);
+final calendarControllerProvider =
+    NotifierProvider.autoDispose<CalendarController, CalendarState>(
+      CalendarController.new,
+      dependencies: [coupleSessionProvider],
+    );

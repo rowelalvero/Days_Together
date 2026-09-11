@@ -14,7 +14,10 @@ class GridBackgroundDrawable extends BackgroundDrawable {
 
   @override
   void draw(Canvas canvas, Size size) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = backgroundColor);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = backgroundColor,
+    );
 
     final paint = Paint()
       ..color = gridColor
@@ -42,7 +45,10 @@ class DotsBackgroundDrawable extends BackgroundDrawable {
 
   @override
   void draw(Canvas canvas, Size size) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = backgroundColor);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = backgroundColor,
+    );
 
     final paint = Paint()
       ..color = dotColor
@@ -71,7 +77,10 @@ class NotebookBackgroundDrawable extends BackgroundDrawable {
 
   @override
   void draw(Canvas canvas, Size size) {
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = backgroundColor);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = backgroundColor,
+    );
 
     final linePaint = Paint()
       ..color = lineColor
@@ -91,9 +100,7 @@ class NotebookBackgroundDrawable extends BackgroundDrawable {
 class GradientBackgroundDrawable extends BackgroundDrawable {
   final List<Color> colors;
 
-  const GradientBackgroundDrawable({
-    required this.colors,
-  });
+  const GradientBackgroundDrawable({required this.colors});
 
   @override
   void draw(Canvas canvas, Size size) {

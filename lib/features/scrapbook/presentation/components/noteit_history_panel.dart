@@ -5,8 +5,8 @@ import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/features/scrapbook/data/noteit_sync_manager.dart';
-import 'package:days_together/shared/scale_drawing_painter.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/scale_drawing_painter.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -65,7 +65,9 @@ class NoteitHistoryPanel extends StatelessWidget {
           onLongPress: () => _confirmDelete(context, item),
           child: Container(
             decoration: BoxDecoration(
-              color: item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
+              color:
+                  item.backgroundColor ??
+                  theme.textColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
             ),
@@ -94,10 +96,10 @@ class NoteitHistoryPanel extends StatelessWidget {
                       child: Text(
                         item.sender == 'you'
                             ? (item.syncStatus == SyncStatus.sending
-                                ? '📤 Sending'
-                                : item.syncStatus == SyncStatus.failed
-                                ? '⚠️ Failed'
-                                : '✅ Sent')
+                                  ? '📤 Sending'
+                                  : item.syncStatus == SyncStatus.failed
+                                  ? '⚠️ Failed'
+                                  : '✅ Sent')
                             : 'Received',
                         style: AppTypography.bodyLarge(
                           fontSize: 8,
@@ -255,7 +257,11 @@ class NoteitSyncStatusBadge extends StatelessWidget {
 }
 
 /// Displays an enlarged popup dialog showing the selected note item.
-void showNoteitEnlargeDialog(BuildContext context, NoteitItem item, LoveStoryTheme theme) {
+void showNoteitEnlargeDialog(
+  BuildContext context,
+  NoteitItem item,
+  LoveStoryTheme theme,
+) {
   showDialog(
     context: context,
     builder: (ctx) => Dialog(
@@ -329,17 +335,20 @@ class NoteitCanvasThumbnail extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        placeholder: (context) => const Center(child: CircularProgressIndicator()),
-        errorWidget: (context) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.grey),
-        ),
+        placeholder: (context) =>
+            const Center(child: CircularProgressIndicator()),
+        errorWidget: (context) =>
+            const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
       );
     }
 
     if (item.type == NoteitType.drawing) {
       return CustomPaint(
         painter: ScaleDrawingPainter(
-          colorfulStrokes: NoteitItem.deserializeColorfulStrokes(item.content, Colors.white),
+          colorfulStrokes: NoteitItem.deserializeColorfulStrokes(
+            item.content,
+            Colors.white,
+          ),
           color: Colors.white,
           strokeWidth: 3.5,
         ),

@@ -74,7 +74,8 @@ class VaultController extends Notifier<VaultState>
   // doesn't need to read it.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       lock();
     }
   }
@@ -92,8 +93,9 @@ class VaultController extends Notifier<VaultState>
 
   VaultItem _parseItem(Map<String, dynamic> data, {String? imagePath}) {
     final typeIndex = data['type'] as int? ?? 0;
-    final type =
-        (typeIndex >= 0 && typeIndex < VaultItemType.values.length) ? VaultItemType.values[typeIndex] : VaultItemType.photo;
+    final type = (typeIndex >= 0 && typeIndex < VaultItemType.values.length)
+        ? VaultItemType.values[typeIndex]
+        : VaultItemType.photo;
     return VaultItem(
       id: data['id'] as String,
       type: type,
@@ -105,7 +107,9 @@ class VaultController extends Notifier<VaultState>
       // every cold start until a realtime event happened to arrive. Fixed
       // upstream in VaultProvider before this port; preserved as fixed.
       imageUrl: data['image_url'] as String?,
-      createdAt: data['created_at'] != null ? DateTime.parse(data['created_at'] as String) : DateTime.now(),
+      createdAt: data['created_at'] != null
+          ? DateTime.parse(data['created_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -113,7 +117,10 @@ class VaultController extends Notifier<VaultState>
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
     try {
-      final List<dynamic> res = await Supabase.instance.client.from('vault_items').select().eq('couple_id', coupleId!);
+      final List<dynamic> res = await Supabase.instance.client
+          .from('vault_items')
+          .select()
+          .eq('couple_id', coupleId!);
       final parsed = res.map((data) => _parseItem(data)).toList()
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -134,7 +141,9 @@ class VaultController extends Notifier<VaultState>
     final oldItems = state.items;
 
     if (!wasLoading) {
-      final added = incoming.where((inc) => !oldItems.any((old) => old.id == inc.id)).toList();
+      final added = incoming
+          .where((inc) => !oldItems.any((old) => old.id == inc.id))
+          .toList();
       for (final item in added) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -150,7 +159,9 @@ class VaultController extends Notifier<VaultState>
         );
       }
 
-      final deleted = oldItems.where((old) => !incoming.any((inc) => inc.id == old.id)).toList();
+      final deleted = oldItems
+          .where((old) => !incoming.any((inc) => inc.id == old.id))
+          .toList();
       for (final item in deleted) {
         if (_localMutations.contains(item.id)) {
           _localMutations.remove(item.id);
@@ -202,7 +213,9 @@ class VaultController extends Notifier<VaultState>
             await _secureStorage.write(key: _pinKey, value: storedSharedPin);
             await prefs.remove(_pinKey);
           } catch (e) {
-            debugPrint('Secure storage write failed during migration: $e. Falling back.');
+            debugPrint(
+              'Secure storage write failed during migration: $e. Falling back.',
+            );
             await prefs.setString(PrefsKeys.vaultPinFallback, storedSharedPin);
           }
           resolvedHasPin = true;
@@ -223,7 +236,10 @@ class VaultController extends Notifier<VaultState>
       }
 
       if (!ref.mounted) return;
-      state = state.copyWith(hasPin: resolvedHasPin, wrongAttempts: wrongAttempts);
+      state = state.copyWith(
+        hasPin: resolvedHasPin,
+        wrongAttempts: wrongAttempts,
+      );
       await _loadItemsFromCache();
     } catch (e, st) {
       debugPrint('VaultController._loadState failed: $e\n$st');
@@ -239,8 +255,10 @@ class VaultController extends Notifier<VaultState>
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
       final items = jsonString != null
-          ? ((jsonDecode(jsonString) as List).map((j) => VaultItem.fromJson(j)).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+          ? ((jsonDecode(jsonString) as List)
+                .map((j) => VaultItem.fromJson(j))
+                .toList()
+              ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
           : <VaultItem>[];
       if (!ref.mounted) return;
       state = state.copyWith(items: items);
@@ -282,7 +300,10 @@ class VaultController extends Notifier<VaultState>
       final nextAttempts = state.wrongAttempts + 1;
       await prefs.setInt(_wrongAttemptsKey, nextAttempts);
       if (nextAttempts >= 3) {
-        await prefs.setString(_decoyActivatedAtKey, DateTime.now().toIso8601String());
+        await prefs.setString(
+          _decoyActivatedAtKey,
+          DateTime.now().toIso8601String(),
+        );
       }
       if (!ref.mounted) return false;
       state = state.copyWith(wrongAttempts: nextAttempts);
@@ -306,7 +327,9 @@ class VaultController extends Notifier<VaultState>
 
   Future<void> addPhoto(BuildContext context) async {
     if (!state.isUnlocked) return;
-    final hasPermission = await PermissionService().requestPhotosPermission(context);
+    final hasPermission = await PermissionService().requestPhotosPermission(
+      context,
+    );
     if (!hasPermission) return;
     try {
       final picked = await _picker.pickImage(
@@ -325,7 +348,11 @@ class VaultController extends Notifier<VaultState>
       await File(picked.path).copy(newPath);
       if (!ref.mounted) return;
 
-      final newItem = VaultItem(id: photoId, type: VaultItemType.photo, imagePath: newPath);
+      final newItem = VaultItem(
+        id: photoId,
+        type: VaultItemType.photo,
+        imagePath: newPath,
+      );
 
       if (coupleId != null) {
         try {
@@ -437,12 +464,17 @@ class VaultController extends Notifier<VaultState>
 
     if (coupleId != null) {
       try {
-        await Supabase.instance.client.from('vault_items').delete().eq('id', id);
+        await Supabase.instance.client
+            .from('vault_items')
+            .delete()
+            .eq('id', id);
 
         if (item.type == VaultItemType.photo) {
           try {
             final storagePath = 'couples/$coupleId/vault_photos/$id.jpg';
-            await Supabase.instance.client.storage.from('vault-photos').remove([storagePath]);
+            await Supabase.instance.client.storage.from('vault-photos').remove([
+              storagePath,
+            ]);
           } catch (e) {
             debugPrint('VaultController.deleteItem storage remove error: $e');
           }
@@ -450,11 +482,15 @@ class VaultController extends Notifier<VaultState>
       } catch (e) {
         debugPrint('VaultController.deleteItem Supabase error: $e');
         if (!ref.mounted) return;
-        state = state.copyWith(items: state.items.where((i) => i.id != id).toList());
+        state = state.copyWith(
+          items: state.items.where((i) => i.id != id).toList(),
+        );
         await _persist();
       }
     } else {
-      state = state.copyWith(items: state.items.where((i) => i.id != id).toList());
+      state = state.copyWith(
+        items: state.items.where((i) => i.id != id).toList(),
+      );
       await _persist();
     }
 
@@ -482,7 +518,8 @@ class VaultController extends Notifier<VaultState>
   }
 }
 
-final vaultControllerProvider = NotifierProvider.autoDispose<VaultController, VaultState>(
-  VaultController.new,
-  dependencies: [coupleSessionProvider],
-);
+final vaultControllerProvider =
+    NotifierProvider.autoDispose<VaultController, VaultState>(
+      VaultController.new,
+      dependencies: [coupleSessionProvider],
+    );

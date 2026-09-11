@@ -129,8 +129,9 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
     final prefs = await SharedPreferences.getInstance();
     Future<void> saveString(String key, String? value) =>
         value != null ? prefs.setString(key, value) : prefs.remove(key);
-    Future<void> saveDate(String key, DateTime? value) =>
-        value != null ? prefs.setString(key, value.toIso8601String()) : prefs.remove(key);
+    Future<void> saveDate(String key, DateTime? value) => value != null
+        ? prefs.setString(key, value.toIso8601String())
+        : prefs.remove(key);
 
     await saveString(PrefsKeys.yourGender, next.yourGender);
     await saveString(PrefsKeys.partnerGender, next.partnerGender);
@@ -161,18 +162,40 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
     if (session.isSupabaseAvailable) {
       if (session.userId != null) {
         final selfData = <String, dynamic>{};
-        if (!identical(yourGender, _unset)) selfData['gender'] = next.yourGender;
+        if (!identical(yourGender, _unset)) {
+          selfData['gender'] = next.yourGender;
+        }
         if (!identical(yourPhone, _unset)) selfData['phone'] = next.yourPhone;
-        if (!identical(yourBirthdate, _unset)) selfData['birthdate'] = next.yourBirthdate?.toIso8601String();
-        if (!identical(yourAddress, _unset)) selfData['address'] = next.yourAddress;
-        if (!identical(yourNationality, _unset)) selfData['nationality'] = next.yourNationality;
-        if (!identical(yourWeight, _unset)) selfData['weight'] = next.yourWeight;
-        if (!identical(yourHeight, _unset)) selfData['height'] = next.yourHeight;
-        if (!identical(yourBloodType, _unset)) selfData['blood_type'] = next.yourBloodType;
-        if (!identical(yourEyeColor, _unset)) selfData['eye_color'] = next.yourEyeColor;
-        if (!identical(yourConditions, _unset)) selfData['conditions'] = next.yourConditions;
-        if (!identical(yourDateIssued, _unset)) selfData['date_issued'] = next.yourDateIssued?.toIso8601String();
-        if (!identical(yourSignature, _unset)) selfData['signature'] = next.yourSignature;
+        if (!identical(yourBirthdate, _unset)) {
+          selfData['birthdate'] = next.yourBirthdate?.toIso8601String();
+        }
+        if (!identical(yourAddress, _unset)) {
+          selfData['address'] = next.yourAddress;
+        }
+        if (!identical(yourNationality, _unset)) {
+          selfData['nationality'] = next.yourNationality;
+        }
+        if (!identical(yourWeight, _unset)) {
+          selfData['weight'] = next.yourWeight;
+        }
+        if (!identical(yourHeight, _unset)) {
+          selfData['height'] = next.yourHeight;
+        }
+        if (!identical(yourBloodType, _unset)) {
+          selfData['blood_type'] = next.yourBloodType;
+        }
+        if (!identical(yourEyeColor, _unset)) {
+          selfData['eye_color'] = next.yourEyeColor;
+        }
+        if (!identical(yourConditions, _unset)) {
+          selfData['conditions'] = next.yourConditions;
+        }
+        if (!identical(yourDateIssued, _unset)) {
+          selfData['date_issued'] = next.yourDateIssued?.toIso8601String();
+        }
+        if (!identical(yourSignature, _unset)) {
+          selfData['signature'] = next.yourSignature;
+        }
         if (selfData.isNotEmpty) {
           try {
             await UserRepository.instance.updateUser(session.userId!, selfData);
@@ -184,27 +207,53 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
 
       if (session.partnerId != null) {
         final partnerData = <String, dynamic>{};
-        if (!identical(partnerGender, _unset)) partnerData['gender'] = next.partnerGender;
-        if (!identical(partnerPhone, _unset)) partnerData['phone'] = next.partnerPhone;
+        if (!identical(partnerGender, _unset)) {
+          partnerData['gender'] = next.partnerGender;
+        }
+        if (!identical(partnerPhone, _unset)) {
+          partnerData['phone'] = next.partnerPhone;
+        }
         if (!identical(partnerBirthdate, _unset)) {
           partnerData['birthdate'] = next.partnerBirthdate?.toIso8601String();
         }
-        if (!identical(partnerAddress, _unset)) partnerData['address'] = next.partnerAddress;
-        if (!identical(partnerNationality, _unset)) partnerData['nationality'] = next.partnerNationality;
-        if (!identical(partnerWeight, _unset)) partnerData['weight'] = next.partnerWeight;
-        if (!identical(partnerHeight, _unset)) partnerData['height'] = next.partnerHeight;
-        if (!identical(partnerBloodType, _unset)) partnerData['blood_type'] = next.partnerBloodType;
-        if (!identical(partnerEyeColor, _unset)) partnerData['eye_color'] = next.partnerEyeColor;
-        if (!identical(partnerConditions, _unset)) partnerData['conditions'] = next.partnerConditions;
-        if (!identical(partnerDateIssued, _unset)) {
-          partnerData['date_issued'] = next.partnerDateIssued?.toIso8601String();
+        if (!identical(partnerAddress, _unset)) {
+          partnerData['address'] = next.partnerAddress;
         }
-        if (!identical(partnerSignature, _unset)) partnerData['signature'] = next.partnerSignature;
+        if (!identical(partnerNationality, _unset)) {
+          partnerData['nationality'] = next.partnerNationality;
+        }
+        if (!identical(partnerWeight, _unset)) {
+          partnerData['weight'] = next.partnerWeight;
+        }
+        if (!identical(partnerHeight, _unset)) {
+          partnerData['height'] = next.partnerHeight;
+        }
+        if (!identical(partnerBloodType, _unset)) {
+          partnerData['blood_type'] = next.partnerBloodType;
+        }
+        if (!identical(partnerEyeColor, _unset)) {
+          partnerData['eye_color'] = next.partnerEyeColor;
+        }
+        if (!identical(partnerConditions, _unset)) {
+          partnerData['conditions'] = next.partnerConditions;
+        }
+        if (!identical(partnerDateIssued, _unset)) {
+          partnerData['date_issued'] = next.partnerDateIssued
+              ?.toIso8601String();
+        }
+        if (!identical(partnerSignature, _unset)) {
+          partnerData['signature'] = next.partnerSignature;
+        }
         if (partnerData.isNotEmpty) {
           try {
-            await UserRepository.instance.updatePartnerProfile(session.partnerId!, partnerData);
+            await UserRepository.instance.updatePartnerProfile(
+              session.partnerId!,
+              partnerData,
+            );
           } catch (e) {
-            debugPrint('LicenseController.updateFields updatePartnerProfile error: $e');
+            debugPrint(
+              'LicenseController.updateFields updatePartnerProfile error: $e',
+            );
           }
         }
       }
@@ -219,7 +268,6 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
       route: 'relationship_profile',
     );
   }
-
 }
 
 /// A default (non-`autoDispose`) `AsyncNotifierProvider` stays alive for the
@@ -237,7 +285,8 @@ class LicenseController extends AsyncNotifier<LicenseDetails> {
 /// before its final `notifyListeners()`. Deliberately invalidate-and-rebuild
 /// rather than a hand-written `reset()` method, so there is exactly one
 /// code path (`build()`) responsible for what "empty" state looks like.
-final licenseControllerProvider = AsyncNotifierProvider<LicenseController, LicenseDetails>(
-  LicenseController.new,
-  dependencies: [coupleSessionProvider],
-);
+final licenseControllerProvider =
+    AsyncNotifierProvider<LicenseController, LicenseDetails>(
+      LicenseController.new,
+      dependencies: [coupleSessionProvider],
+    );

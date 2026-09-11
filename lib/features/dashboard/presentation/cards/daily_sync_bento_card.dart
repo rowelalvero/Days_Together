@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -22,7 +22,8 @@ class DailySyncBentoCard extends StatelessWidget {
 
         final hasQuestion = question != null;
         final answered = question != null && question.myAnswer != null;
-        final partnerAnswered = question != null && question.partnerAnswer != null;
+        final partnerAnswered =
+            question != null && question.partnerAnswer != null;
 
         String statusText = 'Waiting for answers';
         if (answered && partnerAnswered) {
@@ -50,7 +51,10 @@ class DailySyncBentoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -107,14 +111,17 @@ class DailySyncBentoCard extends StatelessWidget {
                         questionText,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.heading(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: theme.textColor,
-                          height: 1.4,
-                        ).copyWith(
-                          fontStyle: hasQuestion ? FontStyle.italic : FontStyle.normal,
-                        ),
+                        style:
+                            AppTypography.heading(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textColor,
+                              height: 1.4,
+                            ).copyWith(
+                              fontStyle: hasQuestion
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
+                            ),
                       ),
                       const SizedBox(height: 12),
                       Container(

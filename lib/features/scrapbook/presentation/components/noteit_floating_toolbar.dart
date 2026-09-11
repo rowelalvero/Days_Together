@@ -50,7 +50,9 @@ class NoteitFloatingToolbar extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            color: isSelected ? Colors.white : theme.textColor.withValues(alpha: 0.7),
+            color: isSelected
+                ? Colors.white
+                : theme.textColor.withValues(alpha: 0.7),
             size: 18,
           ),
         ),

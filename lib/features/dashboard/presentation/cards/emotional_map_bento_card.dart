@@ -7,7 +7,7 @@ import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/features/mood/daily_mood_state.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -37,7 +37,10 @@ class EmotionalMapBentoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -205,7 +208,8 @@ class EmotionalMapBentoCard extends StatelessWidget {
     final now = DateTime.now();
     final dates = List.generate(
       7,
-      (i) => DateFormat('yyyy-MM-dd').format(now.subtract(Duration(days: 6 - i))),
+      (i) =>
+          DateFormat('yyyy-MM-dd').format(now.subtract(Duration(days: 6 - i))),
     );
 
     final userMoodsMap = {for (var m in recent) m.date: m.moodScore};
@@ -220,7 +224,9 @@ class EmotionalMapBentoCard extends StatelessWidget {
         userSpots.add(FlSpot(i.toDouble(), userMoodsMap[date]!.toDouble()));
       }
       if (partnerMoodsMap.containsKey(date)) {
-        partnerSpots.add(FlSpot(i.toDouble(), partnerMoodsMap[date]!.toDouble()));
+        partnerSpots.add(
+          FlSpot(i.toDouble(), partnerMoodsMap[date]!.toDouble()),
+        );
       }
     }
 
@@ -267,8 +273,12 @@ class EmotionalMapBentoCard extends StatelessWidget {
                   },
                 ),
               ),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
@@ -292,7 +302,9 @@ class EmotionalMapBentoCard extends StatelessWidget {
                           ),
                         );
                       } catch (e) {
-                        debugPrint('EmotionalMapBentoCard: rendering a weekday axis label failed: $e');
+                        debugPrint(
+                          'EmotionalMapBentoCard: rendering a weekday axis label failed: $e',
+                        );
                       }
                     }
                     return const SizedBox.shrink();

@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class WidgetDeviceFrame extends StatelessWidget {
   final Widget child;
 
-  const WidgetDeviceFrame({
-    super.key,
-    required this.child,
-  });
+  const WidgetDeviceFrame({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +41,17 @@ class WidgetDeviceFrame extends StatelessWidget {
               ),
               Row(
                 children: [
-                  Icon(Icons.wifi, color: Colors.white.withValues(alpha: 0.6), size: 14),
+                  Icon(
+                    Icons.wifi,
+                    color: Colors.white.withValues(alpha: 0.6),
+                    size: 14,
+                  ),
                   const SizedBox(width: 4),
-                  Icon(Icons.battery_full_rounded, color: Colors.white.withValues(alpha: 0.6), size: 16),
+                  Icon(
+                    Icons.battery_full_rounded,
+                    color: Colors.white.withValues(alpha: 0.6),
+                    size: 16,
+                  ),
                 ],
               ),
             ],

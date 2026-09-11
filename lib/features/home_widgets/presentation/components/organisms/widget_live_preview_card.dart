@@ -70,10 +70,7 @@ class WidgetLivePreviewCard extends StatelessWidget {
 
     return WidgetDeviceFrame(
       child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: renderCard,
-        ),
+        child: FittedBox(fit: BoxFit.scaleDown, child: renderCard),
       ),
     );
   }

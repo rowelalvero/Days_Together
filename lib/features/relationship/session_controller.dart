@@ -41,20 +41,25 @@ class SessionController extends Notifier<SessionState> {
     }
   }
 
-  Future<bool> joinWithCode(String code) => ref.read(coupleSessionProvider).joinWithCode(code);
+  Future<bool> joinWithCode(String code) =>
+      ref.read(coupleSessionProvider).joinWithCode(code);
 
-  Future<void> completeOnboarding() => ref.read(coupleSessionProvider).completeOnboarding();
+  Future<void> completeOnboarding() =>
+      ref.read(coupleSessionProvider).completeOnboarding();
 
   /// Resolves once this device holds the couple's photo-encryption key, or
   /// after a short timeout. See `CoupleSession.waitForCoupleKey`.
-  Future<void> waitForCoupleKey() => ref.read(coupleSessionProvider).waitForCoupleKey();
+  Future<void> waitForCoupleKey() =>
+      ref.read(coupleSessionProvider).waitForCoupleKey();
 
   Future<bool> recoverRelationship(String code) =>
       ref.read(coupleSessionProvider).recoverRelationship(code);
 
-  Future<void> unlinkPartner() => ref.read(coupleSessionProvider).unlinkPartner();
+  Future<void> unlinkPartner() =>
+      ref.read(coupleSessionProvider).unlinkPartner();
 
-  Future<void> deleteAccount() => ref.read(coupleSessionProvider).deleteAccount();
+  Future<void> deleteAccount() =>
+      ref.read(coupleSessionProvider).deleteAccount();
 
   Future<void> signUpWithEmail(String email, String password) =>
       ref.read(coupleSessionProvider).signUpWithEmail(email, password);
@@ -62,17 +67,20 @@ class SessionController extends Notifier<SessionState> {
   Future<void> signInWithEmail(String email, String password) =>
       ref.read(coupleSessionProvider).signInWithEmail(email, password);
 
-  Future<void> signInWithGoogle() => ref.read(coupleSessionProvider).signInWithGoogle();
+  Future<void> signInWithGoogle() =>
+      ref.read(coupleSessionProvider).signInWithGoogle();
 
   Future<void> logout({bool wipeAll = false}) =>
       ref.read(coupleSessionProvider).logout(wipeAll: wipeAll);
 
   void forceInitialized() => ref.read(coupleSessionProvider).forceInitialized();
 
-  void clearPartnerDeletedNotice() => ref.read(coupleSessionProvider).clearPartnerDeletedNotice();
+  void clearPartnerDeletedNotice() =>
+      ref.read(coupleSessionProvider).clearPartnerDeletedNotice();
 }
 
-final sessionControllerProvider = NotifierProvider<SessionController, SessionState>(
-  SessionController.new,
-  dependencies: [coupleSessionProvider],
-);
+final sessionControllerProvider =
+    NotifierProvider<SessionController, SessionState>(
+      SessionController.new,
+      dependencies: [coupleSessionProvider],
+    );

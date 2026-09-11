@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -37,13 +37,10 @@ class _LiveStopwatchCardState extends State<LiveStopwatchCard>
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     );
-    _hoursAnimation = Tween<double>(
-      begin: 0,
-      end: _difference.inHours.toDouble(),
-    ).animate(CurvedAnimation(
-      parent: _introController,
-      curve: Curves.easeOutCubic,
-    ));
+    _hoursAnimation =
+        Tween<double>(begin: 0, end: _difference.inHours.toDouble()).animate(
+          CurvedAnimation(parent: _introController, curve: Curves.easeOutCubic),
+        );
     _introController.forward();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -158,11 +155,7 @@ class _LiveStopwatchCardState extends State<LiveStopwatchCard>
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            child: Divider(
-              height: 1,
-              thickness: 0.5,
-              color: Colors.white10,
-            ),
+            child: Divider(height: 1, thickness: 0.5, color: Colors.white10),
           ),
           Row(
             children: [
@@ -189,11 +182,7 @@ class _LiveStopwatchCardState extends State<LiveStopwatchCard>
                   ],
                 ),
               ),
-              Container(
-                width: 0.5,
-                height: 32,
-                color: Colors.white10,
-              ),
+              Container(width: 0.5, height: 32, color: Colors.white10),
               Expanded(
                 child: Column(
                   children: [

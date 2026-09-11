@@ -28,7 +28,8 @@ import 'package:days_together/core/session/couple_session.dart';
 /// -- almost certainly an accident of inheriting the base class unchanged
 /// rather than a deliberate design choice, but preserved exactly rather
 /// than "fixed," since Phase 6a's job is a faithful port.
-class NotificationPreferencesController extends Notifier<NotificationPreferencesState> {
+class NotificationPreferencesController
+    extends Notifier<NotificationPreferencesState> {
   static const _syncTimeout = Duration(seconds: 15);
 
   String? _coupleId;
@@ -48,12 +49,15 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
   void _runSyncInitialData() {
     syncInitialData().timeout(
       _syncTimeout,
-      onTimeout: () => debugPrint('NotificationPreferencesController: syncInitialData timed out'),
+      onTimeout: () => debugPrint(
+        'NotificationPreferencesController: syncInitialData timed out',
+      ),
     );
   }
 
   Future<void> updateSession(CoupleSession session) async {
-    final credentialsChanged = _coupleId != session.coupleId || _userId != session.userId;
+    final credentialsChanged =
+        _coupleId != session.coupleId || _userId != session.userId;
     if (!credentialsChanged) return;
 
     _coupleId = session.coupleId;
@@ -63,7 +67,9 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
       try {
         await syncInitialData().timeout(_syncTimeout);
       } on TimeoutException {
-        debugPrint('NotificationPreferencesController: syncInitialData timed out');
+        debugPrint(
+          'NotificationPreferencesController: syncInitialData timed out',
+        );
       }
     } else {
       await purgeCache();
@@ -87,7 +93,11 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
 
     try {
       final client = Supabase.instance.client;
-      final res = await client.from('user_notification_preferences').select().eq('user_id', userId).maybeSingle();
+      final res = await client
+          .from('user_notification_preferences')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
 
       if (!ref.mounted) return;
 
@@ -101,14 +111,21 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
           return;
         }
       } else {
-        preferences = NotificationPreferences(userId: userId, timezone: DateTime.now().timeZoneName);
-        await client.from('user_notification_preferences').insert(preferences.toJson());
+        preferences = NotificationPreferences(
+          userId: userId,
+          timezone: DateTime.now().timeZoneName,
+        );
+        await client
+            .from('user_notification_preferences')
+            .insert(preferences.toJson());
       }
 
       if (!ref.mounted) return;
       state = state.copyWith(preferences: preferences, isLoading: false);
     } catch (e) {
-      debugPrint('NotificationPreferencesController: Error loading preferences: $e');
+      debugPrint(
+        'NotificationPreferencesController: Error loading preferences: $e',
+      );
       if (!ref.mounted) return;
       state = state.copyWith(isLoading: false);
     }
@@ -127,9 +144,13 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
       await client.from('user_notification_preferences').upsert(updatedJson);
 
       if (!ref.mounted) return;
-      state = state.copyWith(preferences: NotificationPreferences.fromJson(updatedJson));
+      state = state.copyWith(
+        preferences: NotificationPreferences.fromJson(updatedJson),
+      );
     } catch (e) {
-      debugPrint('NotificationPreferencesController: Error updating preference $key: $e');
+      debugPrint(
+        'NotificationPreferencesController: Error updating preference $key: $e',
+      );
     }
   }
 
@@ -145,7 +166,10 @@ class NotificationPreferencesController extends Notifier<NotificationPreferences
 }
 
 final notificationPreferencesControllerProvider =
-    NotifierProvider.autoDispose<NotificationPreferencesController, NotificationPreferencesState>(
-  NotificationPreferencesController.new,
-  dependencies: [coupleSessionProvider],
-);
+    NotifierProvider.autoDispose<
+      NotificationPreferencesController,
+      NotificationPreferencesState
+    >(
+      NotificationPreferencesController.new,
+      dependencies: [coupleSessionProvider],
+    );

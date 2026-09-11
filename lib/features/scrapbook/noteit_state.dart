@@ -13,9 +13,17 @@ class NoteitState {
   final bool isLoading;
   final String? coupleId;
 
-  const NoteitState({this.notes = const [], this.isLoading = true, this.coupleId});
+  const NoteitState({
+    this.notes = const [],
+    this.isLoading = true,
+    this.coupleId,
+  });
 
-  NoteitState copyWith({List<NoteitItem>? notes, bool? isLoading, String? coupleId}) {
+  NoteitState copyWith({
+    List<NoteitItem>? notes,
+    bool? isLoading,
+    String? coupleId,
+  }) {
     return NoteitState(
       notes: notes ?? this.notes,
       isLoading: isLoading ?? this.isLoading,
@@ -23,7 +31,8 @@ class NoteitState {
     );
   }
 
-  List<NoteitItem> get visibleNotes => coupleId == null ? const [] : List.unmodifiable(notes);
+  List<NoteitItem> get visibleNotes =>
+      coupleId == null ? const [] : List.unmodifiable(notes);
 
   NoteitItem? get latestReceived {
     for (final n in notes) {

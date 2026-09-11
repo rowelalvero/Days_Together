@@ -102,7 +102,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),
@@ -215,12 +218,16 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
             maxLines: 2,
             decoration: InputDecoration(
               hintText: 'Add a little detail about your day... (optional)',
-              hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
+              hintStyle: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.3),
+              ),
               filled: true,
               fillColor: theme.textColor.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+                borderSide: BorderSide(
+                  color: theme.textColor.withValues(alpha: 0.1),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -254,7 +261,11 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
               ),
               child: Text(
                 'Save Today\'s Mood',
-                style: AppTypography.button(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                style: AppTypography.button(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -293,7 +304,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                   });
                 },
                 icon: const Icon(Icons.edit, size: 16),
-                label: Text('Update', style: AppTypography.button(color: theme.accentColor)),
+                label: Text(
+                  'Update',
+                  style: AppTypography.button(color: theme.accentColor),
+                ),
                 style: TextButton.styleFrom(foregroundColor: theme.accentColor),
               ),
             ],
@@ -355,7 +369,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
   }
 
   Widget _buildSyncQuestionCard(
-      DailySyncQuestion? question, LoveStoryTheme theme, DailyMoodController notifier) {
+    DailySyncQuestion? question,
+    LoveStoryTheme theme,
+    DailyMoodController notifier,
+  ) {
     if (question == null) return const SizedBox.shrink();
 
     final hasAnswered = question.myAnswer != null;
@@ -380,7 +397,11 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                   color: theme.accentColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.favorite_rounded, color: theme.accentColor, size: 20),
+                child: Icon(
+                  Icons.favorite_rounded,
+                  color: theme.accentColor,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
@@ -410,12 +431,16 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Write your response here...',
-                hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3)),
+                hintStyle: AppTypography.body(
+                  color: theme.textColor.withValues(alpha: 0.3),
+                ),
                 filled: true,
                 fillColor: theme.textColor.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+                  borderSide: BorderSide(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -444,7 +469,13 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Text('Share Response', style: AppTypography.button(fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text(
+                  'Share Response',
+                  style: AppTypography.button(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ] else ...[
@@ -454,7 +485,9 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
               decoration: BoxDecoration(
                 color: theme.textColor.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.textColor.withValues(alpha: 0.05)),
+                border: Border.all(
+                  color: theme.textColor.withValues(alpha: 0.05),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +503,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                   const SizedBox(height: 6),
                   Text(
                     question.myAnswer!,
-                    style: AppTypography.body(color: theme.textColor, fontSize: 14),
+                    style: AppTypography.body(
+                      color: theme.textColor,
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
@@ -493,7 +529,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                     SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: theme.textColor.withValues(alpha: 0.3)),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.textColor.withValues(alpha: 0.3),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -513,7 +552,9 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                 decoration: BoxDecoration(
                   color: theme.accentColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.accentColor.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: theme.accentColor.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,7 +570,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                     const SizedBox(height: 6),
                     Text(
                       question.partnerAnswer!,
-                      style: AppTypography.body(color: theme.textColor, fontSize: 14),
+                      style: AppTypography.body(
+                        color: theme.textColor,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -541,7 +585,10 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
     );
   }
 
-  Widget _buildMoodChartCard(List<DailyMood> recentMoods, LoveStoryTheme theme) {
+  Widget _buildMoodChartCard(
+    List<DailyMood> recentMoods,
+    LoveStoryTheme theme,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(24),
@@ -596,8 +643,12 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                   gridData: const FlGridData(show: false),
                   titlesData: FlTitlesData(
                     show: true,
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -663,11 +714,11 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
                         show: true,
                         getDotPainter: (spot, percent, barData, index) =>
                             FlDotCirclePainter(
-                          radius: 5,
-                          color: theme.accentColor,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        ),
+                              radius: 5,
+                              color: theme.accentColor,
+                              strokeWidth: 2,
+                              strokeColor: Colors.white,
+                            ),
                       ),
                       belowBarData: BarAreaData(
                         show: true,

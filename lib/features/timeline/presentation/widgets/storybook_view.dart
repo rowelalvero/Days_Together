@@ -5,13 +5,14 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/features/timeline/presentation/memory_notes_section.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/features/timeline/presentation/widgets/memory_notes_section.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 /// Shown while a memory's image is resolving, or when it has none.
-const AssetImage _kStorybookFallbackImage =
-    AssetImage('assets/images/app_icon.png');
+const AssetImage _kStorybookFallbackImage = AssetImage(
+  'assets/images/app_icon.png',
+);
 
 class StorybookView extends ConsumerStatefulWidget {
   final List<TimelineItemData> items;
@@ -69,7 +70,10 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
       return Center(
         child: Text(
           'No chapters written yet.',
-          style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 16),
+          style: AppTypography.body(
+            color: theme.textColor.withValues(alpha: 0.3),
+            fontSize: 16,
+          ),
         ),
       );
     }
@@ -83,8 +87,12 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
         final item = widget.items[index];
         final hasImage = item.imagePath != null || item.networkImageUrl != null;
         final cardTextColor = hasImage ? Colors.white : theme.textColor;
-        final cardSecondaryTextColor = hasImage ? Colors.white70 : theme.textColor.withValues(alpha: 0.7);
-        final cardMutedTextColor = hasImage ? Colors.white54 : theme.textColor.withValues(alpha: 0.54);
+        final cardSecondaryTextColor = hasImage
+            ? Colors.white70
+            : theme.textColor.withValues(alpha: 0.7);
+        final cardMutedTextColor = hasImage
+            ? Colors.white54
+            : theme.textColor.withValues(alpha: 0.54);
 
         // Calculate card scale and translation offset for tactile transition
         double difference = index - _currentPageValue;
@@ -134,7 +142,10 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                 child: Transform.scale(
                   scale: scale,
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
                     child: GlassContainer(
                       width: double.infinity,
                       height: 480,
@@ -162,7 +173,9 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    DateFormat('MMMM dd, yyyy').format(item.date),
+                                    DateFormat(
+                                      'MMMM dd, yyyy',
+                                    ).format(item.date),
                                     style: AppTypography.bodyLarge(
                                       color: cardTextColor,
                                       fontWeight: FontWeight.bold,
@@ -212,15 +225,23 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                               color: cardTextColor,
                             ),
                           ),
-                          if (item.location != null && item.location!.isNotEmpty) ...[
+                          if (item.location != null &&
+                              item.location!.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.location_on_rounded, size: 13, color: cardMutedTextColor),
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  size: 13,
+                                  color: cardMutedTextColor,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   item.location!,
-                                  style: AppTypography.bodyMedium(color: cardMutedTextColor, fontSize: 12),
+                                  style: AppTypography.bodyMedium(
+                                    color: cardMutedTextColor,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
@@ -262,7 +283,12 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                                       borderRadius: 24,
                                       opacity: 0.22,
                                       blur: 25,
-                                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                                      padding: const EdgeInsets.fromLTRB(
+                                        20,
+                                        10,
+                                        20,
+                                        20,
+                                      ),
                                       child: Column(
                                         children: [
                                           Container(
@@ -270,7 +296,8 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                                             height: 5,
                                             decoration: BoxDecoration(
                                               color: Colors.white24,
-                                              borderRadius: BorderRadius.circular(10),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
                                             ),
                                           ),
                                           const SizedBox(height: 10),
@@ -292,7 +319,10 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                               child: GlassContainer(
                                 borderRadius: 20,
                                 opacity: 0.15,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -312,7 +342,9 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      item.comments.length == 1 ? 'note' : 'notes',
+                                      item.comments.length == 1
+                                          ? 'note'
+                                          : 'notes',
                                       style: AppTypography.bodyMedium(
                                         color: cardSecondaryTextColor,
                                         fontSize: 11,

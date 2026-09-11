@@ -21,7 +21,9 @@ class CalendarState {
       if (event.isRecurringYearly) {
         return event.date.month == day.month && event.date.day == day.day;
       }
-      return event.date.year == day.year && event.date.month == day.month && event.date.day == day.day;
+      return event.date.year == day.year &&
+          event.date.month == day.month &&
+          event.date.day == day.day;
     }).toList();
   }
 }

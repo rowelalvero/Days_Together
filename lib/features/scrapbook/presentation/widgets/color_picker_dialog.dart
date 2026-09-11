@@ -53,7 +53,12 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
 
   void _updateColorFromHsv() {
     setState(() {
-      _selectedColor = HSVColor.fromAHSV(1.0, _hue, _saturation, _value).toColor();
+      _selectedColor = HSVColor.fromAHSV(
+        1.0,
+        _hue,
+        _saturation,
+        _value,
+      ).toColor();
     });
   }
 
@@ -77,7 +82,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Color preview and preset palette
             Row(
               children: [
@@ -87,7 +92,10 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   decoration: BoxDecoration(
                     color: _selectedColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: widget.theme.textColor.withValues(alpha: 0.2), width: 2),
+                    border: Border.all(
+                      color: widget.theme.textColor.withValues(alpha: 0.2),
+                      width: 2,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: _selectedColor.withValues(alpha: 0.3),
@@ -110,7 +118,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               ],
             ),
             const SizedBox(height: 20),
-            
+
             Text(
               'Presets',
               style: AppTypography.caption(
@@ -123,7 +131,8 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               spacing: 8,
               runSpacing: 8,
               children: _presetColors.map((color) {
-                final isSelected = _selectedColor.toARGB32() == color.toARGB32();
+                final isSelected =
+                    _selectedColor.toARGB32() == color.toARGB32();
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -138,7 +147,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       color: color,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? widget.theme.accentColor : Colors.transparent,
+                        color: isSelected
+                            ? widget.theme.accentColor
+                            : Colors.transparent,
                         width: 2.5,
                       ),
                       boxShadow: [
@@ -154,7 +165,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               }).toList(),
             ),
             const SizedBox(height: 24),
-            
+
             Text(
               'Custom Color',
               style: AppTypography.caption(
@@ -163,11 +174,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            
+
             // Hue Slider
             Row(
               children: [
-                SizedBox(width: 45, child: Text('Hue', style: AppTypography.body(color: widget.theme.textColor, fontSize: 13))),
+                SizedBox(
+                  width: 45,
+                  child: Text(
+                    'Hue',
+                    style: AppTypography.body(
+                      color: widget.theme.textColor,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Slider(
                     value: _hue,
@@ -184,11 +204,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 ),
               ],
             ),
-            
+
             // Saturation Slider
             Row(
               children: [
-                SizedBox(width: 45, child: Text('Sat', style: AppTypography.body(color: widget.theme.textColor, fontSize: 13))),
+                SizedBox(
+                  width: 45,
+                  child: Text(
+                    'Sat',
+                    style: AppTypography.body(
+                      color: widget.theme.textColor,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Slider(
                     value: _saturation,
@@ -205,11 +234,20 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 ),
               ],
             ),
-            
+
             // Value Slider
             Row(
               children: [
-                SizedBox(width: 45, child: Text('Value', style: AppTypography.body(color: widget.theme.textColor, fontSize: 13))),
+                SizedBox(
+                  width: 45,
+                  child: Text(
+                    'Value',
+                    style: AppTypography.body(
+                      color: widget.theme.textColor,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: Slider(
                     value: _value,
@@ -226,9 +264,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Action Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -237,7 +275,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Cancel',
-                    style: AppTypography.button(color: widget.theme.textColor.withValues(alpha: 0.6)),
+                    style: AppTypography.button(
+                      color: widget.theme.textColor.withValues(alpha: 0.6),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -246,7 +286,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.theme.accentColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: Text(
                     'Select',
@@ -254,7 +296,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

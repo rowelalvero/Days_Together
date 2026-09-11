@@ -16,7 +16,10 @@ class TimeCapsuleState {
     );
   }
 
-  List<TimeCapsule> get lockedCapsules => capsules.where((c) => !c.isOpened && !c.canOpen).toList();
-  List<TimeCapsule> get openableCapsules => capsules.where((c) => !c.isOpened && c.canOpen).toList();
-  List<TimeCapsule> get openedCapsules => capsules.where((c) => c.isOpened).toList();
+  List<TimeCapsule> get lockedCapsules =>
+      capsules.where((c) => !c.isOpened && !c.canOpen).toList();
+  List<TimeCapsule> get openableCapsules =>
+      capsules.where((c) => !c.isOpened && c.canOpen).toList();
+  List<TimeCapsule> get openedCapsules =>
+      capsules.where((c) => c.isOpened).toList();
 }

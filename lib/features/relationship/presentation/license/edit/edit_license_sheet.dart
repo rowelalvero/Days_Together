@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget;
 
 import 'package:days_together/features/relationship/data/signature_codec.dart';
 import 'package:days_together/features/relationship/license_controller.dart';
@@ -86,7 +87,8 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
   void initState() {
     super.initState();
 
-    final license = ref.read(licenseControllerProvider).value ?? const LicenseDetails();
+    final license =
+        ref.read(licenseControllerProvider).value ?? const LicenseDetails();
     // Seeded from ProfileController rather than a prop-drilled CoupleSession.
     // `ref.read` is right here (not `watch`): these are one-shot seeds for
     // mutable text controllers, and re-reading them on a later rebuild would
@@ -99,9 +101,7 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
 
     _yourPhoneCtrl = TextEditingController(text: license.yourPhone ?? '');
 
-    _partnerPhoneCtrl = TextEditingController(
-      text: license.partnerPhone ?? '',
-    );
+    _partnerPhoneCtrl = TextEditingController(text: license.partnerPhone ?? '');
 
     _yourAddressCtrl = TextEditingController(text: license.yourAddress ?? '');
 
@@ -119,23 +119,33 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
 
     _yourWeightCtrl = TextEditingController(text: license.yourWeight ?? '—');
 
-    _partnerWeightCtrl = TextEditingController(text: license.partnerWeight ?? '—');
+    _partnerWeightCtrl = TextEditingController(
+      text: license.partnerWeight ?? '—',
+    );
 
     _yourHeightCtrl = TextEditingController(text: license.yourHeight ?? '—');
 
-    _partnerHeightCtrl = TextEditingController(text: license.partnerHeight ?? '—');
+    _partnerHeightCtrl = TextEditingController(
+      text: license.partnerHeight ?? '—',
+    );
 
     _yourBloodCtrl = TextEditingController(text: license.yourBloodType ?? '—');
 
-    _partnerBloodCtrl = TextEditingController(text: license.partnerBloodType ?? '—');
+    _partnerBloodCtrl = TextEditingController(
+      text: license.partnerBloodType ?? '—',
+    );
 
-    _yourEyeColorCtrl = TextEditingController(text: license.yourEyeColor ?? '—');
+    _yourEyeColorCtrl = TextEditingController(
+      text: license.yourEyeColor ?? '—',
+    );
 
     _partnerEyeColorCtrl = TextEditingController(
       text: license.partnerEyeColor ?? '—',
     );
 
-    _yourConditionsCtrl = TextEditingController(text: license.yourConditions ?? 'Madly in Love');
+    _yourConditionsCtrl = TextEditingController(
+      text: license.yourConditions ?? 'Madly in Love',
+    );
 
     _partnerConditionsCtrl = TextEditingController(
       text: license.partnerConditions ?? 'Madly in Love',
@@ -290,21 +300,27 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
     // CoupleSession before; it now goes through ProfileController's own
     // delegating setter, so this sheet no longer holds the legacy session
     // object at all.
-    ref.read(profileControllerProvider.notifier).setYourName(_yourNameCtrl.text.trim());
-    ref.read(licenseControllerProvider.notifier).updateFields(
-      yourGender: _yourGender,
-      yourPhone: _yourPhoneCtrl.text.trim(),
-      yourBirthdate: _yourBirthdate,
-      yourAddress: _yourAddressCtrl.text.trim(),
-      yourNationality: _yourNationalityCtrl.text.trim(),
-      yourWeight: _yourWeightCtrl.text.trim(),
-      yourHeight: _yourHeightCtrl.text.trim(),
-      yourBloodType: _yourBloodCtrl.text.trim(),
-      yourEyeColor: _yourEyeColorCtrl.text.trim(),
-      yourConditions: _yourConditionsCtrl.text.trim(),
-      yourDateIssued: _yourDateIssued,
-      yourSignature: _yourSignatureStr.isNotEmpty ? _yourSignatureStr : null,
-    );
+    ref
+        .read(profileControllerProvider.notifier)
+        .setYourName(_yourNameCtrl.text.trim());
+    ref
+        .read(licenseControllerProvider.notifier)
+        .updateFields(
+          yourGender: _yourGender,
+          yourPhone: _yourPhoneCtrl.text.trim(),
+          yourBirthdate: _yourBirthdate,
+          yourAddress: _yourAddressCtrl.text.trim(),
+          yourNationality: _yourNationalityCtrl.text.trim(),
+          yourWeight: _yourWeightCtrl.text.trim(),
+          yourHeight: _yourHeightCtrl.text.trim(),
+          yourBloodType: _yourBloodCtrl.text.trim(),
+          yourEyeColor: _yourEyeColorCtrl.text.trim(),
+          yourConditions: _yourConditionsCtrl.text.trim(),
+          yourDateIssued: _yourDateIssued,
+          yourSignature: _yourSignatureStr.isNotEmpty
+              ? _yourSignatureStr
+              : null,
+        );
 
     Navigator.pop(context);
   }
@@ -343,14 +359,16 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
           Text(
             'Edit ID Card Info',
 
-            style: AppTypography.heading(fontSize: 22, fontWeight: FontWeight.bold, color: widget.theme.textColor),
+            style: AppTypography.heading(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: widget.theme.textColor,
+            ),
           ),
 
           const SizedBox(height: 10),
 
-          Expanded(
-            child: _buildForm(isYou: true),
-          ),
+          Expanded(child: _buildForm(isYou: true)),
 
           Padding(
             padding: const EdgeInsets.all(24),
@@ -376,7 +394,10 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
                 child: Text(
                   'Save Changes',
 
-                  style: AppTypography.body(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: AppTypography.body(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),

@@ -16,7 +16,7 @@ import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/presentation/components/noteit_canvas_viewport.dart';
 import 'package:days_together/features/scrapbook/presentation/components/noteit_floating_toolbar.dart';
 import 'package:days_together/features/scrapbook/presentation/components/noteit_history_panel.dart';
-import 'package:days_together/features/scrapbook/presentation/custom_backgrounds.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/custom_backgrounds.dart';
 import 'package:days_together/features/scrapbook/presentation/dialogs/noteit_background_dialog.dart';
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_brush_properties_panel.dart';
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_text_properties_panel.dart';
@@ -142,11 +142,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
           ..style = PaintingStyle.stroke,
         drawOnce: true,
       ),
-      scale: const ScaleSettings(
-        enabled: true,
-        minScale: 0.5,
-        maxScale: 4.0,
-      ),
+      scale: const ScaleSettings(enabled: true, minScale: 0.5, maxScale: 4.0),
     );
     _updateBackground();
     _controller.addListener(_onControllerUpdated);
@@ -567,14 +563,19 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
     }
   }
 
-  Future<void> _sendCanvas(NoteitController notifier, LoveStoryTheme theme) async {
+  Future<void> _sendCanvas(
+    NoteitController notifier,
+    LoveStoryTheme theme,
+  ) async {
     final rp = ref.read(profileControllerProvider);
     final chatProvider = ref.read(loveChatControllerProvider.notifier);
 
     if (_controller.drawables.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add some drawings, shapes, or notes to the canvas! 🎨'),
+          content: Text(
+            'Please add some drawings, shapes, or notes to the canvas! 🎨',
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -602,7 +603,11 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
       );
       final jsonStr = jsonEncode(doc.toJson());
 
-      final useCase = ScrapbookShareUseCase(notifier, chatProvider, _draftStore);
+      final useCase = ScrapbookShareUseCase(
+        notifier,
+        chatProvider,
+        _draftStore,
+      );
       final result = await useCase.share(
         canvasJson: jsonStr,
         localImagePath: file.path,
@@ -627,7 +632,9 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Saved to scrapbook, but couldn\'t notify chat: ${result.failure.message}'),
+                content: Text(
+                  'Saved to scrapbook, but couldn\'t notify chat: ${result.failure.message}',
+                ),
                 backgroundColor: Colors.orangeAccent,
               ),
             );
@@ -712,13 +719,19 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
                     isUnderline: _isUnderline,
                     textAlign: _textAlign,
                     controller: _controller,
-                    onFontFamilyChanged: (font) => setState(() => _activeFontFamily = font),
-                    onTextColorChanged: (color) => setState(() => _brushColor = color),
-                    onHighlightColorChanged: (color) => setState(() => _highlightColor = color),
+                    onFontFamilyChanged: (font) =>
+                        setState(() => _activeFontFamily = font),
+                    onTextColorChanged: (color) =>
+                        setState(() => _brushColor = color),
+                    onHighlightColorChanged: (color) =>
+                        setState(() => _highlightColor = color),
                     onToggleBold: () => setState(() => _isBold = !_isBold),
-                    onToggleItalic: () => setState(() => _isItalic = !_isItalic),
-                    onToggleUnderline: () => setState(() => _isUnderline = !_isUnderline),
-                    onAlignmentChanged: (align) => setState(() => _textAlign = align),
+                    onToggleItalic: () =>
+                        setState(() => _isItalic = !_isItalic),
+                    onToggleUnderline: () =>
+                        setState(() => _isUnderline = !_isUnderline),
+                    onAlignmentChanged: (align) =>
+                        setState(() => _textAlign = align),
                   )
                 : NoteitBrushPropertiesPanel(
                     theme: theme,
@@ -755,12 +768,16 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
               isUnderline: _isUnderline,
               textAlign: _textAlign,
               controller: _controller,
-              onFontFamilyChanged: (font) => setState(() => _activeFontFamily = font),
-              onTextColorChanged: (color) => setState(() => _brushColor = color),
-              onHighlightColorChanged: (color) => setState(() => _highlightColor = color),
+              onFontFamilyChanged: (font) =>
+                  setState(() => _activeFontFamily = font),
+              onTextColorChanged: (color) =>
+                  setState(() => _brushColor = color),
+              onHighlightColorChanged: (color) =>
+                  setState(() => _highlightColor = color),
               onToggleBold: () => setState(() => _isBold = !_isBold),
               onToggleItalic: () => setState(() => _isItalic = !_isItalic),
-              onToggleUnderline: () => setState(() => _isUnderline = !_isUnderline),
+              onToggleUnderline: () =>
+                  setState(() => _isUnderline = !_isUnderline),
               onAlignmentChanged: (align) => setState(() => _textAlign = align),
             )
           else if (_activeMode != 'select')
@@ -844,12 +861,16 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
             ? [
                 IconButton(
                   icon: Icon(Icons.undo_rounded, color: theme.textColor),
-                  onPressed: _controller.canUndo ? () => _controller.undo() : null,
+                  onPressed: _controller.canUndo
+                      ? () => _controller.undo()
+                      : null,
                   tooltip: 'Undo',
                 ),
                 IconButton(
                   icon: Icon(Icons.redo_rounded, color: theme.textColor),
-                  onPressed: _controller.canRedo ? () => _controller.redo() : null,
+                  onPressed: _controller.canRedo
+                      ? () => _controller.redo()
+                      : null,
                   tooltip: 'Redo',
                 ),
                 IconButton(
@@ -858,7 +879,10 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
                   tooltip: 'Background Settings',
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete_outline_rounded, color: theme.textColor),
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    color: theme.textColor,
+                  ),
                   onPressed: () => _clearCanvas(theme),
                   tooltip: 'Clear Canvas',
                 ),
@@ -920,7 +944,8 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
                     _controller.deselectObjectDrawable();
                   });
                 },
-                onStartInlineEditing: (d) => _startInlineEditing(existingDrawable: d),
+                onStartInlineEditing: (d) =>
+                    _startInlineEditing(existingDrawable: d),
                 onDuplicateSelected: _duplicateSelected,
                 onBringForward: _bringForward,
                 onSendBackward: _sendBackward,

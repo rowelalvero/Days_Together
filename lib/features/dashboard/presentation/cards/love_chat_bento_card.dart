@@ -5,7 +5,7 @@ import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
 import 'package:days_together/core/models/scrapbook_ref.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/core/utils/date_helper.dart';
@@ -46,7 +46,10 @@ class LoveChatBentoCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),

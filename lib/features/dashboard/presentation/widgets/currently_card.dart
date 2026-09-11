@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/shared/glass_container.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
@@ -12,7 +12,7 @@ import 'package:days_together/features/currently/currently_controller.dart';
 import 'package:days_together/features/currently/currently_state.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/storage_image.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
 
 class CurrentlyCard extends ConsumerStatefulWidget {
   const CurrentlyCard({super.key});
@@ -21,11 +21,12 @@ class CurrentlyCard extends ConsumerStatefulWidget {
   ConsumerState<CurrentlyCard> createState() => _CurrentlyCardState();
 }
 
-class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProviderStateMixin {
+class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
+    with TickerProviderStateMixin {
   late AnimationController _heartController;
   late AnimationController _celebrationController;
   late AnimationController _pulseController;
-  
+
   final List<String> _presetActivities = [
     '☕ Making coffee...',
     '💻 Working hard...',
@@ -52,7 +53,8 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
   @override
   void initState() {
     super.initState();
-    _successMessage = _successMessages[Random().nextInt(_successMessages.length)];
+    _successMessage =
+        _successMessages[Random().nextInt(_successMessages.length)];
 
     _heartController = AnimationController(
       vsync: this,
@@ -79,7 +81,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
   }
 
   void _triggerTap(CurrentlyState state, CurrentlyController notifier) {
-    if (state.state == LoveTapState.sent || state.state == LoveTapState.mutual) return;
+    if (state.state == LoveTapState.sent ||
+        state.state == LoveTapState.mutual) {
+      return;
+    }
 
     HapticFeedback.mediumImpact();
     _heartController.forward(from: 0.0);
@@ -93,7 +98,9 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
 
   void _showEditActivitySheet(BuildContext context) {
     final theme = ref.read(themeControllerProvider).currentLoveTheme;
-    final controller = TextEditingController(text: ref.read(presenceControllerProvider).yourActivity);
+    final controller = TextEditingController(
+      text: ref.read(presenceControllerProvider).yourActivity,
+    );
 
     showModalBottomSheet(
       context: context,
@@ -102,7 +109,9 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
       isScrollControlled: true,
       builder: (ctx) {
         return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
           child: GlassContainer(
             borderRadius: 32,
             padding: const EdgeInsets.all(24),
@@ -161,7 +170,9 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                               color: theme.textColor,
                             ),
                           ),
-                          backgroundColor: theme.textColor.withValues(alpha: 0.05),
+                          backgroundColor: theme.textColor.withValues(
+                            alpha: 0.05,
+                          ),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
@@ -182,13 +193,17 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                       onPressed: () => Navigator.pop(ctx),
                       child: Text(
                         'Cancel',
-                        style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.6)),
+                        style: AppTypography.body(
+                          color: theme.textColor.withValues(alpha: 0.6),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
-                        ref.read(presenceControllerProvider.notifier).updateCurrentActivity(controller.text.trim());
+                        ref
+                            .read(presenceControllerProvider.notifier)
+                            .updateCurrentActivity(controller.text.trim());
                         Navigator.pop(ctx);
                       },
                       style: ElevatedButton.styleFrom(
@@ -197,7 +212,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                       ),
                       child: Text(
                         'Update',
@@ -228,7 +246,9 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     final partnerActivity = presence.partnerActivity;
 
     // Trigger celebration when mutual becomes active
-    if (currently.state == LoveTapState.mutual && !_celebrationController.isAnimating && _celebrationController.value == 0) {
+    if (currently.state == LoveTapState.mutual &&
+        !_celebrationController.isAnimating &&
+        _celebrationController.value == 0) {
       _celebrationController.forward();
     }
 
@@ -244,9 +264,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
         );
 
         return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
           child: GlassContainer(
             padding: const EdgeInsets.all(18),
             borderRadius: 24,
@@ -264,19 +282,30 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isOnline ? Colors.greenAccent : theme.textColor.withValues(alpha: 0.1),
+                              color: isOnline
+                                  ? Colors.greenAccent
+                                  : theme.textColor.withValues(alpha: 0.1),
                               width: 2,
                             ),
                           ),
                           child: StorageImageBuilder(
                             bucket: StorageBuckets.avatars,
-                            storageRef: partnerJoined ? profile.partnerAvatarPath : null,
+                            storageRef: partnerJoined
+                                ? profile.partnerAvatarPath
+                                : null,
                             builder: (context, image, _, _) => CircleAvatar(
                               radius: 24,
-                              backgroundColor: theme.textColor.withValues(alpha: 0.1),
+                              backgroundColor: theme.textColor.withValues(
+                                alpha: 0.1,
+                              ),
                               foregroundImage: image,
                               child: image == null
-                                  ? Icon(Icons.person, color: theme.textColor.withValues(alpha: 0.3))
+                                  ? Icon(
+                                      Icons.person,
+                                      color: theme.textColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    )
                                   : null,
                             ),
                           ),
@@ -288,9 +317,14 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                             width: 12,
                             height: 12,
                             decoration: BoxDecoration(
-                              color: isOnline ? Colors.greenAccent : Colors.grey,
+                              color: isOnline
+                                  ? Colors.greenAccent
+                                  : Colors.grey,
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.backgroundColor, width: 2),
+                              border: Border.all(
+                                color: theme.backgroundColor,
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
@@ -331,7 +365,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                 // Current Status Activity Text
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.textColor.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(16),
@@ -355,7 +392,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                     GestureDetector(
                       onTap: () => _showEditActivitySheet(context),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.textColor.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
@@ -369,7 +409,8 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              (presence.yourActivity == null || presence.yourActivity!.trim().isEmpty)
+                              (presence.yourActivity == null ||
+                                      presence.yourActivity!.trim().isEmpty)
                                   ? "Share what you're doing..."
                                   : presence.yourActivity!,
                               style: AppTypography.caption(
@@ -420,7 +461,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
                     duration: const Duration(milliseconds: 550),
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.accentColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
@@ -445,7 +489,11 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     );
   }
 
-  Widget _buildLoveTapButton(CurrentlyState currently, CurrentlyController notifier, LoveStoryTheme theme) {
+  Widget _buildLoveTapButton(
+    CurrentlyState currently,
+    CurrentlyController notifier,
+    LoveStoryTheme theme,
+  ) {
     String label = 'Love Tap';
     IconData icon = Icons.favorite_border_rounded;
     Color buttonColor = theme.textColor.withValues(alpha: 0.06);
@@ -486,11 +534,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
     List<BoxShadow>? buttonShadows;
 
     if (currently.state == LoveTapState.mutual) {
-      final pulseColor = theme.accentColor.withValues(alpha: 0.3 + 0.3 * sin(pulseVal * pi));
-      buttonBorder = Border.all(
-        color: pulseColor,
-        width: 1.5,
+      final pulseColor = theme.accentColor.withValues(
+        alpha: 0.3 + 0.3 * sin(pulseVal * pi),
       );
+      buttonBorder = Border.all(color: pulseColor, width: 1.5);
       buttonShadows = [
         BoxShadow(
           color: theme.accentColor.withValues(alpha: 0.1 + 0.1 * pulseVal),
@@ -499,9 +546,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
         ),
       ];
     } else {
-      buttonBorder = Border.all(
-        color: theme.textColor.withValues(alpha: 0.04),
-      );
+      buttonBorder = Border.all(color: theme.textColor.withValues(alpha: 0.04));
     }
 
     Widget buttonContent = Container(
@@ -531,10 +576,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
 
     Widget animatedButton = ScaleTransition(
       scale: Tween<double>(begin: 1.0, end: 1.2).animate(
-        CurvedAnimation(
-          parent: _heartController,
-          curve: Curves.elasticOut,
-        ),
+        CurvedAnimation(parent: _heartController, curve: Curves.elasticOut),
       ),
       child: GestureDetector(
         onTap: active ? () => _triggerTap(currently, notifier) : null,
@@ -551,7 +593,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: FloatingHeartsPainter(progress: celebrationVal, accentColor: theme.accentColor),
+                painter: FloatingHeartsPainter(
+                  progress: celebrationVal,
+                  accentColor: theme.accentColor,
+                ),
               ),
             ),
           ),
@@ -559,7 +604,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard> with TickerProvid
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: SparkleParticlesPainter(progress: celebrationVal, accentColor: theme.accentColor),
+                painter: SparkleParticlesPainter(
+                  progress: celebrationVal,
+                  accentColor: theme.accentColor,
+                ),
               ),
             ),
           ),
@@ -590,8 +638,10 @@ class FloatingHeartsPainter extends CustomPainter {
       final double wave = sin(progress * pi * 2 + i) * 30;
       final double startY = size.height - 20;
       final double endY = -40.0;
-      final double currentY = startY + (endY - startY) * progress - (i * 15 * (1.0 - progress));
-      final double currentX = centerX + wave + (i % 2 == 0 ? 50 : -50) * progress;
+      final double currentY =
+          startY + (endY - startY) * progress - (i * 15 * (1.0 - progress));
+      final double currentX =
+          centerX + wave + (i % 2 == 0 ? 50 : -50) * progress;
 
       final double scale = (0.5 + 0.5 * sin(progress * pi)) * (1.2 - i * 0.1);
       if (currentY > endY && scale > 0) {
@@ -628,10 +678,14 @@ class SparkleParticlesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.amberAccent.withValues(alpha: (1.0 - progress).clamp(0.0, 1.0))
+      ..color = Colors.amberAccent.withValues(
+        alpha: (1.0 - progress).clamp(0.0, 1.0),
+      )
       ..style = PaintingStyle.fill;
 
-    final random = Random(42); // Seed to keep positions stable during frame repaints
+    final random = Random(
+      42,
+    ); // Seed to keep positions stable during frame repaints
     for (int i = 0; i < 15; i++) {
       final double angle = random.nextDouble() * pi * 2;
       final double distance = (30 + random.nextDouble() * 120) * progress;

@@ -60,7 +60,8 @@ class SafeLoadingDialog {
                 onTimeout: () {
                   timedOut = true;
                   throw TimeoutException(
-                    timeoutMessage ?? 'Operation timed out. Please check your connection and try again.',
+                    timeoutMessage ??
+                        'Operation timed out. Please check your connection and try again.',
                     Duration(seconds: timeoutSeconds),
                   );
                 },
@@ -70,8 +71,13 @@ class SafeLoadingDialog {
                 rethrow;
               }
             } finally {
-              // safeDismiss already checks dialogContext.mounted
-              safeDismiss(dialogContext); // ignore: use_build_context_synchronously
+              // safeDismiss already checks dialogContext.mounted.
+              // The ignore sits on its own line rather than trailing the
+              // statement so dart format cannot detach it by wrapping the
+              // call, which is exactly what happened during the
+              // feature-first migration's reformat.
+              // ignore: use_build_context_synchronously
+              safeDismiss(dialogContext);
             }
           },
           loadingMessage: loadingMessage,
@@ -94,11 +100,14 @@ class SafeLoadingDialog {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            timeoutMessage ?? 'Operation timed out. Please check your connection and try again.',
+            timeoutMessage ??
+                'Operation timed out. Please check your connection and try again.',
           ),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -163,7 +172,8 @@ class _SafeLoadingDialogContentState extends State<_SafeLoadingDialogContent> {
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
     final isDark = themeData.brightness == Brightness.dark;
-    final effectiveIndicatorColor = widget.indicatorColor ?? themeData.colorScheme.primary;
+    final effectiveIndicatorColor =
+        widget.indicatorColor ?? themeData.colorScheme.primary;
     final textColor = themeData.colorScheme.onSurface;
 
     return PopScope(

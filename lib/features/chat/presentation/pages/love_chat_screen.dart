@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/core/models/scrapbook_ref.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
-import 'package:days_together/shared/scale_drawing_painter.dart';
+import 'package:days_together/shared/widgets/scale_drawing_painter.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
@@ -16,9 +16,9 @@ import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
-import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/shared/storage_image.dart';
-import 'package:days_together/shared/cached_avatar.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
+import 'package:days_together/shared/widgets/cached_avatar.dart';
 
 class LoveChatScreen extends ConsumerStatefulWidget {
   const LoveChatScreen({super.key});
@@ -51,7 +51,11 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     send.catchError((Object _) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't send that to your partner — check your connection.")),
+        const SnackBar(
+          content: Text(
+            "Couldn't send that to your partner — check your connection.",
+          ),
+        ),
       );
     });
 
@@ -95,7 +99,9 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                 context,
                 theme,
                 partnerAvatarPath: profile.partnerAvatarPath,
-                isPartnerOnline: ref.watch(presenceControllerProvider).isPartnerOnline,
+                isPartnerOnline: ref
+                    .watch(presenceControllerProvider)
+                    .isPartnerOnline,
                 partnerJoined: partnerJoined,
                 partnerName: partnerName,
               ),
@@ -108,7 +114,10 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                     : ListView.builder(
                         controller: _scrollController,
                         reverse: true, // Show latest messages at the bottom
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         itemCount: messages.length,
                         itemBuilder: (context, index) {
                           final message = messages[index];
@@ -116,17 +125,29 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
 
                           // Reversed list means:
                           // previous chronological message is at index + 1
-                          final previousMessage = index < messages.length - 1 ? messages[index + 1] : null;
+                          final previousMessage = index < messages.length - 1
+                              ? messages[index + 1]
+                              : null;
                           // next chronological message is at index - 1
-                          final nextMessage = index > 0 ? messages[index - 1] : null;
+                          final nextMessage = index > 0
+                              ? messages[index - 1]
+                              : null;
 
-                          final isFirstInGroup = previousMessage == null ||
+                          final isFirstInGroup =
+                              previousMessage == null ||
                               previousMessage.senderId != message.senderId ||
-                              message.createdAt.difference(previousMessage.createdAt).inMinutes >= 5;
+                              message.createdAt
+                                      .difference(previousMessage.createdAt)
+                                      .inMinutes >=
+                                  5;
 
-                          final isLastInGroup = nextMessage == null ||
+                          final isLastInGroup =
+                              nextMessage == null ||
                               nextMessage.senderId != message.senderId ||
-                              nextMessage.createdAt.difference(message.createdAt).inMinutes >= 5;
+                              nextMessage.createdAt
+                                      .difference(message.createdAt)
+                                      .inMinutes >=
+                                  5;
 
                           return _buildChatBubble(
                             context,
@@ -165,7 +186,10 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: theme.textColor,
+            ),
           ),
           const SizedBox(width: 4),
           CachedAvatar(
@@ -193,12 +217,16 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: partnerJoined && isPartnerOnline ? Colors.greenAccent : Colors.grey,
+                        color: partnerJoined && isPartnerOnline
+                            ? Colors.greenAccent
+                            : Colors.grey,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      partnerJoined && isPartnerOnline ? 'Active Now' : 'Offline',
+                      partnerJoined && isPartnerOnline
+                          ? 'Active Now'
+                          : 'Offline',
                       style: AppTypography.bodyMedium(
                         fontSize: 11,
                         color: theme.textColor.withValues(alpha: 0.6),
@@ -241,7 +269,9 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
           final noteId = payload.trim();
           final noteitState = ref.watch(noteitControllerProvider);
           try {
-            scrapbookItem = noteitState.visibleNotes.firstWhere((n) => n.id == noteId);
+            scrapbookItem = noteitState.visibleNotes.firstWhere(
+              (n) => n.id == noteId,
+            );
           } catch (_) {
             scrapbookItem = NoteitItem(
               id: noteId,
@@ -346,26 +376,32 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
         );
       } else if (scrapbookItem.type == NoteitType.drawing) {
         Widget drawingWidget;
-        if (scrapbookItem.imagePath != null && File(scrapbookItem.imagePath!).existsSync()) {
+        if (scrapbookItem.imagePath != null &&
+            File(scrapbookItem.imagePath!).existsSync()) {
           drawingWidget = Image.file(
             File(scrapbookItem.imagePath!),
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
           );
-        } else if (scrapbookItem.imageUrl != null && scrapbookItem.imageUrl!.isNotEmpty) {
+        } else if (scrapbookItem.imageUrl != null &&
+            scrapbookItem.imageUrl!.isNotEmpty) {
           drawingWidget = StorageImage(
             bucket: StorageBuckets.loveNotes,
             storageRef: scrapbookItem.imageUrl,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            errorWidget: (context) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+            errorWidget: (context) =>
+                const Icon(Icons.broken_image, size: 20, color: Colors.grey),
           );
         } else {
           drawingWidget = CustomPaint(
             painter: ScaleDrawingPainter(
-              colorfulStrokes: NoteitItem.deserializeColorfulStrokes(scrapbookItem.content, theme.textColor),
+              colorfulStrokes: NoteitItem.deserializeColorfulStrokes(
+                scrapbookItem.content,
+                theme.textColor,
+              ),
               color: theme.textColor,
               strokeWidth: 2.0,
             ),
@@ -373,29 +409,36 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
         }
         canvasContent = drawingWidget;
       } else if (scrapbookItem.type == NoteitType.photo) {
-        canvasContent = scrapbookItem.imagePath != null && File(scrapbookItem.imagePath!).existsSync()
+        canvasContent =
+            scrapbookItem.imagePath != null &&
+                File(scrapbookItem.imagePath!).existsSync()
             ? Image.file(
                 File(scrapbookItem.imagePath!),
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
               )
-            : scrapbookItem.imageUrl != null && scrapbookItem.imageUrl!.isNotEmpty
-                ? StorageImage(
-                    bucket: StorageBuckets.loveNotes,
-                    storageRef: scrapbookItem.imageUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorWidget: (context) => const Icon(Icons.broken_image, size: 20, color: Colors.grey),
-                  )
-                : Center(
-                    child: Icon(
-                      Icons.photo_rounded,
-                      color: theme.textColor.withValues(alpha: 0.6),
-                      size: 24,
-                    ),
-                  );
+            : scrapbookItem.imageUrl != null &&
+                  scrapbookItem.imageUrl!.isNotEmpty
+            ? StorageImage(
+                bucket: StorageBuckets.loveNotes,
+                storageRef: scrapbookItem.imageUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorWidget: (context) => const Icon(
+                  Icons.broken_image,
+                  size: 20,
+                  color: Colors.grey,
+                ),
+              )
+            : Center(
+                child: Icon(
+                  Icons.photo_rounded,
+                  color: theme.textColor.withValues(alpha: 0.6),
+                  size: 24,
+                ),
+              );
       }
 
       bubbleContent = Container(
@@ -404,9 +447,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
         decoration: BoxDecoration(
           color: theme.backgroundColor.withValues(alpha: 0.95),
           borderRadius: borderRadius,
-          border: Border.all(
-            color: theme.textColor.withValues(alpha: 0.15),
-          ),
+          border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -423,7 +464,9 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
               aspectRatio: 1.0,
               child: Container(
                 decoration: BoxDecoration(
-                  color: scrapbookItem.backgroundColor ?? theme.accentColor.withValues(alpha: 0.1),
+                  color:
+                      scrapbookItem.backgroundColor ??
+                      theme.accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ClipRRect(
@@ -440,8 +483,8 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                   scrapbookItem.type == NoteitType.text
                       ? Icons.note_alt_rounded
                       : scrapbookItem.type == NoteitType.photo
-                          ? Icons.image_rounded
-                          : Icons.palette_rounded,
+                      ? Icons.image_rounded
+                      : Icons.palette_rounded,
                   size: 11,
                   color: theme.accentColor,
                 ),
@@ -451,8 +494,8 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                     scrapbookItem.type == NoteitType.text
                         ? 'Scrapbook Note'
                         : scrapbookItem.type == NoteitType.photo
-                            ? 'Scrapbook Photo'
-                            : 'Scrapbook Doodle',
+                        ? 'Scrapbook Photo'
+                        : 'Scrapbook Doodle',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.body(
@@ -475,9 +518,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
               ? theme.accentColor.withValues(alpha: 0.18)
               : theme.textColor.withValues(alpha: 0.05),
           borderRadius: borderRadius,
-          border: Border.all(
-            color: theme.textColor.withValues(alpha: 0.05),
-          ),
+          border: Border.all(color: theme.textColor.withValues(alpha: 0.05)),
         ),
         child: Text(
           message.content,
@@ -493,14 +534,18 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
       child: Column(
-        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isMe
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           // Name and Time Header (only for the first message of a group)
           if (isFirstInGroup) ...[
             Padding(
               padding: const EdgeInsets.only(left: 6, right: 6, bottom: 4),
               child: Row(
-                mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                mainAxisAlignment: isMe
+                    ? MainAxisAlignment.end
+                    : MainAxisAlignment.start,
                 children: [
                   Text(
                     isMe ? 'Me' : message.senderName,
@@ -548,7 +593,10 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
             curve: Curves.easeInOut,
             child: isRevealed
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     child: Text(
                       DateFormat('h:mm a').format(message.createdAt),
                       style: AppTypography.caption(
@@ -564,7 +612,11 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  Widget _buildInputRow(LoveChatController notifier, LoveStoryTheme theme, String yourName) {
+  Widget _buildInputRow(
+    LoveChatController notifier,
+    LoveStoryTheme theme,
+    String yourName,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: Row(
@@ -580,7 +632,10 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: 'Write something sweet...',
-                  hintStyle: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 14),
+                  hintStyle: AppTypography.body(
+                    color: theme.textColor.withValues(alpha: 0.3),
+                    fontSize: 14,
+                  ),
                   border: InputBorder.none,
                 ),
                 onSubmitted: (_) => _sendMessage(notifier, yourName),
@@ -593,7 +648,11 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
             child: CircleAvatar(
               radius: 22,
               backgroundColor: theme.accentColor,
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
         ],
@@ -601,7 +660,11 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     );
   }
 
-  void _showActions(BuildContext context, LoveChatMessage message, LoveChatController notifier) {
+  void _showActions(
+    BuildContext context,
+    LoveChatMessage message,
+    LoveChatController notifier,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -615,7 +678,10 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                leading: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                ),
                 title: Text(
                   'Delete Message',
                   style: AppTypography.body(color: Colors.redAccent),
@@ -645,19 +711,29 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
           const SizedBox(height: 16),
           Text(
             'No messages here yet',
-            style: AppTypography.body(color: theme.textColor.withValues(alpha: 0.3), fontSize: 13),
+            style: AppTypography.body(
+              color: theme.textColor.withValues(alpha: 0.3),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Send a sweet note to start the conversation!',
-            style: AppTypography.bodyMedium(color: theme.accentColor.withValues(alpha: 0.4), fontSize: 12),
+            style: AppTypography.bodyMedium(
+              color: theme.accentColor.withValues(alpha: 0.4),
+              fontSize: 12,
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showEnlargeNoteDialog(BuildContext context, NoteitItem item, LoveStoryTheme theme) {
+  void _showEnlargeNoteDialog(
+    BuildContext context,
+    NoteitItem item,
+    LoveStoryTheme theme,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -720,16 +796,18 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
         height: double.infinity,
         placeholder: (context) =>
             const Center(child: CircularProgressIndicator()),
-        errorWidget: (context) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.grey),
-        ),
+        errorWidget: (context) =>
+            const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
       );
     }
 
     if (item.type == NoteitType.drawing) {
       return CustomPaint(
         painter: ScaleDrawingPainter(
-          colorfulStrokes: NoteitItem.deserializeColorfulStrokes(item.content, theme.textColor),
+          colorfulStrokes: NoteitItem.deserializeColorfulStrokes(
+            item.content,
+            theme.textColor,
+          ),
           color: theme.textColor,
           strokeWidth: 3.5,
         ),

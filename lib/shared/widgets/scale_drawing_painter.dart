@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/shared/models/noteit_model.dart' show ColorfulStroke;
+import 'package:days_together/shared/models/noteit_model.dart'
+    show ColorfulStroke;
 
 /// Renders a set of strokes (drawing/doodle) scaled and centered to fit
 /// [size], preserving aspect ratio. Used for preview thumbnails of scrapbook
@@ -24,8 +25,18 @@ class ScaleDrawingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final List<ColorfulStroke> finalStrokes = colorfulStrokes ??
-        (strokes?.map((s) => ColorfulStroke(points: s, color: color, strokeWidth: strokeWidth)).toList() ?? []);
+    final List<ColorfulStroke> finalStrokes =
+        colorfulStrokes ??
+        (strokes
+                ?.map(
+                  (s) => ColorfulStroke(
+                    points: s,
+                    color: color,
+                    strokeWidth: strokeWidth,
+                  ),
+                )
+                .toList() ??
+            []);
 
     if (finalStrokes.isEmpty) return;
 
