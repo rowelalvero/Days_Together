@@ -12,7 +12,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/services/recent_activity_service.dart';

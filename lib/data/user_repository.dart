@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/models/user_profile.dart';
+import 'package:days_together/features/relationship/domain/entities/user_profile.dart';
 
 /// Typed access to the `users` table (ADR-003). Qualifies for a repository
 /// under the two-part test: read by multiple consumers (`CoupleSession`,

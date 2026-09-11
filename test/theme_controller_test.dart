@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 
 /// `themeControllerProvider` is not `.autoDispose`, but `build()` kicks off
 /// an async `_loadSettings()` -- if nothing reads the provider until after

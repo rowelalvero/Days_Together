@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/bucket_list/bucket_list_state.dart';
-import 'package:days_together/models/bucket_list_model.dart';
+import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';

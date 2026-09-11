@@ -41,6 +41,20 @@ List<File> _dartFilesUnder(String relativeDir) {
       .toList();
 }
 
+/// Every model file, wherever it now lives. The feature-first migration
+/// dissolved the flat `lib/models/` directory: single-feature entities moved
+/// to `lib/features/<f>/domain/entities/` and the genuinely cross-feature
+/// contracts to `lib/shared/models/`. Collecting them here keeps Rules 13 and
+/// Phase 4 scanning the same set, and picks up a model added under a new
+/// feature without a test edit.
+List<File> _modelFiles() => [
+      ..._dartFilesUnder('lib/shared/models'),
+      ...Directory('lib/features')
+          .listSync()
+          .whereType<Directory>()
+          .expand((d) => _dartFilesUnder('${d.path}/domain/entities')),
+    ];
+
 void main() {
   group('Architecture Rule 1 -- UI must not directly access Supabase', () {
     test('no file under lib/app/ imports supabase_flutter', () {
@@ -83,9 +97,9 @@ void main() {
   });
 
   group('Architecture Rule 13 -- models must not import Flutter\'s rendering layer', () {
-    test('no class under lib/models/ extends CustomPainter', () {
+    test('no model class extends CustomPainter', () {
       final violations = <String>[];
-      for (final file in _dartFilesUnder('lib/models')) {
+      for (final file in _modelFiles()) {
         final content = file.readAsStringSync();
         if (content.contains('extends CustomPainter')) {
           violations.add(file.path);
@@ -321,7 +335,7 @@ void main() {
   });
 
   group('Migration Phase 4 -- every model is immutable (ADR-003)', () {
-    test('no class under lib/models/ declares a non-final instance field', () {
+    test('no model class declares a non-final instance field', () {
       // Plain line-based scan, not a real parser -- consistent with this
       // suite's stated "no codegen" approach. Tracks brace depth so it only
       // inspects lines at a class's top level (depth 1), skipping method/
@@ -333,7 +347,7 @@ void main() {
       final fieldDeclaration = RegExp(r'^[A-Za-z_][\w<>?., ]*\s[A-Za-z_]\w*(\s*=\s*[^;]+)?;$');
       final violations = <String>[];
 
-      for (final file in _dartFilesUnder('lib/models')) {
+      for (final file in _modelFiles()) {
         final lines = file.readAsLinesSync();
         var depth = 0;
         var inClassAtDepth1 = false;
@@ -374,7 +388,7 @@ void main() {
       expect(
         violations,
         isEmpty,
-        reason: 'Mutable field found in lib/models/ -- add final and convert call sites to copyWith (see migration-roadmap.md Phase 4): $violations',
+        reason: 'Mutable field found in a model -- add final and convert call sites to copyWith (see migration-roadmap.md Phase 4): $violations',
       );
     });
   });

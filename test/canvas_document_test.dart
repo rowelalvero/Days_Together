@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/models/canvas_document.dart';
+import 'package:days_together/shared/models/canvas_document.dart';
 
 void main() {
   test('CanvasDocument Model serialization and deserialization roundtrip', () {

@@ -1,4 +1,4 @@
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 import 'package:flutter/material.dart';
 
 class ThemeManager {

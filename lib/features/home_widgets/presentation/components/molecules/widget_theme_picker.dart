@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 import 'package:days_together/features/home_widgets/presentation/components/atoms/widget_theme_chip.dart';
 
 class WidgetThemePicker extends StatelessWidget {

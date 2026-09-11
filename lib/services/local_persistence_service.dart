@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:days_together/models/timeline_model.dart';
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 
 /// General local persistence for data that never touches Supabase: cached
 /// timeline items (SharedPreferences), app settings (theme/music,

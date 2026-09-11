@@ -15,8 +15,8 @@ class DailyMood {
     required this.moodScore,
     this.note,
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   DailyMood copyWith({
     String? id,
@@ -37,13 +37,13 @@ class DailyMood {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'userId': userId,
-        'date': date,
-        'moodScore': moodScore,
-        'note': note,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'userId': userId,
+    'date': date,
+    'moodScore': moodScore,
+    'note': note,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory DailyMood.fromJson(Map<String, dynamic> json) {
     return DailyMood(
@@ -75,11 +75,11 @@ class DailySyncQuestion {
   bool get bothAnswered => myAnswer != null && partnerAnswer != null;
 
   Map<String, dynamic> toJson() => {
-        'question': question,
-        'myAnswer': myAnswer,
-        'partnerAnswer': partnerAnswer,
-        'date': date,
-      };
+    'question': question,
+    'myAnswer': myAnswer,
+    'partnerAnswer': partnerAnswer,
+    'date': date,
+  };
 
   factory DailySyncQuestion.fromJson(Map<String, dynamic> json) {
     return DailySyncQuestion(

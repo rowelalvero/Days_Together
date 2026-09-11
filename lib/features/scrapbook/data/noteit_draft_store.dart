@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:days_together/models/canvas_document.dart';
+import 'package:days_together/shared/models/canvas_document.dart';
 
 /// Owns the noteit canvas's local draft persistence, extracted out of
 /// `NoteitScreen`'s state (Migration Phase 8) so the SharedPreferences key

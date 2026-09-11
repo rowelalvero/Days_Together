@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/models/relationship_metadata.dart';
+import 'package:days_together/features/relationship/domain/entities/relationship_metadata.dart';
 
 void main() {
   group('RelationshipMetadata Model', () {

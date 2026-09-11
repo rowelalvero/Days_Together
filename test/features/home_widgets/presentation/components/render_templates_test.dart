@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 import 'package:days_together/features/home_widgets/domain/home_widget_models.dart';
 import 'package:days_together/features/home_widgets/presentation/components/organisms/render_templates/noteit_2x2_render_card.dart';
 import 'package:days_together/features/home_widgets/presentation/components/organisms/render_templates/days_together_2x2_render_card.dart';

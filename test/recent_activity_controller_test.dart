@@ -10,7 +10,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:days_together/features/dashboard/recent_activity_controller.dart';
-import 'package:days_together/models/local_activity_model.dart';
+import 'package:days_together/shared/models/local_activity_model.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 
 void main() {

@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:days_together/models/canvas_document.dart';
+import 'package:days_together/shared/models/canvas_document.dart';
 import 'package:days_together/features/scrapbook/presentation/custom_backgrounds.dart';
 
 class CanvasMapping {

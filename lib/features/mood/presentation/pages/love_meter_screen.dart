@@ -5,7 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
-import 'package:days_together/models/daily_mood_model.dart';
+import 'package:days_together/features/mood/domain/entities/daily_mood_model.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
 class LoveMeterScreen extends ConsumerStatefulWidget {

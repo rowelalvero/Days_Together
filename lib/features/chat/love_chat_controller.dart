@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
-import 'package:days_together/models/love_chat_model.dart';
+import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 
 /// Riverpod port of `LoveChatProvider` (Phase 6a of the architecture
 /// migration, ported together with `NoteitController` since both read the

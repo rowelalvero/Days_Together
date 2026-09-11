@@ -1,4 +1,4 @@
-import 'package:days_together/models/vault_item_model.dart';
+import 'package:days_together/shared/models/vault_item_model.dart';
 
 /// State for `VaultController` (Phase 6a of the architecture migration) --
 /// a direct Riverpod port of `VaultProvider`'s `_items`/`_isUnlocked`/

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/providers/couple_session.dart'
     show SessionStage, computeSessionStage, coupleSessionProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';

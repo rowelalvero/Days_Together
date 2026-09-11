@@ -1,4 +1,4 @@
-import 'package:days_together/models/notification_preferences_model.dart';
+import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
 
 /// State for `NotificationPreferencesController` (Phase 6a of the
 /// architecture migration) -- a direct Riverpod port of

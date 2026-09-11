@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/models/user_profile.dart';
+import 'package:days_together/features/relationship/domain/entities/user_profile.dart';
 
 void main() {
   group('UserProfile Model', () {

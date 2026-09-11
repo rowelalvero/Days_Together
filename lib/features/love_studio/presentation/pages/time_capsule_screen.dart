@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_state.dart';
-import 'package:days_together/models/time_capsule_model.dart';
+import 'package:days_together/features/love_studio/domain/entities/time_capsule_model.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
 class TimeCapsuleScreen extends ConsumerStatefulWidget {

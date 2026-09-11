@@ -1,4 +1,4 @@
-import 'package:days_together/models/calendar_event_model.dart';
+import 'package:days_together/features/calendar/domain/entities/calendar_event_model.dart';
 
 /// State for `CalendarController` (Phase 6a of the architecture migration)
 /// -- a direct Riverpod port of `CalendarProvider`'s `_events`/`_isLoading`

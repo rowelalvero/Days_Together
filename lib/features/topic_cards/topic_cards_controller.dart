@@ -9,7 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/topic_cards/topic_cards_state.dart';
-import 'package:days_together/models/topic_card_model.dart';
+import 'package:days_together/features/topic_cards/domain/entities/topic_card_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/realtime_subscription_manager.dart';

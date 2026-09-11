@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
-import 'package:days_together/models/local_activity_model.dart';
+import 'package:days_together/shared/models/local_activity_model.dart';
 
 class RecentActivityService {
   RecentActivityService._privateConstructor();

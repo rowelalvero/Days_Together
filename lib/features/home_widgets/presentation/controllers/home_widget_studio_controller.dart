@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/services/home_widget_service.dart';
 import 'package:days_together/features/home_widgets/data/home_widget_repository.dart';

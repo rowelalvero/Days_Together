@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_state.dart';
-import 'package:days_together/models/bucket_list_model.dart';
+import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
 import 'package:confetti/confetti.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 

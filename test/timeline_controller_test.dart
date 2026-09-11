@@ -13,7 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
-import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 
 /// timelineControllerProvider is `autoDispose` -- see

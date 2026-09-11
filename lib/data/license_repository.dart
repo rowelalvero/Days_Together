@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/models/relationship_metadata.dart';
+import 'package:days_together/features/relationship/domain/entities/relationship_metadata.dart';
 
 /// Typed access to the `license_details` table (ADR-003). Qualifies for a
 /// repository under the two-part test: read by `ProfileService.fetchLicenseDetails`

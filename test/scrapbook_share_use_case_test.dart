@@ -6,8 +6,8 @@ import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/scrapbook/data/noteit_draft_store.dart';
 import 'package:days_together/features/scrapbook/domain/scrapbook_share_use_case.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
-import 'package:days_together/models/canvas_document.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/canvas_document.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 
 /// Forces the note-creation step to fail, to exercise

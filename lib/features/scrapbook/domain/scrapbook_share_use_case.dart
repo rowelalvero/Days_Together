@@ -1,7 +1,7 @@
 import 'package:days_together/core/errors/app_failure.dart';
 import 'package:days_together/core/scrapbook_ref.dart';
 import 'package:days_together/features/scrapbook/data/noteit_draft_store.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 

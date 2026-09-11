@@ -6,11 +6,11 @@
 // previously untested at all.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/models/bucket_list_model.dart';
-import 'package:days_together/models/gift_reminder_model.dart';
-import 'package:days_together/models/vault_item_model.dart';
-import 'package:days_together/models/time_capsule_model.dart';
-import 'package:days_together/models/daily_mood_model.dart';
+import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
+import 'package:days_together/features/gift_reminders/domain/entities/gift_reminder_model.dart';
+import 'package:days_together/shared/models/vault_item_model.dart';
+import 'package:days_together/features/love_studio/domain/entities/time_capsule_model.dart';
+import 'package:days_together/features/mood/domain/entities/daily_mood_model.dart';
 
 void main() {
   group('BucketListItem', () {

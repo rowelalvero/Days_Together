@@ -62,7 +62,8 @@ class AppSettings {
           : relationshipStartDate as DateTime?,
       customPrimaryColor: customPrimaryColor ?? this.customPrimaryColor,
       customSecondaryColor: customSecondaryColor ?? this.customSecondaryColor,
-      customBackgroundColor: customBackgroundColor ?? this.customBackgroundColor,
+      customBackgroundColor:
+          customBackgroundColor ?? this.customBackgroundColor,
       customAccentColor: customAccentColor ?? this.customAccentColor,
       customIsDark: customIsDark ?? this.customIsDark,
     );
@@ -98,7 +99,8 @@ class AppSettings {
           : null,
       customPrimaryColor: json['customPrimaryColor'] as int? ?? 0xFFFF6B9D,
       customSecondaryColor: json['customSecondaryColor'] as int? ?? 0xFFC44569,
-      customBackgroundColor: json['customBackgroundColor'] as int? ?? 0xFF2C003E,
+      customBackgroundColor:
+          json['customBackgroundColor'] as int? ?? 0xFF2C003E,
       customAccentColor: json['customAccentColor'] as int? ?? 0xFFFFB5C5,
       customIsDark: json['customIsDark'] as bool? ?? true,
     );

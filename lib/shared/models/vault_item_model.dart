@@ -17,8 +17,8 @@ class VaultItem {
     this.imagePath,
     this.imageUrl,
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   VaultItem copyWith({
     String? id,
@@ -39,13 +39,13 @@ class VaultItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type.index,
-        'content': content,
-        'imagePath': imagePath,
-        'imageUrl': imageUrl,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'type': type.index,
+    'content': content,
+    'imagePath': imagePath,
+    'imageUrl': imageUrl,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory VaultItem.fromJson(Map<String, dynamic> json) {
     final typeIndex = json['type'] as int? ?? 0;

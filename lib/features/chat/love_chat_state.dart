@@ -1,4 +1,4 @@
-import 'package:days_together/models/love_chat_model.dart';
+import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 
 /// State for `LoveChatController` (Phase 6a of the architecture migration)
 /// -- a direct Riverpod port of `LoveChatProvider`'s `_messages`/

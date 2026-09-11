@@ -1,4 +1,4 @@
-import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
 
 /// State for `TimelineController` (Phase 6a of the architecture migration)
 /// -- a direct Riverpod port of `TimelineProvider`'s `_timelineItems`/

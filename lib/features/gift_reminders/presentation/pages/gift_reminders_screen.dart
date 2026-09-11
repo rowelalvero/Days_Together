@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_state.dart';
-import 'package:days_together/models/gift_reminder_model.dart';
+import 'package:days_together/features/gift_reminders/domain/entities/gift_reminder_model.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
 class GiftRemindersScreen extends ConsumerStatefulWidget {

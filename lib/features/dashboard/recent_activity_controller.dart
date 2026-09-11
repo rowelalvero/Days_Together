@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:days_together/models/local_activity_model.dart';
+import 'package:days_together/shared/models/local_activity_model.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 
 /// The Riverpod-native replacement for `RecentActivityProvider` (Phase 6b-4

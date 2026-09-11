@@ -17,15 +17,21 @@ class GiftReminder {
     this.isEnabled = true,
     this.isRecurringYearly = true,
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   /// Returns the next occurrence of this reminder date.
   DateTime get nextOccurrence {
     final now = DateTime.now();
     var next = DateTime(now.year, date.month, date.day, date.hour, date.minute);
     if (next.isBefore(now)) {
-      next = DateTime(now.year + 1, date.month, date.day, date.hour, date.minute);
+      next = DateTime(
+        now.year + 1,
+        date.month,
+        date.day,
+        date.hour,
+        date.minute,
+      );
     }
     return next;
   }
@@ -54,21 +60,22 @@ class GiftReminder {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'date': date.toIso8601String(),
-        'reminderDaysBefore': reminderDaysBefore,
-        'isEnabled': isEnabled,
-        'isRecurringYearly': isRecurringYearly,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'date': date.toIso8601String(),
+    'reminderDaysBefore': reminderDaysBefore,
+    'isEnabled': isEnabled,
+    'isRecurringYearly': isRecurringYearly,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory GiftReminder.fromJson(Map<String, dynamic> json) {
     return GiftReminder(
       id: json['id'] as String?,
       title: json['title'] as String? ?? '',
       date: DateTime.parse(json['date'] as String),
-      reminderDaysBefore: (json['reminderDaysBefore'] as List?)
+      reminderDaysBefore:
+          (json['reminderDaysBefore'] as List?)
               ?.map((e) => e as int)
               .toList() ??
           [30, 14, 7],

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';

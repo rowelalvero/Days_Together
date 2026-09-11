@@ -1,4 +1,3 @@
-
 class CanvasPoint {
   final double x;
   final double y;
@@ -26,19 +25,21 @@ class BackgroundData {
   });
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'color': color,
-        'gradientColors': gradientColors,
-        'step': step,
-        'imagePath': imagePath,
-        'imageUrl': imageUrl,
-      };
+    'type': type,
+    'color': color,
+    'gradientColors': gradientColors,
+    'step': step,
+    'imagePath': imagePath,
+    'imageUrl': imageUrl,
+  };
 
   factory BackgroundData.fromJson(Map<String, dynamic> json) {
     return BackgroundData(
       type: json['type'] as String? ?? 'color',
       color: json['color'] as int?,
-      gradientColors: (json['gradientColors'] as List?)?.map((c) => c as int).toList(),
+      gradientColors: (json['gradientColors'] as List?)
+          ?.map((c) => c as int)
+          .toList(),
       step: (json['step'] as num?)?.toDouble(),
       imagePath: json['imagePath'] as String?,
       imageUrl: json['imageUrl'] as String?,
@@ -108,33 +109,35 @@ class StrokeObject extends CanvasObject {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'x': x,
-        'y': y,
-        'scale': scale,
-        'rotation': rotation,
-        'locked': locked,
-        'hidden': hidden,
-        'points': points.map((p) => p.toJson()).toList(),
-        'strokeWidth': strokeWidth,
-        'color': color,
-        'isEraser': isEraser,
-      };
+    'id': id,
+    'type': type,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'rotation': rotation,
+    'locked': locked,
+    'hidden': hidden,
+    'points': points.map((p) => p.toJson()).toList(),
+    'strokeWidth': strokeWidth,
+    'color': color,
+    'isEraser': isEraser,
+  };
 
   factory StrokeObject.fromJson(Map<String, dynamic> json) => StrokeObject(
-        id: json['id'] as String,
-        x: (json['x'] as num? ?? 0.0).toDouble(),
-        y: (json['y'] as num? ?? 0.0).toDouble(),
-        scale: (json['scale'] as num? ?? 1.0).toDouble(),
-        rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
-        locked: json['locked'] as bool? ?? false,
-        hidden: json['hidden'] as bool? ?? false,
-        points: (json['points'] as List).map((p) => CanvasPoint.fromJson(p)).toList(),
-        strokeWidth: (json['strokeWidth'] as num).toDouble(),
-        color: json['color'] as int? ?? 0xFF000000,
-        isEraser: json['isEraser'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    x: (json['x'] as num? ?? 0.0).toDouble(),
+    y: (json['y'] as num? ?? 0.0).toDouble(),
+    scale: (json['scale'] as num? ?? 1.0).toDouble(),
+    rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
+    locked: json['locked'] as bool? ?? false,
+    hidden: json['hidden'] as bool? ?? false,
+    points: (json['points'] as List)
+        .map((p) => CanvasPoint.fromJson(p))
+        .toList(),
+    strokeWidth: (json['strokeWidth'] as num).toDouble(),
+    color: json['color'] as int? ?? 0xFF000000,
+    isEraser: json['isEraser'] as bool? ?? false,
+  );
 }
 
 class TextObject extends CanvasObject {
@@ -169,43 +172,43 @@ class TextObject extends CanvasObject {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'x': x,
-        'y': y,
-        'scale': scale,
-        'rotation': rotation,
-        'locked': locked,
-        'hidden': hidden,
-        'text': text,
-        'color': color,
-        'fontSize': fontSize,
-        'fontFamily': fontFamily,
-        'backgroundColor': backgroundColor,
-        'textAlign': textAlign,
-        'isBold': isBold,
-        'isItalic': isItalic,
-        'isUnderline': isUnderline,
-      };
+    'id': id,
+    'type': type,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'rotation': rotation,
+    'locked': locked,
+    'hidden': hidden,
+    'text': text,
+    'color': color,
+    'fontSize': fontSize,
+    'fontFamily': fontFamily,
+    'backgroundColor': backgroundColor,
+    'textAlign': textAlign,
+    'isBold': isBold,
+    'isItalic': isItalic,
+    'isUnderline': isUnderline,
+  };
 
   factory TextObject.fromJson(Map<String, dynamic> json) => TextObject(
-        id: json['id'] as String,
-        x: (json['x'] as num).toDouble(),
-        y: (json['y'] as num).toDouble(),
-        scale: (json['scale'] as num? ?? 1.0).toDouble(),
-        rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
-        locked: json['locked'] as bool? ?? false,
-        hidden: json['hidden'] as bool? ?? false,
-        text: json['text'] as String,
-        color: json['color'] as int,
-        fontSize: (json['fontSize'] as num).toDouble(),
-        fontFamily: json['fontFamily'] as String? ?? 'Roboto',
-        backgroundColor: json['backgroundColor'] as int? ?? 0,
-        textAlign: json['textAlign'] as String? ?? 'center',
-        isBold: json['isBold'] as bool? ?? false,
-        isItalic: json['isItalic'] as bool? ?? false,
-        isUnderline: json['isUnderline'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    x: (json['x'] as num).toDouble(),
+    y: (json['y'] as num).toDouble(),
+    scale: (json['scale'] as num? ?? 1.0).toDouble(),
+    rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
+    locked: json['locked'] as bool? ?? false,
+    hidden: json['hidden'] as bool? ?? false,
+    text: json['text'] as String,
+    color: json['color'] as int,
+    fontSize: (json['fontSize'] as num).toDouble(),
+    fontFamily: json['fontFamily'] as String? ?? 'Roboto',
+    backgroundColor: json['backgroundColor'] as int? ?? 0,
+    textAlign: json['textAlign'] as String? ?? 'center',
+    isBold: json['isBold'] as bool? ?? false,
+    isItalic: json['isItalic'] as bool? ?? false,
+    isUnderline: json['isUnderline'] as bool? ?? false,
+  );
 }
 
 class ImageObject extends CanvasObject {
@@ -226,29 +229,29 @@ class ImageObject extends CanvasObject {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'x': x,
-        'y': y,
-        'scale': scale,
-        'rotation': rotation,
-        'locked': locked,
-        'hidden': hidden,
-        'imagePath': imagePath,
-        'imageUrl': imageUrl,
-      };
+    'id': id,
+    'type': type,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'rotation': rotation,
+    'locked': locked,
+    'hidden': hidden,
+    'imagePath': imagePath,
+    'imageUrl': imageUrl,
+  };
 
   factory ImageObject.fromJson(Map<String, dynamic> json) => ImageObject(
-        id: json['id'] as String,
-        x: (json['x'] as num).toDouble(),
-        y: (json['y'] as num).toDouble(),
-        scale: (json['scale'] as num? ?? 1.0).toDouble(),
-        rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
-        locked: json['locked'] as bool? ?? false,
-        hidden: json['hidden'] as bool? ?? false,
-        imagePath: json['imagePath'] as String,
-        imageUrl: json['imageUrl'] as String?,
-      );
+    id: json['id'] as String,
+    x: (json['x'] as num).toDouble(),
+    y: (json['y'] as num).toDouble(),
+    scale: (json['scale'] as num? ?? 1.0).toDouble(),
+    rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
+    locked: json['locked'] as bool? ?? false,
+    hidden: json['hidden'] as bool? ?? false,
+    imagePath: json['imagePath'] as String,
+    imageUrl: json['imageUrl'] as String?,
+  );
 }
 
 class ShapeObject extends CanvasObject {
@@ -277,37 +280,37 @@ class ShapeObject extends CanvasObject {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'x': x,
-        'y': y,
-        'scale': scale,
-        'rotation': rotation,
-        'locked': locked,
-        'hidden': hidden,
-        'shapeType': shapeType,
-        'width': width,
-        'height': height,
-        'color': color,
-        'strokeWidth': strokeWidth,
-        'isFilled': isFilled,
-      };
+    'id': id,
+    'type': type,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'rotation': rotation,
+    'locked': locked,
+    'hidden': hidden,
+    'shapeType': shapeType,
+    'width': width,
+    'height': height,
+    'color': color,
+    'strokeWidth': strokeWidth,
+    'isFilled': isFilled,
+  };
 
   factory ShapeObject.fromJson(Map<String, dynamic> json) => ShapeObject(
-        id: json['id'] as String,
-        x: (json['x'] as num).toDouble(),
-        y: (json['y'] as num).toDouble(),
-        scale: (json['scale'] as num? ?? 1.0).toDouble(),
-        rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
-        locked: json['locked'] as bool? ?? false,
-        hidden: json['hidden'] as bool? ?? false,
-        shapeType: json['shapeType'] as String,
-        width: (json['width'] as num).toDouble(),
-        height: (json['height'] as num).toDouble(),
-        color: json['color'] as int,
-        strokeWidth: (json['strokeWidth'] as num).toDouble(),
-        isFilled: json['isFilled'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    x: (json['x'] as num).toDouble(),
+    y: (json['y'] as num).toDouble(),
+    scale: (json['scale'] as num? ?? 1.0).toDouble(),
+    rotation: (json['rotation'] as num? ?? 0.0).toDouble(),
+    locked: json['locked'] as bool? ?? false,
+    hidden: json['hidden'] as bool? ?? false,
+    shapeType: json['shapeType'] as String,
+    width: (json['width'] as num).toDouble(),
+    height: (json['height'] as num).toDouble(),
+    color: json['color'] as int,
+    strokeWidth: (json['strokeWidth'] as num).toDouble(),
+    isFilled: json['isFilled'] as bool? ?? false,
+  );
 }
 
 class CanvasDocument {
@@ -322,15 +325,17 @@ class CanvasDocument {
   });
 
   Map<String, dynamic> toJson() => {
-        'version': version,
-        'background': background.toJson(),
-        'objects': objects.map((o) => o.toJson()).toList(),
-      };
+    'version': version,
+    'background': background.toJson(),
+    'objects': objects.map((o) => o.toJson()).toList(),
+  };
 
   factory CanvasDocument.fromJson(Map<String, dynamic> json) {
     return CanvasDocument(
       version: json['version'] as int? ?? 1,
-      background: BackgroundData.fromJson(json['background'] as Map<String, dynamic>),
+      background: BackgroundData.fromJson(
+        json['background'] as Map<String, dynamic>,
+      ),
       objects: (json['objects'] as List? ?? [])
           .map((o) => CanvasObject.fromJson(o as Map<String, dynamic>))
           .toList(),

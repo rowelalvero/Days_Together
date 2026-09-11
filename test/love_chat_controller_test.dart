@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
-import 'package:days_together/models/love_chat_model.dart';
+import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 
 /// loveChatControllerProvider is `autoDispose` -- see

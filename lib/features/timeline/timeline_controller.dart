@@ -12,7 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
-import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/services/encrypted_storage_service.dart';
 import 'package:days_together/services/local_persistence_service.dart';
 import 'package:days_together/services/notification_service.dart';

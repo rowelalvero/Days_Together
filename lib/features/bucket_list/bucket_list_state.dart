@@ -1,4 +1,4 @@
-import 'package:days_together/models/bucket_list_model.dart';
+import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
 
 /// State for `BucketListController` (Phase 6a of the architecture
 /// migration) -- a direct Riverpod port of `BucketListProvider`'s

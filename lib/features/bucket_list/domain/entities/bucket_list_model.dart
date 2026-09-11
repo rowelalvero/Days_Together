@@ -17,8 +17,8 @@ class BucketListItem {
     required this.order,
     DateTime? createdAt,
     this.scheduledAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   BucketListItem copyWith({
     String? id,
@@ -43,14 +43,14 @@ class BucketListItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'isCompleted': isCompleted,
-        'completedAt': completedAt?.toIso8601String(),
-        'order': order,
-        'createdAt': createdAt.toIso8601String(),
-        'scheduledAt': scheduledAt?.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'isCompleted': isCompleted,
+    'completedAt': completedAt?.toIso8601String(),
+    'order': order,
+    'createdAt': createdAt.toIso8601String(),
+    'scheduledAt': scheduledAt?.toIso8601String(),
+  };
 
   factory BucketListItem.fromJson(Map<String, dynamic> json) {
     return BucketListItem(

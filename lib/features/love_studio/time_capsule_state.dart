@@ -1,4 +1,4 @@
-import 'package:days_together/models/time_capsule_model.dart';
+import 'package:days_together/features/love_studio/domain/entities/time_capsule_model.dart';
 
 /// State for `TimeCapsuleController` (Phase 6a of the architecture
 /// migration) -- a direct Riverpod port of `TimeCapsuleProvider`'s

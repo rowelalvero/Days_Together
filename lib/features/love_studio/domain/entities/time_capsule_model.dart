@@ -13,13 +13,14 @@ class TimeCapsule {
     required this.openDate,
     this.isOpened = false,
     DateTime? createdAt,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
-  bool get canOpen => DateTime.now().isAfter(openDate) || 
-      DateTime.now().year == openDate.year && 
-      DateTime.now().month == openDate.month && 
-      DateTime.now().day == openDate.day;
+  bool get canOpen =>
+      DateTime.now().isAfter(openDate) ||
+      DateTime.now().year == openDate.year &&
+          DateTime.now().month == openDate.month &&
+          DateTime.now().day == openDate.day;
 
   Duration get timeUntilOpen => openDate.difference(DateTime.now());
 
@@ -40,12 +41,12 @@ class TimeCapsule {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'message': message,
-        'openDate': openDate.toIso8601String(),
-        'isOpened': isOpened,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'message': message,
+    'openDate': openDate.toIso8601String(),
+    'isOpened': isOpened,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory TimeCapsule.fromJson(Map<String, dynamic> json) {
     return TimeCapsule(

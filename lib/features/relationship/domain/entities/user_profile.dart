@@ -49,7 +49,9 @@ class UserProfile {
       avatarUrl: map['avatar_url'] as String?,
       gender: map['gender'] as String?,
       phone: map['phone'] as String?,
-      birthdate: map['birthdate'] != null ? DateTime.parse(map['birthdate'] as String) : null,
+      birthdate: map['birthdate'] != null
+          ? DateTime.parse(map['birthdate'] as String)
+          : null,
       address: map['address'] as String?,
       nationality: map['nationality'] as String?,
       weight: map['weight'] as String?,
@@ -57,11 +59,15 @@ class UserProfile {
       bloodType: map['blood_type'] as String?,
       eyeColor: map['eye_color'] as String?,
       conditions: map['conditions'] as String?,
-      dateIssued: map['date_issued'] != null ? DateTime.parse(map['date_issued'] as String) : null,
+      dateIssued: map['date_issued'] != null
+          ? DateTime.parse(map['date_issued'] as String)
+          : null,
       signature: map['signature'] as String?,
       currentActivity: map['current_activity'] as String?,
       partnerDeletedNotice: map['partner_deleted_notice'] as bool? ?? false,
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : null,
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : null,
     );
   }
 

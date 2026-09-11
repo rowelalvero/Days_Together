@@ -6,7 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
-import 'package:days_together/models/topic_card_model.dart';
+import 'package:days_together/features/topic_cards/domain/entities/topic_card_model.dart';
 import 'package:days_together/shared/glass_container.dart';
 
 class TopicCardsScreen extends ConsumerStatefulWidget {

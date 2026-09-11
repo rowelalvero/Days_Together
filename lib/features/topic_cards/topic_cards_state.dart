@@ -1,4 +1,4 @@
-import 'package:days_together/models/topic_card_model.dart';
+import 'package:days_together/features/topic_cards/domain/entities/topic_card_model.dart';
 
 /// State for `TopicCardsController` (Phase 6a of the architecture
 /// migration) -- a direct Riverpod port of `TopicCardsProvider`'s fields.

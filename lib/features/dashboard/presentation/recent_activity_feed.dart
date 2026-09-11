@@ -9,7 +9,7 @@ import 'package:days_together/shared/glass_container.dart';
 
 // Providers & Models
 import 'package:days_together/features/dashboard/recent_activity_controller.dart';
-import 'package:days_together/models/local_activity_model.dart';
+import 'package:days_together/shared/models/local_activity_model.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';

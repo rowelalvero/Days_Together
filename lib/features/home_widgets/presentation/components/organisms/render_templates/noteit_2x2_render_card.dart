@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 

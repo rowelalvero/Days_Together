@@ -14,7 +14,7 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/vault/vault_state.dart';
-import 'package:days_together/models/vault_item_model.dart';
+import 'package:days_together/shared/models/vault_item_model.dart';
 import 'package:days_together/services/encrypted_storage_service.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/permission_service.dart';

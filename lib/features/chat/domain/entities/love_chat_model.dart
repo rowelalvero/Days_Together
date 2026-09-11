@@ -15,8 +15,8 @@ class LoveChatMessage {
     required this.content,
     DateTime? createdAt,
     this.isPinned = false,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   LoveChatMessage copyWith({
     String? id,
@@ -37,13 +37,13 @@ class LoveChatMessage {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'senderId': senderId,
-        'senderName': senderName,
-        'content': content,
-        'createdAt': createdAt.toIso8601String(),
-        'isPinned': isPinned,
-      };
+    'id': id,
+    'senderId': senderId,
+    'senderName': senderName,
+    'content': content,
+    'createdAt': createdAt.toIso8601String(),
+    'isPinned': isPinned,
+  };
 
   factory LoveChatMessage.fromJson(Map<String, dynamic> json) {
     return LoveChatMessage(

@@ -19,8 +19,12 @@ class RelationshipMetadata {
     return RelationshipMetadata(
       coupleId: map['couple_id'] as String,
       certificateNumber: map['certificate_number'] as String?,
-      issueDate: map['issue_date'] != null ? DateTime.parse(map['issue_date'] as String) : null,
-      anniversary: map['anniversary'] != null ? DateTime.parse(map['anniversary'] as String) : null,
+      issueDate: map['issue_date'] != null
+          ? DateTime.parse(map['issue_date'] as String)
+          : null,
+      anniversary: map['anniversary'] != null
+          ? DateTime.parse(map['anniversary'] as String)
+          : null,
       theme: map['theme'] as String?,
       relationshipTitle: map['relationship_title'] as String?,
     );

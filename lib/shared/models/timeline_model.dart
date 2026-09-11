@@ -37,12 +37,12 @@ class CommentData {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'authorName': authorName,
-        'content': content,
-        'date': date.toIso8601String(),
-        'isPinned': isPinned,
-      };
+    'id': id,
+    'authorName': authorName,
+    'content': content,
+    'date': date.toIso8601String(),
+    'isPinned': isPinned,
+  };
 
   factory CommentData.fromJson(Map<String, dynamic> json) {
     return CommentData(

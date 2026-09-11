@@ -1,4 +1,4 @@
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 
 /// State for `NoteitController` (Phase 6a of the architecture migration) --
 /// a direct Riverpod port of `NoteitProvider`'s `_notes`/`_isLoading`

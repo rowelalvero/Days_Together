@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-enum CalendarEventType {
-  anniversary,
-  birthday,
-  date,
-  travel,
-  other,
-}
+enum CalendarEventType { anniversary, birthday, date, travel, other }
 
 class CalendarEvent {
   final String id;
@@ -48,15 +42,15 @@ class CalendarEvent {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'date': date.toIso8601String(),
-        'hour': time?.hour,
-        'minute': time?.minute,
-        'type': type.index,
-        'isRecurringYearly': isRecurringYearly,
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'date': date.toIso8601String(),
+    'hour': time?.hour,
+    'minute': time?.minute,
+    'type': type.index,
+    'isRecurringYearly': isRecurringYearly,
+  };
 
   factory CalendarEvent.fromJson(Map<String, dynamic> json) {
     return CalendarEvent(

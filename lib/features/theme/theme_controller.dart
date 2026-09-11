@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/theme/theme_state.dart';
-import 'package:days_together/models/app_settings.dart';
+import 'package:days_together/shared/models/app_settings.dart';
 import 'package:days_together/services/local_persistence_service.dart';
 
 /// Riverpod port of `ThemeProvider` (Item 3 gap-fix, Phase 2 -- front 3 of

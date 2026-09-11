@@ -1,4 +1,4 @@
-import 'package:days_together/models/gift_reminder_model.dart';
+import 'package:days_together/features/gift_reminders/domain/entities/gift_reminder_model.dart';
 
 /// State for `GiftReminderController` (Phase 6a of the architecture
 /// migration) -- a direct Riverpod port of `GiftReminderProvider`'s

@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-import 'package:days_together/models/daily_mood_model.dart';
+import 'package:days_together/features/mood/domain/entities/daily_mood_model.dart';
 
 /// State for `DailyMoodController` (Phase 6a of the architecture migration)
 /// -- a direct Riverpod port of `DailyMoodProvider`'s fields. `partnerId`

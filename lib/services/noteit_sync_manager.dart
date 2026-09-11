@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/services/encrypted_storage_service.dart';
 import 'package:days_together/services/notification_service.dart';

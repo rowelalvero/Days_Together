@@ -5,9 +5,11 @@ class LocalActivity {
   final String description;
   final String icon;
   final DateTime timestamp;
-  final String? referenceId; // Optional ID pointing to the feature item (e.g. bucket item ID)
+  final String?
+  referenceId; // Optional ID pointing to the feature item (e.g. bucket item ID)
   final String? route; // Optional navigation route/deep link
-  final bool initiatedByCurrentUser; // Distinguish local action vs partner's actions (if any)
+  final bool
+  initiatedByCurrentUser; // Distinguish local action vs partner's actions (if any)
 
   LocalActivity({
     required this.id,

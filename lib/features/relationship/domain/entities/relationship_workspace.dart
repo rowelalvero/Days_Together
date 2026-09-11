@@ -45,11 +45,15 @@ class RelationshipWorkspace {
       recoveryLookupKey: map['recovery_lookup_key'] as String?,
       recoveryCodeHash: map['recovery_code_hash'] as String?,
       isPremium: map['is_premium'] as bool? ?? false,
-      startDate: map['start_date'] != null ? DateTime.parse(map['start_date'] as String) : null,
+      startDate: map['start_date'] != null
+          ? DateTime.parse(map['start_date'] as String)
+          : null,
       startTimeHour: map['start_time_hour'] as int?,
       startTimeMinute: map['start_time_minute'] as int?,
       storyTitle: map['story_title'] as String?,
-      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : null,
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'] as String)
+          : null,
     );
   }
 

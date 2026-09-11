@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
-import 'package:days_together/models/calendar_event_model.dart';
+import 'package:days_together/features/calendar/domain/entities/calendar_event_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 
 /// calendarControllerProvider is `autoDispose` -- see

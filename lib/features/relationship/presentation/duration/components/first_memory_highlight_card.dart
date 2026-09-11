@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
-import 'package:days_together/models/timeline_model.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/storage_image.dart';

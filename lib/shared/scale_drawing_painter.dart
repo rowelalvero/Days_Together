@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/models/noteit_model.dart' show ColorfulStroke;
+import 'package:days_together/shared/models/noteit_model.dart' show ColorfulStroke;
 
 /// Renders a set of strokes (drawing/doodle) scaled and centered to fit
 /// [size], preserving aspect ratio. Used for preview thumbnails of scrapbook

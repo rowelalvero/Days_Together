@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
-import 'package:days_together/models/canvas_document.dart';
+import 'package:days_together/shared/models/canvas_document.dart';
 
 enum NoteitType { drawing, photo, text }
+
 enum SyncStatus { sending, synced, failed }
 
 class NoteitItem {
   final String id;
   final NoteitType type;
-  final String? content; // Text content for text notes, serialized strokes for drawings
+  final String?
+  content; // Text content for text notes, serialized strokes for drawings
   final String? imagePath; // Local file path for photos
   final String? imageUrl; // Remote Storage URL for photos
   final String sender; // 'you' or 'partner'
@@ -27,8 +29,8 @@ class NoteitItem {
     DateTime? createdAt,
     this.backgroundColor,
     this.syncStatus = SyncStatus.synced,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   NoteitItem copyWith({
     String? id,
@@ -55,16 +57,16 @@ class NoteitItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type.index,
-        'content': content,
-        'imagePath': imagePath,
-        'imageUrl': imageUrl,
-        'sender': sender,
-        'createdAt': createdAt.toIso8601String(),
-        'backgroundColor': backgroundColor?.toARGB32(),
-        'syncStatus': syncStatus.index,
-      };
+    'id': id,
+    'type': type.index,
+    'content': content,
+    'imagePath': imagePath,
+    'imageUrl': imageUrl,
+    'sender': sender,
+    'createdAt': createdAt.toIso8601String(),
+    'backgroundColor': backgroundColor?.toARGB32(),
+    'syncStatus': syncStatus.index,
+  };
 
   factory NoteitItem.fromJson(Map<String, dynamic> json) {
     final typeIndex = json['type'] as int? ?? 0;
@@ -90,7 +92,10 @@ class NoteitItem {
     );
   }
 
-  factory NoteitItem.fromSupabase(Map<String, dynamic> data, String currentUserId) {
+  factory NoteitItem.fromSupabase(
+    Map<String, dynamic> data,
+    String currentUserId,
+  ) {
     // 1. Parse Type (Enum) - Handle String comparison
     final typeStr = (data['type'] ?? 'text').toString();
     final type = NoteitType.values.firstWhere(
@@ -118,8 +123,8 @@ class NoteitItem {
     DateTime createdAt;
     try {
       final dateStr = data['created_at'];
-      createdAt = (dateStr != null) 
-          ? DateTime.parse(dateStr.toString()).toLocal() 
+      createdAt = (dateStr != null)
+          ? DateTime.parse(dateStr.toString()).toLocal()
           : DateTime.now();
     } catch (_) {
       createdAt = DateTime.now();
@@ -152,7 +157,10 @@ class NoteitItem {
     }
   }
 
-  static List<ColorfulStroke> deserializeColorfulStrokes(String? data, Color defaultColor) {
+  static List<ColorfulStroke> deserializeColorfulStrokes(
+    String? data,
+    Color defaultColor,
+  ) {
     if (data == null || data.isEmpty) return [];
     try {
       final trimmed = data.trim();
@@ -162,21 +170,27 @@ class NoteitItem {
         for (final obj in doc.objects) {
           if (obj is StrokeObject && !obj.isEraser) {
             final points = obj.points.map((p) => Offset(p.x, p.y)).toList();
-            list.add(ColorfulStroke(
-              points: points,
-              color: Color(obj.color),
-              strokeWidth: obj.strokeWidth,
-            ));
+            list.add(
+              ColorfulStroke(
+                points: points,
+                color: Color(obj.color),
+                strokeWidth: obj.strokeWidth,
+              ),
+            );
           }
         }
         return list;
       } else {
         final legacy = deserializeStrokes(data);
-        return legacy.map((s) => ColorfulStroke(
-          points: s,
-          color: defaultColor,
-          strokeWidth: 2.5,
-        )).toList();
+        return legacy
+            .map(
+              (s) => ColorfulStroke(
+                points: s,
+                color: defaultColor,
+                strokeWidth: 2.5,
+              ),
+            )
+            .toList();
       }
     } catch (e) {
       debugPrint('Failed to deserialize colorful strokes: $e');
@@ -211,14 +225,26 @@ class CanvasStroke {
   final int color;
   final double strokeWidth;
   final String penType;
-  CanvasStroke({required this.points, required this.color, required this.strokeWidth, required this.penType});
-  Map<String, dynamic> toJson() => {'points': points.map((p) => p.toJson()).toList(), 'color': color, 'strokeWidth': strokeWidth, 'penType': penType};
+  CanvasStroke({
+    required this.points,
+    required this.color,
+    required this.strokeWidth,
+    required this.penType,
+  });
+  Map<String, dynamic> toJson() => {
+    'points': points.map((p) => p.toJson()).toList(),
+    'color': color,
+    'strokeWidth': strokeWidth,
+    'penType': penType,
+  };
   factory CanvasStroke.fromJson(Map<String, dynamic> json) => CanvasStroke(
-        points: (json['points'] as List).map((p) => CanvasPoint.fromJson(p)).toList(),
-        color: json['color'] as int,
-        strokeWidth: (json['strokeWidth'] as num).toDouble(),
-        penType: json['penType'] as String? ?? 'pen',
-      );
+    points: (json['points'] as List)
+        .map((p) => CanvasPoint.fromJson(p))
+        .toList(),
+    color: json['color'] as int,
+    strokeWidth: (json['strokeWidth'] as num).toDouble(),
+    penType: json['penType'] as String? ?? 'pen',
+  );
 }
 
 class CanvasTextOverlay {
@@ -251,21 +277,22 @@ class CanvasTextOverlay {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        'x': x,
-        'y': y,
-        'scale': scale,
-        'fontSize': fontSize,
-        'color': color,
-        'backgroundColor': backgroundColor,
-        'isBold': isBold,
-        'isItalic': isItalic,
-        'isUnderline': isUnderline,
-        'alignment': alignment,
-      };
+    'id': id,
+    'text': text,
+    'x': x,
+    'y': y,
+    'scale': scale,
+    'fontSize': fontSize,
+    'color': color,
+    'backgroundColor': backgroundColor,
+    'isBold': isBold,
+    'isItalic': isItalic,
+    'isUnderline': isUnderline,
+    'alignment': alignment,
+  };
 
-  factory CanvasTextOverlay.fromJson(Map<String, dynamic> json) => CanvasTextOverlay(
+  factory CanvasTextOverlay.fromJson(Map<String, dynamic> json) =>
+      CanvasTextOverlay(
         id: json['id'] as String,
         text: json['text'] as String,
         x: (json['x'] as num).toDouble(),
@@ -297,26 +324,25 @@ class CanvasData {
   });
 
   Map<String, dynamic> toJson() => {
-        'version': version,
-        'backgroundColor': backgroundColor,
-        'backgroundImage': backgroundImage,
-        'drawingLayer': drawingLayer,
-        'textOverlays': textOverlays.map((o) => o.toJson()).toList(),
-      };
+    'version': version,
+    'backgroundColor': backgroundColor,
+    'backgroundImage': backgroundImage,
+    'drawingLayer': drawingLayer,
+    'textOverlays': textOverlays.map((o) => o.toJson()).toList(),
+  };
 
   factory CanvasData.fromJson(Map<String, dynamic> json) => CanvasData(
-        version: json['version'] as int? ?? 1,
-        backgroundColor: json['backgroundColor'] as int,
-        backgroundImage: json['backgroundImage'] as String?,
-        drawingLayer: json['drawingLayer'] as String?,
-        textOverlays: (json['textOverlays'] as List? ?? [])
-            .map((o) => CanvasTextOverlay.fromJson(o))
-            .toList(),
-      );
+    version: json['version'] as int? ?? 1,
+    backgroundColor: json['backgroundColor'] as int,
+    backgroundImage: json['backgroundImage'] as String?,
+    drawingLayer: json['drawingLayer'] as String?,
+    textOverlays: (json['textOverlays'] as List? ?? [])
+        .map((o) => CanvasTextOverlay.fromJson(o))
+        .toList(),
+  );
 
   static bool isJson(String? data) {
     if (data == null) return false;
     return data.trim().startsWith('{') && data.trim().endsWith('}');
   }
 }
-

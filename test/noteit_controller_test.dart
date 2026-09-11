@@ -13,7 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderContainer;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
-import 'package:days_together/models/noteit_model.dart';
+import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/providers/couple_session.dart';
 
 /// noteitControllerProvider is `autoDispose` -- see
