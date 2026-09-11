@@ -6,7 +6,8 @@ import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/edit/person_license_form.dart';
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
@@ -16,11 +17,9 @@ import 'package:days_together/themes/theme_manager.dart';
 /// renamed from `_EditLicenseSheet` since it now needs to be public to
 /// be shared across the license/ file split.
 class EditLicenseSheet extends ConsumerStatefulWidget {
-  final CoupleSession rp;
-
   final LoveStoryTheme theme;
 
-  const EditLicenseSheet({super.key, required this.rp, required this.theme});
+  const EditLicenseSheet({super.key, required this.theme});
 
   @override
   ConsumerState<EditLicenseSheet> createState() => _EditLicenseSheetState();
@@ -88,10 +87,15 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
     super.initState();
 
     final license = ref.read(licenseControllerProvider).value ?? const LicenseDetails();
+    // Seeded from ProfileController rather than a prop-drilled CoupleSession.
+    // `ref.read` is right here (not `watch`): these are one-shot seeds for
+    // mutable text controllers, and re-reading them on a later rebuild would
+    // overwrite whatever the user has typed.
+    final profile = ref.read(profileControllerProvider);
 
-    _yourNameCtrl = TextEditingController(text: widget.rp.yourName ?? '');
+    _yourNameCtrl = TextEditingController(text: profile.yourName ?? '');
 
-    _partnerNameCtrl = TextEditingController(text: widget.rp.partnerName ?? '');
+    _partnerNameCtrl = TextEditingController(text: profile.partnerName ?? '');
 
     _yourPhoneCtrl = TextEditingController(text: license.yourPhone ?? '');
 
@@ -239,7 +243,7 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
   Future<void> _selectIssuedDate(BuildContext context, bool isYou) async {
     final initialDate =
         (isYou ? _yourDateIssued : _partnerDateIssued) ??
-        widget.rp.startDate ??
+        ref.read(workspaceControllerProvider).startDate ??
         DateTime.now();
 
     final picked = await showDatePicker(
@@ -281,9 +285,12 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
 
   void _save() {
     // Split across the two controllers that used to be one updateLicense
-    // call: yourName is ProfileController's field (untouched by this
-    // extraction), the rest are LicenseController's.
-    widget.rp.setYourName(_yourNameCtrl.text.trim());
+    // call: yourName is ProfileController's field, the rest are
+    // LicenseController's. The name write went straight to the prop-drilled
+    // CoupleSession before; it now goes through ProfileController's own
+    // delegating setter, so this sheet no longer holds the legacy session
+    // object at all.
+    ref.read(profileControllerProvider.notifier).setYourName(_yourNameCtrl.text.trim());
     ref.read(licenseControllerProvider.notifier).updateFields(
       yourGender: _yourGender,
       yourPhone: _yourPhoneCtrl.text.trim(),

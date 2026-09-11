@@ -18,7 +18,6 @@ import 'package:days_together/features/relationship/presentation/license/license
 import 'package:days_together/features/relationship/presentation/license/license_selector.dart';
 import 'package:days_together/features/relationship/presentation/license/waiting_for_partner_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
-import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
@@ -158,15 +157,6 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
   @override
   Widget build(BuildContext context) {
-    // Instance handle only -- never dereferenced for a field directly in
-    // this build method, just threaded into several downstream widgets
-    // (EditLicenseSheet et al.) that call mutation methods on it. Those
-    // "prop-drilled" widgets depend only on CoupleSession's public method
-    // surface, not on it being reactively watched, so a plain `ref.read`
-    // (not `ref.watch`) is correct here -- this widget's own rebuild-on-
-    // change needs are covered by sessionControllerProvider/
-    // licenseControllerProvider above, which are properly watched.
-    final rp = ref.read(coupleSessionProvider);
     final profileState = ref.watch(profileControllerProvider);
     final workspaceState = ref.watch(workspaceControllerProvider);
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
@@ -255,7 +245,6 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                 if (partnerJoined && !_showBoth) ...[
                   LicenseSelector(
                     theme: theme,
-                    rp: rp,
                     isYourLicense: _isYourLicense,
                     onChanged: (val) => setState(() => _isYourLicense = val),
                   ),
@@ -272,7 +261,7 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
 
                       backgroundColor: Colors.transparent,
 
-                      builder: (ctx) => EditLicenseSheet(rp: rp, theme: theme),
+                      builder: (ctx) => EditLicenseSheet(theme: theme),
                     );
                   },
 
@@ -441,7 +430,6 @@ class _RelationshipLicenseScreenState extends ConsumerState<RelationshipLicenseS
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
                         builder: (ctx) => ExportStudioBottomSheet(
-                          rp: rp,
                           theme: theme,
                           showBoth: _showBoth,
                           isYourLicense: _isYourLicense,

@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
 /// The "My License" / "Partner's License" tab selector. Extracted out of
 /// `RelationshipLicenseScreenState._buildLicenseSelector` (Migration
 /// Phase 8).
-class LicenseSelector extends StatelessWidget {
+class LicenseSelector extends ConsumerWidget {
   const LicenseSelector({
     super.key,
     required this.theme,
-    required this.rp,
     required this.isYourLicense,
     required this.onChanged,
   });
 
   final LoveStoryTheme theme;
-  final CoupleSession rp;
   final bool isYourLicense;
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    final myName = rp.yourName?.isNotEmpty == true ? rp.yourName! : "My";
-    final partnerName = rp.partnerName?.isNotEmpty == true
-        ? rp.partnerName!
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Both names came in on a prop-drilled `CoupleSession` that
+    // `LicenseScreen` resolved with `ref.read`, so the tab labels here went
+    // stale the moment either partner renamed themselves -- nothing marked
+    // this widget dirty. Watching `profileControllerProvider` directly makes
+    // the labels track renames and drops the prop.
+    final profile = ref.watch(profileControllerProvider);
+    final myName = profile.yourName?.isNotEmpty == true ? profile.yourName! : "My";
+    final partnerName = profile.partnerName?.isNotEmpty == true
+        ? profile.partnerName!
         : "Partner";
 
     return Container(

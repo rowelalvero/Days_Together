@@ -5,7 +5,6 @@ import 'package:days_together/features/relationship/data/image_export_service.da
 import 'package:days_together/features/relationship/presentation/license/export/post_export_template.dart';
 import 'package:days_together/features/relationship/presentation/license/export/story_export_template.dart';
 import 'package:days_together/features/relationship/presentation/license/export/transparent_export_template.dart';
-import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
@@ -15,7 +14,6 @@ import 'package:days_together/themes/theme_manager.dart';
 /// (Migration Phase 8) -- renamed from `_ExportStudioBottomSheet` since
 /// it now needs to be public to be shared across the license/ file split.
 class ExportStudioBottomSheet extends ConsumerStatefulWidget {
-  final CoupleSession rp;
   final LoveStoryTheme theme;
   final bool showBoth;
   final bool isYourLicense;
@@ -25,7 +23,6 @@ class ExportStudioBottomSheet extends ConsumerStatefulWidget {
 
   const ExportStudioBottomSheet({
     super.key,
-    required this.rp,
     required this.theme,
     required this.showBoth,
     required this.isYourLicense,
@@ -148,7 +145,6 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
         activeTemplateWidget = RepaintBoundary(
           key: _transparentKey,
           child: TransparentExportTemplate(
-            rp: widget.rp,
             showBoth: widget.showBoth,
             isYourLicense: widget.isYourLicense,
             exportFront: _exportFront,
@@ -161,7 +157,6 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
           key: _storyKey,
           child: StoryExportTemplate(
             theme: widget.theme,
-            rp: widget.rp,
             showBoth: widget.showBoth,
             isYourLicense: widget.isYourLicense,
             exportFront: _exportFront,
@@ -174,7 +169,6 @@ class _ExportStudioBottomSheetState extends ConsumerState<ExportStudioBottomShee
           key: _postKey,
           child: PostExportTemplate(
             theme: widget.theme,
-            rp: widget.rp,
             showBoth: widget.showBoth,
             isYourLicense: widget.isYourLicense,
             exportFront: _exportFront,

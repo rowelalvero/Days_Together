@@ -1,36 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/presentation/license/export/license_card_preview.dart';
 import 'package:days_together/features/relationship/presentation/license/license_widgets.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
 
 /// The export studio's Instagram Story template (1080x1920, portrait).
 /// Extracted out of `ExportStudioBottomSheetState._buildStoryTemplate`
 /// (Migration Phase 8).
-class StoryExportTemplate extends StatelessWidget {
+class StoryExportTemplate extends ConsumerWidget {
   const StoryExportTemplate({
     super.key,
     required this.theme,
-    required this.rp,
     required this.showBoth,
     required this.isYourLicense,
     required this.exportFront,
   });
 
   final LoveStoryTheme theme;
-  final CoupleSession rp;
   final bool showBoth;
   final bool isYourLicense;
   final bool exportFront;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // `startDate` used to arrive as a prop-drilled `CoupleSession` handle
+    // threaded down from `LicenseScreen`. Read it from its own controller
+    // instead, so this template depends on the workspace state it actually
+    // uses rather than on the legacy session object.
+    final startDate = ref.watch(workspaceControllerProvider).startDate;
     final dateFormat = DateFormat('MMMM dd, yyyy');
-    final startDateStr = rp.startDate != null
-        ? dateFormat.format(rp.startDate!)
+    final startDateStr = startDate != null
+        ? dateFormat.format(startDate)
         : 'FOREVER';
 
     return Container(
@@ -143,7 +147,6 @@ class StoryExportTemplate extends StatelessWidget {
                             child: ScaledLicenseCardPreview(
                               isYourLicense: true,
                               showFront: exportFront,
-                              rp: rp,
                               targetWidth: 920,
                             ),
                           ),
@@ -161,7 +164,6 @@ class StoryExportTemplate extends StatelessWidget {
                             child: ScaledLicenseCardPreview(
                               isYourLicense: false,
                               showFront: exportFront,
-                              rp: rp,
                               targetWidth: 920,
                             ),
                           ),
@@ -180,7 +182,6 @@ class StoryExportTemplate extends StatelessWidget {
                         child: ScaledLicenseCardPreview(
                           isYourLicense: isYourLicense,
                           showFront: exportFront,
-                          rp: rp,
                           targetWidth: 920,
                         ),
                       ),

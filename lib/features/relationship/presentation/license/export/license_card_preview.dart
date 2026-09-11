@@ -5,7 +5,8 @@ import 'package:days_together/features/relationship/license_controller.dart';
 import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/license_back.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/license_front.dart';
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/services/date_helper.dart';
 
 /// Renders either partner's license face (front or back) for the export
@@ -18,18 +19,25 @@ class LicenseCardPreview extends ConsumerWidget {
     super.key,
     required this.isYourLicense,
     required this.showFront,
-    required this.rp,
   });
 
   final bool isYourLicense;
   final bool showFront;
-  final CoupleSession rp;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final license = ref.watch(licenseControllerProvider).value ?? const LicenseDetails();
-    final myName = rp.yourName ?? 'You';
-    final partnerName = rp.partnerName ?? 'Partner';
+    // Names, avatars, and the start date used to arrive as a prop-drilled
+    // `CoupleSession` handle threaded down from `LicenseScreen`. Read through
+    // their own controllers instead: the same three hops that carried the
+    // session object no longer carry anything, and because the screen passed
+    // it via `ref.read` (not `watch`), a rename or avatar change did not
+    // reach this card until something else forced a rebuild. Watching fixes
+    // that as a side effect.
+    final profile = ref.watch(profileControllerProvider);
+    final startDate = ref.watch(workspaceControllerProvider).startDate;
+    final myName = profile.yourName ?? 'You';
+    final partnerName = profile.partnerName ?? 'Partner';
     final myPhone = license.yourPhone?.isNotEmpty == true
         ? license.yourPhone!
         : 'Not provided';
@@ -39,7 +47,7 @@ class LicenseCardPreview extends ConsumerWidget {
 
     final name = isYourLicense ? myName : partnerName;
     final gender = isYourLicense ? license.yourGender : license.partnerGender;
-    final avatar = isYourLicense ? rp.yourAvatarPath : rp.partnerAvatarPath;
+    final avatar = isYourLicense ? profile.yourAvatarPath : profile.partnerAvatarPath;
     final birthdate = isYourLicense ? license.yourBirthdate : license.partnerBirthdate;
     final address = isYourLicense ? license.yourAddress : license.partnerAddress;
     final nationality = isYourLicense
@@ -75,7 +83,7 @@ class LicenseCardPreview extends ConsumerWidget {
         holderConditions: conditions,
         holderDateIssued: dateIssued,
         holderSignature: signature,
-        startDate: rp.startDate,
+        startDate: startDate,
         calculatedAge: age,
         isYourLicense: isYourLicense,
         onAvatarTap: () {},
@@ -96,7 +104,7 @@ class LicenseCardPreview extends ConsumerWidget {
         emergencyName: emergencyN,
         emergencyPhone: emergencyP,
         emergencyAddress: emergencyA,
-        startDate: rp.startDate,
+        startDate: startDate,
       );
     }
   }
@@ -112,13 +120,11 @@ class ScaledLicenseCardPreview extends StatelessWidget {
     super.key,
     required this.isYourLicense,
     required this.showFront,
-    required this.rp,
     required this.targetWidth,
   });
 
   final bool isYourLicense;
   final bool showFront;
-  final CoupleSession rp;
   final double targetWidth;
 
   @override
@@ -135,7 +141,6 @@ class ScaledLicenseCardPreview extends StatelessWidget {
           child: LicenseCardPreview(
             isYourLicense: isYourLicense,
             showFront: showFront,
-            rp: rp,
           ),
         ),
       ),

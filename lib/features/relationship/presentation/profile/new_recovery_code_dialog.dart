@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget;
 
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
@@ -13,31 +15,36 @@ import 'package:days_together/themes/theme_manager.dart';
 /// `god-file-decomposition.md` item 5: this file is not a real
 /// architectural problem, but its dialog bodies were verbosely inlined
 /// rather than extracted -- opportunistic, low-priority readability work).
-class NewRecoveryCodeDialog extends StatefulWidget {
-  const NewRecoveryCodeDialog({super.key, required this.rp, required this.theme});
+class NewRecoveryCodeDialog extends ConsumerStatefulWidget {
+  const NewRecoveryCodeDialog({super.key, required this.theme});
 
-  final CoupleSession rp;
   final LoveStoryTheme theme;
 
-  static void show(BuildContext context, CoupleSession rp, LoveStoryTheme theme) {
+  static void show(BuildContext context, LoveStoryTheme theme) {
     showDialog(
       context: context,
       barrierDismissible: false, // Force them to save and check the box
-      builder: (context) => NewRecoveryCodeDialog(rp: rp, theme: theme),
+      builder: (context) => NewRecoveryCodeDialog(theme: theme),
     );
   }
 
   @override
-  State<NewRecoveryCodeDialog> createState() => _NewRecoveryCodeDialogState();
+  ConsumerState<NewRecoveryCodeDialog> createState() =>
+      _NewRecoveryCodeDialogState();
 }
 
-class _NewRecoveryCodeDialogState extends State<NewRecoveryCodeDialog> {
+class _NewRecoveryCodeDialogState extends ConsumerState<NewRecoveryCodeDialog> {
   bool _saved = false;
+
+  /// Captured once, deliberately not watched: the Continue button clears
+  /// the code from workspace state, so a watching build would repaint this
+  /// dialog with an em dash in the instant between that clear and the pop.
+  late final String? _recoveryCode =
+      ref.read(workspaceControllerProvider).recoveryCode;
 
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme;
-    final rp = widget.rp;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -80,7 +87,7 @@ class _NewRecoveryCodeDialogState extends State<NewRecoveryCodeDialog> {
               ),
               child: Center(
                 child: SelectableText(
-                  rp.recoveryCode ?? '—',
+                  _recoveryCode ?? '—',
                   style: AppTypography.body(
                     color: theme.accentColor,
                     fontWeight: FontWeight.bold,
@@ -104,7 +111,9 @@ class _NewRecoveryCodeDialogState extends State<NewRecoveryCodeDialog> {
             Center(
               child: TextButton.icon(
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: rp.recoveryCode ?? ''));
+                  Clipboard.setData(
+                    ClipboardData(text: _recoveryCode ?? ''),
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Recovery code copied!')),
                   );
@@ -139,7 +148,9 @@ class _NewRecoveryCodeDialogState extends State<NewRecoveryCodeDialog> {
               child: ElevatedButton(
                 onPressed: _saved
                     ? () {
-                        rp.clearRecoveryCode();
+                        ref
+                            .read(workspaceControllerProvider.notifier)
+                            .clearRecoveryCode();
                         Navigator.pop(context);
                       }
                     : null,

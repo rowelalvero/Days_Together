@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ConsumerState, ConsumerStatefulWidget, WidgetRef;
 
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/shared/cached_avatar.dart';
 import 'package:days_together/shared/glass_container.dart';
@@ -12,35 +15,37 @@ import 'package:image_picker/image_picker.dart';
 /// display name and avatar. Extracted out of
 /// `RelationshipProfileScreen._editProfileDialog` (per
 /// `god-file-decomposition.md` item 5).
-class EditProfileDialog extends StatefulWidget {
-  const EditProfileDialog({super.key, required this.rp, required this.theme});
+class EditProfileDialog extends ConsumerStatefulWidget {
+  const EditProfileDialog({super.key, required this.theme});
 
-  final CoupleSession rp;
   final LoveStoryTheme theme;
 
-  static void show(BuildContext context, CoupleSession rp, LoveStoryTheme theme) {
+  static void show(BuildContext context, LoveStoryTheme theme) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.transparent,
-      builder: (context) => EditProfileDialog(rp: rp, theme: theme),
+      builder: (context) => EditProfileDialog(theme: theme),
     );
   }
 
   @override
-  State<EditProfileDialog> createState() => _EditProfileDialogState();
+  ConsumerState<EditProfileDialog> createState() => _EditProfileDialogState();
 }
 
-class _EditProfileDialogState extends State<EditProfileDialog> {
+class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
   late final TextEditingController _yourController;
   late final TextEditingController _partnerController;
 
   @override
   void initState() {
     super.initState();
-    _yourController = TextEditingController(text: widget.rp.yourName);
-    _partnerController = TextEditingController(text: widget.rp.partnerName);
+    // One-shot seeds for mutable text fields, so `read` rather than `watch`:
+    // re-reading on a later rebuild would overwrite what the user has typed.
+    final profile = ref.read(profileControllerProvider);
+    _yourController = TextEditingController(text: profile.yourName);
+    _partnerController = TextEditingController(text: profile.partnerName);
   }
 
   @override
@@ -53,8 +58,12 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme;
-    final rp = widget.rp;
-    final partnerJoined = rp.partnerId != null;
+    // Watched, not a prop-drilled `CoupleSession` handle: the avatar row
+    // reads `yourAvatarPath`/`partnerAvatarPath`, and picking a new image
+    // previously left the old one on screen because nothing marked this
+    // dialog dirty after `setAvatars` resolved.
+    final profile = ref.watch(profileControllerProvider);
+    final partnerJoined = ref.watch(sessionControllerProvider).partnerId != null;
 
     return GlassContainer(
       borderRadius: 32,
@@ -77,12 +86,12 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               ),
             ),
             const SizedBox(height: 32),
-            _buildAvatarRow(context, rp, theme, true),
+            _buildAvatarRow(context, profile.yourAvatarPath, theme, true),
             const SizedBox(height: 20),
             _buildNameField(_yourController, 'Your Name', theme),
             if (partnerJoined) ...[
               const SizedBox(height: 32),
-              _buildAvatarRow(context, rp, theme, false),
+              _buildAvatarRow(context, profile.partnerAvatarPath, theme, false),
               const SizedBox(height: 20),
               _buildNameField(_partnerController, "Partner's Name", theme),
             ],
@@ -105,13 +114,14 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
+                      final controller = ref.read(profileControllerProvider.notifier);
                       if (partnerJoined) {
-                        await rp.setNames(
+                        await controller.setNames(
                           _yourController.text.trim(),
                           _partnerController.text.trim(),
                         );
                       } else {
-                        await rp.setYourName(_yourController.text.trim());
+                        await controller.setYourName(_yourController.text.trim());
                       }
                       if (context.mounted) Navigator.pop(context);
                     },
@@ -140,13 +150,12 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
   Widget _buildAvatarRow(
     BuildContext context,
-    CoupleSession rp,
+    String? path,
     LoveStoryTheme theme,
     bool isYou,
   ) {
-    final path = isYou ? rp.yourAvatarPath : rp.partnerAvatarPath;
     return GestureDetector(
-      onTap: () => _pickAvatar(context, rp, isYou),
+      onTap: () => _pickAvatar(context, ref, isYou),
       child: Stack(
         children: [
           CachedAvatar(
@@ -202,7 +211,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
   Future<void> _pickAvatar(
     BuildContext context,
-    CoupleSession rp,
+    WidgetRef ref,
     bool isYou,
   ) async {
     final hasPermission = await PermissionService().requestPhotosPermission(
@@ -217,10 +226,11 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     );
     if (pickedFile != null) {
       try {
+        final controller = ref.read(profileControllerProvider.notifier);
         if (isYou) {
-          await rp.setAvatars(yourPath: pickedFile.path);
+          await controller.setAvatars(yourPath: pickedFile.path);
         } else {
-          await rp.setAvatars(partnerPath: pickedFile.path);
+          await controller.setAvatars(partnerPath: pickedFile.path);
         }
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

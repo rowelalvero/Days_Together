@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:days_together/themes/theme_manager.dart';
@@ -10,11 +11,10 @@ import 'package:days_together/themes/theme_manager.dart';
 /// the profile screen. Extracted out of
 /// `RelationshipProfileScreen._showUnlinkConfirmation` (per
 /// `god-file-decomposition.md` item 5).
-class UnlinkConfirmationDialog extends StatelessWidget {
+class UnlinkConfirmationDialog extends ConsumerWidget {
   const UnlinkConfirmationDialog({
     super.key,
     required this.profileContext,
-    required this.rp,
     required this.theme,
   });
 
@@ -24,23 +24,21 @@ class UnlinkConfirmationDialog extends StatelessWidget {
   /// the profile screen itself is popped via this context, which must
   /// still be mounted at that point.
   final BuildContext profileContext;
-  final CoupleSession rp;
   final LoveStoryTheme theme;
 
-  static void show(BuildContext context, CoupleSession rp, LoveStoryTheme theme) {
+  static void show(BuildContext context, LoveStoryTheme theme) {
     showDialog(
       context: context,
       builder: (dialogContext) => UnlinkConfirmationDialog(
         profileContext: context,
-        rp: rp,
         theme: theme,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final partnerJoined = rp.partnerId != null;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final partnerJoined = ref.watch(sessionControllerProvider).partnerId != null;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -115,7 +113,9 @@ class UnlinkConfirmationDialog extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       Navigator.pop(context); // close dialog
-                      await rp.unlinkPartner();
+                      await ref
+                          .read(sessionControllerProvider.notifier)
+                          .unlinkPartner();
                       if (profileContext.mounted) {
                         Navigator.pop(profileContext); // exit profile screen
                       }

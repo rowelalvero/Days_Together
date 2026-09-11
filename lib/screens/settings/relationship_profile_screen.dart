@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/themes/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:days_together/providers/couple_session.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/session_state.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
@@ -28,18 +27,6 @@ class RelationshipProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
-    // Instance handle only -- never dereferenced for a field directly in
-    // this build method, just threaded into several downstream dialogs
-    // (EditProfileDialog, RegenerateRecoveryCodeDialog,
-    // UnlinkConfirmationDialog, DeleteAccountConfirmationDialog -- all out of
-    // this conversion's scope) that call mutation methods on it. Those
-    // "prop-drilled" widgets depend only on CoupleSession's public method
-    // surface, not on it being reactively watched, so a plain `ref.read`
-    // (not `ref.watch`/`context.watch`) is correct here -- this widget's own
-    // rebuild-on-change needs are covered by sessionControllerProvider/
-    // profileControllerProvider/workspaceControllerProvider above, which are
-    // properly watched.
-    final rp = ref.read(coupleSessionProvider);
     final sessionState = ref.watch(sessionControllerProvider);
     final profileState = ref.watch(profileControllerProvider);
     final workspaceState = ref.watch(workspaceControllerProvider);
@@ -64,7 +51,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeaderSection(context, rp, sessionState, profileState, theme),
+                      _buildHeaderSection(context, sessionState, profileState, theme),
                       const SizedBox(height: 32),
                       _buildInfoCard(context, ref, workspaceState, profileState, theme),
                       const SizedBox(height: 32),
@@ -73,13 +60,13 @@ class RelationshipProfileScreen extends ConsumerWidget {
                         const SizedBox(height: 32),
                       ],
                       const SizedBox(height: 16),
-                      _buildRegenerateRecoveryCodeButton(context, rp, theme),
+                      _buildRegenerateRecoveryCodeButton(context, theme),
                       const SizedBox(height: 16),
                       _buildDangerZoneDivider(theme),
                       const SizedBox(height: 20),
-                      _buildUnlinkButton(context, rp, sessionState, theme),
+                      _buildUnlinkButton(context, sessionState, theme),
                       if (partnerJoined) const SizedBox(height: 16),
-                      _buildDeleteAccountButton(context, rp, theme),
+                      _buildDeleteAccountButton(context, theme),
                       const SizedBox(height: 24),
                       _buildAuthDebugInfo(sessionState, theme),
                       const SizedBox(height: 40),
@@ -137,7 +124,6 @@ class RelationshipProfileScreen extends ConsumerWidget {
 
   Widget _buildHeaderSection(
     BuildContext context,
-    CoupleSession rp,
     SessionState sessionState,
     ProfileState profileState,
     LoveStoryTheme theme,
@@ -229,7 +215,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 24),
           OutlinedButton.icon(
-            onPressed: () => EditProfileDialog.show(context, rp, theme),
+            onPressed: () => EditProfileDialog.show(context, theme),
             icon: Icon(Icons.edit_rounded, color: theme.textColor, size: 16),
             label: Text(
               'Edit Profile',
@@ -479,7 +465,6 @@ class RelationshipProfileScreen extends ConsumerWidget {
 
     Widget _buildRegenerateRecoveryCodeButton(
     BuildContext context,
-    CoupleSession rp,
     LoveStoryTheme theme,
   ) {
     return Container(
@@ -489,7 +474,7 @@ class RelationshipProfileScreen extends ConsumerWidget {
         border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
       ),
       child: TextButton.icon(
-        onPressed: () => RegenerateRecoveryCodeDialog.show(context, rp, theme),
+        onPressed: () => RegenerateRecoveryCodeDialog.show(context, theme),
         icon: Icon(Icons.security_rounded, color: theme.textColor, size: 20),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -552,7 +537,6 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
 
   Widget _buildUnlinkButton(
     BuildContext context,
-    CoupleSession rp,
     SessionState sessionState,
     LoveStoryTheme theme,
   ) {
@@ -567,7 +551,7 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
         border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
       ),
       child: TextButton(
-        onPressed: () => UnlinkConfirmationDialog.show(context, rp, theme),
+        onPressed: () => UnlinkConfirmationDialog.show(context, theme),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -588,7 +572,6 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
 
   Widget _buildDeleteAccountButton(
     BuildContext context,
-    CoupleSession rp,
     LoveStoryTheme theme,
   ) {
     return Container(
@@ -598,7 +581,7 @@ Widget _buildDangerZoneDivider(LoveStoryTheme theme) {
         border: Border.all(color: theme.textColor.withValues(alpha: 0.15)),
       ),
       child: TextButton(
-        onPressed: () => DeleteAccountConfirmationDialog.show(context, rp, theme),
+        onPressed: () => DeleteAccountConfirmationDialog.show(context, theme),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

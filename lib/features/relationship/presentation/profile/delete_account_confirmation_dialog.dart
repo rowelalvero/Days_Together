@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, WidgetRef;
 
-import 'package:days_together/providers/couple_session.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
 import 'package:days_together/themes/app_typography.dart';
@@ -10,11 +11,10 @@ import 'package:days_together/themes/theme_manager.dart';
 /// `CoupleSession.deleteAccount()`. Extracted out of
 /// `RelationshipProfileScreen._showDeleteAccountConfirmation` (per
 /// `god-file-decomposition.md` item 5).
-class DeleteAccountConfirmationDialog extends StatelessWidget {
+class DeleteAccountConfirmationDialog extends ConsumerWidget {
   const DeleteAccountConfirmationDialog({
     super.key,
     required this.profileContext,
-    required this.rp,
     required this.theme,
   });
 
@@ -24,22 +24,20 @@ class DeleteAccountConfirmationDialog extends StatelessWidget {
   /// button's `SafeLoadingDialog` needs a context that is still mounted
   /// after this dialog has already been popped.
   final BuildContext profileContext;
-  final CoupleSession rp;
   final LoveStoryTheme theme;
 
-  static void show(BuildContext context, CoupleSession rp, LoveStoryTheme theme) {
+  static void show(BuildContext context, LoveStoryTheme theme) {
     showDialog(
       context: context,
       builder: (dialogContext) => DeleteAccountConfirmationDialog(
         profileContext: context,
-        rp: rp,
         theme: theme,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: GlassContainer(
@@ -124,7 +122,9 @@ class DeleteAccountConfirmationDialog extends StatelessWidget {
                       await SafeLoadingDialog.run<bool>(
                         context: profileContext,
                         future: () async {
-                          await rp.deleteAccount();
+                          await ref
+                              .read(sessionControllerProvider.notifier)
+                              .deleteAccount();
                           return true;
                         },
                         timeoutSeconds: 20,
