@@ -14,7 +14,9 @@ import 'package:days_together/services/profile_service.dart';
 import 'package:days_together/services/recent_activity_service.dart';
 import 'package:days_together/services/relationship_lifecycle_manager.dart';
 import 'package:days_together/services/home_widget_service.dart';
+import 'package:days_together/services/couple_key_exchange.dart';
 import 'package:days_together/services/key_management_service.dart';
+import 'package:days_together/services/partner_presence.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart' show evictStorageImageCache;
 
@@ -181,24 +183,12 @@ class CoupleSession extends ChangeNotifier {
   StreamSubscription? _partnerUserSub;
   StreamSubscription? _coupleSub;
   StreamSubscription? _authSub;
-  // Watches couple_key_exchanges for a row wrapped for this device (E2EE
-  // photo encryption) -- scoped to the authenticated user, not the couple,
-  // so it lives and dies alongside _userSub. See _initKeyExchangeSync and
-  // _wrapCoupleKeyForPartnerIfHeld.
-  StreamSubscription? _keyExchangeSub;
-  String? _lastWrappedForPartnerId;
-  // A wrapped key that arrived from couple_key_exchanges before _partnerId
-  // was known. Unwrapping needs the partner's public key, so the row cannot
-  // be applied yet -- and the stream will not re-emit an unchanged row, so
-  // dropping it here used to mean the couple photo key was never obtained on
-  // this device. Held until the couples stream resolves a partner, which
-  // drains it via _drainPendingWrappedKey.
-  String? _pendingWrappedKey;
-  // Completes as soon as this device holds the couple photo key, so callers
-  // that must encrypt something during onboarding (the avatar upload) can
-  // wait on the key exchange instead of failing outright. See
-  // [waitForCoupleKey].
-  Completer<void>? _coupleKeyWaiter;
+  /// Both halves of the E2EE photo-key exchange, and the four pieces of
+  /// wrapped-key bookkeeping they need. Owns its own
+  /// `couple_key_exchanges` subscription, which is scoped to the
+  /// authenticated user rather than the couple and so lives and dies
+  /// alongside [_userSub].
+  late final CoupleKeyExchange _keyExchange;
   // Bumped whenever _applyPartnerUserFields actually changes one of the 12
   // Relationship License fields mirrored from the partner's `users` row.
   // main.dart's _CoupleSessionBridge diffs this (like _lastUserId) to decide
@@ -212,10 +202,9 @@ class CoupleSession extends ChangeNotifier {
   String? _partnerId;
 
   // Real-time presence & connection dates
-  bool _isPartnerOnline = false;
+  late final PartnerPresence _presence;
   DateTime? _yourJoinDate;
   DateTime? _partnerJoinDate;
-  RealtimeChannel? _presenceChannel;
 
   String? _yourActivity;
   String? _partnerActivity;
@@ -240,7 +229,7 @@ class CoupleSession extends ChangeNotifier {
   bool _isCreator = false;
   bool get isCreator => _isCreator;
 
-  bool get isPartnerOnline => _isPartnerOnline;
+  bool get isPartnerOnline => _presence.isPartnerOnline;
   DateTime? get yourJoinDate => _yourJoinDate;
   DateTime? get partnerJoinDate => _partnerJoinDate;
   String? get yourActivity => _yourActivity;
@@ -267,6 +256,14 @@ class CoupleSession extends ChangeNotifier {
   CoupleSession({CoupleService? coupleService, KeyManagementService? keyManagementService})
       : _coupleService = coupleService ?? CoupleService.instance,
         _keyManagementService = keyManagementService ?? KeyManagementService.instance {
+    _keyExchange = CoupleKeyExchange(
+      // Read through a closure rather than captured: all three fields
+      // resolve asynchronously and at different times, and the ordering
+      // between them is exactly what the exchange exists to handle.
+      identity: () => (userId: _userId, partnerId: _partnerId, coupleId: _coupleId),
+      keyManagementService: _keyManagementService,
+    );
+    _presence = PartnerPresence(onChanged: notifyListeners);
     _loadLocalData().then((_) {
       if (isSupabaseAvailable) {
         _initSupabaseSync();
@@ -400,11 +397,7 @@ class CoupleSession extends ChangeNotifier {
         _cancelActiveSubscriptions();
         _userSub?.cancel();
         _userSub = null;
-        _keyExchangeSub?.cancel();
-        _keyExchangeSub = null;
-        _lastWrappedForPartnerId = null;
-        _pendingWrappedKey = null;
-        _lastAppliedWrappedKey = null;
+        _keyExchange.reset();
 
         if (user == null) {
           _userId = null;
@@ -412,13 +405,11 @@ class CoupleSession extends ChangeNotifier {
           _partnerId = null;
           _isPaired = false;
           _status = RelationshipStatus.disconnected;
-          _isPartnerOnline = false;
           _yourActivity = null;
           _partnerActivity = null;
           _yourJoinDate = null;
           _partnerJoinDate = null;
-          _presenceChannel?.unsubscribe();
-          _presenceChannel = null;
+          _presence.disconnect();
           _isInitialized = true;
           notifyListeners();
           return;
@@ -428,7 +419,7 @@ class CoupleSession extends ChangeNotifier {
         _isInitialized = false;
         notifyListeners();
 
-        _initKeyExchangeSync();
+        _keyExchange.start();
 
         _userSub = Supabase.instance.client
             .from('users')
@@ -586,7 +577,7 @@ class CoupleSession extends ChangeNotifier {
                             // Mirrored so a warm start knows the partner
                             // before any stream resolves -- the E2EE key
                             // exchange needs _partnerId to unwrap an incoming
-                            // wrapped key (see _initKeyExchangeSync), and
+                            // wrapped key (see CoupleKeyExchange.start), and
                             // only joinWithCode used to persist it, leaving
                             // the creator's device with a null _partnerId on
                             // every launch.
@@ -627,11 +618,11 @@ class CoupleSession extends ChangeNotifier {
                             if (oldPartnerId != _partnerId) {
                               _initPartnerUserSync();
                               if (_partnerId != null) {
-                                _wrapCoupleKeyForPartnerIfHeld(_partnerId!);
+                                _keyExchange.wrapForPartnerIfHeld(_partnerId!);
                                 // A wrapped key may have arrived before this
                                 // partner identity was known; it is held
                                 // rather than dropped, and applied here.
-                                _drainPendingWrappedKey();
+                                _keyExchange.drainPending();
                               }
                             }
 
@@ -781,215 +772,19 @@ class CoupleSession extends ChangeNotifier {
   /// returns), and it must also survive this device later becoming the
   /// "surviving partner" that re-wraps for a recovered partner, which is a
   /// symmetric, ongoing relationship rather than a one-time pairing event.
-  void _initKeyExchangeSync() {
-    _keyExchangeSub?.cancel();
-    final userId = _userId;
-    if (userId == null) return;
-
-    _keyExchangeSub = Supabase.instance.client
-        .from('couple_key_exchanges')
-        .stream(primaryKey: ['couple_id', 'recipient_user_id'])
-        .eq('recipient_user_id', userId)
-        .listen(
-          (rows) async {
-            if (rows.isEmpty) return;
-            final wrappedKeyBase64 = rows.first['wrapped_key'] as String?;
-            if (wrappedKeyBase64 == null || wrappedKeyBase64 == _lastAppliedWrappedKey) {
-              return;
-            }
-            // The partner's public key is required to unwrap, and _partnerId
-            // is routinely still null here: this stream is deliberately
-            // scoped to the user rather than the couple, so it can (and on a
-            // fresh join usually does) emit before the couples stream has
-            // resolved a partner. Hold the row rather than dropping it --
-            // Realtime will not re-send an unchanged row, so a drop was
-            // permanent for the lifetime of that wrapped key.
-            if (_partnerId == null) {
-              _pendingWrappedKey = wrappedKeyBase64;
-              return;
-            }
-            await _applyWrappedKey(userId, wrappedKeyBase64);
-          },
-          onError: (error) {
-            debugPrint('couple_key_exchanges stream error: $error');
-          },
-        );
-  }
-
-  /// The wrapped key most recently unwrapped and stored, so a re-emission of
-  /// the same row is a no-op. An instance field rather than a closure local
-  /// because [_applyWrappedKey] is also reached from
-  /// [_drainPendingWrappedKey], outside the listener.
-  String? _lastAppliedWrappedKey;
-
-  /// Unwraps [wrappedKeyBase64] with the partner's public key and caches the
-  /// resulting couple photo key in secure storage.
-  Future<void> _applyWrappedKey(String userId, String wrappedKeyBase64) async {
-    final partnerId = _partnerId;
-    if (partnerId == null) return;
-    try {
-      final partnerData = await Supabase.instance.client
-          .from('users')
-          .select('public_key')
-          .eq('id', partnerId)
-          .maybeSingle();
-      final partnerPublicKey = partnerData?['public_key'] as String?;
-      if (partnerPublicKey == null || partnerPublicKey.isEmpty) return;
-
-      final coupleKeyBytes = await _keyManagementService.unwrapKeyFromPartner(
-        userId: userId,
-        wrappedKeyBase64: wrappedKeyBase64,
-        partnerPublicKeyBase64: partnerPublicKey,
-      );
-      await _keyManagementService.storeCoupleKey(
-        userId,
-        coupleKeyBytes,
-        coupleId: _coupleId,
-      );
-      _lastAppliedWrappedKey = wrappedKeyBase64;
-      _completeCoupleKeyWaiter();
-    } catch (e) {
-      debugPrint('Error unwrapping couple photo key: $e');
-    }
-  }
-
-  /// Applies a wrapped key that arrived before [_partnerId] was known. Called
-  /// by the couples stream the moment a partner identity resolves.
-  void _drainPendingWrappedKey() {
-    final pending = _pendingWrappedKey;
-    final userId = _userId;
-    if (pending == null || userId == null || _partnerId == null) return;
-    _pendingWrappedKey = null;
-    _applyWrappedKey(userId, pending);
-  }
-
-  /// Resolves once this device holds the couple photo key, or after [timeout]
-  /// if it never arrives.
-  ///
-  /// The joining side of a pairing has no key until the creator's device
-  /// wraps one for it, which makes any encrypted upload in that window fail
-  /// ([EncryptedStorageService] deliberately refuses to fall back to an
-  /// unencrypted upload). Callers that can tolerate a short wait -- avatar
-  /// upload during onboarding -- use this instead of failing immediately.
-  /// Never throws: a timeout simply returns, and the caller decides what a
-  /// missing key means for it.
+  /// Resolves once this device holds the couple photo key, or returns
+  /// after a timeout if it never arrives. See [CoupleKeyExchange.waitForKey].
   Future<void> waitForCoupleKey({
     Duration timeout = const Duration(seconds: 10),
-  }) async {
-    final userId = _userId;
-    if (userId == null) return;
-    if (await _keyManagementService.loadCoupleKey(userId) != null) return;
-
-    final waiter = _coupleKeyWaiter ??= Completer<void>();
-    try {
-      await waiter.future.timeout(timeout);
-    } catch (_) {
-      // Timed out (or the waiter was replaced by a logout) -- not an error
-      // here; the caller handles the still-missing key.
-    }
-  }
-
-  void _completeCoupleKeyWaiter() {
-    final waiter = _coupleKeyWaiter;
-    if (waiter != null && !waiter.isCompleted) waiter.complete();
-    _coupleKeyWaiter = null;
-  }
-
-  /// The sending half of E2EE photo-key exchange: if this device already
-  /// holds the couple photo key (it created the workspace, or it previously
-  /// received one via [_initKeyExchangeSync]), wrap it for [partnerId] and
-  /// store the wrapped copy so their device can pick it up. Called whenever
-  /// the couples-stream observes a *new* partner identity -- which covers
-  /// both the original join (creator wraps for the joiner) and a later
-  /// recovery (whichever side still holds the key re-wraps for whoever just
-  /// claimed the vacant slot with a fresh keypair).
-  ///
-  /// A no-op if this device doesn't hold the couple key (the joining/
-  /// recovering side never does) or the partner hasn't posted a public key
-  /// yet -- there is no retry here; the next relevant realtime event (a
-  /// fresh app launch re-observing the same partner counts) will try again.
-  Future<void> _wrapCoupleKeyForPartnerIfHeld(String partnerId) async {
-    if (_lastWrappedForPartnerId == partnerId) return;
-    final userId = _userId;
-    if (userId == null) return;
-    try {
-      final coupleKeyBytes = await _keyManagementService.loadCoupleKey(userId);
-      if (coupleKeyBytes == null) return;
-
-      final partnerData = await Supabase.instance.client
-          .from('users')
-          .select('public_key')
-          .eq('id', partnerId)
-          .maybeSingle();
-      final partnerPublicKey = partnerData?['public_key'] as String?;
-      if (partnerPublicKey == null || partnerPublicKey.isEmpty) return;
-
-      final wrapped = await _keyManagementService.wrapKeyForPartner(
-        userId: userId,
-        coupleKeyBytes: coupleKeyBytes,
-        partnerPublicKeyBase64: partnerPublicKey,
-      );
-      await Supabase.instance.client.rpc(
-        'store_wrapped_key',
-        params: {'p_recipient_id': partnerId, 'p_wrapped_key': wrapped},
-      );
-      _lastWrappedForPartnerId = partnerId;
-    } catch (e) {
-      debugPrint('Error wrapping couple photo key for partner: $e');
-    }
-  }
+  }) =>
+      _keyExchange.waitForKey(timeout: timeout);
 
   void _initPresence() {
-    if (_presenceChannel != null) {
-      try {
-        _presenceChannel!.unsubscribe();
-        Supabase.instance.client.removeChannel(_presenceChannel!);
-      } catch (e) {
-        debugPrint('CoupleSession: tearing down the previous presence channel failed: $e');
-      }
-      _presenceChannel = null;
-    }
-
-    if (_userId == null || _coupleId == null) {
-      _isPartnerOnline = false;
-      notifyListeners();
-      return;
-    }
-
-    final channelName = 'couple_presence_$_coupleId';
-    _presenceChannel = Supabase.instance.client.channel(channelName);
-
-    _presenceChannel!
-        .onPresenceSync((_) {
-          final state = _presenceChannel!.presenceState();
-          bool partnerFound = false;
-          for (final presenceState in state) {
-            for (final presence in presenceState.presences) {
-              final payload = presence.payload;
-              if (payload['user_id'] == _partnerId) {
-                partnerFound = true;
-                break;
-              }
-            }
-            if (partnerFound) break;
-          }
-          if (_isPartnerOnline != partnerFound) {
-            _isPartnerOnline = partnerFound;
-            notifyListeners();
-          }
-        })
-        .subscribe((status, [error]) async {
-          if (status == RealtimeSubscribeStatus.subscribed) {
-            try {
-              await _presenceChannel!.track({
-                'user_id': _userId,
-                'online_at': DateTime.now().toIso8601String(),
-              });
-            } catch (e) {
-              debugPrint('CoupleSession: presence track() failed: $e');
-            }
-          }
-        });
+    _presence.connect(
+      userId: _userId,
+      coupleId: _coupleId,
+      partnerId: _partnerId,
+    );
   }
 
   Future<void> updateCurrentActivity(String? activity) async {
@@ -1290,7 +1085,7 @@ class CoupleSession extends ChangeNotifier {
     try {
       // E2EE photo encryption: this device mints the couple's photo key --
       // it never leaves this device except AES-GCM-wrapped for a partner's
-      // public key (see _wrapCoupleKeyForPartnerIfHeld) -- and posts its own
+      // public key (see CoupleKeyExchange.wrapForPartnerIfHeld) -- and posts its own
       // public key so the joining partner can eventually be wrapped for.
       // Keyed by _userId (falling back to a fixed slot only when genuinely
       // offline/unauthenticated, e.g. this app's own no-network test/dev
@@ -1314,7 +1109,7 @@ class CoupleSession extends ChangeNotifier {
         coupleKeyBytes,
         coupleId: _coupleId,
       );
-      _completeCoupleKeyWaiter();
+      _keyExchange.completeWaiter();
 
       _coupleCode = result['pairing_code'] as String;
       _recoveryCode = result['recovery_code'] as String;
@@ -1383,7 +1178,7 @@ class CoupleSession extends ChangeNotifier {
       if (isSupabaseAvailable && _userId != null) {
         // E2EE photo encryption: post this device's public key so the
         // creator can wrap the couple photo key for it (see
-        // _wrapCoupleKeyForPartnerIfHeld, triggered on their end once their
+        // CoupleKeyExchange.wrapForPartnerIfHeld, triggered on their end once their
         // couples-stream observes this partner_id).
         final publicKey = await _keyManagementService.getOrCreatePublicKeyBase64(_userId!);
         final result = await _coupleService.joinWithCode(cleanCode, publicKey: publicKey);
@@ -1504,7 +1299,7 @@ class CoupleSession extends ChangeNotifier {
       // had (that's the premise of recovery), so this always mints a fresh
       // one and posts it -- the surviving partner re-wraps the couple photo
       // key for it once their app next observes this new partner identity
-      // (_wrapCoupleKeyForPartnerIfHeld).
+      // (CoupleKeyExchange.wrapForPartnerIfHeld).
       final publicKey = await _keyManagementService.getOrCreatePublicKeyBase64(_userId ?? 'offline');
       final result = await _coupleService.recoverWithCode(code, publicKey: publicKey);
       final bool success = result['success'] as bool? ?? false;
@@ -1556,11 +1351,9 @@ class CoupleSession extends ChangeNotifier {
       _partnerName = null;
       _partnerAvatarPath = null;
       _partnerJoinDate = null;
-      _isPartnerOnline = false;
       _cancelActiveSubscriptions();
       await RelationshipLifecycleManager.instance.handleDisconnect();
-      _presenceChannel?.unsubscribe();
-      _presenceChannel = null;
+      _presence.disconnect();
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(PrefsKeys.isPaired, false);
@@ -1586,14 +1379,12 @@ class CoupleSession extends ChangeNotifier {
 
       // The couple photo key belongs to the relationship being left, not to
       // this device. Keeping it would make the *next* pairing's
-      // _wrapCoupleKeyForPartnerIfHeld push this dead relationship's key to
+      // CoupleKeyExchange.wrapForPartnerIfHeld push this dead relationship's key to
       // the new partner, permanently diverging the two devices' key material.
       if (_userId != null) {
         await _keyManagementService.clearCoupleKey(_userId!);
       }
-      _pendingWrappedKey = null;
-      _lastAppliedWrappedKey = null;
-      _lastWrappedForPartnerId = null;
+      _keyExchange.clearCachedExchangeState();
 
       await prefs.remove(PrefsKeys.partnerId);
       _coupleId = null;
@@ -1736,18 +1527,12 @@ class CoupleSession extends ChangeNotifier {
     _partnerUserSub = null;
     _partnerActivity = null;
     _coupleSub?.cancel();
-    _keyExchangeSub?.cancel();
-    _keyExchangeSub = null;
-    _lastWrappedForPartnerId = null;
     // In-memory key-exchange state only. The stored couple photo key itself
     // deliberately survives a sign-out -- see
     // KeyManagementService.clearCoupleKey's doc for why.
-    _pendingWrappedKey = null;
-    _lastAppliedWrappedKey = null;
-    _completeCoupleKeyWaiter();
-    _presenceChannel?.unsubscribe();
-    _presenceChannel = null;
-    _isPartnerOnline = false;
+    _keyExchange.reset();
+    _keyExchange.completeWaiter();
+    _presence.disconnect();
     _yourJoinDate = null;
     _partnerJoinDate = null;
 
@@ -1770,15 +1555,8 @@ class CoupleSession extends ChangeNotifier {
     _userSub?.cancel();
     _partnerUserSub?.cancel();
     _coupleSub?.cancel();
-    _keyExchangeSub?.cancel();
-    if (_presenceChannel != null) {
-      try {
-        _presenceChannel!.unsubscribe();
-        Supabase.instance.client.removeChannel(_presenceChannel!);
-      } catch (e) {
-        debugPrint('CoupleSession: presence channel teardown during dispose failed: $e');
-      }
-    }
+    _keyExchange.dispose();
+    _presence.dispose();
     super.dispose();
   }
 }
