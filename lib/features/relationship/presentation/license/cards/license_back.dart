@@ -4,7 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:days_together/features/relationship/data/license_qr_codec.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/card_shell.dart';
 import 'package:days_together/features/relationship/presentation/license/license_widgets.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 /// The relationship license card's back face -- emergency contact info
 /// and a QR code encoding the license details. Extracted out of

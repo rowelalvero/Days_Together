@@ -10,8 +10,8 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:days_together/providers/couple_session.dart';
-import 'package:days_together/routing/app_router.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/app_router.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/services/notification_service.dart';
 
 void main() {

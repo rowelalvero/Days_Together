@@ -7,7 +7,7 @@ import 'package:days_together/features/relationship/presentation/license/license
 import 'package:days_together/features/relationship/presentation/license/painters/signature_painter.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/storage_image.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 /// The relationship license card's front face -- photo ID layout with
 /// avatar, name, and vital-stats fields. Extracted out of

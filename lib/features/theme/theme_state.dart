@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' show LinearGradient;
 import 'package:days_together/models/app_settings.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// State for `ThemeController` (Item 3 gap-fix, Phase 2 -- front 3 of the
 /// architecture migration's `provider`-removal item). A direct Riverpod

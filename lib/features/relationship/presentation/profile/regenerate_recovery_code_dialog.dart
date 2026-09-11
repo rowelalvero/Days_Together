@@ -5,8 +5,8 @@ import 'package:days_together/features/relationship/presentation/profile/new_rec
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/safe_loading_dialog.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Warns that regenerating the recovery code invalidates the old one, then
 /// (on confirm) regenerates it and opens [NewRecoveryCodeDialog] to show

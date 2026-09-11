@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 class WrappedPageMood extends StatelessWidget {
   final WrappedData data;

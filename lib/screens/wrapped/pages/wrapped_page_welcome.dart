@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 class WrappedPageWelcome extends StatefulWidget {
   final WrappedData data;

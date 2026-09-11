@@ -1,10 +1,10 @@
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';

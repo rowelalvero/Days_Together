@@ -18,7 +18,7 @@ import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/features/currently/currently_controller.dart';
 import 'package:days_together/features/settings/notification_preferences_controller.dart';
-import 'package:days_together/routing/app_router.dart';
+import 'package:days_together/app/router/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerStatefulWidget, ConsumerState, ConsumerWidget, WidgetRef, ProviderScope;
@@ -26,12 +26,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:days_together/features/home_widgets/data/home_widget_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/app_config.dart';
+import 'package:days_together/app/config/app_config.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/home_widget_service.dart';
 
 import 'package:home_widget/home_widget.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 
 @pragma('vm:entry-point')
 void main() {

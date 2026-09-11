@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Shown while waiting for the partner to join or complete their own
 /// license setup. Extracted out of

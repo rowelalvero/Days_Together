@@ -1,4 +1,4 @@
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -6,7 +6,7 @@ import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_state.dart';
 import 'package:days_together/models/time_capsule_model.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 class TimeCapsuleScreen extends ConsumerStatefulWidget {
   const TimeCapsuleScreen({super.key});

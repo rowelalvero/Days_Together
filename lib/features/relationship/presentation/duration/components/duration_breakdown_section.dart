@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:days_together/features/relationship/workspace_state.dart';
 import 'package:days_together/services/date_helper.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Bento card row showing the precise duration breakdown in Years, Months, and Days.
 class DurationBreakdownSection extends StatelessWidget {

@@ -84,10 +84,9 @@ class ThemeManager {
   }
 
   static LinearGradient getGradient(ThemeType type, {AppSettings? settings}) {
-    final theme =
-        (type == ThemeType.custom && settings != null)
-            ? buildCustomTheme(settings)
-            : getTheme(type);
+    final theme = (type == ThemeType.custom && settings != null)
+        ? buildCustomTheme(settings)
+        : getTheme(type);
     return LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,

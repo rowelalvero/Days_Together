@@ -8,7 +8,7 @@ import 'package:days_together/features/dashboard/presentation/cards/love_chat_be
 import 'package:days_together/features/dashboard/presentation/cards/secret_vault_bento_card.dart';
 import 'package:days_together/features/dashboard/presentation/cards/shared_calendar_bento_card.dart';
 import 'package:days_together/features/dashboard/presentation/cards/time_capsule_bento_card.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Bento Grid dashboard layout orchestrator.
 /// Arranges responsive glassmorphic cards for all core couple experiences.

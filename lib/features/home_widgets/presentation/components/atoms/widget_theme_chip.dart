@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/models/app_settings.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 class WidgetThemeChip extends StatelessWidget {
   final ThemeType themeType;

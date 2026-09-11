@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:days_together/screens/wrapped/wrapped_data.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 class WrappedPageFinale extends StatefulWidget {
   final WrappedData data;

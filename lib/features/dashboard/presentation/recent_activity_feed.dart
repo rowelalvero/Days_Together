@@ -1,9 +1,9 @@
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerState, ConsumerStatefulWidget;
 import 'package:go_router/go_router.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 import 'package:intl/intl.dart';
 import 'package:days_together/shared/glass_container.dart';
 
@@ -18,7 +18,7 @@ import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 // LoveStoryScreen.of(context)?.setIndex(...) below is tab-switching inside
 // the already-mounted shell, not screen navigation -- deliberately out of
 // go_router's scope (ADR-007); every other case now resolves to a Routes

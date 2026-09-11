@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:days_together/app_config.dart';
+import 'package:days_together/app/config/app_config.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/services/notification_service.dart';
 import 'package:days_together/services/auth_service.dart';

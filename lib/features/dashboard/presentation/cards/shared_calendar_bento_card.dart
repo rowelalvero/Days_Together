@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
 import 'package:days_together/features/calendar/calendar_state.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Bento card for the Shared Calendar on the dashboard.
 /// Displays the next upcoming milestone/event and countdown badge.

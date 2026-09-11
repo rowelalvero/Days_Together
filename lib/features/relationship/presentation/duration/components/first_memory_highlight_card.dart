@@ -6,8 +6,8 @@ import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/storage_image.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Bento card highlighting the first recorded relationship memory ("How It All Started").
 class FirstMemoryHighlightCard extends StatelessWidget {

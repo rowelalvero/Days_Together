@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/features/scrapbook/presentation/color_picker_dialog.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Properties sheet for brush/drawing configurations (stroke width slider,
 /// shape type dropdown, and color palette picker).

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Floating bottom toolbar containing tool selection (select, pen, pencil,
 /// marker, eraser, shapes) and content insertion (text, gallery, camera).

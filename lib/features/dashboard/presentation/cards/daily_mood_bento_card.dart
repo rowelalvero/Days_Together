@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/mood/daily_mood_controller.dart';
 import 'package:days_together/features/mood/daily_mood_state.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Bento card for the Daily Mood feature on the dashboard.
 /// Shows current couple mood status and emoji indicators.

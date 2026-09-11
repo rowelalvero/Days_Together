@@ -6,7 +6,7 @@ import 'package:days_together/providers/couple_session.dart'
     show SessionStage, computeSessionStage, coupleSessionProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/screens/love_story_screen.dart';
 import 'package:days_together/screens/onboarding/auth_screen.dart';
 import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
@@ -244,7 +244,8 @@ String? computeRedirectTarget({
   }
 
   if (pendingLocation != null) {
-    return computeRedirectTarget(stage: stage, here: pendingLocation) ?? pendingLocation;
+    return computeRedirectTarget(stage: stage, here: pendingLocation) ??
+        pendingLocation;
   }
 
   final target = _routeForStage(stage);
@@ -306,12 +307,27 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
           },
         ),
       ),
-      GoRoute(path: Routes.pairing, builder: (_, _) => const PairingSelectionScreen()),
-      GoRoute(path: Routes.joinCode, builder: (_, _) => const JoinCoupleCodeScreen()),
-      GoRoute(path: Routes.recover, builder: (_, _) => const RecoverRelationshipScreen()),
-      GoRoute(path: Routes.workspace, builder: (_, _) => const CreateCoupleCodeScreen()),
+      GoRoute(
+        path: Routes.pairing,
+        builder: (_, _) => const PairingSelectionScreen(),
+      ),
+      GoRoute(
+        path: Routes.joinCode,
+        builder: (_, _) => const JoinCoupleCodeScreen(),
+      ),
+      GoRoute(
+        path: Routes.recover,
+        builder: (_, _) => const RecoverRelationshipScreen(),
+      ),
+      GoRoute(
+        path: Routes.workspace,
+        builder: (_, _) => const CreateCoupleCodeScreen(),
+      ),
       GoRoute(path: Routes.genesis, builder: (_, _) => const GenesisScreen()),
-      GoRoute(path: Routes.avatar, builder: (_, _) => const AvatarCreationScreen()),
+      GoRoute(
+        path: Routes.avatar,
+        builder: (_, _) => const AvatarCreationScreen(),
+      ),
       GoRoute(
         path: Routes.home,
         builder: (context, state) {
@@ -320,19 +336,49 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
         },
       ),
       GoRoute(path: Routes.chat, builder: (_, _) => const LoveChatScreen()),
-      GoRoute(path: Routes.bucketList, builder: (_, _) => const BucketListScreen()),
-      GoRoute(path: Routes.loveMeter, builder: (_, _) => const LoveMeterScreen()),
+      GoRoute(
+        path: Routes.bucketList,
+        builder: (_, _) => const BucketListScreen(),
+      ),
+      GoRoute(
+        path: Routes.loveMeter,
+        builder: (_, _) => const LoveMeterScreen(),
+      ),
       GoRoute(path: Routes.notes, builder: (_, _) => const NoteitScreen()),
-      GoRoute(path: Routes.timeCapsule, builder: (_, _) => const TimeCapsuleScreen()),
+      GoRoute(
+        path: Routes.timeCapsule,
+        builder: (_, _) => const TimeCapsuleScreen(),
+      ),
       GoRoute(path: Routes.calendar, builder: (_, _) => const CalendarScreen()),
       GoRoute(path: Routes.vault, builder: (_, _) => const VaultScreen()),
-      GoRoute(path: Routes.topicCards, builder: (_, _) => const TopicCardsScreen()),
-      GoRoute(path: Routes.license, builder: (_, _) => const RelationshipLicenseScreen()),
-      GoRoute(path: Routes.gifts, builder: (_, _) => const GiftRemindersScreen()),
-      GoRoute(path: Routes.themeSelector, builder: (_, _) => const ThemeSelectorScreen()),
-      GoRoute(path: Routes.notificationSettings, builder: (_, _) => const NotificationSettingsScreen()),
-      GoRoute(path: Routes.profile, builder: (_, _) => const RelationshipProfileScreen()),
-      GoRoute(path: Routes.wrappedArchive, builder: (_, _) => const WrappedArchiveScreen()),
+      GoRoute(
+        path: Routes.topicCards,
+        builder: (_, _) => const TopicCardsScreen(),
+      ),
+      GoRoute(
+        path: Routes.license,
+        builder: (_, _) => const RelationshipLicenseScreen(),
+      ),
+      GoRoute(
+        path: Routes.gifts,
+        builder: (_, _) => const GiftRemindersScreen(),
+      ),
+      GoRoute(
+        path: Routes.themeSelector,
+        builder: (_, _) => const ThemeSelectorScreen(),
+      ),
+      GoRoute(
+        path: Routes.notificationSettings,
+        builder: (_, _) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.profile,
+        builder: (_, _) => const RelationshipProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.wrappedArchive,
+        builder: (_, _) => const WrappedArchiveScreen(),
+      ),
       GoRoute(
         path: Routes.wrapped,
         // Preserves settings_tab.dart's/wrapped_archive_screen.dart's original
@@ -355,9 +401,10 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
             key: state.pageKey,
             child: child,
             transitionDuration: const Duration(milliseconds: 600),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
           );
         },
       ),
@@ -385,16 +432,26 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
           },
         ),
       ),
-      GoRoute(path: Routes.studioLoveLetter, builder: (_, _) => const AILoveLetterScreen()),
-      GoRoute(path: Routes.studioInsights, builder: (_, _) => const RelationshipInsightsScreen()),
-      GoRoute(path: Routes.homeWidgets, builder: (_, _) => const HomeWidgetStudioScreen()),
+      GoRoute(
+        path: Routes.studioLoveLetter,
+        builder: (_, _) => const AILoveLetterScreen(),
+      ),
+      GoRoute(
+        path: Routes.studioInsights,
+        builder: (_, _) => const RelationshipInsightsScreen(),
+      ),
+      GoRoute(
+        path: Routes.homeWidgets,
+        builder: (_, _) => const HomeWidgetStudioScreen(),
+      ),
       GoRoute(
         path: Routes.memoryPattern,
         builder: (context, state) {
           final itemId = state.pathParameters['itemId']!;
-          final items = ProviderScope.containerOf(context, listen: false)
-              .read(timelineControllerProvider)
-              .items;
+          final items = ProviderScope.containerOf(
+            context,
+            listen: false,
+          ).read(timelineControllerProvider).items;
           TimelineItemData? item;
           try {
             item = items.firstWhere((i) => i.id == itemId);

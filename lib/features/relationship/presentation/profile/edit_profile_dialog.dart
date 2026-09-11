@@ -7,8 +7,8 @@ import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/services/permission_service.dart';
 import 'package:days_together/shared/cached_avatar.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// The bottom sheet for editing your (and, if paired, your partner's)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:days_together/routing/routes.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/router/route_names.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'wrapped_data.dart';
 import 'wrapped_service.dart';

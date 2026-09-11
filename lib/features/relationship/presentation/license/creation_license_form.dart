@@ -3,8 +3,8 @@ import 'package:intl/intl.dart';
 
 import 'package:days_together/features/relationship/data/signature_codec.dart';
 import 'package:days_together/features/relationship/presentation/license/painters/signature_painter.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// The first-time license creation form -- extracted out of
 /// `RelationshipLicenseScreenState._buildFormFields`/`_buildSignatureBox`

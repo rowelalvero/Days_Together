@@ -1,8 +1,8 @@
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/models/timeline_model.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';

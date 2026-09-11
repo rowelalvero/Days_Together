@@ -22,8 +22,8 @@ import 'package:days_together/features/scrapbook/presentation/sheets/noteit_brus
 import 'package:days_together/features/scrapbook/presentation/sheets/noteit_text_properties_panel.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/services/permission_service.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/utils/canvas_mapping.dart';
 
 /// NoteIt / Scrapbook interactive canvas screen.

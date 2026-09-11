@@ -1,9 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
 import 'package:days_together/models/topic_card_model.dart';

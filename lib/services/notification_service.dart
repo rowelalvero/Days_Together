@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:days_together/routing/app_router.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/app_router.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';

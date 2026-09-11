@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:days_together/features/relationship/presentation/license/export/license_card_preview.dart';
 import 'package:days_together/features/relationship/presentation/license/license_widgets.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// The export studio's Instagram Story template (1080x1920, portrait).
 /// Extracted out of `ExportStudioBottomSheetState._buildStoryTemplate`

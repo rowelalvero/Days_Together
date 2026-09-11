@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ConsumerWidget, Wid
 
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/shared/glass_container.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Confirms unlinking from the partner (or cancelling a pending pairing
 /// invitation) before calling `CoupleSession.unlinkPartner()` and popping

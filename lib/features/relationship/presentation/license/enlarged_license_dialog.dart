@@ -5,7 +5,7 @@ import 'package:days_together/features/relationship/presentation/license/flippab
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 /// A pinch-to-zoom, tap-to-flip enlarged view of one partner's license
 /// card. Extracted out of

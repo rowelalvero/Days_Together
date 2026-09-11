@@ -15,7 +15,7 @@ import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/services/date_helper.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 /// Relationship Duration & Milestones Screen.
 /// Displays animated duration counters, live ticking stopwatch, milestone achievements,

@@ -8,8 +8,8 @@ import 'package:days_together/features/relationship/presentation/license/edit/pe
 import 'package:days_together/features/relationship/presentation/license/signature/signature_drawing_dialog.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// The bottom sheet for editing every field on the relationship license
 /// (both partners' vitals, emergency contact, and signature). Extracted

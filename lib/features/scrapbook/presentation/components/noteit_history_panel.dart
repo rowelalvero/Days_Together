@@ -7,8 +7,8 @@ import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/services/noteit_sync_manager.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/shared/storage_image.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Historical grid feed of exchanged scrapbook notes, including sync indicators
 /// and enlargement dialogs.

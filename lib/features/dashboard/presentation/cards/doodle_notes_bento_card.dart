@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:days_together/routing/routes.dart';
+import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/models/noteit_model.dart';
@@ -11,8 +11,8 @@ import 'package:days_together/services/storage_url_service.dart';
 import 'package:days_together/shared/glass_container.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
 import 'package:days_together/shared/storage_image.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/services/date_helper.dart';
 
 /// Bento card for the Scrapbook / NoteIt feature on the dashboard.

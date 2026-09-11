@@ -5,8 +5,8 @@ import 'package:days_together/features/relationship/data/image_export_service.da
 import 'package:days_together/features/relationship/presentation/license/export/post_export_template.dart';
 import 'package:days_together/features/relationship/presentation/license/export/story_export_template.dart';
 import 'package:days_together/features/relationship/presentation/license/export/transparent_export_template.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// The bottom sheet for exporting the relationship license as a shareable
 /// image (transparent PNG, Instagram Story template, or square post

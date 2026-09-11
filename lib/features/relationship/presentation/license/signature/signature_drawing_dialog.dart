@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:days_together/features/relationship/presentation/license/painters/signature_painter.dart';
-import 'package:days_together/themes/app_typography.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 
 /// A full-screen dialog for freehand-drawing a signature, used by the
 /// license editor. Extracted out of relationship_license_screen.dart

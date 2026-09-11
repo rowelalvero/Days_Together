@@ -12,9 +12,9 @@ import 'package:days_together/features/gift_reminders/gift_reminder_controller.d
 import 'package:days_together/features/vault/vault_controller.dart';
 import 'package:days_together/models/calendar_event_model.dart';
 import 'package:days_together/models/vault_item_model.dart';
-import 'package:days_together/routing/routes.dart';
-import 'package:days_together/themes/theme_manager.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/router/route_names.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});

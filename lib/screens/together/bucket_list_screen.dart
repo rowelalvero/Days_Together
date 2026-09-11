@@ -1,4 +1,4 @@
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
@@ -6,7 +6,7 @@ import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/bucket_list/bucket_list_state.dart';
 import 'package:days_together/models/bucket_list_model.dart';
 import 'package:confetti/confetti.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 
 import 'package:intl/intl.dart';
 

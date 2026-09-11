@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/home_widgets/domain/home_widget_models.dart';
 
 class DaysTogether2x2RenderCard extends StatelessWidget {

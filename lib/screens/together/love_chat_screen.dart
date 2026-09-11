@@ -1,4 +1,4 @@
-import 'package:days_together/themes/theme_manager.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:days_together/core/scrapbook_ref.dart';
 import 'package:days_together/models/noteit_model.dart';
 import 'package:days_together/shared/scale_drawing_painter.dart';
-import 'package:days_together/themes/app_typography.dart';
+import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/models/love_chat_model.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/chat/love_chat_controller.dart';
