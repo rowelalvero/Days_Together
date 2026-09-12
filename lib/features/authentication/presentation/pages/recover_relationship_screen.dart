@@ -1,15 +1,22 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/authentication/presentation/pages/avatar_creation_screen.dart';
+import 'package:days_together/features/authentication/presentation/widgets/recover_button.dart';
+import 'package:days_together/features/authentication/presentation/widgets/recovery_code_input_card.dart';
 import 'package:days_together/shared/widgets/safe_loading_dialog.dart';
 
+/// Recovery-code entry screen shown to a user restoring a workspace on a
+/// new device.
+///
+/// Its inline recovery-code card and submit button were extracted into
+/// widgets under `presentation/widgets/` (Migration audit item 6) -- this
+/// class still owns the form key, code controller, loading/error state,
+/// and the recovery flow itself.
 class RecoverRelationshipScreen extends ConsumerStatefulWidget {
   const RecoverRelationshipScreen({super.key});
 
@@ -173,175 +180,17 @@ class _RecoverRelationshipScreenState
                       ),
                     ),
                     const SizedBox(height: 40),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(
-                              alpha: theme.isDark ? 0.08 : 0.65,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: Colors.white.withValues(
-                                alpha: theme.isDark ? 0.15 : 0.45,
-                              ),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'RECOVERY CODE',
-                                style: AppTypography.caption(
-                                  color: theme.textColor.withValues(alpha: 0.6),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _codeController,
-                                textCapitalization:
-                                    TextCapitalization.characters,
-                                style: AppTypography.body(
-                                  color: theme.textColor,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: theme.textColor.withValues(
-                                    alpha: 0.04,
-                                  ),
-                                  prefixIcon: Icon(
-                                    Icons.key_rounded,
-                                    color: theme.textColor.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                    size: 20,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      Icons.paste_rounded,
-                                      color: theme.accentColor,
-                                      size: 20,
-                                    ),
-                                    tooltip: 'Paste recovery code',
-                                    onPressed: () async {
-                                      final data = await Clipboard.getData(
-                                        Clipboard.kTextPlain,
-                                      );
-                                      if (data?.text != null) {
-                                        _codeController.text = data!.text!
-                                            .trim()
-                                            .toUpperCase();
-                                        setState(() {
-                                          _errorMessage = null;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                  hintText: 'e.g. ABC123-RVT7-H9MK-PQ82-JXW5',
-                                  hintStyle: AppTypography.body(
-                                    color: theme.textColor.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide(
-                                      color: theme.textColor.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide(
-                                      color: theme.accentColor,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  errorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: Colors.redAccent,
-                                    ),
-                                  ),
-                                  focusedErrorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: Colors.redAccent,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Recovery code is required';
-                                  }
-                                  if (!value.contains('-')) {
-                                    return 'Invalid format. Code must contain a hyphen';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              if (_errorMessage != null) ...[
-                                const SizedBox(height: 16),
-                                Text(
-                                  _errorMessage!,
-                                  style: AppTypography.caption(
-                                    color: Colors.redAccent,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
+                    RecoveryCodeInputCard(
+                      controller: _codeController,
+                      errorMessage: _errorMessage,
+                      onPasted: () => setState(() => _errorMessage = null),
+                      theme: theme,
                     ),
                     const SizedBox(height: 40),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 60,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleRecover,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.accentColor,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: theme.accentColor.withValues(
-                            alpha: 0.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : Text(
-                                'Recover Workspace',
-                                style: AppTypography.button(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
+                    RecoverButton(
+                      isLoading: _isLoading,
+                      onPressed: _handleRecover,
+                      theme: theme,
                     ),
                     const SizedBox(height: 40),
                   ],
