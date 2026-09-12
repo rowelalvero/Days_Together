@@ -1,14 +1,24 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/app/theme/app_typography.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
+import 'package:days_together/features/topic_cards/presentation/sheets/add_topic_card_sheet.dart';
+import 'package:days_together/features/topic_cards/presentation/widgets/topic_card_deck.dart';
+import 'package:days_together/features/topic_cards/presentation/widgets/topic_card_round_button.dart';
+import 'package:days_together/features/topic_cards/presentation/widgets/topic_cards_empty_state.dart';
 import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
-import 'package:days_together/features/topic_cards/domain/entities/topic_card_model.dart';
-import 'package:days_together/shared/widgets/glass_container.dart';
 
+/// The Topic Cards feature's home screen: a swipeable, flippable deck of
+/// conversation prompts, filterable by category.
+///
+/// Card rendering, the empty-deck placeholder, and the "add a custom card"
+/// sheet were split out into their own widgets under `presentation/widgets/`
+/// and `presentation/sheets/` (Migration audit item 6) -- this class now
+/// owns only what genuinely needs to live on a `State`: the swipe/flip
+/// animation controllers and the drag gesture handlers that drive them.
 class TopicCardsScreen extends ConsumerStatefulWidget {
   const TopicCardsScreen({super.key});
 
@@ -153,202 +163,23 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
     });
   }
 
-  void _showAddCardDialog(
+  void _showAddCardSheet(
     BuildContext context,
     LoveStoryTheme theme,
     TopicCardsController notifier,
   ) {
-    final formKey = GlobalKey<FormState>();
-    final questionController = TextEditingController();
-    String selectedCategory =
-        _categories[1]; // default to first real category (Deep)
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.transparent,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: GlassContainer(
-                borderRadius: 24,
-                opacity: 0.15,
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Create Custom Card',
-                            style: AppTypography.heading(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: theme.textColor,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.close, color: theme.textColor),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'CATEGORY',
-                        style: AppTypography.caption(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: theme.textColor.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: theme.textColor.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedCategory,
-                            dropdownColor: theme.backgroundColor,
-                            style: AppTypography.body(
-                              color: theme.textColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: theme.accentColor,
-                            ),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setModalState(() {
-                                  selectedCategory = val;
-                                });
-                              }
-                            },
-                            items: _categories
-                                .where((c) => c != 'All' && c != 'Favorites')
-                                .map((cat) {
-                                  return DropdownMenuItem<String>(
-                                    value: cat,
-                                    child: Text(cat),
-                                  );
-                                })
-                                .toList(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'YOUR CONVERSATION PROMPT',
-                        style: AppTypography.caption(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: questionController,
-                        maxLines: 4,
-                        style: AppTypography.body(color: theme.textColor),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please share a question or prompt.';
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          hintText:
-                              'e.g., What is a dream you\'ve always wanted to share with me?',
-                          hintStyle: AppTypography.body(
-                            color: theme.textColor.withValues(alpha: 0.4),
-                          ),
-                          filled: true,
-                          fillColor: theme.textColor.withValues(alpha: 0.05),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: theme.textColor.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: theme.textColor.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: theme.accentColor,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (formKey.currentState!.validate()) {
-                              notifier.addCustomCard(
-                                questionController.text.trim(),
-                                selectedCategory,
-                              );
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Custom prompt added to your deck! 🃏',
-                                  ),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.accentColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 4,
-                          ),
-                          child: Text(
-                            'Add to Deck',
-                            style: AppTypography.body(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (ctx) => AddTopicCardSheet(
+        theme: theme,
+        notifier: notifier,
+        selectableCategories: _categories
+            .where((c) => c != 'All' && c != 'Favorites')
+            .toList(),
+      ),
     );
   }
 
@@ -386,7 +217,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
               Icons.add_circle_outline_rounded,
               color: theme.textColor,
             ),
-            onPressed: () => _showAddCardDialog(context, theme, cardsNotifier),
+            onPressed: () => _showAddCardSheet(context, theme, cardsNotifier),
           ),
         ],
       ),
@@ -459,17 +290,26 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
               Expanded(
                 child: isDeckEmpty
                     ? Center(
-                        child: _buildEmptyState(
-                          theme,
-                          cardsState.activeCategory,
-                          cardsNotifier,
+                        child: TopicCardsEmptyState(
+                          theme: theme,
+                          activeCategory: cardsState.activeCategory,
+                          onAddCard: () =>
+                              _showAddCardSheet(context, theme, cardsNotifier),
                         ),
                       )
-                    : _buildCardDeck(
-                        activeDeck,
-                        activeIndex,
-                        theme,
-                        cardsNotifier,
+                    : TopicCardDeck(
+                        deck: activeDeck,
+                        index: activeIndex,
+                        theme: theme,
+                        notifier: cardsNotifier,
+                        dragOffset: _dragOffset,
+                        isSwipeAnimating: _swipeController.isAnimating,
+                        rotationAnimation: _rotationAnimation,
+                        flipRotation: _flipRotation,
+                        onHorizontalDragUpdate: _onHorizontalDragUpdate,
+                        onHorizontalDragEnd: (details) =>
+                            _onHorizontalDragEnd(details, cardsNotifier),
+                        onTap: _toggleFlip,
                       ),
               ),
 
@@ -486,7 +326,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       // Previous Button
-                      _buildRoundButton(
+                      TopicCardRoundButton(
                         icon: Icons.skip_previous_rounded,
                         color: theme.textColor.withValues(alpha: 0.1),
                         iconColor: theme.textColor,
@@ -501,7 +341,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                       ),
 
                       // Shuffle Button
-                      _buildRoundButton(
+                      TopicCardRoundButton(
                         icon: Icons.shuffle_rounded,
                         color: theme.textColor.withValues(alpha: 0.1),
                         iconColor: theme.textColor,
@@ -518,7 +358,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                       ),
 
                       // Next Button
-                      _buildRoundButton(
+                      TopicCardRoundButton(
                         icon: Icons.skip_next_rounded,
                         color: theme.accentColor,
                         iconColor: Colors.white,
@@ -538,507 +378,6 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(
-    LoveStoryTheme theme,
-    String activeCategory,
-    TopicCardsController notifier,
-  ) {
-    final isFav = activeCategory == 'Favorites';
-    return GlassContainer(
-      borderRadius: 24,
-      opacity: 0.08,
-      margin: const EdgeInsets.symmetric(horizontal: 36, vertical: 48),
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: theme.accentColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isFav
-                  ? Icons.favorite_outline_rounded
-                  : Icons.folder_open_rounded,
-              size: 50,
-              color: theme.accentColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            isFav ? 'No Favorited Topics' : 'No custom prompts yet',
-            style: AppTypography.heading(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: theme.textColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            isFav
-                ? 'Tap the heart icon on any card to save meaningful prompts for later!'
-                : 'Add your own custom prompts to personalize your deck!',
-            style: AppTypography.body(
-              fontSize: 14,
-              color: theme.textColor.withValues(alpha: 0.6),
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 28),
-          if (!isFav)
-            ElevatedButton.icon(
-              onPressed: () => _showAddCardDialog(context, theme, notifier),
-              icon: const Icon(Icons.add),
-              label: const Text('Create Custom Card'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCardDeck(
-    List<TopicCard> deck,
-    int index,
-    LoveStoryTheme theme,
-    TopicCardsController notifier,
-  ) {
-    final double cardWidth = 300;
-    final double cardHeight = 440;
-
-    // We build a stack representing the deck.
-    // The top card is interactive.
-    // Behind it we render 1 or 2 visual placeholders of other cards to create a deck effect.
-    return Center(
-      child: SizedBox(
-        width: cardWidth + 50,
-        height: cardHeight + 40,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Bottom deck visual shadow card
-            if (deck.length > 2)
-              Positioned(
-                bottom: 5,
-                child: Transform.scale(
-                  scale: 0.90,
-                  child: Opacity(
-                    opacity: 0.4,
-                    child: _buildStaticCardCover(
-                      theme,
-                      deck[(index + 2) % deck.length],
-                    ),
-                  ),
-                ),
-              ),
-
-            // Middle deck visual shadow card
-            if (deck.length > 1)
-              Positioned(
-                bottom: 15,
-                child: Transform.scale(
-                  scale: 0.95,
-                  child: Opacity(
-                    opacity: 0.7,
-                    child: _buildStaticCardCover(
-                      theme,
-                      deck[(index + 1) % deck.length],
-                    ),
-                  ),
-                ),
-              ),
-
-            // Top draggable & interactive card
-            Positioned(
-              bottom: 25,
-              child: GestureDetector(
-                onHorizontalDragUpdate: _onHorizontalDragUpdate,
-                onHorizontalDragEnd: (details) =>
-                    _onHorizontalDragEnd(details, notifier),
-                onTap: _toggleFlip,
-                child: Transform.translate(
-                  offset: _dragOffset,
-                  child: Transform.rotate(
-                    angle: _swipeController.isAnimating
-                        ? _rotationAnimation.value
-                        : (_dragOffset.dx / 1000).clamp(-0.15, 0.15),
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0.0, end: _flipRotation),
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeInOut,
-                      builder: (context, angle, child) {
-                        final isBack = angle >= pi / 2;
-                        return Transform(
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.001) // perspective
-                            ..rotateY(angle),
-                          alignment: Alignment.center,
-                          child: isBack
-                              ? _buildCardBack(theme, deck[index], notifier)
-                              : _buildCardFront(theme, deck[index]),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStaticCardCover(LoveStoryTheme theme, TopicCard card) {
-    return Container(
-      width: 300,
-      height: 400,
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.textColor.withValues(alpha: 0.1),
-          width: 1.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardFront(LoveStoryTheme theme, TopicCard card) {
-    return Container(
-      width: 300,
-      height: 400,
-      decoration: BoxDecoration(
-        color: theme.backgroundColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFFD4AF37), // elegant gold border
-          width: 2.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.accentColor.withValues(alpha: 0.1),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Corner gold accents
-          Positioned(
-            top: 10,
-            left: 10,
-            child: Icon(
-              Icons.star_border_rounded,
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              size: 18,
-            ),
-          ),
-          Positioned(
-            top: 10,
-            right: 10,
-            child: Icon(
-              Icons.star_border_rounded,
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              size: 18,
-            ),
-          ),
-          Positioned(
-            bottom: 10,
-            left: 10,
-            child: Icon(
-              Icons.star_border_rounded,
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              size: 18,
-            ),
-          ),
-          Positioned(
-            bottom: 10,
-            right: 10,
-            child: Icon(
-              Icons.star_border_rounded,
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              size: 18,
-            ),
-          ),
-
-          // Core content
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.accentColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.favorite_rounded,
-                      color: theme.accentColor.withValues(alpha: 0.8),
-                      size: 48,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    card.category.toUpperCase(),
-                    textAlign: TextAlign.center,
-                    style: AppTypography.caption(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFFD4AF37),
-                    ).copyWith(letterSpacing: 2),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Conversation Deck',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.heading(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: theme.textColor.withValues(alpha: 0.2),
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'TAP TO REVEAL',
-                      style: AppTypography.caption(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textColor.withValues(alpha: 0.6),
-                      ).copyWith(letterSpacing: 1.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCardBack(
-    LoveStoryTheme theme,
-    TopicCard card,
-    TopicCardsController notifier,
-  ) {
-    return Transform(
-      // We flip Y axis of the content so it reads correctly when Y-rotated 180 degrees
-      transform: Matrix4.identity()..rotateY(pi),
-      alignment: Alignment.center,
-      child: Container(
-        width: 300,
-        height: 400,
-        decoration: BoxDecoration(
-          color: theme.backgroundColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFFD4AF37), // elegant gold border
-            width: 2.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.accentColor.withValues(alpha: 0.1),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top Row: Category label & Delete (if custom)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.accentColor.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        card.category,
-                        style: AppTypography.caption(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: theme.accentColor,
-                        ),
-                      ),
-                    ),
-                    if (card.isCustom)
-                      IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.redAccent,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              backgroundColor: theme.backgroundColor,
-                              title: Text(
-                                'Delete Card?',
-                                style: AppTypography.title(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.textColor,
-                                ),
-                              ),
-                              content: Text(
-                                'Are you sure you want to delete this custom topic card?',
-                                style: AppTypography.body(
-                                  color: theme.textColor.withValues(alpha: 0.8),
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('Cancel'),
-                                  onPressed: () => Navigator.pop(ctx),
-                                ),
-                                TextButton(
-                                  child: Text(
-                                    'Delete',
-                                    style: AppTypography.button(
-                                      color: Colors.redAccent,
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    notifier.deleteCard(card.id);
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-                const Spacer(),
-
-                // Question Text
-                Text(
-                  card.question,
-                  textAlign: TextAlign.center,
-                  style: AppTypography.heading(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor,
-                    height: 1.4,
-                  ),
-                ),
-                const Spacer(),
-
-                // Bottom Action buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Share Button
-                    IconButton(
-                      icon: Icon(
-                        Icons.share_outlined,
-                        color: theme.textColor.withValues(alpha: 0.6),
-                      ),
-                      onPressed: () {
-                        Share.share(
-                          'Here is a relationship topic for us: "${card.question}" 💕',
-                          subject: 'Deep Connection Topic',
-                        );
-                      },
-                    ),
-
-                    // Like/Favorite Toggle Button
-                    IconButton(
-                      icon: Icon(
-                        card.isLiked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        color: card.isLiked
-                            ? theme.accentColor
-                            : theme.textColor.withValues(alpha: 0.6),
-                      ),
-                      onPressed: () {
-                        notifier.toggleLikeCard(card.id);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoundButton({
-    required IconData icon,
-    required Color color,
-    required Color iconColor,
-    required LoveStoryTheme theme,
-    required VoidCallback onPressed,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: theme.textColor.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(icon, color: iconColor, size: 26),
       ),
     );
   }
