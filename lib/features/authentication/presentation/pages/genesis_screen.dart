@@ -1,4 +1,3 @@
-import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,8 +5,17 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
+import 'package:days_together/features/authentication/presentation/widgets/continue_button.dart';
+import 'package:days_together/features/authentication/presentation/widgets/date_time_picker_tile.dart';
 import 'package:intl/intl.dart';
 
+/// Onboarding screen where a couple's creator sets when their story
+/// began.
+///
+/// Its inline date/time picker tiles were extracted into
+/// DateTimePickerTile under `presentation/widgets/` (Migration audit
+/// item 6); the "Continue" button reuses the same ContinueButton widget
+/// CreateCoupleCodeScreen uses, since both render an identical style.
 class GenesisScreen extends ConsumerStatefulWidget {
   const GenesisScreen({super.key});
 
@@ -70,7 +78,7 @@ class _GenesisScreenState extends ConsumerState<GenesisScreen> {
                 ),
                 const SizedBox(height: 40),
                 // Date Picker
-                _buildPickerTile(
+                DateTimePickerTile(
                   icon: Icons.calendar_today_rounded,
                   label: 'DATE',
                   value: DateFormat('MMMM dd, yyyy').format(_selectedDate),
@@ -102,7 +110,7 @@ class _GenesisScreenState extends ConsumerState<GenesisScreen> {
                 ),
                 const SizedBox(height: 20),
                 // Time Picker
-                _buildPickerTile(
+                DateTimePickerTile(
                   icon: Icons.access_time_rounded,
                   label: 'TIME',
                   value: _selectedTime.format(context),
@@ -131,102 +139,21 @@ class _GenesisScreenState extends ConsumerState<GenesisScreen> {
                   },
                 ),
                 const SizedBox(height: 60),
-                // Continue Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final workspace = ref.read(
-                        workspaceControllerProvider.notifier,
-                      );
-                      await workspace.setStartDate(_selectedDate);
-                      await workspace.setStartTime(_selectedTime);
-                      if (!context.mounted) return;
-                      context.push(Routes.avatar);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.accentColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Continue',
-                      style: AppTypography.button(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                ContinueButton(
+                  theme: theme,
+                  onPressed: () async {
+                    final workspace = ref.read(
+                      workspaceControllerProvider.notifier,
+                    );
+                    await workspace.setStartDate(_selectedDate);
+                    await workspace.setStartTime(_selectedTime);
+                    if (!context.mounted) return;
+                    context.push(Routes.avatar);
+                  },
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPickerTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required LoveStoryTheme theme,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.textColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: theme.accentColor.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: theme.accentColor),
-            ),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: AppTypography.caption(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor.withValues(alpha: 0.5),
-                  ).copyWith(letterSpacing: 2),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: AppTypography.body(
-                    color: theme.textColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Icon(
-              Icons.edit_rounded,
-              color: theme.textColor.withValues(alpha: 0.3),
-              size: 20,
-            ),
-          ],
         ),
       ),
     );
