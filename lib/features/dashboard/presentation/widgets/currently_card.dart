@@ -3,11 +3,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/features/dashboard/presentation/widgets/partner_invite_prompt.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/presence_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/currently/currently_controller.dart';
 import 'package:days_together/features/currently/currently_state.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
@@ -49,6 +52,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
   ];
 
   late String _successMessage;
+  bool _codeCopied = false;
 
   @override
   void initState() {
@@ -78,6 +82,14 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
     _celebrationController.dispose();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  void _copyCode(String code) {
+    Clipboard.setData(ClipboardData(text: code));
+    setState(() => _codeCopied = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _codeCopied = false);
+    });
   }
 
   void _triggerTap(CurrentlyState state, CurrentlyController notifier) {
@@ -236,12 +248,30 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
   Widget build(BuildContext context) {
     final theme = ref.watch(themeControllerProvider).currentLoveTheme;
     final session = ref.watch(sessionControllerProvider);
+
+    if (session.partnerId == null) {
+      final coupleCode = ref.watch(workspaceControllerProvider).coupleCode;
+      return GlassContainer(
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 18),
+        borderRadius: 24,
+        border: Border.all(color: theme.textColor.withValues(alpha: 0.08)),
+        child: PartnerInvitePrompt(
+          theme: theme,
+          code: coupleCode,
+          copied: _codeCopied,
+          onCopy: () => _copyCode(coupleCode!),
+          onShare: () => Share.share(
+            'Connect with me on Days Together! Enter my connection code: $coupleCode to link our hearts 💕',
+          ),
+        ),
+      );
+    }
+
     final profile = ref.watch(profileControllerProvider);
     final presence = ref.watch(presenceControllerProvider);
     final currently = ref.watch(currentlyControllerProvider);
     final currentlyNotifier = ref.read(currentlyControllerProvider.notifier);
 
-    final partnerJoined = session.partnerId != null;
     final isOnline = presence.isPartnerOnline;
     final partnerActivity = presence.partnerActivity;
 
@@ -290,9 +320,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                           ),
                           child: StorageImageBuilder(
                             bucket: StorageBuckets.avatars,
-                            storageRef: partnerJoined
-                                ? profile.partnerAvatarPath
-                                : null,
+                            storageRef: profile.partnerAvatarPath,
                             builder: (context, image, _, _) => CircleAvatar(
                               radius: 24,
                               backgroundColor: theme.textColor.withValues(
