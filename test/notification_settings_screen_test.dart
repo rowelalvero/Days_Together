@@ -72,7 +72,7 @@ void main() {
       await _pump(tester);
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('Global Preferences'), findsNothing);
+      expect(find.text('GLOBAL PREFERENCES'), findsNothing);
     });
 
     testWidgets('renders all three section headers once loaded', (
@@ -85,9 +85,12 @@ void main() {
         ),
       );
 
-      expect(find.text('Global Preferences'), findsOneWidget);
-      expect(find.text('Quiet Hours'), findsOneWidget);
-      expect(find.text('Feature Notifications'), findsOneWidget);
+      // Small-caps to match this app's other settings section headings
+      // (SettingsSectionHeader) -- the widget uppercases the title it is
+      // given, so these are the rendered strings.
+      expect(find.text('GLOBAL PREFERENCES'), findsOneWidget);
+      expect(find.text('QUIET HOURS'), findsOneWidget);
+      expect(find.text('FEATURE NOTIFICATIONS'), findsOneWidget);
     });
 
     testWidgets('renders a representative tile from each card with its value', (

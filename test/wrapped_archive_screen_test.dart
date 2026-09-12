@@ -13,13 +13,16 @@
 // GoRouter, matching this app's other screen tests.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:days_together/features/wrapped/presentation/pages/wrapped_archive_screen.dart';
 
 Future<void> _pump(WidgetTester tester) async {
-  await tester.pumpWidget(const MaterialApp(home: WrappedArchiveScreen()));
+  await tester.pumpWidget(
+    const ProviderScope(child: MaterialApp(home: WrappedArchiveScreen())),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -33,7 +36,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       await _pump(tester);
 
-      expect(find.text('❤️ Wrapped Archive'), findsOneWidget);
+      expect(find.text('Wrapped Archive'), findsOneWidget);
       expect(find.text('No archives yet'), findsOneWidget);
     });
 
@@ -56,18 +59,20 @@ void main() {
     testWidgets('the back button pops the screen', (tester) async {
       SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const WrappedArchiveScreen(),
+        ProviderScope(
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const WrappedArchiveScreen(),
+                      ),
                     ),
+                    child: const Text('Open'),
                   ),
-                  child: const Text('Open'),
                 ),
               ),
             ),
@@ -77,13 +82,13 @@ void main() {
 
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
-      expect(find.text('❤️ Wrapped Archive'), findsOneWidget);
+      expect(find.text('Wrapped Archive'), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
       await tester.pumpAndSettle();
 
       expect(find.text('Open'), findsOneWidget);
-      expect(find.text('❤️ Wrapped Archive'), findsNothing);
+      expect(find.text('Wrapped Archive'), findsNothing);
     });
   });
 }

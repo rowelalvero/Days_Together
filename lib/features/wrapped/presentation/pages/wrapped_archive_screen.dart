@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:days_together/app/router/route_names.dart';
-import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/features/wrapped/data/wrapped_service.dart';
+import 'package:days_together/features/wrapped/presentation/widgets/wrapped_archive_app_bar.dart';
 import 'package:days_together/features/wrapped/presentation/widgets/wrapped_archive_empty_state.dart';
 import 'package:days_together/features/wrapped/presentation/widgets/wrapped_year_card.dart';
 
 /// Displays all archived Wrapped years and allows replaying any one of them.
-class WrappedArchiveScreen extends StatefulWidget {
+///
+/// Painted with the active [LoveStoryTheme]'s gradient and text colors like
+/// every other pushed screen. It used to hardcode a dark palette
+/// (`0xFF0D0D1A` behind white type) borrowed from the cinematic Wrapped
+/// playback, which read as a different app on this app's light themes --
+/// and this screen is reached from Settings, not from inside that playback.
+class WrappedArchiveScreen extends ConsumerStatefulWidget {
   const WrappedArchiveScreen({super.key});
 
   @override
-  State<WrappedArchiveScreen> createState() => _WrappedArchiveScreenState();
+  ConsumerState<WrappedArchiveScreen> createState() =>
+      _WrappedArchiveScreenState();
 }
 
-class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
+class _WrappedArchiveScreenState extends ConsumerState<WrappedArchiveScreen> {
   List<int> _archivedYears = [];
   final Map<int, WrappedData?> _dataCache = {};
   bool _isLoading = true;
@@ -51,61 +60,44 @@ class _WrappedArchiveScreenState extends State<WrappedArchiveScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = ref.watch(themeControllerProvider);
+    final theme = themeProvider.currentLoveTheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D1A),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            backgroundColor: const Color(0xFF0D0D1A),
-            expandedHeight: 120,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(
-                left: 20,
-                bottom: 16,
-                right: 20,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              WrappedArchiveAppBar(theme: theme),
+              Expanded(
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: theme.accentColor,
+                        ),
+                      )
+                    : _archivedYears.isEmpty
+                    ? WrappedArchiveEmptyState(theme: theme)
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
+                        itemCount: _archivedYears.length,
+                        itemBuilder: (context, i) {
+                          final year = _archivedYears[i];
+                          return WrappedYearCard(
+                            year: year,
+                            index: i,
+                            theme: theme,
+                            onTap: () => _openYear(year),
+                          );
+                        },
+                      ),
               ),
-              title: Text(
-                '❤️ Wrapped Archive',
-                style: AppTypography.heading(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white54,
-                size: 20,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            ],
           ),
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFF43F5E)),
-              ),
-            )
-          else if (_archivedYears.isEmpty)
-            const SliverFillRemaining(child: WrappedArchiveEmptyState())
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, i) {
-                  final year = _archivedYears[i];
-                  return WrappedYearCard(
-                    year: year,
-                    index: i,
-                    onTap: () => _openYear(year),
-                  );
-                }, childCount: _archivedYears.length),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

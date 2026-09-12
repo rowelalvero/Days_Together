@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
 
 const List<Color> _yearColors = [
@@ -17,16 +18,23 @@ const List<String> _yearEmojis = ['❤️', '💜', '💙', '💛', '💚'];
 /// its `_buildYearCard` method (Migration audit item 6) -- [index] picks
 /// the card's color/emoji from a fixed palette and staggers its
 /// entrance animation.
+///
+/// The per-year color stays Wrapped's own (it is the feature's signature,
+/// and reads as a tint at these alphas on light and dark themes alike),
+/// but the type is drawn in [theme]'s text color rather than the hardcoded
+/// white it used while this screen painted itself dark.
 class WrappedYearCard extends StatelessWidget {
   const WrappedYearCard({
     super.key,
     required this.year,
     required this.index,
+    required this.theme,
     required this.onTap,
   });
 
   final int year;
   final int index;
+  final LoveStoryTheme theme;
   final VoidCallback onTap;
 
   Color get _color => _yearColors[index % _yearColors.length];
@@ -48,6 +56,7 @@ class WrappedYearCard extends StatelessWidget {
           onTap: onTap,
           child: GlassContainer(
             borderRadius: 20,
+            opacity: 0.03,
             padding: EdgeInsets.zero,
             child: Container(
               padding: const EdgeInsets.all(24),
@@ -88,7 +97,7 @@ class WrappedYearCard extends StatelessWidget {
                           'Wrapped $year',
                           style: AppTypography.heading(
                             fontSize: 20,
-                            color: Colors.white,
+                            color: theme.textColor,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -97,7 +106,7 @@ class WrappedYearCard extends StatelessWidget {
                           'Your year in review',
                           style: AppTypography.body(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.45),
+                            color: theme.textColor.withValues(alpha: 0.45),
                           ),
                         ),
                       ],
@@ -105,7 +114,7 @@ class WrappedYearCard extends StatelessWidget {
                   ),
                   Icon(
                     Icons.play_arrow_rounded,
-                    color: Colors.white.withValues(alpha: 0.4),
+                    color: theme.textColor.withValues(alpha: 0.4),
                     size: 28,
                   ),
                 ],

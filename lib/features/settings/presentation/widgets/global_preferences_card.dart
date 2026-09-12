@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/settings/domain/entities/notification_preferences_model.dart';
+import 'package:days_together/features/settings/presentation/widgets/notification_card_divider.dart';
 import 'package:days_together/features/settings/presentation/widgets/notification_switch_tile.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
 
@@ -24,18 +25,21 @@ class GlobalPreferencesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassContainer(
       borderRadius: 20,
-      padding: const EdgeInsets.all(8),
+      opacity: 0.03,
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
         children: [
           NotificationSwitchTile(
+            icon: Icons.notifications_off_outlined,
             title: 'Mute All Notifications',
             subtitle: 'Silence all notifications temporarily',
             value: prefs.muteAll,
             onChanged: (_) => onTogglePreference('mute_all'),
             theme: theme,
           ),
-          const Divider(height: 1),
+          NotificationCardDivider(theme: theme),
           NotificationSwitchTile(
+            icon: Icons.volume_up_outlined,
             title: 'Play Sound',
             subtitle: 'Play alert sound on arrival',
             value: prefs.soundEnabled,
@@ -44,8 +48,9 @@ class GlobalPreferencesCard extends StatelessWidget {
                 : (_) => onTogglePreference('sound_enabled'),
             theme: theme,
           ),
-          const Divider(height: 1),
+          NotificationCardDivider(theme: theme),
           NotificationSwitchTile(
+            icon: Icons.vibration_rounded,
             title: 'Vibrate',
             subtitle: 'Haptic feedback on alerts',
             value: prefs.vibrationEnabled,
@@ -54,8 +59,9 @@ class GlobalPreferencesCard extends StatelessWidget {
                 : (_) => onTogglePreference('vibration_enabled'),
             theme: theme,
           ),
-          const Divider(height: 1),
+          NotificationCardDivider(theme: theme),
           NotificationSwitchTile(
+            icon: Icons.numbers_rounded,
             title: 'App Badge Count',
             subtitle: 'Show unread message badge count',
             value: prefs.badgeCountEnabled,
