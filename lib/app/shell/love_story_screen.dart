@@ -1,5 +1,7 @@
-import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:ui';
+import 'package:days_together/app/shell/animated_fab_location.dart';
+import 'package:days_together/app/shell/dashboard_grid_painter.dart';
+import 'package:days_together/app/shell/widgets/unified_floating_bar.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
@@ -203,15 +205,21 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
     }
   }
 
-  double get _floatingBarMarginBottom =>
-      16.0 + MediaQuery.of(context).padding.bottom;
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final hasTimelineItems = ref.watch(
       timelineControllerProvider.select((s) => s.items.isNotEmpty),
+    );
+    final timelineState = ref.watch(timelineControllerProvider);
+    // The scrubber row's content and interaction logic are defined and
+    // owned by TimelineTab (the only tab that uses it); this shared shell
+    // just asks it for a widget to slot into UnifiedFloatingBar's own
+    // capsule, so it doesn't need to know about RulerPickerScrubber at all.
+    final scrubberRow = _timelineTabKey.currentState?.buildFloatingScrubber(
+      timelineState,
+      ref.read(timelineControllerProvider.notifier),
     );
 
     return PopScope(
@@ -278,7 +286,12 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: _buildUnifiedFloatingBar(theme),
+                child: UnifiedFloatingBar(
+                  currentIndex: _currentIndex,
+                  onIndexSelected: (i) => setState(() => _currentIndex = i),
+                  scrubberRow: scrubberRow,
+                  theme: theme,
+                ),
               ),
             ],
           ),
@@ -303,203 +316,10 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
             : null,
         floatingActionButtonLocation: AnimatedFabLocation(
           _currentIndex == 1 && hasTimelineItems
-              ? 148.0 + _floatingBarMarginBottom + 16.0
-              : 70.0 + _floatingBarMarginBottom + 16.0,
+              ? 148.0 + floatingBarMarginBottom(context) + 16.0
+              : 70.0 + floatingBarMarginBottom(context) + 16.0,
         ),
       ),
     );
   }
-
-  Widget _buildUnifiedFloatingBar(LoveStoryTheme theme) {
-    final double marginBot = _floatingBarMarginBottom;
-
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final overlayColor = isLight ? Colors.black : Colors.white;
-    final borderColor = isLight
-        ? Colors.black.withValues(alpha: 0.08)
-        : Colors.white.withValues(alpha: 0.2);
-    final double opacity = 0.15;
-
-    final timelineState = ref.watch(timelineControllerProvider);
-    // The scrubber row's content and interaction logic are defined and
-    // owned by TimelineTab (the only tab that uses it); this shared
-    // shell just asks it for a widget to slot into its own capsule, so
-    // it doesn't need to know about RulerPickerScrubber at all.
-    final scrubberRow = _timelineTabKey.currentState?.buildFloatingScrubber(
-      timelineState,
-      ref.read(timelineControllerProvider.notifier),
-    );
-    final showScrubber = _currentIndex == 1 && scrubberRow != null;
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, marginBot),
-      child: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
-        tween: Tween<double>(begin: 35.0, end: showScrubber ? 24.0 : 35.0),
-        builder: (context, radius, child) {
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: overlayColor.withValues(alpha: opacity),
-                  borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(color: borderColor, width: 1.5),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      overlayColor.withValues(alpha: opacity * 2),
-                      overlayColor.withValues(alpha: opacity),
-                    ],
-                  ),
-                ),
-                child: child,
-              ),
-            ),
-          );
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRect(
-              child: AnimatedAlign(
-                alignment: Alignment.topCenter,
-                heightFactor: showScrubber ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeInOutCubic,
-                child: AnimatedOpacity(
-                  opacity: showScrubber ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOutCubic,
-                  child: scrubberRow ?? const SizedBox(height: 78),
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 70,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavItem(
-                    0,
-                    Icons.home_rounded,
-                    Icons.home_outlined,
-                    'Home',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    1,
-                    Icons.auto_awesome_motion_rounded,
-                    Icons.auto_awesome_motion_outlined,
-                    'Story',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    2,
-                    Icons.favorite_rounded,
-                    Icons.favorite_outline_rounded,
-                    'Us',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    3,
-                    Icons.palette_rounded,
-                    Icons.palette_outlined,
-                    'Studio',
-                    theme,
-                  ),
-                  _buildNavItem(
-                    4,
-                    Icons.person_rounded,
-                    Icons.person_outline_rounded,
-                    'More',
-                    theme,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData activeIcon,
-    IconData inactiveIcon,
-    String label,
-    LoveStoryTheme theme,
-  ) {
-    final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.accentColor.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : inactiveIcon,
-              color: isSelected
-                  ? theme.accentColor
-                  : theme.textColor.withValues(alpha: 0.4),
-              size: 24,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class AnimatedFabLocation extends FloatingActionButtonLocation {
-  final double bottomOffset;
-  const AnimatedFabLocation(this.bottomOffset);
-
-  @override
-  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
-    final double fabX =
-        scaffoldGeometry.scaffoldSize.width -
-        scaffoldGeometry.minInsets.right -
-        scaffoldGeometry.floatingActionButtonSize.width -
-        16.0;
-    final double fabY =
-        scaffoldGeometry.scaffoldSize.height -
-        scaffoldGeometry.floatingActionButtonSize.height -
-        bottomOffset;
-    return Offset(fabX, fabY);
-  }
-}
-
-class DashboardGridPainter extends CustomPainter {
-  final Color gridColor;
-  DashboardGridPainter({this.gridColor = const Color(0x05000000)});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = gridColor
-      ..strokeWidth = 1.0;
-    const double step = 32.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
