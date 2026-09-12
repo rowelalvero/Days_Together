@@ -1,4 +1,3 @@
-import 'package:days_together/app/theme/theme_manager.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,8 +7,18 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/authentication/presentation/widgets/avatar_picker_circle.dart';
+import 'package:days_together/features/authentication/presentation/widgets/complete_setup_button.dart';
+import 'package:days_together/features/authentication/presentation/widgets/name_field.dart';
 import 'package:days_together/core/permissions/permission_service.dart';
 
+/// Onboarding screen where a new user picks an avatar and enters their
+/// name.
+///
+/// Its inline avatar-picker circle, name field, and submit button were
+/// extracted into widgets under `presentation/widgets/` (Migration audit
+/// item 6) -- this class still owns the picked-avatar path, the name
+/// controller, the saving flag, and the setup-completion flow.
 class AvatarCreationScreen extends ConsumerStatefulWidget {
   const AvatarCreationScreen({super.key});
 
@@ -78,150 +87,29 @@ class _AvatarCreationScreenState extends ConsumerState<AvatarCreationScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Avatar Picker
-                Center(
-                  child: GestureDetector(
-                    onTap: _pickAvatar,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        border: Border.all(
-                          color: theme.accentColor.withValues(alpha: 0.3),
-                          width: 3,
-                        ),
-                        image:
-                            _avatarPath != null &&
-                                File(_avatarPath!).existsSync()
-                            ? DecorationImage(
-                                image: FileImage(File(_avatarPath!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child:
-                          _avatarPath == null ||
-                              !File(_avatarPath!).existsSync()
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.camera_alt_rounded,
-                                  color: theme.accentColor,
-                                  size: 32,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Add Photo',
-                                  style: AppTypography.caption(
-                                    color: theme.accentColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : null,
-                    ),
-                  ),
+                AvatarPickerCircle(
+                  avatarPath: _avatarPath,
+                  onTap: _pickAvatar,
+                  theme: theme,
                 ),
                 const SizedBox(height: 40),
-                _buildNameField(
+                NameField(
                   label: 'Your Name',
                   controller: _yourNameController,
                   hint: 'Enter your name',
                   theme: theme,
                 ),
                 const SizedBox(height: 48),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _completeSetup,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.accentColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Complete Setup',
-                            style: AppTypography.button(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                CompleteSetupButton(
+                  isSaving: _isSaving,
+                  onPressed: _completeSetup,
+                  theme: theme,
                 ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildNameField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    required LoveStoryTheme theme,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: AppTypography.caption(
-            color: theme.textColor.withValues(alpha: 0.6),
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ).copyWith(letterSpacing: 1.5),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          style: AppTypography.body(color: theme.textColor, fontSize: 16),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTypography.body(
-              color: theme.textColor.withValues(alpha: 0.3),
-            ),
-            filled: true,
-            fillColor: theme.textColor.withValues(alpha: 0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.textColor.withValues(alpha: 0.1),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: theme.textColor.withValues(alpha: 0.1),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: theme.accentColor, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.all(20),
-          ),
-        ),
-      ],
     );
   }
 
