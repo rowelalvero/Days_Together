@@ -10,11 +10,13 @@ import 'package:days_together/features/relationship/license_details.dart';
 import 'package:days_together/features/relationship/presentation/license/cards/flippable_license_card.dart';
 import 'package:days_together/features/relationship/presentation/license/control_bar.dart';
 import 'package:days_together/features/relationship/presentation/license/creation_license_form.dart';
-import 'package:days_together/features/relationship/presentation/license/edit/edit_license_sheet.dart';
 import 'package:days_together/features/relationship/presentation/license/enlarged_license_dialog.dart';
 import 'package:days_together/features/relationship/presentation/license/export/export_studio_sheet.dart';
 import 'package:days_together/features/relationship/presentation/license/first_time_welcome_screen.dart';
-import 'package:days_together/features/relationship/presentation/license/flippable_license_preview.dart';
+import 'package:days_together/features/relationship/presentation/license/license_action_buttons.dart';
+import 'package:days_together/features/relationship/presentation/license/license_card_canvas.dart';
+import 'package:days_together/features/relationship/presentation/license/license_configure_details_card.dart';
+import 'package:days_together/features/relationship/presentation/license/license_creation_form_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/license_loading_screen.dart';
 import 'package:days_together/features/relationship/presentation/license/license_selector.dart';
 import 'package:days_together/features/relationship/presentation/license/waiting_for_partner_screen.dart';
@@ -24,7 +26,6 @@ import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/core/permissions/permission_service.dart';
-import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
@@ -269,238 +270,46 @@ class _RelationshipLicenseScreenState
                 ],
 
                 // Configure details button card
-                GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-
-                      isScrollControlled: true,
-
-                      backgroundColor: Colors.transparent,
-
-                      builder: (ctx) => EditLicenseSheet(theme: theme),
-                    );
-                  },
-
-                  child: GlassContainer(
-                    borderRadius: 16,
-
-                    opacity: 0.06,
-
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-
-                      children: [
-                        Icon(
-                          Icons.edit_note_rounded,
-                          color: theme.accentColor,
-                          size: 20,
-                        ),
-
-                        const SizedBox(width: 10),
-
-                        Text(
-                          'Configure License Details',
-
-                          style: AppTypography.body(
-                            fontSize: 14,
-                            color: theme.textColor.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                LicenseConfigureDetailsCard(theme: theme),
 
                 const SizedBox(height: 24),
 
                 // Card Canvas to capture
-                RepaintBoundary(
-                  key: _licenseKey,
-                  child: Container(
-                    child: _showBoth
-                        ? Column(
-                            children: [
-                              FlippableLicensePreview(
-                                cardKey: _myCardKey,
-                                isYourLicense: true,
-                                profileState: profileState,
-                                workspaceState: workspaceState,
-                                onAvatarTap: () => _pickAvatar(true),
-                              ),
-                              const SizedBox(height: 20),
-                              FlippableLicensePreview(
-                                cardKey: _partnerCardKey,
-                                isYourLicense: false,
-                                profileState: profileState,
-                                workspaceState: workspaceState,
-                                onAvatarTap: () => _pickAvatar(false),
-                              ),
-                            ],
-                          )
-                        : _isYourLicense
-                        ? FlippableLicensePreview(
-                            cardKey: _myCardKey,
-                            isYourLicense: true,
-                            profileState: profileState,
-                            workspaceState: workspaceState,
-                            onAvatarTap: () => _pickAvatar(true),
-                          )
-                        : FlippableLicensePreview(
-                            cardKey: _partnerCardKey,
-                            isYourLicense: false,
-                            profileState: profileState,
-                            workspaceState: workspaceState,
-                            onAvatarTap: () => _pickAvatar(false),
-                          ),
-                  ),
+                LicenseCardCanvas(
+                  licenseKey: _licenseKey,
+                  myCardKey: _myCardKey,
+                  partnerCardKey: _partnerCardKey,
+                  showBoth: _showBoth,
+                  isYourLicense: _isYourLicense,
+                  profileState: profileState,
+                  workspaceState: workspaceState,
+                  onAvatarTapYour: () => _pickAvatar(true),
+                  onAvatarTapPartner: () => _pickAvatar(false),
                 ),
 
                 const SizedBox(height: 24),
 
-                // Helper text
-                Text(
-                  '💡 Tap any license card directly to flip it!',
-
-                  style: AppTypography.body(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: theme.textColor.withValues(alpha: 0.5),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _flipVisibleCards,
-
-                        icon: Icon(
-                          Icons.flip_rounded,
-
-                          color: theme.accentColor,
-                        ),
-
-                        label: Text(
-                          'Flip Cards',
-
-                          style: AppTypography.body(
-                            fontWeight: FontWeight.w700,
-                            color: theme.textColor,
-                          ),
-                        ),
-
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-
-                          side: BorderSide(
-                            color: theme.textColor.withValues(alpha: 0.15),
-                          ),
-
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
+                LicenseActionButtons(
+                  theme: theme,
+                  onFlip: _flipVisibleCards,
+                  onEnlarge: _showEnlargedDialog,
+                  onShare: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (ctx) => ExportStudioBottomSheet(
+                        theme: theme,
+                        showBoth: _showBoth,
+                        isYourLicense: _isYourLicense,
+                        myShowingFront:
+                            _myCardKey.currentState?.showingFront ?? true,
+                        partnerShowingFront:
+                            _partnerCardKey.currentState?.showingFront ?? true,
+                        mainLicenseKey: _licenseKey,
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _showEnlargedDialog,
-
-                        icon: Icon(
-                          Icons.zoom_in_rounded,
-
-                          color: theme.accentColor,
-                        ),
-
-                        label: Text(
-                          'Enlarge ID',
-
-                          style: AppTypography.body(
-                            fontWeight: FontWeight.w700,
-                            color: theme.textColor,
-                          ),
-                        ),
-
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-
-                          side: BorderSide(
-                            color: theme.textColor.withValues(alpha: 0.15),
-                          ),
-
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (ctx) => ExportStudioBottomSheet(
-                          theme: theme,
-                          showBoth: _showBoth,
-                          isYourLicense: _isYourLicense,
-                          myShowingFront:
-                              _myCardKey.currentState?.showingFront ?? true,
-                          partnerShowingFront:
-                              _partnerCardKey.currentState?.showingFront ??
-                              true,
-                          mainLicenseKey: _licenseKey,
-                        ),
-                      );
-                    },
-
-                    icon: const Icon(Icons.share_rounded),
-
-                    label: Text(
-                      'Share License',
-
-                      style: AppTypography.body(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-
-                      backgroundColor: theme.accentColor,
-
-                      foregroundColor: Colors.white,
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-
-                      elevation: 6,
-
-                      shadowColor: theme.accentColor.withValues(alpha: 0.3),
-                    ),
-                  ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 40),
@@ -592,94 +401,22 @@ class _RelationshipLicenseScreenState
   }
 
   Widget _buildCreationForm(LoveStoryTheme theme) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          'License Application',
-          style: AppTypography.heading(
-            fontWeight: FontWeight.bold,
-            color: theme.textColor,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
-          onPressed: () {
-            setState(() {
-              _isCreating = false;
-            });
-          },
-        ),
-      ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: ref.watch(themeControllerProvider).currentGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: GlassContainer(
-                    borderRadius: 20,
-                    opacity: 0.04,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _buildFormFields(isYou: true, theme: theme),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_createYourNameCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please enter Your Name first! ✍️'),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                        return;
-                      }
-                      _startLoadingAnimation();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.accentColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                    ),
-                    child: Text(
-                      'Generate Relationship License ID',
-                      style: AppTypography.body(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return LicenseCreationFormScreen(
+      theme: theme,
+      formFields: _buildFormFields(isYou: true, theme: theme),
+      onCancel: () => setState(() => _isCreating = false),
+      onSubmit: () {
+        if (_createYourNameCtrl.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter Your Name first! ✍️'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          return;
+        }
+        _startLoadingAnimation();
+      },
     );
   }
 
