@@ -1,10 +1,22 @@
-import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/features/authentication/presentation/widgets/auth_form_fields.dart';
+import 'package:days_together/features/authentication/presentation/widgets/auth_header.dart';
+import 'package:days_together/features/authentication/presentation/widgets/auth_mode_toggle.dart';
+import 'package:days_together/features/authentication/presentation/widgets/auth_submit_button.dart';
+import 'package:days_together/features/authentication/presentation/widgets/google_sign_in_button.dart';
+import 'package:days_together/features/authentication/presentation/widgets/or_divider.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 
+/// The combined sign-in/sign-up screen: email/password auth plus Google
+/// sign-in.
+///
+/// Its ~510-line single-literal `build()` was broken into focused widgets
+/// under `presentation/widgets/` (Migration audit item 6) -- this class
+/// still owns the form key, text controllers, and the sign-in/sign-up/
+/// loading/obscure-password flags, matching how this app's other
+/// extracted forms keep state on their own State.
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
@@ -127,32 +139,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: theme.textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    _isSignUp ? 'Create Your Shared Space' : 'Welcome Back',
-                    style: AppTypography.cormorant(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isSignUp
-                        ? 'Begin your exclusive space to capture memories and stay in sync.'
-                        : 'Step back into your shared world.',
-                    style: AppTypography.spectral(
-                      fontSize: 16,
-                      color: theme.textColor.withValues(alpha: 0.7),
-                    ),
-                  ),
+                  AuthHeader(isSignUp: _isSignUp, theme: theme),
                   const SizedBox(height: 40),
                   // Form Card
                   Container(
@@ -169,299 +156,44 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Capsule Selector
-                          Container(
-                            height: 48,
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: theme.textColor.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _isSignUp = false),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 250,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: !_isSignUp
-                                            ? theme.accentColor
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Log In',
-                                        style: AppTypography.button(
-                                          color: !_isSignUp
-                                              ? Colors.white
-                                              : theme.textColor.withValues(
-                                                  alpha: 0.6,
-                                                ),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _isSignUp = true),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 250,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: _isSignUp
-                                            ? theme.accentColor
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Sign Up',
-                                        style: AppTypography.button(
-                                          color: _isSignUp
-                                              ? Colors.white
-                                              : theme.textColor.withValues(
-                                                  alpha: 0.6,
-                                                ),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          AuthModeToggle(
+                            isSignUp: _isSignUp,
+                            theme: theme,
+                            onChanged: (val) => setState(() => _isSignUp = val),
                           ),
                           const SizedBox(height: 24),
-                          // Email Field
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            style: AppTypography.body(color: theme.textColor),
-                            decoration: _buildInputDecoration(
-                              label: 'Email Address',
-                              icon: Icons.mail_outline_rounded,
-                              theme: theme,
+                          AuthFormFields(
+                            emailController: _emailController,
+                            passwordController: _passwordController,
+                            confirmPasswordController:
+                                _confirmPasswordController,
+                            isSignUp: _isSignUp,
+                            obscurePassword: _obscurePassword,
+                            obscureConfirmPassword: _obscureConfirmPassword,
+                            onTogglePasswordVisibility: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
                             ),
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!val.contains('@')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
+                            onToggleConfirmPasswordVisibility: () => setState(
+                              () => _obscureConfirmPassword =
+                                  !_obscureConfirmPassword,
+                            ),
+                            onSubmit: _submit,
+                            theme: theme,
                           ),
-                          const SizedBox(height: 16),
-                          // Password Field
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            textInputAction: _isSignUp
-                                ? TextInputAction.next
-                                : TextInputAction.done,
-                            onFieldSubmitted: (_) {
-                              if (!_isSignUp) {
-                                _submit();
-                              }
-                            },
-                            style: AppTypography.body(color: theme.textColor),
-                            decoration: _buildInputDecoration(
-                              label: 'Password',
-                              icon: Icons.lock_outline_rounded,
-                              theme: theme,
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  color: theme.textColor.withValues(alpha: 0.4),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
-                            ),
-                            validator: (val) {
-                              if (val == null || val.isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              if (val.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                          if (_isSignUp) ...[
-                            const SizedBox(height: 16),
-                            // Confirm Password Field
-                            TextFormField(
-                              controller: _confirmPasswordController,
-                              obscureText: _obscureConfirmPassword,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              style: AppTypography.body(color: theme.textColor),
-                              decoration: _buildInputDecoration(
-                                label: 'Confirm Password',
-                                icon: Icons.lock_outline_rounded,
-                                theme: theme,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscureConfirmPassword
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    color: theme.textColor.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureConfirmPassword =
-                                          !_obscureConfirmPassword;
-                                    });
-                                  },
-                                ),
-                              ),
-                              validator: (val) {
-                                if (val == null || val.isEmpty) {
-                                  return 'Please confirm your password';
-                                }
-                                if (val != _passwordController.text) {
-                                  return 'Passwords do not match';
-                                }
-                                return null;
-                              },
-                            ),
-                          ],
                           const SizedBox(height: 32),
-                          // Submit Button
-                          SizedBox(
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.accentColor,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                      ),
-                                    )
-                                  : Text(
-                                      _isSignUp ? 'Create Account' : 'Sign In',
-                                      style: AppTypography.button(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                            ),
+                          AuthSubmitButton(
+                            isLoading: _isLoading,
+                            isSignUp: _isSignUp,
+                            onPressed: _submit,
+                            theme: theme,
                           ),
                           const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: theme.textColor.withValues(alpha: 0.1),
-                                  thickness: 1,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: Text(
-                                  'OR',
-                                  style: AppTypography.caption(
-                                    color: theme.textColor.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ).copyWith(letterSpacing: 1.1),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: theme.textColor.withValues(alpha: 0.1),
-                                  thickness: 1,
-                                ),
-                              ),
-                            ],
-                          ),
+                          OrDivider(theme: theme),
                           const SizedBox(height: 24),
-                          // Google Sign In Button
-                          SizedBox(
-                            height: 56,
-                            child: OutlinedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : _handleGoogleSignIn,
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                  color: theme.textColor.withValues(
-                                    alpha: 0.15,
-                                  ),
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                foregroundColor: theme.textColor,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.network(
-                                    'https://www.gstatic.com/images/branding/product/2x/googleg_64dp.png',
-                                    width: 24,
-                                    height: 24,
-                                    errorBuilder:
-                                        (context, error, stackTrace) => Text(
-                                          'G',
-                                          style: AppTypography.button(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20,
-                                            color: theme.textColor,
-                                          ),
-                                        ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Continue with Google',
-                                    style: AppTypography.button(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.textColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          GoogleSignInButton(
+                            isLoading: _isLoading,
+                            onPressed: _handleGoogleSignIn,
+                            theme: theme,
                           ),
                         ],
                       ),
@@ -474,37 +206,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration({
-    required String label,
-    required IconData icon,
-    required LoveStoryTheme theme,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: AppTypography.body(
-        color: theme.textColor.withValues(alpha: 0.4),
-      ),
-      prefixIcon: Icon(icon, color: theme.textColor.withValues(alpha: 0.4)),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: theme.textColor.withValues(alpha: 0.05),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: theme.accentColor, width: 1.5),
-      ),
-      errorStyle: AppTypography.caption(color: Colors.redAccent),
     );
   }
 }
