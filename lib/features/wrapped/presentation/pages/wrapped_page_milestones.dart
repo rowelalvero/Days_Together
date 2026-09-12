@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/features/wrapped/presentation/widgets/wrapped_milestone_tile.dart';
+import 'package:days_together/features/wrapped/presentation/widgets/wrapped_milestones_empty_state.dart';
 
+/// Its inline milestone tile and empty state were extracted into widgets
+/// under `presentation/widgets/` (Migration audit item 6).
 class WrappedPageMilestones extends StatefulWidget {
   final WrappedData data;
   const WrappedPageMilestones({super.key, required this.data});
@@ -78,10 +82,10 @@ class _WrappedPageMilestonesState extends State<WrappedPageMilestones> {
                 const SizedBox(height: 36),
                 if (hasMilestones)
                   ...milestones.asMap().entries.map(
-                    (e) => _buildMilestoneTile(e.value, e.key),
+                    (e) => WrappedMilestoneTile(title: e.value, index: e.key),
                   )
                 else
-                  _emptyMilestonesState(),
+                  const WrappedMilestonesEmptyState(),
                 const SizedBox(height: 24),
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: 1),
@@ -133,98 +137,4 @@ class _WrappedPageMilestonesState extends State<WrappedPageMilestones> {
       ],
     );
   }
-
-  Widget _buildMilestoneTile(String title, int index) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 700 + index * 150),
-      curve: Curves.easeOutCubic,
-      builder: (_, v, child) => Transform.translate(
-        offset: Offset(0, 20 * (1 - v)),
-        child: Opacity(opacity: v, child: child),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.1),
-                Colors.white.withValues(alpha: 0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTypography.body(
-                    fontSize: 16,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyMilestonesState() => TweenAnimationBuilder<double>(
-    tween: Tween(begin: 0, end: 1),
-    duration: const Duration(milliseconds: 900),
-    builder: (_, v, child) => Opacity(opacity: v, child: child),
-    child: Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Your next milestone is coming.',
-            style: AppTypography.heading(
-              fontSize: 18,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Every day brings you closer to something\nworth celebrating.',
-            style: AppTypography.body(
-              fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.55),
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    ),
-  );
 }
