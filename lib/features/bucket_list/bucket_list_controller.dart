@@ -265,15 +265,18 @@ class BucketListController extends Notifier<BucketListState>
       } catch (e) {
         debugPrint('BucketListController.updateItem Supabase error: $e');
       }
-      if (!ref.mounted) return;
-      _applyItemUpdate(
-        id,
-        title: title,
-        scheduledAt: scheduledAt,
-        clearDate: clearDate,
-      );
-      await _persist();
     }
+
+    // Applied unconditionally -- not just when paired -- so an unpaired
+    // edit isn't silently dropped, matching addItem/toggleItem/deleteItem.
+    if (!ref.mounted) return;
+    _applyItemUpdate(
+      id,
+      title: title,
+      scheduledAt: scheduledAt,
+      clearDate: clearDate,
+    );
+    await _persist();
 
     if (!ref.mounted) return;
     final updatedItem = state.items.firstWhere(

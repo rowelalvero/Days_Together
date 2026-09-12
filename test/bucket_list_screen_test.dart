@@ -109,37 +109,34 @@ void main() {
       expect(find.text('Road trip along the coast'), findsOneWidget);
     });
 
-    testWidgets(
-      'tapping the edit icon opens a pre-filled sheet, and saving closes it',
-      (tester) async {
-        // NOTE: BucketListController.updateItem's local-state write is
-        // nested inside its `coupleId != null` branch (a pre-existing bug,
-        // not touched by this refactor), so an unpaired save like this one
-        // does not actually change the displayed title -- this test only
-        // pins the sheet's open/pre-fill/close behavior, not that outcome.
-        await _pump(
-          tester,
-          bucketList: BucketListState(
-            isLoading: false,
-            items: [BucketListItem(title: 'Watch the sunset', order: 0)],
-          ),
-        );
+    testWidgets('editing an adventure updates its title', (tester) async {
+      await _pump(
+        tester,
+        bucketList: BucketListState(
+          isLoading: false,
+          items: [BucketListItem(title: 'Watch the sunset', order: 0)],
+        ),
+      );
 
-        await tester.tap(find.byIcon(Icons.edit_outlined));
-        await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
 
-        expect(find.text('📝 Edit Adventure'), findsOneWidget);
-        expect(
-          find.widgetWithText(TextField, 'Watch the sunset'),
-          findsOneWidget,
-        );
+      expect(find.text('📝 Edit Adventure'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextField, 'Watch the sunset'),
+        findsOneWidget,
+      );
 
-        await tester.tap(find.text('Update Adventure'));
-        await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Watch the sunset'),
+        'Watch the sunrise',
+      );
+      await tester.tap(find.text('Update Adventure'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('📝 Edit Adventure'), findsNothing);
-      },
-    );
+      expect(find.text('Watch the sunset'), findsNothing);
+      expect(find.text('Watch the sunrise'), findsOneWidget);
+    });
 
     testWidgets('toggling an item marks it completed', (tester) async {
       await _pump(
