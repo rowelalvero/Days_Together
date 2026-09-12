@@ -1,13 +1,23 @@
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/love_studio/data/ai_service.dart';
-import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/generate_letter_button.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/generating_letter_state.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/love_letter_app_bar.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/love_letter_card.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/memory_dropdown.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/no_memories_state.dart';
 
+/// Turns a chosen timeline memory into an AI-authored love letter.
+///
+/// Its inline app bar, empty state, memory dropdown, action button,
+/// generating state, and letter card were extracted into widgets under
+/// `presentation/widgets/` (Migration audit item 6) -- this class still
+/// owns the selected-memory/generating/generated-letter state and the
+/// generation flow itself.
 class AILoveLetterScreen extends ConsumerStatefulWidget {
   const AILoveLetterScreen({super.key});
 
@@ -80,6 +90,10 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
     final timelineProvider = ref.watch(timelineControllerProvider);
     final memories = timelineProvider.items;
 
+    if (_selectedMemoryId == null && memories.isNotEmpty) {
+      _selectedMemoryId = memories.first.id;
+    }
+
     return Scaffold(
       body: Stack(
         children: [
@@ -94,238 +108,31 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildAppBar(context, theme),
+                  LoveLetterAppBar(theme: theme),
                   const SizedBox(height: 12),
                   if (memories.isEmpty)
-                    _buildNoMemoriesState(theme)
+                    NoMemoriesState(theme: theme)
                   else ...[
-                    _buildMemoryDropdown(memories, theme),
+                    MemoryDropdown(
+                      memories: memories,
+                      selectedMemoryId: _selectedMemoryId,
+                      onChanged: (val) =>
+                          setState(() => _selectedMemoryId = val),
+                      theme: theme,
+                    ),
                     const SizedBox(height: 24),
-                    _buildActionButtons(theme),
+                    GenerateLetterButton(
+                      onPressed: () => _generateLetter(theme),
+                      theme: theme,
+                    ),
                     const SizedBox(height: 24),
                     if (_isGenerating)
-                      _buildGeneratingState(theme)
+                      GeneratingLetterState(theme: theme)
                     else if (_generatedLetter != null)
-                      _buildLetterCard(theme),
+                      LoveLetterCard(letter: _generatedLetter!, theme: theme),
                   ],
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: theme.textColor,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Love Letter Writer',
-                  style: AppTypography.cormorant(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor,
-                  ),
-                ),
-                Text(
-                  'Transform your shared memories into a beautiful letter.',
-                  style: AppTypography.spectral(
-                    fontSize: 12,
-                    color: theme.textColor.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoMemoriesState(LoveStoryTheme theme) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            Icon(
-              Icons.palette_outlined,
-              size: 64,
-              color: theme.textColor.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No memories logged yet',
-              style: AppTypography.title(color: theme.textColor),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Share a memory in the Timeline first, and we\'ll help you turn it into a beautiful love letter.',
-              textAlign: TextAlign.center,
-              style: AppTypography.body(
-                color: theme.textColor.withValues(alpha: 0.54),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMemoryDropdown(List<dynamic> memories, LoveStoryTheme theme) {
-    if (_selectedMemoryId == null && memories.isNotEmpty) {
-      _selectedMemoryId = memories.first.id;
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedMemoryId,
-          dropdownColor: theme.primaryColor,
-          isExpanded: true,
-          icon: Icon(Icons.arrow_drop_down, color: theme.textColor),
-          items: memories.map((m) {
-            return DropdownMenuItem<String>(
-              value: m.id,
-              child: Row(
-                children: [
-                  Text(m.mood, style: AppTypography.body(fontSize: 20)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      m.title,
-                      style: AppTypography.body(color: theme.textColor),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (val) {
-            setState(() {
-              _selectedMemoryId = val;
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(LoveStoryTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton.icon(
-          onPressed: () => _generateLetter(theme),
-          icon: const Icon(Icons.auto_awesome, color: Colors.white),
-          label: Text(
-            'Write Love Letter',
-            style: AppTypography.button(color: Colors.white, fontSize: 16),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: theme.accentColor,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGeneratingState(LoveStoryTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Center(
-        child: Column(
-          children: [
-            CircularProgressIndicator(color: theme.accentColor),
-            const SizedBox(height: 24),
-            Text(
-              '✍️ Writing your love story...',
-              style: AppTypography.body(
-                color: theme.textColor.withValues(alpha: 0.7),
-                fontSize: 16,
-              ).copyWith(fontStyle: FontStyle.italic),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLetterCard(LoveStoryTheme theme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.copy_rounded,
-                  color: theme.textColor.withValues(alpha: 0.7),
-                ),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: _generatedLetter!));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Copied to clipboard!')),
-                  );
-                },
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.share_rounded,
-                  color: theme.textColor.withValues(alpha: 0.7),
-                ),
-                onPressed: () {
-                  Share.share(_generatedLetter!);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _generatedLetter!,
-            style: AppTypography.lora(
-              fontSize: 16,
-              height: 1.6,
-              color: theme.textColor.withValues(alpha: 0.7),
             ),
           ),
         ],
