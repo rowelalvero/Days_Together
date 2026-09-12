@@ -3,7 +3,7 @@ import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
-import 'package:days_together/features/timeline/presentation/widgets/add_item_dialog.dart';
+import 'package:days_together/features/timeline/presentation/widgets/timeline_empty_state.dart';
 import 'package:days_together/features/timeline/presentation/widgets/timeline_item.dart';
 import 'package:days_together/features/timeline/presentation/widgets/storybook_view.dart';
 import 'package:days_together/features/timeline/presentation/widgets/ruler_picker_scrubber.dart';
@@ -292,7 +292,7 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
                           if (items.isEmpty)
                             SliverFillRemaining(
                               hasScrollBody: false,
-                              child: _buildEmptyState(context, theme),
+                              child: TimelineEmptyState(theme: theme),
                             )
                           else
                             SliverToBoxAdapter(
@@ -419,79 +419,6 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, LoveStoryTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: theme.textColor.withValues(alpha: 0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              size: 64,
-              color: theme.accentColor.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Your story begins here.',
-            textAlign: TextAlign.center,
-            style: AppTypography.heading(
-              color: theme.textColor,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Every date, every laugh, and every small moment is a chapter in your book. Start capturing your memories together.',
-            textAlign: TextAlign.center,
-            style: AppTypography.body(
-              color: theme.textColor.withValues(alpha: 0.5),
-              fontSize: 15,
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () {
-              // See the FAB's onPressed above for why this stays a plain
-              // Navigator.push.
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const AddItemDialog()));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.accentColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              elevation: 0,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.add_rounded),
-                const SizedBox(width: 8),
-                Text(
-                  'Capture first memory',
-                  style: AppTypography.body(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

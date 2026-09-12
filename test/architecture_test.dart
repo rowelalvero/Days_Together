@@ -346,8 +346,11 @@ void main() {
           'lib/app/shell/love_story_screen.dart',
           'lib/features/timeline/presentation/pages/memory_detail_screen.dart',
           // TimelineTab's AddItemDialog push, which moved here when
-          // love_story_screen.dart was split -- same call site, new file.
-          'lib/features/timeline/presentation/pages/timeline_tab.dart',
+          // love_story_screen.dart was split, then again into
+          // TimelineEmptyState when timeline_tab.dart's _buildEmptyState
+          // was extracted into its own widget class -- same call site,
+          // new file.
+          'lib/features/timeline/presentation/widgets/timeline_empty_state.dart',
           // relationship_license_screen.dart's two SignatureDrawingDialog
           // push sites, post-Phase-8 file split:
           'lib/features/relationship/presentation/license/license_screen.dart',
