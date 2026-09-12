@@ -5,9 +5,9 @@ import 'package:confetti/confetti.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:intl/intl.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/features/wrapped/presentation/widgets/wrapped_share_card.dart';
 
 class WrappedPageFinale extends StatefulWidget {
   final WrappedData data;
@@ -146,7 +146,10 @@ class _WrappedPageFinaleState extends State<WrappedPageFinale>
                 ),
                 const SizedBox(height: 52),
                 // Share card preview (off-screen render boundary)
-                RepaintBoundary(key: _shareKey, child: _buildShareCard()),
+                RepaintBoundary(
+                  key: _shareKey,
+                  child: WrappedShareCard(data: widget.data),
+                ),
                 const SizedBox(height: 32),
                 // Action buttons
                 TweenAnimationBuilder<double>(
@@ -228,123 +231,6 @@ class _WrappedPageFinaleState extends State<WrappedPageFinale>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildShareCard() {
-    return Container(
-      width: 340,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1a0033), Color(0xFF3d0066), Color(0xFF0a001a)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.15),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Text('❤️', style: TextStyle(fontSize: 22)),
-              const SizedBox(width: 8),
-              Text(
-                'Days Together',
-                style: AppTypography.body(
-                  fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'Wrapped ${widget.data.year}',
-                style: AppTypography.caption(
-                  fontSize: 11,
-                  color: Colors.white.withValues(alpha: 0.4),
-                  fontWeight: FontWeight.w600,
-                ).copyWith(letterSpacing: 0.5),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '${widget.data.yourName} & ${widget.data.partnerDisplayName}',
-            style: AppTypography.heading(
-              fontSize: 22,
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _shareChip(
-                '${NumberFormat('#,###').format(widget.data.totalDays)} Days',
-                '❤️',
-              ),
-              const SizedBox(width: 10),
-              _shareChip('${widget.data.totalMemories} Memories', '📸'),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _shareChip('${widget.data.totalNotes} Notes', '💌'),
-              const SizedBox(width: 10),
-              _shareChip('${widget.data.bucketCompleted} Goals', '🪣'),
-            ],
-          ),
-          if (widget.data.startDate != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              'Together since ${DateFormat('MMM d, y').format(widget.data.startDate!)}',
-              style: AppTypography.body(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.4),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _shareChip(String text, String emoji) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                text,
-                style: AppTypography.body(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
