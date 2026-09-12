@@ -331,9 +331,7 @@ class _EditLicenseSheetState extends ConsumerState<EditLicenseSheet> {
       height: MediaQuery.of(context).size.height * 0.85,
 
       decoration: BoxDecoration(
-        color: widget.theme.isDark
-            ? const Color(0xFF10122B)
-            : const Color(0xFFFFF0F5),
+        color: widget.theme.primaryColor,
 
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),

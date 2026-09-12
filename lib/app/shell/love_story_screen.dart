@@ -102,7 +102,7 @@ class LoveStoryScreenState extends ConsumerState<LoveStoryScreen> {
         return PopScope(
           canPop: false,
           child: AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: theme.primaryColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),

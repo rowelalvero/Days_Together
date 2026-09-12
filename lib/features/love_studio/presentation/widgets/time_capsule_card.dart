@@ -91,7 +91,7 @@ class TimeCapsuleCard extends StatelessWidget {
           decoration: BoxDecoration(
             color:
                 (capsule.isOpened
-                        ? Colors.pinkAccent
+                        ? theme.accentColor
                         : (isOpenable ? Colors.green : Colors.grey))
                     .withValues(alpha: 0.15),
             shape: BoxShape.circle,
@@ -101,7 +101,7 @@ class TimeCapsuleCard extends StatelessWidget {
                 ? Icons.drafts_rounded
                 : (isOpenable ? Icons.lock_open_rounded : Icons.lock_rounded),
             color: capsule.isOpened
-                ? Colors.pinkAccent
+                ? theme.accentColor
                 : (isOpenable
                       ? Colors.green
                       : theme.textColor.withValues(alpha: 0.6)),

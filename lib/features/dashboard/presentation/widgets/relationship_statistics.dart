@@ -84,11 +84,11 @@ class RelationshipStatistics extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 4.0),
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
                 child: Icon(
                   Icons.show_chart_rounded,
-                  color: Color(0xFFEC4899),
+                  color: theme.accentColor,
                   size: 20,
                 ),
               ),

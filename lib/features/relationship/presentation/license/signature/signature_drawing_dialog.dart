@@ -45,9 +45,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: widget.theme.isDark
-          ? const Color(0xFF10122B)
-          : const Color(0xFFFFF0F5),
+      backgroundColor: widget.theme.primaryColor,
 
       appBar: AppBar(
         title: Text(

@@ -196,13 +196,9 @@ class _ExportStudioBottomSheetState
 
   @override
   Widget build(BuildContext context) {
-    final bottomSheetBg = widget.theme.isDark
-        ? const Color(0xFF151833)
-        : const Color(0xFFFFF4F8);
-
     return Container(
       decoration: BoxDecoration(
-        color: bottomSheetBg,
+        color: widget.theme.primaryColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),

@@ -72,9 +72,9 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
             const SizedBox(height: 24),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.bookmark_rounded,
-                  color: Colors.pinkAccent,
+                  color: theme.accentColor,
                   size: 16,
                 ),
                 const SizedBox(width: 8),

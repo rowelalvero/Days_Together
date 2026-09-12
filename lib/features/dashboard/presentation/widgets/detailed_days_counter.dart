@@ -68,9 +68,9 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.auto_awesome,
-                  color: Colors.pinkAccent,
+                  color: widget.theme.accentColor,
                   size: 14,
                 ),
                 const SizedBox(width: 6),
@@ -79,7 +79,7 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
                   style: AppTypography.captionMono(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.pinkAccent,
+                    color: widget.theme.accentColor,
                   ).copyWith(letterSpacing: 1.5),
                 ),
               ],
@@ -91,7 +91,10 @@ class _DetailedDaysCounterState extends State<DetailedDaysCounter> {
               children: [
                 ShaderMask(
                   shaderCallback: (bounds) => LinearGradient(
-                    colors: [widget.theme.accentColor, Colors.amberAccent],
+                    colors: [
+                      widget.theme.accentColor,
+                      widget.theme.accentColor.withValues(alpha: 0.6),
+                    ],
                   ).createShader(bounds),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween<double>(begin: 0, end: totalDays.toDouble()),

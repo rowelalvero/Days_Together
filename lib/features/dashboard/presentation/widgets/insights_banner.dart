@@ -95,12 +95,12 @@ class _InsightsBannerState extends State<InsightsBanner> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.pinkAccent.withValues(alpha: 0.1),
+              color: widget.theme.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome,
-              color: Colors.pinkAccent,
+              color: widget.theme.accentColor,
               size: 16,
             ),
           ),
@@ -115,7 +115,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
                   style: AppTypography.caption(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: Colors.pinkAccent,
+                    color: widget.theme.accentColor,
                   ).copyWith(letterSpacing: 1),
                 ),
                 const SizedBox(height: 2),

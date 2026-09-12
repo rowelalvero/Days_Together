@@ -30,7 +30,7 @@ class CapsuleDetailDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Row(
         children: [
-          const Icon(Icons.drafts_rounded, color: Colors.pinkAccent),
+          Icon(Icons.drafts_rounded, color: theme.accentColor),
           const SizedBox(width: 12),
           Text(
             'Opened Capsule',

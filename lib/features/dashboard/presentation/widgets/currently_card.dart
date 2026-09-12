@@ -508,20 +508,20 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
       case LoveTapState.sent:
         label = 'Tapped';
         icon = Icons.favorite_rounded;
-        iconColor = Colors.pinkAccent;
+        iconColor = theme.accentColor;
         buttonColor = theme.accentColor.withValues(alpha: 0.15);
         active = false;
         break;
       case LoveTapState.received:
         label = 'Tap Back';
         icon = Icons.favorite_border_rounded;
-        iconColor = Colors.pinkAccent;
+        iconColor = theme.accentColor;
         buttonColor = theme.accentColor.withValues(alpha: 0.1);
         break;
       case LoveTapState.mutual:
         label = 'Connected';
         icon = Icons.favorite_rounded;
-        iconColor = Colors.pinkAccent;
+        iconColor = theme.accentColor;
         buttonColor = theme.accentColor.withValues(alpha: 0.18);
         active = false;
         break;
