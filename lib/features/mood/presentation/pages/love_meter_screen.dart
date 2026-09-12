@@ -1,13 +1,20 @@
-import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
-import 'package:days_together/features/theme/theme_controller.dart';
-import 'package:days_together/features/mood/daily_mood_controller.dart';
-import 'package:days_together/features/mood/domain/entities/daily_mood_model.dart';
-import 'package:days_together/app/theme/app_typography.dart';
 
+import 'package:days_together/features/mood/daily_mood_controller.dart';
+import 'package:days_together/features/mood/presentation/widgets/daily_sync_question_card.dart';
+import 'package:days_together/features/mood/presentation/widgets/love_meter_app_bar.dart';
+import 'package:days_together/features/mood/presentation/widgets/mood_chart_card.dart';
+import 'package:days_together/features/mood/presentation/widgets/mood_logger_card.dart';
+import 'package:days_together/features/mood/presentation/widgets/today_mood_summary_card.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
+
+/// The couple's shared mood tracker: today's mood logger/summary, a daily
+/// connection prompt, and a 30-day mood trend chart.
+///
+/// Its `_buildX` methods were extracted into focused widgets under
+/// `presentation/widgets/` (Migration audit item 6) -- this class now only
+/// owns the in-progress mood-entry state (score/note/editing flag).
 class LoveMeterScreen extends ConsumerStatefulWidget {
   const LoveMeterScreen({super.key});
 
@@ -39,20 +46,27 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
     super.dispose();
   }
 
-  String _getMoodEmoji(double score) {
-    if (score <= 2) return '😢';
-    if (score <= 4) return '😕';
-    if (score <= 6) return '🙂';
-    if (score <= 8) return '😊';
-    return '😍';
+  Future<void> _saveMood(DailyMoodController notifier) async {
+    final noteText = _noteController.text.trim();
+    await notifier.logMood(
+      _currentMoodScore.toInt(),
+      note: noteText.isEmpty ? null : noteText,
+    );
+    if (mounted) {
+      setState(() {
+        _isEditingMood = false;
+      });
+    }
   }
 
-  String _getMoodLabel(double score) {
-    if (score <= 2) return 'Sad / Low energy';
-    if (score <= 4) return 'A bit down / Tired';
-    if (score <= 6) return 'Good / Content';
-    if (score <= 8) return 'Happy / Positive';
-    return 'Amazing / In Love!';
+  Future<void> _submitAnswer(DailyMoodController notifier) async {
+    final text = _answerController.text.trim();
+    if (text.isNotEmpty) {
+      await notifier.answerDailyQuestion(text);
+      if (mounted) {
+        _answerController.clear();
+      }
+    }
   }
 
   @override
@@ -78,657 +92,38 @@ class _LoveMeterScreenState extends ConsumerState<LoveMeterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildAppBar(context, theme),
+                  LoveMeterAppBar(theme: theme),
                   if (todayMood == null || _isEditingMood)
-                    _buildMoodLogger(theme, moodNotifier)
+                    MoodLoggerCard(
+                      theme: theme,
+                      currentScore: _currentMoodScore,
+                      noteController: _noteController,
+                      onScoreChanged: (val) =>
+                          setState(() => _currentMoodScore = val),
+                      onSave: () => _saveMood(moodNotifier),
+                    )
                   else
-                    _buildTodayMoodSummary(todayMood, theme),
+                    TodayMoodSummaryCard(
+                      todayMood: todayMood,
+                      theme: theme,
+                      onUpdate: () => setState(() => _isEditingMood = true),
+                    ),
                   const SizedBox(height: 24),
-                  _buildSyncQuestionCard(todayQuestion, theme, moodNotifier),
+                  DailySyncQuestionCard(
+                    question: todayQuestion,
+                    theme: theme,
+                    answerController: _answerController,
+                    onSubmitAnswer: () => _submitAnswer(moodNotifier),
+                  ),
                   const SizedBox(height: 24),
-                  _buildMoodChartCard(moodState.recentMoods, theme),
+                  MoodChartCard(
+                    recentMoods: moodState.recentMoods,
+                    theme: theme,
+                  ),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      child: Row(
-        children: [
-          IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: theme.textColor,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Love Harmony',
-                style: AppTypography.cormorant(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textColor,
-                ),
-              ),
-              Text(
-                'Connect your hearts and share your daily moods.',
-                style: AppTypography.spectral(
-                  fontSize: 12,
-                  color: theme.textColor.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMoodLogger(LoveStoryTheme theme, DailyMoodController notifier) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'How is your mood today?',
-            style: AppTypography.heading(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: theme.textColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            _getMoodEmoji(_currentMoodScore),
-            style: AppTypography.body(fontSize: 70),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _getMoodLabel(_currentMoodScore),
-            style: AppTypography.body(
-              fontSize: 16,
-              color: theme.accentColor,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: theme.accentColor,
-              inactiveTrackColor: theme.textColor.withValues(alpha: 0.1),
-              thumbColor: theme.accentColor,
-              overlayColor: theme.accentColor.withValues(alpha: 0.2),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
-            ),
-            child: Slider(
-              value: _currentMoodScore,
-              min: 1.0,
-              max: 10.0,
-              divisions: 9,
-              label: _currentMoodScore.toInt().toString(),
-              onChanged: (val) {
-                setState(() {
-                  _currentMoodScore = val;
-                });
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(
-                10,
-                (i) => Text(
-                  '${i + 1}',
-                  style: AppTypography.caption(
-                    color: (_currentMoodScore.toInt() == i + 1)
-                        ? theme.textColor
-                        : theme.textColor.withValues(alpha: 0.38),
-                    fontWeight: (_currentMoodScore.toInt() == i + 1)
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _noteController,
-            style: AppTypography.body(color: theme.textColor),
-            maxLines: 2,
-            decoration: InputDecoration(
-              hintText: 'Add a little detail about your day... (optional)',
-              hintStyle: AppTypography.body(
-                color: theme.textColor.withValues(alpha: 0.3),
-              ),
-              filled: true,
-              fillColor: theme.textColor.withValues(alpha: 0.05),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: theme.textColor.withValues(alpha: 0.1),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: theme.accentColor),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () async {
-                final noteText = _noteController.text.trim();
-                await notifier.logMood(
-                  _currentMoodScore.toInt(),
-                  note: noteText.isEmpty ? null : noteText,
-                );
-                if (mounted) {
-                  setState(() {
-                    _isEditingMood = false;
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Text(
-                'Save Today\'s Mood',
-                style: AppTypography.button(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodayMoodSummary(DailyMood todayMood, LoveStoryTheme theme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Today\'s Mood',
-                style: AppTypography.body(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textColor.withValues(alpha: 0.7),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _isEditingMood = true;
-                  });
-                },
-                icon: const Icon(Icons.edit, size: 16),
-                label: Text(
-                  'Update',
-                  style: AppTypography.button(color: theme.accentColor),
-                ),
-                style: TextButton.styleFrom(foregroundColor: theme.accentColor),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text(
-                _getMoodEmoji(todayMood.moodScore.toDouble()),
-                style: AppTypography.body(fontSize: 48),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Score: ${todayMood.moodScore}/10',
-                      style: AppTypography.body(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _getMoodLabel(todayMood.moodScore.toDouble()),
-                      style: AppTypography.body(
-                        fontSize: 14,
-                        color: theme.accentColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (todayMood.note != null && todayMood.note!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                '"${todayMood.note}"',
-                style: AppTypography.body(
-                  color: theme.textColor.withValues(alpha: 0.7),
-                  fontSize: 14,
-                ).copyWith(fontStyle: FontStyle.italic),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSyncQuestionCard(
-    DailySyncQuestion? question,
-    LoveStoryTheme theme,
-    DailyMoodController notifier,
-  ) {
-    if (question == null) return const SizedBox.shrink();
-
-    final hasAnswered = question.myAnswer != null;
-    final bothAnswered = question.bothAnswered;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.accentColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.favorite_rounded,
-                  color: theme.accentColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Daily Connection Prompt',
-                style: AppTypography.body(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            question.question,
-            style: AppTypography.body(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: theme.textColor,
-            ).copyWith(fontStyle: FontStyle.italic),
-          ),
-          const SizedBox(height: 20),
-          if (!hasAnswered) ...[
-            TextField(
-              controller: _answerController,
-              style: AppTypography.body(color: theme.textColor),
-              maxLines: 2,
-              decoration: InputDecoration(
-                hintText: 'Write your response here...',
-                hintStyle: AppTypography.body(
-                  color: theme.textColor.withValues(alpha: 0.3),
-                ),
-                filled: true,
-                fillColor: theme.textColor.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: theme.textColor.withValues(alpha: 0.1),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: theme.accentColor),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final text = _answerController.text.trim();
-                  if (text.isNotEmpty) {
-                    await notifier.answerDailyQuestion(text);
-                    if (mounted) {
-                      _answerController.clear();
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.accentColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  'Share Response',
-                  style: AppTypography.button(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ] else ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: theme.textColor.withValues(alpha: 0.05),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your Answer:',
-                    style: AppTypography.caption(
-                      color: theme.textColor.withValues(alpha: 0.54),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    question.myAnswer!,
-                    style: AppTypography.body(
-                      color: theme.textColor,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (!bothAnswered) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  color: theme.textColor.withValues(alpha: 0.01),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.05),
-                    style: BorderStyle.solid,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.textColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '⏳ Waiting for partner to reply...',
-                      style: AppTypography.body(
-                        color: theme.textColor.withValues(alpha: 0.5),
-                        fontSize: 13,
-                      ).copyWith(fontStyle: FontStyle.italic),
-                    ),
-                  ],
-                ),
-              ),
-            ] else ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.accentColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.accentColor.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Partner\'s Answer:',
-                      style: AppTypography.caption(
-                        color: Colors.pinkAccent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      question.partnerAnswer!,
-                      style: AppTypography.body(
-                        color: theme.textColor,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMoodChartCard(
-    List<DailyMood> recentMoods,
-    LoveStoryTheme theme,
-  ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: theme.textColor.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Emotional Map',
-            style: AppTypography.body(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: theme.textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Your shared mood trends over the last 30 days',
-            style: AppTypography.caption(
-              fontSize: 12,
-              color: theme.textColor.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 30),
-          if (recentMoods.length < 2)
-            Container(
-              height: 200,
-              width: double.infinity,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.02),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'Log your mood for a few days to visualize your emotional connection 📈',
-                textAlign: TextAlign.center,
-                style: AppTypography.body(
-                  color: theme.textColor.withValues(alpha: 0.38),
-                  fontSize: 13,
-                ).copyWith(fontStyle: FontStyle.italic),
-              ),
-            )
-          else
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        interval: 2,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: AppTypography.caption(
-                              color: theme.textColor.withValues(alpha: 0.3),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          );
-                        },
-                        reservedSize: 28,
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 22,
-                        interval: (recentMoods.length / 4).clamp(1.0, 30.0),
-                        getTitlesWidget: (value, meta) {
-                          final idx = value.toInt();
-                          if (idx >= 0 && idx < recentMoods.length) {
-                            final date = DateTime.parse(recentMoods[idx].date);
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                DateFormat('MM/dd').format(date),
-                                style: AppTypography.caption(
-                                  color: theme.textColor.withValues(alpha: 0.3),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 9,
-                                ),
-                              ),
-                            );
-                          }
-                          return const Text('');
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  minX: 0,
-                  maxX: (recentMoods.length - 1).toDouble(),
-                  minY: 1,
-                  maxY: 10,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: List.generate(
-                        recentMoods.length,
-                        (index) => FlSpot(
-                          index.toDouble(),
-                          recentMoods[index].moodScore.toDouble(),
-                        ),
-                      ),
-                      isCurved: true,
-                      color: theme.accentColor,
-                      barWidth: 4,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) =>
-                            FlDotCirclePainter(
-                              radius: 5,
-                              color: theme.accentColor,
-                              strokeWidth: 2,
-                              strokeColor: Colors.white,
-                            ),
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: theme.accentColor.withValues(alpha: 0.15),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
