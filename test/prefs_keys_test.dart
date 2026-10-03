@@ -5,9 +5,9 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 void main() {
   group('PrefsKeys', () {
     test(
-      'contains exactly 43 entries (Phase 0 exit criterion; 42 after the Secret Vault removal dropped vaultPinFallback, then +1 for the mirrored userId)',
+      'contains exactly 44 entries (Phase 0 exit criterion; 42 after the Secret Vault removal dropped vaultPinFallback, then +1 for the mirrored userId, +1 for appSettings)',
       () {
-        expect(PrefsKeys.all.length, 43);
+        expect(PrefsKeys.all.length, 44);
       },
     );
 
@@ -43,6 +43,9 @@ void main() {
           'lib/core/session/couple_session.dart',
           'lib/features/relationship/license_controller.dart',
           'lib/features/timeline/timeline_controller.dart',
+          // appSettings (theme/music), centralized when SessionDataWiper
+          // needed to name it as device-scoped.
+          'lib/core/storage/local_persistence_service.dart',
         ].map((path) => File(path).readAsStringSync()).toList();
 
         // Recover the value -> constant-name mapping directly from

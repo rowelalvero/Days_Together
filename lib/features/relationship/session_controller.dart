@@ -70,8 +70,7 @@ class SessionController extends Notifier<SessionState> {
   Future<void> signInWithGoogle() =>
       ref.read(coupleSessionProvider).signInWithGoogle();
 
-  Future<void> logout({bool wipeAll = false}) =>
-      ref.read(coupleSessionProvider).logout(wipeAll: wipeAll);
+  Future<void> logout() => ref.read(coupleSessionProvider).logout();
 
   void forceInitialized() => ref.read(coupleSessionProvider).forceInitialized();
 

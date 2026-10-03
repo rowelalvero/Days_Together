@@ -533,6 +533,35 @@ void main() {
     },
   );
 
+  group('partner notifications go through NotificationService', () {
+    test(
+      'only notification_service.dart invokes the send-push-notification edge function',
+      () {
+        // Love chat used to call the edge function directly, without a
+        // `feature`: the partner's chat-notification toggle was ignored, the
+        // tap routed nowhere, and the message text went into the lock-screen
+        // body (audit F-19). sendPartnerNotification is the one pathway.
+        final violations = <String>[];
+        var canonicalFound = false;
+        for (final file in _dartFilesUnder('lib')) {
+          final normalized = file.path.replaceAll('\\', '/');
+          if (!file.readAsStringSync().contains("'send-push-notification'")) {
+            continue;
+          }
+          if (normalized.endsWith(
+            'lib/core/notifications/notification_service.dart',
+          )) {
+            canonicalFound = true;
+          } else {
+            violations.add(normalized);
+          }
+        }
+        expect(canonicalFound, isTrue, reason: 'canonical call site moved?');
+        expect(violations, isEmpty);
+      },
+    );
+  });
+
   group('feature caches are per-user, not device-wide', () {
     test('no feature controller touches SharedPreferences directly', () {
       // Every feature cache used to be a bare device-wide key

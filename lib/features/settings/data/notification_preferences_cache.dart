@@ -12,11 +12,10 @@ import 'package:days_together/features/settings/domain/entities/notification_pre
 /// offline it never populates at all.
 ///
 /// **Keyed per user, deliberately.** A single device-wide key let a second
-/// account signing in read the first one's settings. Explicit logout is not
-/// the hole -- `CoupleSession.logout()` calls `prefs.clear()` on both its
-/// branches -- but a session can also end through the auth listener's
-/// signed-out branch (a server-side revocation, an expired refresh token, an
-/// account switch), and that path clears no preferences. Scoping the key to
+/// account signing in read the first one's settings. Every identity exit now
+/// runs SessionDataWiper, but this stays as defense in depth: the auth
+/// listener's signed-out branch (a server-side revocation, an expired refresh
+/// token, an account switch) used to clear no preferences. Scoping the key to
 /// the user makes the leak impossible regardless of which teardown ran,
 /// rather than relying on every path remembering to purge.
 ///

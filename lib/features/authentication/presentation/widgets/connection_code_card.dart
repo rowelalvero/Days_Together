@@ -49,13 +49,19 @@ class ConnectionCodeCard extends StatelessWidget {
                 child: CircularProgressIndicator(),
               )
             else
-              Text(
-                codeToDisplay,
-                style: AppTypography.body(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w900,
-                  color: theme.textColor,
-                ).copyWith(letterSpacing: 10),
+              // Scales down rather than wrapping: 8-character codes at this
+              // size are wider than a narrow phone's card.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  codeToDisplay,
+                  maxLines: 1,
+                  style: AppTypography.body(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    color: theme.textColor,
+                  ).copyWith(letterSpacing: 10),
+                ),
               ),
             const SizedBox(height: 10),
             Text(

@@ -71,6 +71,8 @@ class _DecryptedBytesCache {
   }
 
   void remove(String key) => _entries.remove(key);
+
+  void clear() => _entries.clear();
 }
 
 /// Evicts any cached bytes for `[bucket]/[ref]` -- the on-disk ciphertext
@@ -93,6 +95,21 @@ Future<void> evictStorageImageCache({
     await _EncryptedPhotoCacheManager().removeFile(key);
   } catch (_) {
     // Best-effort; a miss here just means the entry expires naturally.
+  }
+}
+
+/// Drops every cached image byte this app holds: the in-memory decrypted
+/// plaintext and the on-disk fetch cache (ciphertext for E2EE uploads, but
+/// plaintext for photos uploaded before E2EE shipped). Called by
+/// SessionDataWiper when an account or relationship ends, so the next
+/// identity on this device never renders -- or finds on disk -- the previous
+/// one's photos.
+Future<void> clearStorageImageCaches() async {
+  _DecryptedBytesCache.instance.clear();
+  try {
+    await _EncryptedPhotoCacheManager().emptyCache();
+  } catch (_) {
+    // Best-effort: no platform plugin in some contexts (e.g. unit tests).
   }
 }
 

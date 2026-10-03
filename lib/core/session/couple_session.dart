@@ -13,6 +13,7 @@ import 'package:days_together/core/network/couple_service.dart';
 import 'package:days_together/core/network/profile_service.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
 import 'package:days_together/core/session/relationship_lifecycle_manager.dart';
+import 'package:days_together/core/session/session_data_wiper.dart';
 import 'package:days_together/core/session/couple_key_exchange.dart';
 import 'package:days_together/core/security/key_management_service.dart';
 import 'package:days_together/core/session/partner_presence.dart';
@@ -77,6 +78,45 @@ bool shouldResubscribePartner({
 }) {
   if (oldPartnerId != newPartnerId) return true;
   return newPartnerId != null && !hasLiveSubscription;
+}
+
+/// Whether [code] (already trimmed and upper-cased) is worth sending to
+/// `join_relationship_with_code`. Codes are 8 characters since
+/// 20261003000200_harden_pairing.sql; a 6-character code issued before that
+/// stays valid until it expires (at most 20 minutes), so both are accepted.
+/// The server re-validates -- this only spares an obviously malformed round
+/// trip.
+bool isPlausiblePairingCode(String code) =>
+    RegExp(r'^[A-Z0-9]{6,8}$').hasMatch(code);
+
+/// Maps a failed `join_relationship_with_code` result to the message shown to
+/// the user, keyed on the RPC's stable `error_code` -- never on Postgres
+/// exception text. Pure and top-level for the same reason
+/// [computeSessionStage] is: the join itself needs a live session, so this is
+/// the part a unit test can reach.
+String pairingFailureMessage(Map<String, dynamic> result, {DateTime? now}) {
+  switch (result['error_code']) {
+    case 'INVALID_CODE':
+      return 'Hmm, we couldn\'t find that connection code. Please check it with your partner.';
+    case 'CODE_EXPIRED':
+      return 'That code has expired. Ask your partner for their new code.';
+    case 'ALREADY_PAIRED':
+      return 'You\'re already connected to a partner.';
+    case 'INVALID_SESSION':
+      return 'Your session has expired. Please sign in again.';
+    case 'RATE_LIMITED':
+      final retryAfter = DateTime.tryParse(
+        result['retry_after'] as String? ?? '',
+      );
+      final minutes = retryAfter == null
+          ? 15
+          : (retryAfter.difference(now ?? DateTime.now()).inSeconds / 60)
+                .ceil()
+                .clamp(1, 15);
+      return 'Too many attempts. Please try again in $minutes minute${minutes == 1 ? '' : 's'}.';
+    default:
+      return 'Pairing failed. Please try again.';
+  }
 }
 
 SessionStage computeSessionStage({
@@ -285,19 +325,31 @@ class CoupleSession extends ChangeNotifier {
 
   final CoupleService _coupleService;
   final KeyManagementService _keyManagementService;
+  final PushTokenRegistry _pushTokens;
+  final SessionDataWiper _dataWiper;
+  final Future<void> Function()? _signOutOverride;
 
   /// [coupleService] defaults to the real [CoupleService.instance], and
   /// [keyManagementService] to the real [KeyManagementService.instance] --
   /// both injectable only so a test can substitute a fake/test-seam instance
   /// for pairing-flow coverage (ADR-010's exception: "singletons convert to
   /// providers only when a specific test needs a fake"), no behavior change
-  /// for the app.
+  /// for the app. [pushTokens], [dataWiper] and [signOut] follow the same
+  /// rule, for the account-isolation test (test/account_isolation_test.dart):
+  /// they default to [NotificationService], a real [SessionDataWiper], and
+  /// Supabase + Google sign-out.
   CoupleSession({
     CoupleService? coupleService,
     KeyManagementService? keyManagementService,
+    PushTokenRegistry? pushTokens,
+    SessionDataWiper? dataWiper,
+    Future<void> Function()? signOut,
   }) : _coupleService = coupleService ?? CoupleService.instance,
        _keyManagementService =
-           keyManagementService ?? KeyManagementService.instance {
+           keyManagementService ?? KeyManagementService.instance,
+       _pushTokens = pushTokens ?? NotificationService(),
+       _dataWiper = dataWiper ?? SessionDataWiper(),
+       _signOutOverride = signOut {
     _keyExchange = CoupleKeyExchange(
       // Read through a closure rather than captured: all three fields
       // resolve asynchronously and at different times, and the ordering
@@ -467,28 +519,31 @@ class CoupleSession extends ChangeNotifier {
     _keyExchange.reset();
 
     if (user == null) {
-      // logout() wipes every pref, but this branch also runs for a
-      // server-side revocation or an expired refresh token, which clear
-      // nothing -- so the mirror has to be dropped explicitly here.
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.remove(PrefsKeys.userId);
-      } catch (e) {
-        debugPrint('CoupleSession: clearing the persisted user id failed: $e');
-      }
-      _userId = null;
-      _coupleId = null;
-      _partnerId = null;
-      _isPaired = false;
-      _status = RelationshipStatus.disconnected;
-      _yourActivity = null;
-      _partnerActivity = null;
-      _yourJoinDate = null;
-      _partnerJoinDate = null;
+      // Identity exit that did not go through logout(): a server-side
+      // revocation, an expired refresh token, a sign-out from elsewhere.
+      // Wipe exactly as logout() does (audit F-06) -- this path used to drop
+      // only the userId mirror, leaving the previous account's profile,
+      // partner PII and activity log for whoever signed in next. The FCM
+      // token cannot be unregistered here (no JWT any more); the next
+      // account's registration takes the token over server-side.
       _presence.disconnect();
+      _resetIdentityState();
+      await _dataWiper.wipeAccountData();
       _isInitialized = true;
       notifyListeners();
       return;
+    }
+
+    // A different account than the one this device last held -- either in
+    // memory or persisted from a previous run. Normally logout()/the branch
+    // above already wiped, but if the previous session never got the chance
+    // (killed mid-logout, an account switch with no sign-out event), its data
+    // must not survive into this one.
+    final previousUserId = _userId ?? await _persistedUserId();
+    if (previousUserId != null && previousUserId != user.id) {
+      _presence.disconnect();
+      _resetIdentityState();
+      await _dataWiper.wipeAccountData();
     }
 
     _userId = user.id;
@@ -502,9 +557,70 @@ class CoupleSession extends ChangeNotifier {
       debugPrint('CoupleSession: persisting the user id failed: $e');
     }
 
-    _keyExchange.start();
+    if (isSupabaseAvailable) {
+      _keyExchange.start();
+      _subscribeToUserRow();
+    }
+  }
 
-    _subscribeToUserRow();
+  Future<String?> _persistedUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(PrefsKeys.userId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Resets every in-memory field that belongs to an account or its
+  /// relationship. The on-disk counterpart is [SessionDataWiper]; every
+  /// identity exit (logout, auth session gone, account switch) runs both.
+  void _resetIdentityState() {
+    _userId = null;
+    _coupleId = null;
+    _partnerId = null;
+    _status = RelationshipStatus.disconnected;
+    _recoveryCode = null;
+    _startDate = null;
+    _startTime = null;
+    _partnerName = null;
+    _yourName = null;
+    _yourAvatarPath = null;
+    _partnerAvatarPath = null;
+    _coupleCode = null;
+    _isPaired = false;
+    _isCreator = false;
+    _onboardingCompleted = false;
+    _isPremium = false;
+    _showPartnerDeletedNotice = false;
+    _storyTitle = null;
+    _yourActivity = null;
+    _partnerActivity = null;
+    _yourJoinDate = null;
+    _partnerJoinDate = null;
+  }
+
+  /// Test seams onto the auth/row handlers. The real entry points are
+  /// Supabase streams, which a plain `flutter test` cannot open; these let
+  /// test/account_isolation_test.dart drive a real sign-in / sign-out /
+  /// account-switch sequence through the production handlers.
+  @visibleForTesting
+  Future<void> handleAuthChangeForTest(AuthState data) =>
+      _handleAuthChange(data);
+
+  @visibleForTesting
+  Future<void> handleUserRowForTest(List<Map<String, dynamic>> rows) =>
+      _handleUserRow(rows);
+
+  @visibleForTesting
+  Future<void> handleCoupleRowForTest(List<Map<String, dynamic>> rows) =>
+      _handleCoupleRow(rows);
+
+  @visibleForTesting
+  Future<void> handlePartnerRowForTest(Map<String, dynamic> row) async {
+    _partnerActivity = row['current_activity'] as String?;
+    await _applyPartnerUserFields(row);
+    notifyListeners();
   }
 
   /// Subscribes to this user's own `users` row.
@@ -558,11 +674,13 @@ class CoupleSession extends ChangeNotifier {
         userData['partner_deleted_notice'] as bool? ?? false;
     if (partnerDeletedNotice) {
       _showPartnerDeletedNotice = true;
-      Supabase.instance.client
-          .from(Tables.users)
-          .update({'partner_deleted_notice': false})
-          .eq('id', _userId!)
-          .then((_) {});
+      if (isSupabaseAvailable) {
+        Supabase.instance.client
+            .from(Tables.users)
+            .update({'partner_deleted_notice': false})
+            .eq('id', _userId!)
+            .then((_) {});
+      }
     }
 
     bool coupleIdChanged = _coupleId != newCoupleId;
@@ -573,8 +691,9 @@ class CoupleSession extends ChangeNotifier {
       await prefs.remove(PrefsKeys.coupleId);
     }
 
-    // Sync FCM Token to Supabase
-    NotificationService().syncTokenToSupabase();
+    // Associate this device's push token with the signed-in account. Per
+    // account, not once per process (see NotificationService._syncedUserId).
+    _pushTokens.register();
 
     _yourName =
         userData['display_name'] as String? ??
@@ -621,7 +740,7 @@ class CoupleSession extends ChangeNotifier {
     final createdAtStr = userData['created_at'] as String?;
     if (createdAtStr != null) {
       _yourJoinDate = DateTime.parse(createdAtStr);
-    } else {
+    } else if (isSupabaseAvailable) {
       final authCreated = Supabase.instance.client.auth.currentUser?.createdAt;
       if (authCreated != null) {
         _yourJoinDate = DateTime.parse(authCreated);
@@ -641,7 +760,7 @@ class CoupleSession extends ChangeNotifier {
         _partnerActivity = null;
         _syncLocalDetailsToCloud();
 
-        _subscribeToCouple();
+        if (isSupabaseAvailable) _subscribeToCouple();
       } else {
         _isInitialized = true;
         notifyListeners();
@@ -758,12 +877,14 @@ class CoupleSession extends ChangeNotifier {
     }
 
     // See [shouldResubscribePartner] for why an identity change alone is the
-    // wrong condition on a warm start.
-    if (shouldResubscribePartner(
-      oldPartnerId: oldPartnerId,
-      newPartnerId: _partnerId,
-      hasLiveSubscription: _partnerUserSub != null,
-    )) {
+    // wrong condition on a warm start. Everything in here opens network
+    // subscriptions, hence the availability guard (always true in the app).
+    if (isSupabaseAvailable &&
+        shouldResubscribePartner(
+          oldPartnerId: oldPartnerId,
+          newPartnerId: _partnerId,
+          hasLiveSubscription: _partnerUserSub != null,
+        )) {
       _initPartnerUserSync();
       if (_partnerId != null) {
         _keyExchange.wrapForPartnerIfHeld(_partnerId!);
@@ -774,7 +895,7 @@ class CoupleSession extends ChangeNotifier {
       }
     }
 
-    _initPresence();
+    if (isSupabaseAvailable) _initPresence();
     _isInitialized = true;
     notifyListeners();
   }
@@ -1325,7 +1446,7 @@ class CoupleSession extends ChangeNotifier {
 
     try {
       final cleanCode = code.trim().toUpperCase();
-      if (cleanCode.length != 6) return false;
+      if (!isPlausiblePairingCode(cleanCode)) return false;
 
       _coupleCode = cleanCode;
       final prefs = await SharedPreferences.getInstance();
@@ -1345,9 +1466,10 @@ class CoupleSession extends ChangeNotifier {
         final bool success = result['success'] as bool? ?? false;
 
         if (!success) {
-          final errorMsg = result['error'] as String? ?? 'Pairing failed';
-          debugPrint('Supabase join_relationship_with_code error: $errorMsg');
-          throw Exception(errorMsg);
+          debugPrint(
+            'join_relationship_with_code failed: ${result['error_code']}',
+          );
+          throw Exception(pairingFailureMessage(result));
         }
 
         final joinedCoupleId = result['couple_id'] as String;
@@ -1445,13 +1567,10 @@ class CoupleSession extends ChangeNotifier {
     _isPremium = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(PrefsKeys.isPremium, _isPremium);
-    if (_coupleId != null) {
-      Supabase.instance.client
-          .from(Tables.couples)
-          .update({'is_premium': _isPremium})
-          .eq('id', _coupleId!)
-          .then((_) {});
-    }
+    // Deliberately no server write: couples.is_premium is server-controlled.
+    // protect_premium_status always reverted a client's write, and since
+    // 20261003010300_couples_mutation_boundary.sql clients hold no UPDATE
+    // privilege on that column at all.
     notifyListeners();
   }
 
@@ -1536,19 +1655,28 @@ class CoupleSession extends ChangeNotifier {
     try {
       _isPaired = false;
       _coupleCode = null;
+      _recoveryCode = null;
       _partnerName = null;
       _partnerAvatarPath = null;
       _partnerJoinDate = null;
+      _partnerActivity = null;
+      // The relationship's own fields go with it. Keeping the start date in
+      // particular let _syncLocalDetailsToCloud push the PREVIOUS
+      // relationship's anniversary into the next couple's row (audit F-06).
+      _startDate = null;
+      _startTime = null;
+      _storyTitle = null;
+      _isCreator = false;
+      _isPremium = false;
       _cancelActiveSubscriptions();
       await RelationshipLifecycleManager.instance.handleDisconnect();
       _presence.disconnect();
 
+      // Partner PII, relationship dates, feature caches, the activity log and
+      // image caches -- see SessionDataWiper for the couple scope.
+      await _dataWiper.wipeCoupleData();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(PrefsKeys.isPaired, false);
-      await prefs.remove(PrefsKeys.coupleCode);
-      await prefs.remove(PrefsKeys.partnerName);
-      await prefs.remove(PrefsKeys.partnerAvatarPath);
-      await prefs.remove(PrefsKeys.partnerJoinDate);
       _onboardingCompleted = false;
       await prefs.setBool(PrefsKeys.onboardingCompleted, false);
 
@@ -1619,7 +1747,7 @@ class CoupleSession extends ChangeNotifier {
       debugPrint('CoupleSession: local key cleanup after deletion failed: $e');
     }
     try {
-      await logout(wipeAll: true);
+      await logout();
     } catch (e) {
       // The server has already deleted the account. A local sign-out failure
       // cannot turn that into a retryable deletion failure in the UI.
@@ -1673,84 +1801,59 @@ class CoupleSession extends ChangeNotifier {
     );
   }
 
-  Future<void> logout({bool wipeAll = false}) async {
-    _userId = null;
-    _coupleId = null;
-    _partnerId = null;
-    _startDate = null;
-    _startTime = null;
-    _partnerName = null;
-    _yourName = null;
-    _yourAvatarPath = null;
-    _partnerAvatarPath = null;
-    _coupleCode = null;
-    _isPaired = false;
-    _isCreator = false;
-    _onboardingCompleted = false;
-    _isPremium = false;
-    _storyTitle = null;
-    // The 24 license fields used to be reset here -- LicenseController's
-    // own state is invalidated on logout by main.dart's
-    // _LicenseLifecycleBridge instead (see license_controller.dart).
+  /// Signs out and removes every trace of the account from this device
+  /// (audit F-06/F-07, invariants S11/S12). Order matters:
+  ///
+  /// 1. Unregister this device's push token FIRST, while the session's JWT
+  ///    still authorises deleting the token row. After sign-out the device
+  ///    would otherwise keep receiving this account's partner notifications.
+  /// 2. Reset in-memory state and wipe on-device data via [SessionDataWiper]
+  ///    -- everything but device chrome. (This used to deliberately keep the
+  ///    name, avatar, start date and onboarding flag, which the next account
+  ///    signing in then inherited and even synced into its own rows.)
+  /// 3. Tear down subscriptions, then sign out.
+  ///
+  /// The E2EE keys in secure storage are user-scoped and survive -- see
+  /// KeyManagementService.clearCoupleKey's doc.
+  Future<void> logout() async {
+    await _pushTokens.unregister();
 
-    final prefs = await SharedPreferences.getInstance();
-    if (wipeAll) {
-      await prefs.clear();
-    } else {
-      final onboardingCompleted = prefs.getBool(PrefsKeys.onboardingCompleted);
-      final startDate = prefs.getString(PrefsKeys.relationshipStartDate);
-      final startHour = prefs.getInt(PrefsKeys.relationshipStartHour);
-      final startMinute = prefs.getInt(PrefsKeys.relationshipStartMinute);
-      final yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
-      final yourName = prefs.getString(PrefsKeys.yourName);
-
-      await prefs.clear();
-
-      if (onboardingCompleted != null) {
-        await prefs.setBool(PrefsKeys.onboardingCompleted, onboardingCompleted);
-      }
-      if (startDate != null) {
-        await prefs.setString(PrefsKeys.relationshipStartDate, startDate);
-      }
-      if (startHour != null) {
-        await prefs.setInt(PrefsKeys.relationshipStartHour, startHour);
-      }
-      if (startMinute != null) {
-        await prefs.setInt(PrefsKeys.relationshipStartMinute, startMinute);
-      }
-      if (yourAvatarPath != null) {
-        await prefs.setString(PrefsKeys.yourAvatarPath, yourAvatarPath);
-      }
-      if (yourName != null) await prefs.setString(PrefsKeys.yourName, yourName);
-    }
+    _resetIdentityState();
+    await _dataWiper.wipeAccountData();
+    // LicenseController's cached state is invalidated by main.dart's
+    // _CoupleSessionBridge when the identity clears.
 
     await RelationshipLifecycleManager.instance.handleLogout();
 
     _userSub?.cancel();
+    _userSub = null;
     _partnerUserSub?.cancel();
     _partnerUserSub = null;
-    _partnerActivity = null;
     _coupleSub?.cancel();
+    _coupleSub = null;
     // In-memory key-exchange state only. The stored couple photo key itself
     // deliberately survives a sign-out -- see
     // KeyManagementService.clearCoupleKey's doc for why.
     _keyExchange.reset();
     _keyExchange.completeWaiter();
     _presence.disconnect();
-    _yourJoinDate = null;
-    _partnerJoinDate = null;
 
-    if (isSupabaseAvailable) {
-      await AuthService.instance.signOut();
-      try {
-        final googleSignIn = GoogleSignIn();
-        await googleSignIn.signOut();
-      } catch (e) {
-        debugPrint('CoupleSession: Google sign-out during logout failed: $e');
-      }
-    }
+    await _signOut();
 
     notifyListeners();
+  }
+
+  Future<void> _signOut() async {
+    final override = _signOutOverride;
+    if (override != null) return override();
+    if (!isSupabaseAvailable) return;
+    await AuthService.instance.signOut();
+    try {
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+    } catch (e) {
+      debugPrint('CoupleSession: Google sign-out during logout failed: $e');
+    }
   }
 
   @override

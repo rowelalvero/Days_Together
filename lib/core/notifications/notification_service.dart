@@ -10,7 +10,20 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/core/constants/tables.dart';
 
-class NotificationService {
+/// What the session needs from push-token plumbing (invariant S12), as an
+/// interface so the account-isolation test can observe which account the
+/// device's token belongs to without Firebase.
+abstract interface class PushTokenRegistry {
+  /// Associates this device's token with the currently signed-in account.
+  Future<void> register();
+
+  /// Removes this device's token for the currently signed-in account. Must
+  /// run BEFORE sign-out: the delete is authorised by the session's JWT.
+  /// Never throws.
+  Future<void> unregister();
+}
+
+class NotificationService implements PushTokenRegistry {
   /// The host platform, as stored on `user_fcm_tokens.device_type`. Replaces
   /// `Platform.isIOS ? 'ios' : 'android'`, which labelled every desktop,
   /// Linux, and web run as an Android device -- so any per-platform push
@@ -32,7 +45,18 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
-  bool _tokenSynced = false;
+
+  /// The account this device's token was last registered for. Per-user, not
+  /// a plain "already synced" flag: with a flag, a second account signing in
+  /// within the same process skipped registration and the token stayed
+  /// assigned to the previous account (audit F-07).
+  String? _syncedUserId;
+
+  @override
+  Future<void> register() => syncTokenToSupabase();
+
+  @override
+  Future<void> unregister() => clearToken();
 
   Future<void> init() async {
     if (_initialized) return;
@@ -93,21 +117,20 @@ class NotificationService {
   }
 
   Future<void> syncTokenToSupabase([String? explicitToken]) async {
-    if (_tokenSynced && explicitToken == null) return;
-
     try {
-      final token = explicitToken ?? await _fcm.getToken();
-      if (token == null) return;
-
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
+      if (explicitToken == null && _syncedUserId == userId) return;
+
+      final token = explicitToken ?? await _fcm.getToken();
+      if (token == null) return;
 
       try {
         await Supabase.instance.client.rpc(
           'upsert_user_fcm_token',
           params: {'p_token': token, 'p_device_type': _deviceType},
         );
-        _tokenSynced = true;
+        _syncedUserId = userId;
         debugPrint('NotificationService: Token synced via RPC successfully.');
         return;
       } catch (rpcError) {
@@ -135,14 +158,17 @@ class NotificationService {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'token');
 
-      _tokenSynced = true;
+      _syncedUserId = userId;
       debugPrint('NotificationService: Token synced successfully.');
     } catch (e) {
       debugPrint('NotificationService: Failed to sync token to Supabase: $e');
     }
   }
 
-  /// Remove the current device's FCM token from Supabase on logout (Audit 12.1)
+  /// Removes this device's FCM token for the signed-in account. Called by
+  /// CoupleSession.logout() before sign-out, while the JWT that authorises the
+  /// delete is still valid. Always forgets the per-user sync state, even when
+  /// the delete fails, so the next account to sign in registers afresh.
   Future<void> clearToken() async {
     try {
       final token = await _fcm.getToken();
@@ -154,9 +180,10 @@ class NotificationService {
             .eq('user_id', userId)
             .eq('token', token);
       }
-      _tokenSynced = false;
     } catch (e) {
       debugPrint('NotificationService: Failed to clear token: $e');
+    } finally {
+      _syncedUserId = null;
     }
   }
 

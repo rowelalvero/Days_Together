@@ -5,6 +5,8 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
+import 'package:days_together/core/session/couple_session.dart'
+    show isPlausiblePairingCode;
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/workspace_controller.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
@@ -37,9 +39,9 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
 
   Future<void> _linkCode() async {
     final code = _controller.text.trim().toUpperCase();
-    if (code.length != 6) {
+    if (!isPlausiblePairingCode(code)) {
       setState(() {
-        _errorMessage = 'Code must be exactly 6 characters.';
+        _errorMessage = 'Enter the 8-character code from your partner.';
       });
       return;
     }
@@ -71,8 +73,9 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage =
-              'Connection error: ${e.toString().replaceAll('Exception: ', '')}';
+          // Already user-facing: mapped from the RPC's error_code by
+          // CoupleSession.joinWithCode (pairingFailureMessage).
+          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
           _isLinking = false;
         });
       }
@@ -199,7 +202,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Enter the 6-character connection code sent by your partner to link immediately.',
+                'Enter the 8-character connection code sent by your partner to link immediately.',
                 style: AppTypography.body(
                   fontSize: 13,
                   color: theme.textColor.withValues(alpha: 0.6),
@@ -212,7 +215,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      maxLength: 6,
+                      maxLength: 8,
                       textCapitalization: TextCapitalization.characters,
                       style: AppTypography.bodyMono(
                         fontSize: 18,
@@ -221,7 +224,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                       ).copyWith(letterSpacing: 2),
                       decoration: InputDecoration(
                         counterText: '',
-                        hintText: 'CODE12',
+                        hintText: 'CODE1234',
                         hintStyle: AppTypography.bodyMono(
                           fontSize: 18,
                           color: theme.textColor.withValues(alpha: 0.25),

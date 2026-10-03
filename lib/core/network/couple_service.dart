@@ -34,7 +34,9 @@ class CoupleService {
     return Map<String, dynamic>.from(response);
   }
 
-  /// Attempts to join a workspace using a 6-digit invitation code via Database RPC.
+  /// Attempts to join a workspace using an 8-character invitation code via
+  /// Database RPC. Failures come back as `{success: false, error_code}` rather
+  /// than an exception (see 20261003000200_harden_pairing.sql).
   ///
   /// [publicKey] -- see [createRelationshipWorkspace].
   Future<Map<String, dynamic>> joinWithCode(

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
@@ -239,24 +240,17 @@ class LoveChatController extends Notifier<LoveChatState>
           'created_at': DateTime.now().toUtc().toIso8601String(),
         });
 
-        try {
-          await Supabase.instance.client.functions.invoke(
-            'send-push-notification',
-            body: {
-              'sender_id': sessionUserId,
-              'title': 'New Love Note 💖',
-              'body': content.length > 50
-                  ? '${content.substring(0, 47)}...'
-                  : content,
-            },
-          );
-        } catch (fcmError) {
-          // The message itself is stored; only the partner's push failed.
-          // Genuinely non-fatal, so it stays swallowed.
-          debugPrint(
-            'LoveChatController: Failed to trigger push notification: $fcmError',
-          );
-        }
+        // Through the canonical pathway with feature 'chat', so the partner's
+        // chat_enabled preference applies and a tap opens the chat (audit
+        // F-19). The body deliberately carries no message text: it is shown
+        // on the lock screen and transits Google's push servers. The message
+        // itself is stored above; a failed push is non-fatal and is swallowed
+        // inside sendPartnerNotification.
+        await NotificationService().sendPartnerNotification(
+          title: 'New Love Note 💖',
+          body: 'Your partner sent you a message.',
+          feature: 'chat',
+        );
       } catch (e) {
         // Rethrown rather than swallowed: the local optimistic write above has
         // already happened and is persisted, so the caller's UI stays correct,

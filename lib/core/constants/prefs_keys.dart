@@ -35,10 +35,10 @@ class PrefsKeys {
   /// `computeSessionStage` saw a null userId on a warm launch and could
   /// route a returning user to the welcome screen until auth caught up.
   ///
-  /// Cleared explicitly on the auth listener's signed-out branch:
-  /// `logout()` wipes all prefs, but a server-side revocation or an
-  /// expired refresh token does not, and a stale id here would leave the
-  /// app believing it is signed in.
+  /// Cleared, with all other account data, by SessionDataWiper on every
+  /// identity exit (logout, the auth listener's signed-out branch, an
+  /// account switch); a stale id here would leave the app believing it is
+  /// signed in.
   static const String userId = 'user_id';
   static const String coupleId = 'couple_id';
   static const String partnerId = 'partner_id';
@@ -96,6 +96,11 @@ class PrefsKeys {
   //      file's own "centralized incrementally" scope note above) ----
   static const String timelineIsAscending = 'timeline_is_ascending';
 
+  /// Theme and music settings (LocalPersistenceService). Device chrome, not
+  /// account data: one of the few keys SessionDataWiper keeps across an
+  /// identity change.
+  static const String appSettings = 'app_settings';
+
   /// All 42 keys, for verification (e.g. the Phase 0 exit-criteria test
   /// asserting `PrefsKeys.all.length == 42`). Was 43 before the Secret
   /// Vault's `vaultPinFallback` was removed with that feature.
@@ -143,5 +148,6 @@ class PrefsKeys {
     yourSignature,
     partnerSignature,
     timelineIsAscending,
+    appSettings,
   ];
 }

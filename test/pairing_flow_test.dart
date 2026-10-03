@@ -227,6 +227,89 @@ void main() {
     );
   });
 
+  group('8-character pairing codes (20261003000200_harden_pairing)', () {
+    test('isPlausiblePairingCode accepts 8 (and transitional 6) chars', () {
+      expect(isPlausiblePairingCode('AB12CD34'), isTrue);
+      expect(isPlausiblePairingCode('ABC123'), isTrue);
+      expect(isPlausiblePairingCode('ABC12'), isFalse);
+      expect(isPlausiblePairingCode('ABCD12345'), isFalse);
+      expect(isPlausiblePairingCode('AB12-D34'), isFalse);
+      expect(isPlausiblePairingCode(''), isFalse);
+    });
+
+    test(
+      'joinWithCode lets an 8-character code through the client gate',
+      () async {
+        final session = CoupleSession(
+          coupleService: FakeCoupleService(),
+          keyManagementService: fakeKeyManagementService,
+        );
+        await Future.delayed(Duration.zero);
+
+        // coupleCode is recorded only after the format gate passes, so it is
+        // the observable proof the code was accepted (the RPC itself is
+        // unreachable offline -- see this file's scope note).
+        await session.joinWithCode(' ab12cd34 ');
+        expect(session.coupleCode, 'AB12CD34');
+      },
+    );
+
+    test('a too-short code still never reaches the session', () async {
+      final session = CoupleSession(
+        coupleService: FakeCoupleService(),
+        keyManagementService: fakeKeyManagementService,
+      );
+      await Future.delayed(Duration.zero);
+
+      expect(await session.joinWithCode('AB12C'), false);
+      expect(session.coupleCode, isNull);
+    });
+  });
+
+  group('pairingFailureMessage maps the RPC error_code', () {
+    test('every stable code gets its own user-facing message', () {
+      final messages = {
+        for (final code in [
+          'INVALID_CODE',
+          'CODE_EXPIRED',
+          'ALREADY_PAIRED',
+          'INVALID_SESSION',
+          'RATE_LIMITED',
+        ])
+          code: pairingFailureMessage({'success': false, 'error_code': code}),
+      };
+      expect(messages.values.toSet(), hasLength(5));
+      expect(messages['INVALID_CODE'], contains('couldn\'t find'));
+      expect(messages['CODE_EXPIRED'], contains('expired'));
+      expect(messages['ALREADY_PAIRED'], contains('already connected'));
+      expect(messages['INVALID_SESSION'], contains('sign in again'));
+    });
+
+    test('RATE_LIMITED reports the remaining lockout in minutes', () {
+      final now = DateTime.utc(2026, 10, 3, 12);
+      final message = pairingFailureMessage({
+        'success': false,
+        'error_code': 'RATE_LIMITED',
+        'retry_after': now
+            .add(const Duration(minutes: 4, seconds: 10))
+            .toIso8601String(),
+      }, now: now);
+      expect(message, 'Too many attempts. Please try again in 5 minutes.');
+    });
+
+    test(
+      'ignores the server\'s free-text "error" field (no raw DB text in the UI)',
+      () {
+        final message = pairingFailureMessage({
+          'success': false,
+          'error_code': 'SOMETHING_NEW',
+          'error': 'P0001: internal detail',
+        });
+        expect(message, 'Pairing failed. Please try again.');
+      },
+    );
+  });
+
   group('CoupleSession.recoverRelationship', () {
     test('keeps invalid codes as a normal failed result', () async {
       final fake = FakeCoupleService()

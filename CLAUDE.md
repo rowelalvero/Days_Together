@@ -18,6 +18,8 @@ flutter test test/some_test.dart   # run a single test file
 flutter test test/architecture_test.dart   # the architectural guardrails (see below)
 flutter analyze                    # static analysis (flutter_lints via analysis_options.yaml)
 dart format lib/ test/             # both are formatted; keep them that way
+supabase start && supabase db reset   # local Postgres with every migration applied
+supabase test db                   # pgTAP security suite (supabase/tests/) -- see docs/security/security-invariants.md
 flutter build appbundle            # Android release build
 flutter build ipa                  # iOS release build
 ```

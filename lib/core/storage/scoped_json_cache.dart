@@ -10,11 +10,11 @@ import 'package:days_together/core/constants/prefs_keys.dart';
 /// try/catch-and-log. This owns that, plus the one thing they all got wrong.
 ///
 /// **Keyed per user.** Every cache key used to be a bare device-wide constant
-/// (`'calendar_events'`, `'love_chat_messages'`, ...). Explicit logout is not
-/// the hole -- `CoupleSession.logout()` calls `prefs.clear()` on both its
-/// branches -- but a session can also end through the auth listener's
-/// signed-out branch (a server-side revocation, an expired refresh token, an
-/// account switch). A second account signing in on that device would then
+/// (`'calendar_events'`, `'love_chat_messages'`, ...). Every identity exit now
+/// runs SessionDataWiper (logout, the auth listener's signed-out branch, an
+/// account switch), but this stays as defense in depth: before that, the
+/// signed-out branch (a server-side revocation, an expired refresh token)
+/// cleared nothing, and a second account signing in on that device would then
 /// load the previous account's cached bucket list, calendar, chat messages and
 /// note-its until the network sync replaced them. Scoping the key to the user
 /// makes that impossible regardless of which teardown path ran, instead of

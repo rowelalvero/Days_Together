@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
 import 'package:days_together/core/storage/scoped_json_cache.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/shared/models/app_settings.dart';
@@ -25,7 +26,7 @@ class LocalPersistenceService {
   /// Deliberately NOT scoped. This is the theme and music preference -- device
   /// chrome, not couple data -- and scoping it would reset a returning user's
   /// theme for no privacy gain.
-  static const String _settingsKey = 'app_settings';
+  static const String _settingsKey = PrefsKeys.appSettings;
 
   Future<void> saveTimelineItems(List<TimelineItemData> items) async {
     final jsonList = items.map((item) => item.toJson()).toList();

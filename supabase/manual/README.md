@@ -53,9 +53,14 @@ stored public URLs down to bare paths. Old clients break here; new clients are
 unaffected either way. Take the snapshot the script creates, and keep it until
 step 5 is verified.
 
-**Step 5 — flip the buckets private** (`02_make_buckets_private.sql`). This is
-the step that actually closes SEC-1. Run the verification block at the bottom of
-that file immediately afterwards.
+**Step 5 — flip the buckets private.** Now done by the regular migration
+`20261003000000_enforce_private_storage_buckets.sql`, so every environment
+(including `supabase db reset`) comes up private and the state no longer
+depends on this manual script. The migration refuses to run if the read
+policies signing depends on are missing. `02_make_buckets_private.sql` is kept
+for its verification queries. Since the signed-URL client resolves legacy
+public URLs itself, step 4 is a tidy-up rather than a prerequisite. See
+`docs/security/manual-actions.md` §3 for the remote verification.
 
 ---
 

@@ -15,11 +15,18 @@ class JoinCoupleCodeScreen extends ConsumerStatefulWidget {
 }
 
 class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
+  /// Server-issued pairing codes are 8 characters
+  /// (20261003000200_harden_pairing.sql).
+  static const int _codeLength = 8;
+
   final List<TextEditingController> _controllers = List.generate(
-    6,
+    _codeLength,
     (_) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(
+    _codeLength,
+    (_) => FocusNode(),
+  );
   String? _errorMessage;
   bool _isValidating = false;
 
@@ -73,68 +80,80 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Enter the 6-character connection code sent by your partner.',
+                    'Enter the $_codeLength-character connection code sent by your partner.',
                     style: AppTypography.spectral(
                       fontSize: 16,
                       color: theme.textColor.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 60),
-                  // 6-digit input
+                  // One box per character. Expanded (not a fixed width) so
+                  // eight boxes still fit a narrow phone.
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(6, (index) {
-                      return SizedBox(
-                        width: 48,
-                        height: 60,
-                        child: TextField(
-                          controller: _controllers[index],
-                          focusNode: _focusNodes[index],
-                          textAlign: TextAlign.center,
-                          maxLength: 1,
-                          textCapitalization: TextCapitalization.characters,
-                          style: AppTypography.body(
-                            color: theme.textColor,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                    children: List.generate(_codeLength, (index) {
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: SizedBox(
+                            height: 60,
+                            child: TextField(
+                              controller: _controllers[index],
+                              focusNode: _focusNodes[index],
+                              textAlign: TextAlign.center,
+                              maxLength: 1,
+                              textCapitalization: TextCapitalization.characters,
+                              style: AppTypography.body(
+                                color: theme.textColor,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                filled: true,
+                                fillColor: theme.textColor.withValues(
+                                  alpha: 0.05,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: _errorMessage != null
+                                        ? theme.accentColor
+                                        : theme.textColor.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: _errorMessage != null
+                                        ? theme.accentColor
+                                        : theme.textColor.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: theme.accentColor,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                setState(() => _errorMessage = null);
+                                if (value.isNotEmpty &&
+                                    index < _codeLength - 1) {
+                                  _focusNodes[index + 1].requestFocus();
+                                }
+                                if (_fullCode.length == _codeLength &&
+                                    !_isValidating) {
+                                  _validateCode();
+                                }
+                              },
+                            ),
                           ),
-                          decoration: InputDecoration(
-                            counterText: '',
-                            filled: true,
-                            fillColor: theme.textColor.withValues(alpha: 0.05),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: _errorMessage != null
-                                    ? theme.accentColor
-                                    : theme.textColor.withValues(alpha: 0.15),
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: _errorMessage != null
-                                    ? theme.accentColor
-                                    : theme.textColor.withValues(alpha: 0.15),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: theme.accentColor,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() => _errorMessage = null);
-                            if (value.isNotEmpty && index < 5) {
-                              _focusNodes[index + 1].requestFocus();
-                            }
-                            if (_fullCode.length == 6 && !_isValidating) {
-                              _validateCode();
-                            }
-                          },
                         ),
                       );
                     }),
@@ -154,7 +173,8 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
                     width: double.infinity,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed: _fullCode.length == 6 && !_isValidating
+                      onPressed:
+                          _fullCode.length == _codeLength && !_isValidating
                           ? _validateCode
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -218,8 +238,9 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage =
-              'Connection error: ${e.toString().replaceAll('Exception: ', '')}';
+          // CoupleSession.joinWithCode throws an already user-facing message
+          // mapped from the RPC's error_code (pairingFailureMessage).
+          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
           _isValidating = false;
         });
       }
