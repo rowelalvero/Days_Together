@@ -11,8 +11,8 @@ import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/network/auth_service.dart';
 import 'package:days_together/core/network/couple_service.dart';
 import 'package:days_together/core/network/profile_service.dart';
+import 'package:days_together/core/network/realtime_subscription_manager.dart';
 import 'package:days_together/core/activity/recent_activity_service.dart';
-import 'package:days_together/core/session/relationship_lifecycle_manager.dart';
 import 'package:days_together/core/session/session_data_wiper.dart';
 import 'package:days_together/core/session/couple_key_exchange.dart';
 import 'package:days_together/core/security/key_management_service.dart';
@@ -308,6 +308,39 @@ class CoupleSession extends ChangeNotifier {
   bool _isCreator = false;
   bool get isCreator => _isCreator;
 
+  /// The server presented a partner public key that differs from the one
+  /// this device pinned (re-audit R-03 / audit F-14). While set, the couple
+  /// photo key is neither sent to nor accepted from the partner; the user
+  /// must compare safety numbers and call [acceptPartnerKeyChange].
+  bool _partnerKeyChanged = false;
+  bool get partnerKeyChanged => _partnerKeyChanged;
+
+  /// The safety number for this device's key and the partner's CURRENT
+  /// server-side key (so, during a pending key change, the new one -- the
+  /// one the user is being asked to verify). Null when there is no partner
+  /// or the partner has not posted a key yet.
+  Future<String?> loadSafetyNumber() async {
+    final userId = _userId;
+    final partnerId = _partnerId;
+    if (userId == null || partnerId == null) return null;
+    final partnerKey = await _keyExchange.currentPartnerPublicKey(partnerId);
+    if (partnerKey == null) return null;
+    final ownKey = await _keyManagementService.getOrCreatePublicKeyBase64(
+      userId,
+    );
+    return KeyManagementService.safetyNumber(ownKey, partnerKey);
+  }
+
+  /// The user verified the partner's new key: pin it and resume the photo
+  /// key exchange it held up.
+  Future<void> acceptPartnerKeyChange() async {
+    final partnerId = _partnerId;
+    if (partnerId == null) return;
+    await _keyExchange.acceptPartnerKey(partnerId);
+    _partnerKeyChanged = false;
+    notifyListeners();
+  }
+
   bool get isPartnerOnline => _presence.isPartnerOnline;
   DateTime? get yourJoinDate => _yourJoinDate;
   DateTime? get partnerJoinDate => _partnerJoinDate;
@@ -357,6 +390,10 @@ class CoupleSession extends ChangeNotifier {
       identity: () =>
           (userId: _userId, partnerId: _partnerId, coupleId: _coupleId),
       keyManagementService: _keyManagementService,
+      onPartnerKeyChanged: (_) {
+        _partnerKeyChanged = true;
+        notifyListeners();
+      },
     );
     _presence = PartnerPresence(onChanged: notifyListeners);
     _loadLocalData().then((_) {
@@ -512,6 +549,9 @@ class CoupleSession extends ChangeNotifier {
         'CoupleSession: removeAllChannels() during auth change failed: $e',
       );
     }
+    // Every shared feature stream just lost its channel. End them all so
+    // each controller re-subscribes on a live one (audit F-16).
+    RealtimeSubscriptionManager.instance.reset();
 
     _cancelActiveSubscriptions();
     _userSub?.cancel();
@@ -593,6 +633,7 @@ class CoupleSession extends ChangeNotifier {
     _onboardingCompleted = false;
     _isPremium = false;
     _showPartnerDeletedNotice = false;
+    _partnerKeyChanged = false;
     _storyTitle = null;
     _yourActivity = null;
     _partnerActivity = null;
@@ -1486,11 +1527,6 @@ class CoupleSession extends ChangeNotifier {
         await prefs.setBool(PrefsKeys.isPaired, true);
         await prefs.setBool(PrefsKeys.onboardingCompleted, false);
 
-        await RelationshipLifecycleManager.instance.handlePair(
-          _coupleId!,
-          _userId!,
-        );
-
         try {
           await NotificationService().sendPartnerNotification(
             title: 'Connected! 💞',
@@ -1615,10 +1651,6 @@ class CoupleSession extends ChangeNotifier {
 
         // Triggers active sync streams
         _initSupabaseSync();
-        await RelationshipLifecycleManager.instance.handleRepair(
-          _coupleId!,
-          _userId!,
-        );
         return true;
       }
       return false;
@@ -1669,7 +1701,6 @@ class CoupleSession extends ChangeNotifier {
       _isCreator = false;
       _isPremium = false;
       _cancelActiveSubscriptions();
-      await RelationshipLifecycleManager.instance.handleDisconnect();
       _presence.disconnect();
 
       // Partner PII, relationship dates, feature caches, the activity log and
@@ -1701,6 +1732,7 @@ class CoupleSession extends ChangeNotifier {
         await _keyManagementService.clearCoupleKey(_userId!);
       }
       _keyExchange.clearCachedExchangeState();
+      _partnerKeyChanged = false;
 
       await prefs.remove(PrefsKeys.partnerId);
       _coupleId = null;
@@ -1822,8 +1854,6 @@ class CoupleSession extends ChangeNotifier {
     await _dataWiper.wipeAccountData();
     // LicenseController's cached state is invalidated by main.dart's
     // _CoupleSessionBridge when the identity clears.
-
-    await RelationshipLifecycleManager.instance.handleLogout();
 
     _userSub?.cancel();
     _userSub = null;

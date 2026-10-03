@@ -10,10 +10,11 @@ plugins {
 }
 
 // Release signing credentials live in android/key.properties, which is
-// gitignored and must never be committed. When the file is absent (CI, a fresh
-// clone, a machine without the upload keystore) the release build falls back to
-// debug signing so `flutter run --release` still works -- such a build is NOT
-// publishable to the Play Store.
+// gitignored and must never be committed. Without it a release build (apk or
+// app bundle) FAILS rather than silently signing with the debug key (audit
+// F-23): a debug-signed release is not publishable and is easy to ship by
+// mistake. To build one deliberately for local testing:
+//   ALLOW_DEBUG_SIGNED_RELEASE=true flutter run --release
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
@@ -23,11 +24,26 @@ val keystoreProperties = Properties().apply {
 val hasReleaseKeystore = keystorePropertiesFile.exists() &&
     keystoreProperties.getProperty("storeFile") != null
 
-if (!hasReleaseKeystore) {
+val allowDebugSignedRelease = System.getenv("ALLOW_DEBUG_SIGNED_RELEASE") == "true"
+
+if (!hasReleaseKeystore && allowDebugSignedRelease) {
     logger.warn(
-        "WARNING: android/key.properties not found -- release builds will be signed " +
-            "with the DEBUG keystore and CANNOT be uploaded to the Play Store."
+        "WARNING: android/key.properties not found -- ALLOW_DEBUG_SIGNED_RELEASE is set, so " +
+            "release builds are signed with the DEBUG keystore and CANNOT be uploaded to the Play Store."
     )
+}
+
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any {
+        it.name == "assembleRelease" || it.name == "bundleRelease"
+    }
+    if (buildsRelease && !hasReleaseKeystore && !allowDebugSignedRelease) {
+        throw GradleException(
+            "Release signing is not configured: android/key.properties is missing. " +
+                "Add it to build a publishable release, or set " +
+                "ALLOW_DEBUG_SIGNED_RELEASE=true for a local-only debug-signed build."
+        )
+    }
 }
 
 android {
@@ -70,10 +86,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasReleaseKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            signingConfig = when {
+                hasReleaseKeystore -> signingConfigs.getByName("release")
+                allowDebugSignedRelease -> signingConfigs.getByName("debug")
+                else -> null // the taskGraph guard above stops the build first
             }
         }
     }

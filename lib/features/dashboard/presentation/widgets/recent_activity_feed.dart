@@ -13,7 +13,6 @@ import 'package:days_together/features/dashboard/recent_activity_controller.dart
 import 'package:days_together/shared/models/local_activity_model.dart';
 import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/calendar/calendar_controller.dart';
-import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/love_studio/time_capsule_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
@@ -127,14 +126,13 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
         break;
       case 'timeline':
         if (referenceId != null && activity.activityType != 'deleted') {
-          final timelineState = ref.read(timelineControllerProvider);
-          exists = timelineState.items.any((i) => i.id == referenceId);
-        }
-        if (exists) {
-          LoveStoryScreen.of(context)?.setIndex(1); // Story/Timeline Tab
+          // The memory route loads it if it is outside the timeline's page
+          // window, and says so if it has since been deleted.
+          context.push(Routes.memory(referenceId));
           return;
         }
-        break;
+        LoveStoryScreen.of(context)?.setIndex(1); // Story/Timeline Tab
+        return;
       case 'time_capsule':
         if (referenceId != null && activity.activityType != 'deleted') {
           final capsuleState = ref.read(timeCapsuleControllerProvider);
@@ -146,7 +144,11 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
       case 'doodle_notes':
         if (referenceId != null && activity.activityType != 'deleted') {
           final noteitState = ref.read(noteitControllerProvider);
-          exists = noteitState.visibleNotes.any((n) => n.id == referenceId);
+          // Only the newest page of notes is loaded; an older one can't be
+          // ruled out, so only a fully loaded scrapbook can say it's gone.
+          exists =
+              noteitState.noteById(referenceId) != null ||
+              noteitState.paging.hasMore;
         }
         targetRoute = Routes.notes;
         break;

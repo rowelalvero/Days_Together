@@ -11,7 +11,7 @@
 ///
 /// Deliberately lists only the tables Dart actually reads or writes. The
 /// rate-limiting and bookkeeping tables (`failed_pairing_attempts`,
-/// `failed_recovery_attempts`, `user_recovery_attempts`,
+/// `pairing_attempt_failures`, `user_recovery_attempts`,
 /// `storage_cleanup_queue`) are touched exclusively by SQL functions and
 /// triggers, so a constant for them would be dead weight.
 ///

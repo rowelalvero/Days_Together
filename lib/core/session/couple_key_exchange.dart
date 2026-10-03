@@ -32,14 +32,110 @@ typedef CoupleKeyExchangeIdentity = ({
 /// accessor instead, which is also what makes it unit-testable without a
 /// live session.
 class CoupleKeyExchange {
+  /// [loadPartnerPublicKey] and [storeWrappedKey] default to the real
+  /// Supabase read/RPC; they are injectable so the partner-key trust rules
+  /// can be unit-tested (test/couple_key_exchange_test.dart).
+  /// [onPartnerKeyChanged] fires when the server presents a partner key that
+  /// differs from the pinned one -- see [KeyManagementService.checkPartnerKey].
   CoupleKeyExchange({
     required CoupleKeyExchangeIdentity Function() identity,
     KeyManagementService? keyManagementService,
+    Future<String?> Function(String partnerId)? loadPartnerPublicKey,
+    Future<void> Function(String partnerId, String wrappedKey)? storeWrappedKey,
+    void Function(String partnerId)? onPartnerKeyChanged,
   }) : _identity = identity,
-       _keys = keyManagementService ?? KeyManagementService.instance;
+       _keys = keyManagementService ?? KeyManagementService.instance,
+       _loadPartnerPublicKey = loadPartnerPublicKey ?? _loadFromSupabase,
+       _storeWrappedKey = storeWrappedKey ?? _storeViaRpc,
+       _onPartnerKeyChanged = onPartnerKeyChanged;
 
   final CoupleKeyExchangeIdentity Function() _identity;
   final KeyManagementService _keys;
+  final Future<String?> Function(String partnerId) _loadPartnerPublicKey;
+  final Future<void> Function(String partnerId, String wrappedKey)
+  _storeWrappedKey;
+  final void Function(String partnerId)? _onPartnerKeyChanged;
+
+  static Future<String?> _loadFromSupabase(String partnerId) async {
+    final partnerData = await Supabase.instance.client
+        .from(Tables.users)
+        .select('public_key')
+        .eq('id', partnerId)
+        .maybeSingle();
+    final key = partnerData?['public_key'] as String?;
+    return (key == null || key.isEmpty) ? null : key;
+  }
+
+  static Future<void> _storeViaRpc(String partnerId, String wrappedKey) =>
+      Supabase.instance.client.rpc(
+        'store_wrapped_key',
+        params: {'p_recipient_id': partnerId, 'p_wrapped_key': wrappedKey},
+      );
+
+  /// The partner whose key changed and awaits the user's confirmation, if any.
+  String? _partnerKeyChangedFor;
+  String? get partnerKeyChangedFor => _partnerKeyChangedFor;
+
+  /// The last wrapped key seen for the current couple, kept so it can be
+  /// applied once the user accepts a changed partner key.
+  ({String userId, String coupleId, String wrappedKey})? _lastSeenWrapped;
+
+  /// The partner's current public key, but only if it is trusted: pinned now
+  /// (first use) or equal to the pin. A changed key is withheld and reported.
+  Future<String?> _trustedPartnerKey(
+    String userId,
+    String coupleId,
+    String partnerId,
+  ) async {
+    final key = await _loadPartnerPublicKey(partnerId);
+    if (key == null) return null;
+    final trust = await _keys.checkPartnerKey(
+      userId: userId,
+      coupleId: coupleId,
+      partnerId: partnerId,
+      publicKeyBase64: key,
+    );
+    if (trust.isTrusted) return key;
+    if (_partnerKeyChangedFor != partnerId) {
+      _partnerKeyChangedFor = partnerId;
+      _onPartnerKeyChanged?.call(partnerId);
+    }
+    return null;
+  }
+
+  /// The partner's current server-side public key, for the safety number
+  /// (including a changed key the user is being asked to verify).
+  Future<String?> currentPartnerPublicKey(String partnerId) =>
+      _loadPartnerPublicKey(partnerId);
+
+  /// The user confirmed (ideally after comparing safety numbers) that the
+  /// partner's new key is genuine: pin it and complete whatever the change
+  /// held up -- wrapping our couple key for them and/or applying a wrapped
+  /// key they sent us.
+  Future<void> acceptPartnerKey(String partnerId) async {
+    final id = _identity();
+    final userId = id.userId;
+    final coupleId = id.coupleId;
+    if (userId == null || coupleId == null || id.partnerId != partnerId) {
+      return;
+    }
+    final key = await _loadPartnerPublicKey(partnerId);
+    if (key == null) return;
+    await _keys.acceptPartnerKey(
+      userId: userId,
+      coupleId: coupleId,
+      partnerId: partnerId,
+      publicKeyBase64: key,
+    );
+    _partnerKeyChangedFor = null;
+    _lastWrappedForPartnerId = null;
+    await wrapForPartnerIfHeld(partnerId);
+    final seen = _lastSeenWrapped;
+    if (seen != null && seen.userId == userId && seen.coupleId == coupleId) {
+      _lastAppliedWrappedKey = null;
+      await _applyWrappedKey(userId, coupleId, seen.wrappedKey);
+    }
+  }
 
   /// Watches `couple_key_exchanges` for a row wrapped for this device --
   /// scoped to the authenticated user, not the couple, so it lives and dies
@@ -98,6 +194,13 @@ class CoupleKeyExchange {
 
     _pendingRows = null;
     final wrappedKeyBase64 = wrappedKeyForCouple(rows, id.coupleId!);
+    if (wrappedKeyBase64 != null) {
+      _lastSeenWrapped = (
+        userId: userId,
+        coupleId: id.coupleId!,
+        wrappedKey: wrappedKeyBase64,
+      );
+    }
     if (wrappedKeyBase64 == null ||
         (wrappedKeyBase64 == _lastAppliedWrappedKey &&
             id.coupleId == _lastAppliedCoupleId)) {
@@ -105,6 +208,14 @@ class CoupleKeyExchange {
     }
     await _applyWrappedKey(userId, id.coupleId!, wrappedKeyBase64);
   }
+
+  /// Test seam: delivers `couple_key_exchanges` rows as the stream opened by
+  /// [start] would (a plain `flutter test` cannot open that stream).
+  @visibleForTesting
+  Future<void> handleRowsForTest(
+    String userId,
+    List<Map<String, dynamic>> rows,
+  ) => _handleRows(userId, rows);
 
   @visibleForTesting
   static String? wrappedKeyForCouple(
@@ -132,13 +243,12 @@ class CoupleKeyExchange {
       return;
     }
     try {
-      final partnerData = await Supabase.instance.client
-          .from(Tables.users)
-          .select('public_key')
-          .eq('id', partnerId)
-          .maybeSingle();
-      final partnerPublicKey = partnerData?['public_key'] as String?;
-      if (partnerPublicKey == null || partnerPublicKey.isEmpty) return;
+      final partnerPublicKey = await _trustedPartnerKey(
+        userId,
+        coupleId,
+        partnerId,
+      );
+      if (partnerPublicKey == null) return;
 
       final coupleKeyBytes = await _keys.unwrapKeyFromPartner(
         userId: userId,
@@ -224,29 +334,29 @@ class CoupleKeyExchange {
   /// app launch re-observing the same partner counts) will try again.
   Future<void> wrapForPartnerIfHeld(String partnerId) async {
     if (_lastWrappedForPartnerId == partnerId) return;
-    final userId = _identity().userId;
-    if (userId == null) return;
+    final id = _identity();
+    final userId = id.userId;
+    final coupleId = id.coupleId;
+    if (userId == null || coupleId == null) return;
     try {
       final coupleKeyBytes = await _keys.loadCoupleKey(userId);
       if (coupleKeyBytes == null) return;
 
-      final partnerData = await Supabase.instance.client
-          .from(Tables.users)
-          .select('public_key')
-          .eq('id', partnerId)
-          .maybeSingle();
-      final partnerPublicKey = partnerData?['public_key'] as String?;
-      if (partnerPublicKey == null || partnerPublicKey.isEmpty) return;
+      // Only ever wrap for a TRUSTED key: a substituted public key would
+      // otherwise receive the couple key (re-audit R-03 / audit F-14).
+      final partnerPublicKey = await _trustedPartnerKey(
+        userId,
+        coupleId,
+        partnerId,
+      );
+      if (partnerPublicKey == null) return;
 
       final wrapped = await _keys.wrapKeyForPartner(
         userId: userId,
         coupleKeyBytes: coupleKeyBytes,
         partnerPublicKeyBase64: partnerPublicKey,
       );
-      await Supabase.instance.client.rpc(
-        'store_wrapped_key',
-        params: {'p_recipient_id': partnerId, 'p_wrapped_key': wrapped},
-      );
+      await _storeWrappedKey(partnerId, wrapped);
       _lastWrappedForPartnerId = partnerId;
     } catch (e) {
       debugPrint('Error wrapping couple photo key for partner: $e');
@@ -260,6 +370,8 @@ class CoupleKeyExchange {
   /// to the new partner.
   void clearCachedExchangeState() {
     _pendingRows = null;
+    _lastSeenWrapped = null;
+    _partnerKeyChangedFor = null;
     _lastAppliedWrappedKey = null;
     _lastAppliedCoupleId = null;
     _lastWrappedForPartnerId = null;

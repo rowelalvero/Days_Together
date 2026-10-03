@@ -117,6 +117,9 @@ class TopicCardsController extends Notifier<TopicCardsState>
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
     try {
       final List<dynamic> cardsRes = await Supabase.instance.client
           .from(Tables.topicCards)
@@ -151,7 +154,7 @@ class TopicCardsController extends Notifier<TopicCardsState>
         }
       }
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
       state = state.copyWith(
         customCards: parsedCards,
         likedCardIds: myLikes,

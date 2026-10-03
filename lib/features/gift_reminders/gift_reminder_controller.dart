@@ -65,6 +65,9 @@ class GiftReminderController extends Notifier<GiftReminderState>
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from(Tables.giftReminders)
@@ -80,7 +83,7 @@ class GiftReminderController extends Notifier<GiftReminderState>
         );
       }).toList();
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
       state = state.copyWith(reminders: parsed, isLoading: false);
       await _persistLocalOnly();
     } catch (e) {

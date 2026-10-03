@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8"
 import { isWithinQuietHours } from "./quiet_hours.ts"
+import { createAccessTokenCache, isStaleTokenResponse } from "./fcm.ts"
 
 const FIREBASE_SERVICE_ACCOUNT = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const firebaseCredentials = FIREBASE_SERVICE_ACCOUNT ? JSON.parse(FIREBASE_SERVICE_ACCOUNT) : null;
+// One OAuth token per worker, not one per request (audit F-20).
+const getAccessToken = createAccessTokenCache(() => fetchAccessToken(firebaseCredentials));
 
 serve(async (req) => {
   // Enable CORS
@@ -136,11 +141,11 @@ serve(async (req) => {
     const tokens = tokenRows.map((r) => r.token);
 
     // 5. Generate FCM OAuth2 Access Token
-    if (!FIREBASE_SERVICE_ACCOUNT) {
+    if (!firebaseCredentials) {
       throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_JSON secret in Supabase dashboard");
     }
-    const credentials = JSON.parse(FIREBASE_SERVICE_ACCOUNT);
-    const accessToken = await getAccessToken(credentials);
+    const credentials = firebaseCredentials;
+    const accessToken = await getAccessToken();
 
     // 6. Standardize Payload Data
     const fcmData: Record<string, string> = {
@@ -161,42 +166,66 @@ serve(async (req) => {
       }
     }
 
-    // 7. Send FCM alerts
-    const results = [];
-    for (const token of tokens) {
-      const response = await fetch(
-        `https://fcm.googleapis.com/v1/projects/${credentials.project_id}/messages:send`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: {
-              token: token,
-              notification: { title, body },
-              data: fcmData,
+    // 7. Send FCM alerts, to every device at once.
+    const outcomes = await Promise.all(tokens.map(async (token) => {
+      try {
+        const response = await fetch(
+          `https://fcm.googleapis.com/v1/projects/${credentials.project_id}/messages:send`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
             },
-          }),
-        }
-      );
-      results.push({ token, status: response.status });
+            body: JSON.stringify({
+              message: {
+                token: token,
+                notification: { title, body },
+                data: fcmData,
+              },
+            }),
+          }
+        );
+        const responseBody = response.ok ? null : await response.json().catch(() => null);
+        return { token, ok: response.ok, stale: isStaleTokenResponse(response.status, responseBody) };
+      } catch (_) {
+        return { token, ok: false, stale: false };
+      }
+    }));
+
+    // 8. Forget devices FCM says are gone (uninstalled, token rotated), so
+    //    they are not retried on every future notification.
+    const staleTokens = outcomes.filter((o) => o.stale).map((o) => o.token);
+    if (staleTokens.length > 0) {
+      const { error: pruneErr } = await supabase
+        .from('user_fcm_tokens')
+        .delete()
+        .eq('user_id', partner.id)
+        .in('token', staleTokens);
+      if (pruneErr) console.error("Failed to prune stale FCM tokens:", pruneErr.message);
     }
 
-    return new Response(JSON.stringify({ success: true, results }), {
+    // Counts only: the partner's device tokens never go back to the sender.
+    return new Response(JSON.stringify({
+      success: true,
+      sent: outcomes.filter((o) => o.ok).length,
+      failed: outcomes.filter((o) => !o.ok).length,
+      pruned: staleTokens.length,
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    // Details go to the function log, not to the caller.
+    console.error("send-push-notification failed:", error?.message ?? error);
+    return new Response(JSON.stringify({ error: "Failed to send notification" }), {
       status: 500,
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
     });
   }
 });
 
-async function getAccessToken(credentials: any): Promise<string> {
+async function fetchAccessToken(credentials: any): Promise<{ token: string; expiresInSeconds: number }> {
   const header = { alg: "RS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
   const claim = {
@@ -215,7 +244,10 @@ async function getAccessToken(credentials: any): Promise<string> {
     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
   });
   const data = await res.json();
-  return data.access_token;
+  if (!res.ok || typeof data.access_token !== "string") {
+    throw new Error(`OAuth token request failed (${res.status})`);
+  }
+  return { token: data.access_token, expiresInSeconds: Number(data.expires_in) || 3600 };
 }
 
 async function generateJWT(header: any, claim: any, privateKeyPem: string): Promise<string> {

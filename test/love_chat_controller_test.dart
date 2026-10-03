@@ -233,10 +233,10 @@ void main() {
       expect(state.messages.first.content, 'Hello love!');
     });
 
-    test('loads exactly 200 persisted messages without loss', () async {
+    test('loads exactly 100 persisted messages without loss', () async {
       final now = DateTime.now();
       final rawList = [
-        for (int i = 0; i < 200; i++)
+        for (int i = 0; i < 100; i++)
           LoveChatMessage(
             id: 'msg-$i',
             senderId: 'you',
@@ -254,15 +254,15 @@ void main() {
       await Future.delayed(Duration.zero);
 
       final state = container.read(loveChatControllerProvider);
-      expect(state.messages.length, 200);
+      expect(state.messages.length, 100);
       expect(state.messages.first.id, 'msg-0');
-      expect(state.messages.last.id, 'msg-199');
+      expect(state.messages.last.id, 'msg-99');
     });
 
-    test('clamps 201 persisted messages to 200 on load', () async {
+    test('clamps 101 persisted messages to 100 on load', () async {
       final now = DateTime.now();
       final rawList = [
-        for (int i = 0; i < 201; i++)
+        for (int i = 0; i < 101; i++)
           LoveChatMessage(
             id: 'msg-$i',
             senderId: 'you',
@@ -280,12 +280,12 @@ void main() {
       await Future.delayed(Duration.zero);
 
       final state = container.read(loveChatControllerProvider);
-      expect(state.messages.length, 200);
+      expect(state.messages.length, 100);
       expect(state.messages.first.id, 'msg-0');
-      expect(state.messages.last.id, 'msg-199');
+      expect(state.messages.last.id, 'msg-99');
     });
 
-    test('clamps 1,000 persisted messages to 200 on load', () async {
+    test('clamps 1,000 persisted messages to 100 on load', () async {
       final now = DateTime.now();
       final rawList = [
         for (int i = 0; i < 1000; i++)
@@ -306,9 +306,9 @@ void main() {
       await Future.delayed(Duration.zero);
 
       final state = container.read(loveChatControllerProvider);
-      expect(state.messages.length, 200);
+      expect(state.messages.length, 100);
       expect(state.messages.first.id, 'msg-0');
-      expect(state.messages.last.id, 'msg-199');
+      expect(state.messages.last.id, 'msg-99');
     });
 
     test('falls back safely on malformed persisted JSON', () async {
@@ -412,15 +412,15 @@ void main() {
       await Future.delayed(const Duration(milliseconds: 50));
 
       final state = container.read(loveChatControllerProvider);
-      expect(state.messages.length, 200);
+      expect(state.messages.length, 100);
 
       final prefs = await SharedPreferences.getInstance();
       final migratedDiskJson = prefs.getString(_cacheKey('love_chat_messages'));
       expect(migratedDiskJson, isNotNull);
       final migratedList = jsonDecode(migratedDiskJson!) as List;
-      expect(migratedList.length, 200);
+      expect(migratedList.length, 100);
       expect((migratedList.first as Map)['id'], 'legacy-0');
-      expect((migratedList.last as Map)['id'], 'legacy-199');
+      expect((migratedList.last as Map)['id'], 'legacy-99');
     });
   });
 }

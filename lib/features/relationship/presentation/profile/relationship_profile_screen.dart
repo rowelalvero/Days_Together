@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:days_together/features/relationship/presentation/profile/components/auth_debug_footer.dart';
 import 'package:days_together/features/relationship/presentation/profile/components/danger_zone_section.dart';
 import 'package:days_together/features/relationship/presentation/profile/components/pairing_options_section.dart';
+import 'package:days_together/features/relationship/presentation/profile/components/partner_key_security_card.dart';
 import 'package:days_together/features/relationship/presentation/profile/components/profile_app_bar.dart';
 import 'package:days_together/features/relationship/presentation/profile/components/profile_header_section.dart';
 import 'package:days_together/features/relationship/presentation/profile/components/profile_info_card.dart';
@@ -63,6 +64,10 @@ class RelationshipProfileScreen extends ConsumerWidget {
                         theme: theme,
                       ),
                       const SizedBox(height: 32),
+                      if (partnerJoined) ...[
+                        PartnerKeySecurityCard(theme: theme),
+                        const SizedBox(height: 32),
+                      ],
                       if (!partnerJoined &&
                           workspaceState.coupleCode != null) ...[
                         PairingOptionsSection(theme: theme),

@@ -58,10 +58,10 @@ class _MemoryDetailScreenState extends ConsumerState<MemoryDetailScreen> {
     final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
     final timelineProvider = ref.watch(timelineControllerProvider);
-    final currentItem = timelineProvider.items.firstWhere(
-      (i) => i.id == widget.item.id,
-      orElse: () => widget.item,
-    );
+    // itemById also covers a memory loaded outside the page window (e.g.
+    // opened from a notification), so live edits show for it too.
+    final currentItem =
+        timelineProvider.itemById(widget.item.id) ?? widget.item;
 
     return Scaffold(
       backgroundColor: Colors.transparent,

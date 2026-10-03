@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/love_studio/presentation/pages/ai_love_letter_screen.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/memory_picker.dart';
 import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
 import 'package:days_together/shared/models/timeline_model.dart';
@@ -91,7 +92,7 @@ void main() {
       await _pump(tester, items: [_memoryOne, _memoryTwo]);
 
       expect(find.text('Love Letter Writer'), findsOneWidget);
-      expect(find.byType(DropdownButton<String>), findsOneWidget);
+      expect(find.byType(MemoryPicker), findsOneWidget);
       expect(find.text('Beach Day'), findsOneWidget);
       expect(find.text('Write Love Letter'), findsOneWidget);
     });
@@ -132,18 +133,19 @@ void main() {
       expect(find.text('Copied to clipboard!'), findsOneWidget);
     });
 
-    testWidgets('selecting a different memory updates the dropdown value', (
-      tester,
-    ) async {
-      await _pump(tester, items: [_memoryOne, _memoryTwo]);
+    testWidgets(
+      'selecting a different memory in the picker sheet updates the choice',
+      (tester) async {
+        await _pump(tester, items: [_memoryOne, _memoryTwo]);
 
-      await tester.tap(find.byType(DropdownButton<String>));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byType(MemoryPicker));
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Rainy Movie Night').last);
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Rainy Movie Night').last);
+        await tester.pumpAndSettle();
 
-      expect(find.text('Rainy Movie Night'), findsOneWidget);
-    });
+        expect(find.text('Rainy Movie Night'), findsOneWidget);
+      },
+    );
   });
 }

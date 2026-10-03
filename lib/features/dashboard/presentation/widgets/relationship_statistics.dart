@@ -22,18 +22,13 @@ class RelationshipStatistics extends ConsumerWidget {
     final capsule = ref.watch(timeCapsuleControllerProvider);
     final workspace = ref.watch(workspaceControllerProvider);
 
-    final totalMemories = timeline.items.length;
+    // Whole-timeline counts: items is only the loaded page window.
+    final totalMemories = timeline.memoryCount;
     final bucketStats = '${bucket.completedItems}/${bucket.totalItems}';
-    final totalNotes = noteit.visibleNotes.length;
+    final totalNotes = noteit.noteCount; // whole scrapbook, not the page
     // Sourced from timeline photo memories since the Secret Vault was
     // removed; it was previously the vault's item count.
-    final totalPhotos = timeline.items
-        .where(
-          (i) =>
-              (i.imagePath != null && i.imagePath!.isNotEmpty) ||
-              (i.networkImageUrl != null && i.networkImageUrl!.isNotEmpty),
-        )
-        .length;
+    final totalPhotos = timeline.photoMemoryCount;
     final totalCapsules = capsule.capsules.length;
 
     // Calculate timeline years from start date

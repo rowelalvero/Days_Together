@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:days_together/core/models/paging_status.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
+import 'package:days_together/core/network/row_change.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/chat/love_chat_state.dart';
@@ -72,10 +74,23 @@ List<LoveChatMessage> _sortedNewestFirst(Iterable<LoveChatMessage> messages) {
   return [for (final entry in indexed) entry.$2];
 }
 
+/// Paged: when paired, the newest [maxLocalMessages] load first and older
+/// history loads [olderPageSize] at a time as the user scrolls up
+/// ([loadOlder]). The on-disk cache (and the unpaired, local-only list) keep
+/// only the newest [maxLocalMessages].
 class LoveChatController extends Notifier<LoveChatState>
     with SupabaseLifecycleNotifier<LoveChatState> {
   static const ScopedJsonCache _cache = ScopedJsonCache('love_chat_messages');
-  static const int maxLocalMessages = 200;
+  static const int maxLocalMessages = 100;
+  static const int olderPageSize = 50;
+  static const int _maxResyncWindow = 500;
+
+  /// Keyset position (created_at, id) of the oldest message paged in from
+  /// the server; live inserts don't move it.
+  ChatCursor? _cursor;
+  int _pagedCount = 0;
+  bool _loadingOlder = false;
+  Future<void> _localLoad = Future.value();
 
   @override
   String get tableName => Tables.loveNotes;
@@ -87,8 +102,10 @@ class LoveChatController extends Notifier<LoveChatState>
     // subscription during a brief background/tab-switch would visibly drop
     // incoming messages during the gap.
     ref.keepAlive();
+    // The sync waits for the cache, so the (older) cache can never land on
+    // top of the fresh page.
+    _localLoad = _loadFromCache();
     initSessionLifecycle();
-    _loadFromCache();
     return const LoveChatState();
   }
 
@@ -147,34 +164,162 @@ class LoveChatController extends Notifier<LoveChatState>
     ];
   }
 
+  /// Unpaired, the list is local-only and capped. Paired, nothing is
+  /// dropped from memory: older pages the user scrolled in stay, and the
+  /// cache is bounded separately (see [_persistLocalOnly]).
+  List<LoveChatMessage> _bounded(List<LoveChatMessage> newestFirst) =>
+      coupleId == null
+      ? newestFirst.take(maxLocalMessages).toList()
+      : newestFirst;
+
   @override
   Future<void> purgeCache() async {
-    state = state.copyWith(messages: [], isLoading: false);
+    _cursor = null;
+    _pagedCount = 0;
+    state = state.copyWith(
+      messages: [],
+      isLoading: false,
+      paging: const PagingStatus(),
+    );
     await _cache.clearAll();
+  }
+
+  /// Chat messages newest first, strictly older than [before] in
+  /// (created_at, id) order. Static so the e2e test runs this exact query
+  /// against a real server.
+  static Future<List<Map<String, dynamic>>> queryPage(
+    SupabaseClient client, {
+    required String coupleId,
+    ChatCursor? before,
+    required int limit,
+  }) async {
+    var query = client
+        .from(Tables.loveNotes)
+        .select()
+        .eq('couple_id', coupleId)
+        .eq('type', 'chat');
+    if (before != null) {
+      final at = before.createdAt.toUtc().toIso8601String();
+      query = query.or(
+        'created_at.lt."$at",and(created_at.eq."$at",id.lt.${before.id})',
+      );
+    }
+    return await query
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .limit(limit);
+  }
+
+  /// Overridden in tests.
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchPage({
+    ChatCursor? before,
+    required int limit,
+  }) => queryPage(
+    Supabase.instance.client,
+    coupleId: coupleId!,
+    before: before,
+    limit: limit,
+  );
+
+  /// The server's own last row, not the client's sort: the client orders
+  /// ties by arrival, the server by id.
+  static ChatCursor? _cursorAfter(List<dynamic> rows) {
+    if (rows.isEmpty) return null;
+    final last = rows.last as Map<String, dynamic>;
+    return (
+      createdAt: DateTime.parse(last['created_at'] as String),
+      id: last['id'] as String,
+    );
+  }
+
+  /// Loads the next page of older messages; one request at a time, nothing
+  /// once the beginning of the conversation is reached.
+  Future<void> loadOlder() async {
+    final cursor = _cursor;
+    if (coupleId == null ||
+        !state.paging.hasMore ||
+        _loadingOlder ||
+        cursor == null) {
+      return;
+    }
+    _loadingOlder = true;
+    final generation = sessionGeneration;
+    state = state.copyWith(
+      paging: state.paging.copyWith(isLoadingMore: true, loadMoreFailed: false),
+    );
+    try {
+      final res = await fetchPage(before: cursor, limit: olderPageSize);
+      if (isStale(generation)) return;
+      _cursor = _cursorAfter(res) ?? cursor;
+      _pagedCount += res.length;
+      final known = {for (final m in state.messages) m.id};
+      final older = res
+          .map((data) => _parseMessage(data))
+          .where((m) => !known.contains(m.id));
+      state = state.copyWith(
+        messages: _sortedNewestFirst([...state.messages, ...older]),
+        paging: PagingStatus(hasMore: res.length == olderPageSize),
+      );
+    } catch (e) {
+      debugPrint('LoveChatController.loadOlder error: $e');
+      if (ref.mounted && !isStale(generation)) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(loadMoreFailed: true),
+        );
+      }
+    } finally {
+      _loadingOlder = false;
+      if (ref.mounted && state.paging.isLoadingMore) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(isLoadingMore: false),
+        );
+      }
+    }
+  }
+
+  /// The history footer's "Try again".
+  Future<void> retryLoad() async {
+    if (_cursor == null) {
+      _pagedCount = 0;
+      await syncInitialData();
+      return;
+    }
+    await loadOlder();
   }
 
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
+    await _localLoad;
+    if (isStale(generation) || !ref.mounted) return;
+    // A re-sync (reconnect) reloads the history already scrolled through.
+    final limit = _pagedCount.clamp(maxLocalMessages, _maxResyncWindow);
     try {
-      final List<dynamic> res = await Supabase.instance.client
-          .from(Tables.loveNotes)
-          .select()
-          .eq('couple_id', coupleId!)
-          .eq('type', 'chat')
-          .order('created_at', ascending: false)
-          .limit(maxLocalMessages);
+      final res = await fetchPage(limit: limit);
 
       final parsed = _sortedNewestFirst(res.map((data) => _parseMessage(data)));
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
+      _cursor = _cursorAfter(res);
+      _pagedCount = res.length;
       state = state.copyWith(
-        messages: parsed.take(maxLocalMessages).toList(),
+        messages: parsed,
         isLoading: false,
+        paging: PagingStatus(hasMore: res.length == limit),
       );
       await _persistLocalOnly();
     } catch (e) {
       debugPrint('LoveChatController.syncInitialData error: $e');
+      if (isStale(generation) || !ref.mounted) return;
+      _cursor = null;
+      state = state.copyWith(
+        isLoading: false,
+        paging: const PagingStatus(hasMore: true, loadMoreFailed: true),
+      );
     }
   }
 
@@ -193,19 +338,34 @@ class LoveChatController extends Notifier<LoveChatState>
     );
   }
 
+  /// Row changes, not the full love_notes table (audit F-18): `.stream()`
+  /// re-fetched every chat line AND every doodle's strokes on each launch and
+  /// reconnect, then re-emitted the whole list per message.
   @override
-  void onRealtimeData(List<Map<String, dynamic>> dataList) {
-    if (!ref.mounted) return;
-    final parsed = _sortedNewestFirst(
-      dataList
-          .where((data) => data['type'] == 'chat')
-          .map((data) => _parseMessage(data)),
-    );
+  bool get usesRowChanges => true;
 
-    state = state.copyWith(
-      messages: parsed.take(maxLocalMessages).toList(),
-      isLoading: false,
-    );
+  @override
+  void onRowChange(RowChange change) {
+    if (!ref.mounted) return;
+    final id = change.id;
+    if (id == null) return;
+    final others = state.messages.where((m) => m.id != id).toList();
+    final isChat =
+        change.type != RowChangeType.delete &&
+        change.newRecord['type'] == 'chat';
+
+    if (!isChat) {
+      // A delete, or a row that is not (or no longer) a chat message.
+      if (others.length == state.messages.length) return;
+      state = state.copyWith(messages: others, isLoading: false);
+    } else {
+      state = state.copyWith(
+        messages: _bounded(
+          _sortedNewestFirst([_parseMessage(change.newRecord), ...others]),
+        ),
+        isLoading: false,
+      );
+    }
     _persistLocalOnly();
   }
 
@@ -222,10 +382,9 @@ class LoveChatController extends Notifier<LoveChatState>
       content: content,
     );
 
-    final messages = _sortedNewestFirst([
-      newMessage,
-      ...state.messages,
-    ]).take(maxLocalMessages).toList();
+    final messages = _bounded(
+      _sortedNewestFirst([newMessage, ...state.messages]),
+    );
     state = state.copyWith(messages: messages);
     await _persist();
 
@@ -295,6 +454,9 @@ class LoveChatController extends Notifier<LoveChatState>
     }
   }
 }
+
+/// Keyset position in the chat's (created_at, id) newest-first order.
+typedef ChatCursor = ({DateTime createdAt, String id});
 
 final loveChatControllerProvider =
     NotifierProvider.autoDispose<LoveChatController, LoveChatState>(

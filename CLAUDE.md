@@ -20,6 +20,9 @@ flutter analyze                    # static analysis (flutter_lints via analysis
 dart format lib/ test/             # both are formatted; keep them that way
 supabase start && supabase db reset   # local Postgres with every migration applied
 supabase test db                   # pgTAP security suite (supabase/tests/) -- see docs/security/security-invariants.md
+# Realtime end-to-end tests against the real local server (skipped without these env vars):
+eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
+E2E_SUPABASE_URL="$API_URL" E2E_SUPABASE_ANON_KEY="$ANON_KEY" flutter test test/e2e/realtime_e2e_test.dart
 flutter build appbundle            # Android release build
 flutter build ipa                  # iOS release build
 ```
@@ -41,8 +44,8 @@ Never put a Supabase `service_role` key in the client. See [BUILD_AND_RUN.md](BU
 ### Supabase backend
 
 - [supabase/migrations/](supabase/migrations/) is the source of truth for schema, RLS policies, and RPCs — sequential, timestamp-named SQL files. **Never edit an already-applied migration; add a new one.** (An unapplied migration that failed to push is fair game to fix in place.)
-- [supabase/functions/](supabase/functions/) holds Edge Functions (e.g. `send-push-notification`).
-- Tables: `users`, `couples`, `couple_key_exchanges`, `timeline_items`, `bucket_list`, `calendar_events`, `moods`, `daily_questions`, `gift_reminders`, `love_notes`, `love_taps`, `license_details`, `topic_cards`, `topic_card_likes`, `time_capsules`, `user_fcm_tokens`, `user_notification_preferences`, plus the rate-limiting/bookkeeping tables `failed_pairing_attempts`, `failed_recovery_attempts`, `user_recovery_attempts`, `storage_cleanup_queue`.
+- [supabase/functions/](supabase/functions/) holds Edge Functions: `send-push-notification` (partner pushes) and `storage-cleanup` (service-role only; drains `storage_cleanup_queue` through the Storage API). Their pure helpers have Node tests: `node --test "supabase/functions/**/*.test.mjs"`.
+- Tables: `users`, `couples`, `couple_key_exchanges`, `timeline_items`, `bucket_list`, `calendar_events`, `moods`, `daily_questions`, `gift_reminders`, `love_notes`, `love_taps`, `license_details`, `topic_cards`, `topic_card_likes`, `time_capsules`, `user_fcm_tokens`, `user_notification_preferences`, plus the rate-limiting/bookkeeping tables `failed_pairing_attempts`, `pairing_attempt_failures`, `user_recovery_attempts`, `storage_cleanup_queue` (all service-role only).
 - Storage buckets: `avatars`, `timeline`, `love-notes` (see `StorageBuckets` in [lib/core/storage/storage_url_service.dart](lib/core/storage/storage_url_service.dart)).
 - RLS is the actual security boundary: every table's policies key off `couple_id` so only the two paired partners can read or write a couple's rows. When adding a feature/table, a migration with correct RLS is not optional.
 - Supabase blocks direct SQL DML against the `storage` schema. Deleting stored objects is a Storage API operation (`supabase storage rm ss:///bucket/prefix -r --experimental --yes`), not something a migration can express.
@@ -59,7 +62,7 @@ lib/
 │   ├── shell/      # LoveStoryScreen — the four-tab scaffold + its tabs
 │   └── theme/      # theme_manager.dart (LoveStoryTheme) + app_typography.dart
 ├── core/           # infrastructure several unrelated features need
-│   ├── session/    # CoupleSession, key exchange, presence, lifecycle manager
+│   ├── session/    # CoupleSession, key exchange, presence, SessionDataWiper
 │   ├── network/    # Supabase clients, RealtimeSubscriptionManager
 │   ├── storage/    # StorageUrlService, EncryptedStorageService, local persistence
 │   ├── security/   # KeyManagementService, PhotoEncryptionService (E2EE)
@@ -82,9 +85,9 @@ Feature controllers mix in `SupabaseLifecycleNotifier<T>` ([lib/core/riverpod/su
 - `String get tableName` — the Supabase table to subscribe to
 - `Future<void> syncInitialData()` — called on pair/repair, under a timeout
 - `Future<void> purgeCache()` — called on disconnect/logout
-- `void onRealtimeData(List<Map<String, dynamic>>)` — realtime rows
+- `void onRealtimeData(List<Map<String, dynamic>>)` — realtime rows (or, with `usesRowChanges`, `onRowChange` for individual insert/update/delete events)
 
-`RelationshipLifecycleManager` ([lib/core/session/relationship_lifecycle_manager.dart](lib/core/session/relationship_lifecycle_manager.dart)) is the pair/repair/disconnect/logout event bus, so a partner unlinking or an account deletion propagates to every feature's cache without features referencing each other.
+Pair/unlink/logout propagate through the bridge: each controller's `updateSession` sees the couple id change and syncs or purges. Async loads capture `sessionGeneration` and drop their result if `isStale(generation)`. Local data is wiped by `SessionDataWiper` ([lib/core/session/session_data_wiper.dart](lib/core/session/session_data_wiper.dart)) — account-wide on logout/account switch/deletion, couple-scoped on unlink. It is an allowlist: a new `SharedPreferences` key is wiped on logout unless it is listed in `deviceScopedKeys`.
 
 ### Realtime subscription multiplexing
 
@@ -133,6 +136,8 @@ Photo uploads are end-to-end encrypted: X25519 key agreement + HKDF-SHA256 with 
 - Five themes (Midnight Glass, Azure Liquid, Rose Quartz, Neon Violet, Lovely Off-White) plus a user-defined Custom theme live in [lib/app/theme/theme_manager.dart](lib/app/theme/theme_manager.dart), served through `themeControllerProvider`.
 
 ## Testing notes
+
+CI (`.github/workflows/ci.yml`) runs all of the above on every push and PR: format, analyze and `flutter test`; then a real Supabase stack with `supabase db reset`, `supabase test db` and the Realtime e2e tests.
 
 Tests live in [test/](test/). Conventions worth copying:
 

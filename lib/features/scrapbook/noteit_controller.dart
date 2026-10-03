@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -9,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:days_together/core/models/paging_status.dart';
+import 'package:days_together/core/network/row_change.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
@@ -48,9 +51,27 @@ import 'package:days_together/core/storage/scoped_json_cache.dart';
 /// caller. Until then, an item created directly through this controller
 /// (nothing does today) would visibly stay "sending" forever in its own
 /// state, even though the underlying data synced fine.
+///
+/// Paged: when paired, notes load [pageSize] at a time, newest first
+/// ([loadMore], driven by the history grid's scroll), so the doodles' stroke
+/// payloads are no longer all downloaded up front. A note referenced from
+/// elsewhere loads on its own via [ensureLoaded]; a Wrapped year via
+/// [ensureRangeLoaded].
 class NoteitController extends Notifier<NoteitState>
     with SupabaseLifecycleNotifier<NoteitState> {
   static const ScopedJsonCache _cache = ScopedJsonCache('love_notes_items');
+  static const int pageSize = 20;
+  static const int _maxResyncWindow = 200;
+
+  /// Keyset position (created_at, id) of the oldest note paged in from the
+  /// server; live inserts don't move it.
+  NoteitCursor? _cursor;
+  int _pagedCount = 0;
+  bool _loadingMore = false;
+  Timer? _countDebounce;
+  Future<void> _localLoad = Future.value();
+  final Map<String, Future<bool>> _rangeLoads = {};
+  final Set<String> _idsInFlight = {};
 
   @override
   String get tableName => Tables.loveNotes;
@@ -62,8 +83,11 @@ class NoteitController extends Notifier<NoteitState>
     // subscription during a brief background/tab-switch would visibly drop
     // incoming messages during the gap.
     ref.keepAlive();
+    ref.onDispose(() => _countDebounce?.cancel());
+    // The sync waits for the cache, so the (older) cache can never land on
+    // top of the fresh page.
+    _localLoad = _loadFromCache();
     initSessionLifecycle();
-    _loadFromCache();
     return NoteitState(coupleId: coupleId);
   }
 
@@ -127,23 +151,152 @@ class NoteitController extends Notifier<NoteitState>
 
   @override
   Future<void> purgeCache() async {
-    state = state.copyWith(notes: [], isLoading: false);
+    _cursor = null;
+    _pagedCount = 0;
+    _countDebounce?.cancel();
+    _rangeLoads.clear();
+    _idsInFlight.clear();
+    state = state.copyWith(
+      notes: [],
+      isLoading: false,
+      paging: const PagingStatus(),
+      detached: const {},
+      clearTotalCount: true,
+    );
     await _cache.clearAll();
   }
+
+  /// One page of notes (never chat), newest first, strictly older than
+  /// [before] in (created_at, id) order. Static so the e2e test runs this
+  /// exact query against a real server.
+  static Future<List<Map<String, dynamic>>> queryPage(
+    SupabaseClient client, {
+    required String coupleId,
+    NoteitCursor? before,
+    required int limit,
+  }) async {
+    var query = client
+        .from(Tables.loveNotes)
+        .select()
+        .eq('couple_id', coupleId)
+        // Chat shares love_notes; filtering it server-side keeps every
+        // chat line out of this download (audit F-18).
+        .neq('type', 'chat');
+    if (before != null) {
+      final at = before.createdAt.toUtc().toIso8601String();
+      query = query.or(
+        'created_at.lt."$at",and(created_at.eq."$at",id.lt.${before.id})',
+      );
+    }
+    return await query
+        .order('created_at', ascending: false)
+        .order('id', ascending: false)
+        .limit(limit);
+  }
+
+  /// How many notes (not chat) the couple has.
+  static Future<int> queryCount(
+    SupabaseClient client, {
+    required String coupleId,
+  }) async {
+    final res = await client
+        .from(Tables.loveNotes)
+        .select('id')
+        .eq('couple_id', coupleId)
+        .neq('type', 'chat')
+        .limit(1)
+        .count(CountOption.exact);
+    return res.count;
+  }
+
+  /// Notes by id (chat rows excluded); missing ids are simply absent.
+  static Future<List<Map<String, dynamic>>> queryByIds(
+    SupabaseClient client, {
+    required String coupleId,
+    required List<String> ids,
+  }) async {
+    return await client
+        .from(Tables.loveNotes)
+        .select()
+        .eq('couple_id', coupleId)
+        .neq('type', 'chat')
+        .inFilter('id', ids);
+  }
+
+  /// Notes created in [from, to), for Wrapped.
+  static Future<List<Map<String, dynamic>>> queryRange(
+    SupabaseClient client, {
+    required String coupleId,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    return await client
+        .from(Tables.loveNotes)
+        .select()
+        .eq('couple_id', coupleId)
+        .neq('type', 'chat')
+        .gte('created_at', from.toUtc().toIso8601String())
+        .lt('created_at', to.toUtc().toIso8601String())
+        .order('created_at', ascending: false)
+        .limit(2000);
+  }
+
+  // Overridden in tests.
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchPage({
+    NoteitCursor? before,
+    required int limit,
+  }) => queryPage(
+    Supabase.instance.client,
+    coupleId: coupleId!,
+    before: before,
+    limit: limit,
+  );
+
+  @visibleForTesting
+  Future<int> fetchCount() =>
+      queryCount(Supabase.instance.client, coupleId: coupleId!);
+
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchByIds(List<String> ids) =>
+      queryByIds(Supabase.instance.client, coupleId: coupleId!, ids: ids);
+
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchRange(DateTime from, DateTime to) =>
+      queryRange(
+        Supabase.instance.client,
+        coupleId: coupleId!,
+        from: from,
+        to: to,
+      );
+
+  static NoteitCursor? _cursorAfter(List<NoteitItem> page) =>
+      page.isEmpty ? null : (createdAt: page.last.createdAt, id: page.last.id);
+
+  static List<NoteitItem> _newestFirst(Iterable<NoteitItem> notes) =>
+      notes.toList()..sort((a, b) {
+        final byDate = b.createdAt.compareTo(a.createdAt);
+        return byDate != 0 ? byDate : b.id.compareTo(a.id);
+      });
 
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
+    await _localLoad;
+    if (isStale(generation) || !ref.mounted) return;
+    // A re-sync (reconnect) reloads what was already scrolled through.
+    final limit = _pagedCount.clamp(pageSize, _maxResyncWindow);
     try {
-      final List<dynamic> res = await Supabase.instance.client
-          .from(Tables.loveNotes)
-          .select()
-          .eq('couple_id', coupleId!);
-      if (!ref.mounted) return;
-      final filteredList = res.where((data) => data['type'] != 'chat').toList();
-      final parsed = filteredList
+      final res = await fetchPage(limit: limit);
+      if (isStale(generation)) return;
+      final parsed = res
           .map((data) => NoteitItem.fromSupabase(data, sessionUserId!))
           .toList();
+      _cursor = _cursorAfter(_newestFirst(parsed));
+      _pagedCount = parsed.length;
 
       final localUnsynced = state.notes
           .where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you')
@@ -156,105 +309,266 @@ class NoteitController extends Notifier<NoteitState>
         mergedMap.putIfAbsent(note.id, () => note);
       }
 
-      final merged = mergedMap.values.toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      state = state.copyWith(notes: merged, isLoading: false);
+      state = state.copyWith(
+        notes: _newestFirst(mergedMap.values),
+        isLoading: false,
+        paging: PagingStatus(hasMore: parsed.length == limit),
+      );
       await _persistLocalOnly();
     } catch (e) {
       debugPrint('NoteitController.syncInitialData error: $e');
+      if (isStale(generation) || !ref.mounted) return;
+      _cursor = null;
+      state = state.copyWith(
+        isLoading: false,
+        paging: const PagingStatus(hasMore: true, loadMoreFailed: true),
+      );
+      return;
+    }
+    await _refreshCount();
+  }
+
+  /// Appends the next (older) page; one request at a time, nothing once the
+  /// server is exhausted.
+  Future<void> loadMore() async {
+    final cursor = _cursor;
+    if (coupleId == null ||
+        sessionUserId == null ||
+        !state.paging.hasMore ||
+        _loadingMore ||
+        cursor == null) {
+      return;
+    }
+    _loadingMore = true;
+    final generation = sessionGeneration;
+    state = state.copyWith(
+      paging: state.paging.copyWith(isLoadingMore: true, loadMoreFailed: false),
+    );
+    try {
+      final res = await fetchPage(before: cursor, limit: pageSize);
+      if (isStale(generation)) return;
+      final page = _newestFirst(
+        res.map((data) => NoteitItem.fromSupabase(data, sessionUserId!)),
+      );
+      _cursor = _cursorAfter(page) ?? cursor;
+      _pagedCount += page.length;
+      final byId = {for (final n in state.notes) n.id: n};
+      for (final n in page) {
+        byId[n.id] = n;
+      }
+      state = state.copyWith(
+        notes: _newestFirst(byId.values),
+        paging: PagingStatus(hasMore: page.length == pageSize),
+      );
+      await _persistLocalOnly();
+    } catch (e) {
+      debugPrint('NoteitController.loadMore error: $e');
+      if (ref.mounted && !isStale(generation)) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(loadMoreFailed: true),
+        );
+      }
+    } finally {
+      _loadingMore = false;
+      if (ref.mounted && state.paging.isLoadingMore) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(isLoadingMore: false),
+        );
+      }
     }
   }
 
+  /// The footer's "Try again".
+  Future<void> retryLoad() async {
+    if (_cursor == null) {
+      _pagedCount = 0;
+      await syncInitialData();
+      return;
+    }
+    await loadMore();
+  }
+
+  /// Loads the notes with [ids] that aren't loaded yet (e.g. ones older
+  /// chat messages refer to) into [NoteitState.detached]. Ids already loaded
+  /// or already being fetched are skipped, so calling this on every rebuild
+  /// is cheap.
+  Future<void> ensureLoaded(Iterable<String> ids) async {
+    if (coupleId == null || sessionUserId == null) return;
+    final missing = ids
+        .where((id) => state.noteById(id) == null && !_idsInFlight.contains(id))
+        .toSet()
+        .toList();
+    if (missing.isEmpty) return;
+    _idsInFlight.addAll(missing);
+    final generation = sessionGeneration;
+    try {
+      final rows = await fetchByIds(missing);
+      if (isStale(generation) || !ref.mounted) return;
+      final detached = {...state.detached};
+      for (final row in rows) {
+        final note = NoteitItem.fromSupabase(row, sessionUserId!);
+        if (state.noteById(note.id) == null) detached[note.id] = note;
+      }
+      state = state.copyWith(detached: detached);
+    } catch (e) {
+      debugPrint('NoteitController.ensureLoaded error: $e');
+    } finally {
+      // Ids that turned out not to exist stay unresolved (the chat shows
+      // its placeholder) and may be retried later.
+      _idsInFlight.removeAll(missing);
+    }
+  }
+
+  /// Makes sure every note created in [from, to) is loaded; for Wrapped.
+  /// Returns false if the fetch failed.
+  Future<bool> ensureRangeLoaded(DateTime from, DateTime to) {
+    if (coupleId == null || sessionUserId == null) return Future.value(true);
+    final key = '${from.toIso8601String()}|${to.toIso8601String()}';
+    return _rangeLoads[key] ??= _loadRange(from, to).whenComplete(() {
+      // Block body: remove() returns this very future, and whenComplete
+      // waits on whatever its callback returns -- an arrow body deadlocks.
+      _rangeLoads.remove(key);
+    });
+  }
+
+  Future<bool> _loadRange(DateTime from, DateTime to) async {
+    final generation = sessionGeneration;
+    try {
+      final rows = await fetchRange(from, to);
+      if (isStale(generation) || !ref.mounted) return false;
+      final detached = {...state.detached};
+      for (final row in rows) {
+        final note = NoteitItem.fromSupabase(row, sessionUserId!);
+        detached[note.id] = note;
+      }
+      state = state.copyWith(detached: detached);
+      return true;
+    } catch (e) {
+      debugPrint('NoteitController.ensureRangeLoaded error: $e');
+      return false;
+    }
+  }
+
+  Future<void> _refreshCount() async {
+    if (coupleId == null) return;
+    final generation = sessionGeneration;
+    try {
+      final count = await fetchCount();
+      if (isStale(generation) || !ref.mounted) return;
+      state = state.copyWith(totalCount: count);
+    } catch (e) {
+      debugPrint('NoteitController._refreshCount error: $e');
+    }
+  }
+
+  void _scheduleCountRefresh() {
+    _countDebounce?.cancel();
+    _countDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (ref.mounted) _refreshCount();
+    });
+  }
+
+  /// Row changes, not the full love_notes table (audit F-18) -- see
+  /// LoveChatController.usesRowChanges.
   @override
-  void onRealtimeData(List<Map<String, dynamic>> dataList) {
-    if (!ref.mounted) return;
-    final localUnsynced = state.notes
-        .where((n) => n.syncStatus != SyncStatus.synced && n.sender == 'you')
-        .toList();
+  bool get usesRowChanges => true;
 
-    final filteredList = dataList
-        .where((data) => data['type'] != 'chat')
-        .toList();
-    final serverNotes = filteredList
-        .map((data) => NoteitItem.fromSupabase(data, sessionUserId!))
-        .toList();
+  @override
+  void onRowChange(RowChange change) {
+    if (!ref.mounted || sessionUserId == null) return;
+    final id = change.id;
+    if (id == null) return;
+    final inWindow = state.notes.where((n) => n.id == id).firstOrNull;
+    final detachedOld = state.detached[id];
+    final existing = inWindow ?? detachedOld;
+    final others = state.notes.where((n) => n.id != id).toList();
+    final isNote =
+        change.type != RowChangeType.delete &&
+        change.newRecord['type'] != 'chat';
 
-    final Map<String, NoteitItem> mergedMap = {};
-    for (final note in serverNotes) {
-      mergedMap[note.id] = note;
-    }
-    for (final note in localUnsynced) {
-      mergedMap.putIfAbsent(note.id, () => note);
-    }
-
-    final wasLoading = state.isLoading;
-    final oldNotes = state.notes;
-
-    if (!wasLoading) {
-      final added = serverNotes
-          .where(
-            (srv) =>
-                srv.sender == 'partner' &&
-                !oldNotes.any((old) => old.id == srv.id),
-          )
-          .toList();
-      for (final note in added) {
-        String title = 'Partner sent a love note 💌';
-        String desc = 'Shared a new text love note';
-        String icon = '✍️';
-        String route = 'love_notes';
-
-        if (note.type == NoteitType.drawing) {
-          title = 'Partner created a doodle 🎨';
-          desc = 'Drew and shared a new doodle';
-          icon = '🎨';
-          route = 'doodle_notes';
-        } else if (note.type == NoteitType.photo) {
-          title = 'Partner shared photo note 📸';
-          desc = 'Shared a new photo note';
-          icon = '📷';
-          route = 'love_notes';
+    if (!isNote) {
+      // A delete, or a chat row (chat shares the love_notes table).
+      if (change.type == RowChangeType.delete) _scheduleCountRefresh();
+      if (existing == null) return;
+      if (change.type == RowChangeType.delete &&
+          !state.isLoading &&
+          existing.sender == 'partner') {
+        _logPartnerNoteDeleted(existing);
+      }
+      state = state.copyWith(
+        notes: others,
+        isLoading: false,
+        detached: detachedOld == null
+            ? null
+            : ({...state.detached}..remove(id)),
+      );
+    } else {
+      final note = NoteitItem.fromSupabase(change.newRecord, sessionUserId!);
+      if (existing == null) {
+        // An update to a note outside the window arrives with its page;
+        // new notes show straight away.
+        if (change.type != RowChangeType.insert && state.paging.hasMore) {
+          return;
         }
-
-        RecentActivityService.instance.logActivity(
-          activityType: 'created',
-          title: title,
-          description: desc,
-          icon: icon,
-          referenceId: note.id,
-          route: route,
-        );
+        if (!state.isLoading && note.sender == 'partner') {
+          _logPartnerNoteAdded(note);
+        }
+        _scheduleCountRefresh();
       }
-
-      final deleted = oldNotes
-          .where(
-            (old) =>
-                old.sender == 'partner' &&
-                !serverNotes.any((srv) => srv.id == old.id),
-          )
-          .toList();
-      for (final note in deleted) {
-        RecentActivityService.instance.logActivity(
-          activityType: 'deleted',
-          title: note.type == NoteitType.drawing
-              ? "Partner's doodle deleted 🗑️"
-              : "Partner's love note deleted 🗑️",
-          description: note.type == NoteitType.drawing
-              ? 'Partner deleted a doodle'
-              : 'Partner deleted a love note',
-          icon: '🗑️',
-          referenceId: note.id,
-          route: note.type == NoteitType.drawing
-              ? 'doodle_notes'
-              : 'love_notes',
+      if (detachedOld != null) {
+        state = state.copyWith(detached: {...state.detached, id: note});
+      }
+      if (inWindow != null || detachedOld == null) {
+        state = state.copyWith(
+          notes: _newestFirst([note, ...others]),
+          isLoading: false,
         );
       }
     }
-
-    final merged = mergedMap.values.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    state = state.copyWith(notes: merged, isLoading: false);
     _persistLocalOnly();
+  }
+
+  void _logPartnerNoteAdded(NoteitItem note) {
+    String title = 'Partner sent a love note 💌';
+    String desc = 'Shared a new text love note';
+    String icon = '✍️';
+    String route = 'love_notes';
+
+    if (note.type == NoteitType.drawing) {
+      title = 'Partner created a doodle 🎨';
+      desc = 'Drew and shared a new doodle';
+      icon = '🎨';
+      route = 'doodle_notes';
+    } else if (note.type == NoteitType.photo) {
+      title = 'Partner shared photo note 📸';
+      desc = 'Shared a new photo note';
+      icon = '📷';
+      route = 'love_notes';
+    }
+
+    RecentActivityService.instance.logActivity(
+      activityType: 'created',
+      title: title,
+      description: desc,
+      icon: icon,
+      referenceId: note.id,
+      route: route,
+    );
+  }
+
+  void _logPartnerNoteDeleted(NoteitItem note) {
+    RecentActivityService.instance.logActivity(
+      activityType: 'deleted',
+      title: note.type == NoteitType.drawing
+          ? "Partner's doodle deleted 🗑️"
+          : "Partner's love note deleted 🗑️",
+      description: note.type == NoteitType.drawing
+          ? 'Partner deleted a doodle'
+          : 'Partner deleted a love note',
+      icon: '🗑️',
+      referenceId: note.id,
+      route: note.type == NoteitType.drawing ? 'doodle_notes' : 'love_notes',
+    );
   }
 
   @override
@@ -454,9 +768,11 @@ class NoteitController extends Notifier<NoteitState>
   }
 
   Future<void> deleteNote(String id) async {
-    final index = state.notes.indexWhere((n) => n.id == id);
-    if (index == -1) return;
-    final noteToDelete = state.notes[index];
+    // Not noteById: that hides everything while unpaired, and local-only
+    // notes must still be deletable then.
+    final noteToDelete =
+        state.notes.where((n) => n.id == id).firstOrNull ?? state.detached[id];
+    if (noteToDelete == null) return;
     if (noteToDelete.imagePath != null) {
       try {
         final file = File(noteToDelete.imagePath!);
@@ -486,11 +802,11 @@ class NoteitController extends Notifier<NoteitState>
       } catch (e) {
         debugPrint('NoteitController.deleteNote Supabase error: $e');
         if (!ref.mounted) return;
-        state = state.copyWith(notes: [...state.notes]..removeAt(index));
+        _removeLocally(id);
         await _persist();
       }
     } else {
-      state = state.copyWith(notes: [...state.notes]..removeAt(index));
+      _removeLocally(id);
       await _persist();
     }
 
@@ -508,6 +824,13 @@ class NoteitController extends Notifier<NoteitState>
       route: noteToDelete.type == NoteitType.drawing
           ? 'doodle_notes'
           : 'love_notes',
+    );
+  }
+
+  void _removeLocally(String id) {
+    state = state.copyWith(
+      notes: state.notes.where((n) => n.id != id).toList(),
+      detached: {...state.detached}..remove(id),
     );
   }
 
@@ -548,6 +871,9 @@ class NoteitController extends Notifier<NoteitState>
     }
   }
 }
+
+/// Keyset position in the scrapbook's (created_at, id) newest-first order.
+typedef NoteitCursor = ({DateTime createdAt, String id});
 
 final noteitControllerProvider =
     NotifierProvider.autoDispose<NoteitController, NoteitState>(

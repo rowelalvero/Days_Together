@@ -62,6 +62,9 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from(Tables.timeCapsules)
@@ -81,7 +84,7 @@ class TimeCapsuleController extends Notifier<TimeCapsuleState>
         );
       }).toList()..sort((a, b) => a.openDate.compareTo(b.openDate));
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
       state = state.copyWith(capsules: parsed, isLoading: false);
       await _persistLocalOnly();
     } catch (e) {

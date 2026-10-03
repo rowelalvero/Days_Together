@@ -61,7 +61,10 @@ select set_eq(
     'delete_current_user()',
     -- RLS predicate used by every couple-scoped policy; policies run as the
     -- querying role, so it must stay executable. Side-effect free.
-    'is_member_of_couple(uuid)'
+    'is_member_of_couple(uuid)',
+    -- Same reason: the realtime.messages presence policies call it as the
+    -- joining user (20261003030000). Side-effect free.
+    'is_couple_presence_topic(text)'
   ],
   'authenticated can execute exactly the RPC allowlist'
 );
@@ -99,7 +102,7 @@ select throws_ok(format($$ select public.update_partner_profile(%L, '{"display_n
 select throws_ok(format($$ select public.store_wrapped_key(%L, 'k') $$, :'a'), '42501', null, 'anon: store_wrapped_key refused');
 select throws_ok($$ select public.upsert_user_fcm_token('tok', 'android') $$, '42501', null, 'anon: upsert_user_fcm_token refused');
 select throws_ok($$ select public.delete_current_user() $$, '42501', null, 'anon: delete_current_user refused');
-select throws_ok(format($$ select public.get_user_couple_id(%L) $$, :'a'), '42501', null, 'anon: get_user_couple_id refused');
+select hasnt_function('public', 'get_user_couple_id', 'the unused get_user_couple_id helper is gone (20261003050000)');
 
 select tests.as_postgres();
 select is(

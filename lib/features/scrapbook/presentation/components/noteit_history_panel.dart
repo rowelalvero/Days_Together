@@ -6,12 +6,14 @@ import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
 import 'package:days_together/features/scrapbook/data/noteit_sync_manager.dart';
 import 'package:days_together/shared/widgets/scale_drawing_painter.dart';
+import 'package:days_together/shared/widgets/paged_list_footer.dart';
 import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
 /// Historical grid feed of exchanged scrapbook notes, including sync indicators
-/// and enlargement dialogs.
+/// and enlargement dialogs. Paged: the next page of older notes loads as the
+/// grid nears its end (see `NoteitController.loadMore`).
 class NoteitHistoryPanel extends StatelessWidget {
   final LoveStoryTheme theme;
   final NoteitState state;
@@ -27,6 +29,16 @@ class NoteitHistoryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final list = state.visibleNotes;
+    if (list.isEmpty && state.paging.loadMoreFailed) {
+      // Nothing cached and the first page failed.
+      return Center(
+        child: PagedListFooter(
+          status: state.paging,
+          onRetry: notifier.retryLoad,
+          color: theme.textColor,
+        ),
+      );
+    }
     if (list.isEmpty) {
       return Center(
         child: Column(
@@ -49,78 +61,102 @@ class NoteitHistoryPanel extends StatelessWidget {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.9,
-      ),
-      itemCount: list.length,
-      itemBuilder: (ctx, idx) {
-        final item = list[idx];
-        return GestureDetector(
-          onTap: () => showNoteitEnlargeDialog(context, item, theme),
-          onLongPress: () => _confirmDelete(context, item),
-          child: Container(
-            decoration: BoxDecoration(
-              color:
-                  item.backgroundColor ??
-                  theme.textColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: NoteitCanvasThumbnail(item: item),
-                    ),
-                  ),
-                  Positioned(
-                    top: 6,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black45,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        item.sender == 'you'
-                            ? (item.syncStatus == SyncStatus.sending
-                                  ? '📤 Sending'
-                                  : item.syncStatus == SyncStatus.failed
-                                  ? '⚠️ Failed'
-                                  : '✅ Sent')
-                            : 'Received',
-                        style: AppTypography.bodyLarge(
-                          fontSize: 8,
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (item.sender == 'you')
-                    Positioned(
-                      bottom: 6,
-                      right: 8,
-                      child: NoteitSyncStatusBadge(item: item, theme: theme),
-                    ),
-                ],
+    return NotificationListener<ScrollNotification>(
+      onNotification: (n) {
+        if (state.paging.canAutoLoad && isNearScrollEnd(n.metrics)) {
+          notifier.loadMore();
+        }
+        return false;
+      },
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            sliver: SliverGrid.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.9,
               ),
+              itemCount: list.length,
+              itemBuilder: (ctx, idx) => _tile(context, list[idx]),
             ),
           ),
-        );
-      },
+          SliverToBoxAdapter(
+            child: PagedListFooter(
+              status: state.paging,
+              onRetry: notifier.retryLoad,
+              color: theme.textColor,
+              endLabel: list.length > NoteitController.pageSize
+                  ? "That's every note 💌"
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tile(BuildContext context, NoteitItem item) {
+    return GestureDetector(
+      onTap: () => showNoteitEnlargeDialog(context, item, theme),
+      onLongPress: () => _confirmDelete(context, item),
+      child: Container(
+        decoration: BoxDecoration(
+          color:
+              item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: NoteitCanvasThumbnail(item: item),
+                ),
+              ),
+              Positioned(
+                top: 6,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    item.sender == 'you'
+                        ? (item.syncStatus == SyncStatus.sending
+                              ? '📤 Sending'
+                              : item.syncStatus == SyncStatus.failed
+                              ? '⚠️ Failed'
+                              : '✅ Sent')
+                        : 'Received',
+                    style: AppTypography.bodyLarge(
+                      fontSize: 8,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              if (item.sender == 'you')
+                Positioned(
+                  bottom: 6,
+                  right: 8,
+                  child: NoteitSyncStatusBadge(item: item, theme: theme),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

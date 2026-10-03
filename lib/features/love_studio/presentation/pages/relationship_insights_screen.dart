@@ -78,7 +78,7 @@ class _RelationshipInsightsScreenState
     final commonMood = _getCommonMood(dp.moods);
     final insights = AIService.generateInsights(
       totalDays: DateHelper.relationshipTotalDays(workspace.startDate),
-      totalMemories: tp.items.length,
+      totalMemories: tp.memoryCount,
       commonMood: commonMood,
       totalBucketItems: bp.totalItems,
       completedBucketItems: bp.completedItems,

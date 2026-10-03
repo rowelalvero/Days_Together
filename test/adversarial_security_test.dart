@@ -8,6 +8,13 @@ import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/core/storage/scoped_json_cache.dart';
 import 'package:days_together/core/constants/prefs_keys.dart';
 
+// The partner-profile column whitelist, the 90-day recovery-code expiry and
+// the attempt lockouts used to be "tested" here by re-declaring those rules
+// as Dart constants and asserting against them -- tests that could never fail
+// when the SQL changed (audit F-10). They are now tested against the real
+// database functions in supabase/tests/ (001_rpc_privileges.sql,
+// 003_pairing.sql, 005_recovery.sql); run them with `supabase test db`.
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -15,82 +22,6 @@ void main() {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
     });
-
-    test('TEST 3: Column Whitelist Validation for Partner Profile Updates', () {
-      final allowedKeys = <String>{
-        'display_name',
-        'gender',
-        'phone',
-        'birthdate',
-        'address',
-        'nationality',
-        'weight',
-        'height',
-        'blood_type',
-        'eye_color',
-        'conditions',
-        'date_issued',
-        'signature',
-        'avatar_url',
-      };
-
-      final maliciousUpdates = {
-        'couple_id': '00000000-0000-0000-0000-000000000000',
-        'id': 'attacker-id',
-        'partner_deleted_notice': true,
-        'created_at': '2026-01-01T00:00:00Z',
-      };
-
-      for (final key in maliciousUpdates.keys) {
-        final isWhitelisted = allowedKeys.contains(key);
-        expect(
-          isWhitelisted,
-          isFalse,
-          reason: 'Key "$key" MUST NOT be whitelisted',
-        );
-      }
-    });
-
-    test('TEST 6: Recovery Code Expiration Boundary Conditions (90 Days)', () {
-      final now = DateTime.now().toUtc();
-      const maxAgeDays = 90;
-
-      final validCodeGeneratedAt = now.subtract(const Duration(days: 89));
-      final expiredCodeGeneratedAt = now.subtract(const Duration(days: 91));
-
-      final isValidAge = validCodeGeneratedAt.isAfter(
-        now.subtract(const Duration(days: maxAgeDays)),
-      );
-      final isExpiredAge = expiredCodeGeneratedAt.isBefore(
-        now.subtract(const Duration(days: maxAgeDays)),
-      );
-
-      expect(isValidAge, isTrue, reason: '89-day old code must be valid');
-      expect(isExpiredAge, isTrue, reason: '91-day old code must be expired');
-    });
-
-    test(
-      'TEST 7/8: Rate Limiting Attempt Count Lockout Threshold (5 Attempts)',
-      () {
-        const maxAttempts = 5;
-        int attempts = 0;
-        bool isLockedOut = false;
-
-        for (int i = 1; i <= 6; i++) {
-          attempts++;
-          if (attempts >= maxAttempts) {
-            isLockedOut = true;
-          }
-        }
-
-        expect(attempts, 6);
-        expect(
-          isLockedOut,
-          isTrue,
-          reason: 'Account MUST lock out on or after 5 failed attempts',
-        );
-      },
-    );
 
     test('TEST 17: Logout Local Cache Purge & Account Data Isolation', () async {
       // 1. User A signs in and creates local chat and timeline data.

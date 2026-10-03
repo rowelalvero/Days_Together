@@ -27,6 +27,22 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// exactly the bug this scoping fixes: two accounts ended up posting the
 /// identical public key, and every wrap/unwrap after that used a degenerate
 /// self-ECDH instead of a genuine two-party one.
+/// Outcome of checking a partner's public key against this device's pin
+/// (trust on first use -- see [KeyManagementService.checkPartnerKey]).
+enum PartnerKeyTrust {
+  /// No pin existed; the key was pinned now.
+  pinnedNow,
+
+  /// The key equals the pinned one.
+  matchesPin,
+
+  /// The server presented a DIFFERENT key than the one pinned for this
+  /// partner. Never use it without the user's explicit confirmation.
+  changed;
+
+  bool get isTrusted => this != PartnerKeyTrust.changed;
+}
+
 class KeyManagementService {
   KeyManagementService._() : _bypassSecureStorage = false;
 
@@ -57,6 +73,11 @@ class KeyManagementService {
   static String _coupleKeyOwnerStorageKeyFor(String userId) =>
       'e2ee_couple_photo_key_couple_$userId';
 
+  // Pinned partner public keys, as one JSON map per user:
+  // {"<coupleId>:<partnerId>": "<base64 X25519 public key>"}.
+  static String _pinnedPartnerKeysStorageKeyFor(String userId) =>
+      'e2ee_pinned_partner_keys_$userId';
+
   static final X25519 _keyExchangeAlgorithm = X25519();
   static final AesGcm _aesGcm = AesGcm.with256bits();
 
@@ -72,6 +93,7 @@ class KeyManagementService {
   String? _cachedKeyPairUserId;
   Uint8List? _testCoupleKey;
   String? _testCoupleKeyCoupleId;
+  final Map<String, Map<String, String>> _testPins = {};
 
   Future<SimpleKeyPair> _loadOrCreateKeyPair(String userId) async {
     if (_bypassSecureStorage) return _cachedKeyPair!;
@@ -238,8 +260,111 @@ class KeyManagementService {
       _cachedKeyPair = null;
       _cachedKeyPairUserId = null;
     }
-    if (_bypassSecureStorage) return;
+    if (_bypassSecureStorage) {
+      _testPins.remove(userId);
+      return;
+    }
     await _secureStorage.delete(key: _privateKeyStorageKeyFor(userId));
+    await _secureStorage.delete(key: _pinnedPartnerKeysStorageKeyFor(userId));
+  }
+
+  // ---- Partner key pinning (re-audit R-03 / audit F-14) ----------------
+  //
+  // The couple photo key is wrapped for whatever public key the server
+  // returns for the partner. Without pinning, anyone able to rewrite
+  // users.public_key -- including the project's service_role, the exact
+  // adversary E2EE exists to exclude -- could substitute their own key and
+  // receive the couple key on the next wrap. Pinning makes the FIRST key seen
+  // for a (couple, partner) authoritative; a later different key is refused
+  // until the user confirms it, ideally after comparing [safetyNumber]s in
+  // person.
+
+  Future<Map<String, String>> _readPins(String userId) async {
+    if (_bypassSecureStorage) return Map.of(_testPins[userId] ?? const {});
+    final raw = await _secureStorage.read(
+      key: _pinnedPartnerKeysStorageKeyFor(userId),
+    );
+    if (raw == null) return {};
+    return Map<String, String>.from(jsonDecode(raw) as Map);
+  }
+
+  Future<void> _writePins(String userId, Map<String, String> pins) async {
+    if (_bypassSecureStorage) {
+      _testPins[userId] = Map.of(pins);
+      return;
+    }
+    await _secureStorage.write(
+      key: _pinnedPartnerKeysStorageKeyFor(userId),
+      value: jsonEncode(pins),
+    );
+  }
+
+  static String _pinSlot(String coupleId, String partnerId) =>
+      '$coupleId:$partnerId';
+
+  /// Trust on first use: pins [publicKeyBase64] for ([coupleId], [partnerId])
+  /// if nothing is pinned yet, and otherwise reports whether it matches.
+  Future<PartnerKeyTrust> checkPartnerKey({
+    required String userId,
+    required String coupleId,
+    required String partnerId,
+    required String publicKeyBase64,
+  }) async {
+    final pins = await _readPins(userId);
+    final slot = _pinSlot(coupleId, partnerId);
+    final pinned = pins[slot];
+    if (pinned == null) {
+      pins[slot] = publicKeyBase64;
+      await _writePins(userId, pins);
+      return PartnerKeyTrust.pinnedNow;
+    }
+    return pinned == publicKeyBase64
+        ? PartnerKeyTrust.matchesPin
+        : PartnerKeyTrust.changed;
+  }
+
+  /// Re-pins after the user has explicitly accepted a changed partner key.
+  Future<void> acceptPartnerKey({
+    required String userId,
+    required String coupleId,
+    required String partnerId,
+    required String publicKeyBase64,
+  }) async {
+    final pins = await _readPins(userId);
+    pins[_pinSlot(coupleId, partnerId)] = publicKeyBase64;
+    await _writePins(userId, pins);
+  }
+
+  @visibleForTesting
+  Future<String?> pinnedPartnerKey({
+    required String userId,
+    required String coupleId,
+    required String partnerId,
+  }) async => (await _readPins(userId))[_pinSlot(coupleId, partnerId)];
+
+  /// A short number both partners can read aloud and compare in person: it is
+  /// equal on both devices exactly when each holds the other's real public
+  /// key. Symmetric (order of the two keys does not matter) and versioned
+  /// by a domain-separation prefix.
+  static Future<String> safetyNumber(
+    String publicKeyBase64A,
+    String publicKeyBase64B,
+  ) async {
+    final keys = [publicKeyBase64A, publicKeyBase64B]..sort();
+    final digest = await Sha256().hash(
+      utf8.encode('days_together.safety_number.v1|${keys[0]}|${keys[1]}'),
+    );
+    final bytes = digest.bytes;
+    final groups = <String>[];
+    // Six groups of five digits, each from 40 bits of the digest.
+    for (var g = 0; g < 6; g++) {
+      var value = 0;
+      for (var i = 0; i < 5; i++) {
+        value = (value << 8) | bytes[g * 5 + i];
+      }
+      groups.add((value % 100000).toString().padLeft(5, '0'));
+    }
+    return groups.join(' ');
   }
 
   /// Safety net for any path that leaves a relationship without going through

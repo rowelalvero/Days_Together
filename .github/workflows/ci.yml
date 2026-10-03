@@ -1,0 +1,103 @@
+# Runs every check the remediation phases gate on, on every push and PR.
+#
+#   flutter  -- format, analyze, the full Dart test suite (includes the
+#               architecture rules, the secret scan and the account-isolation
+#               tests; the live e2e tests skip themselves here).
+#   database -- a real local Supabase stack: every migration from scratch,
+#               the pgTAP security suite, then the e2e tests against the real
+#               Realtime server (things pgTAP cannot see -- see
+#               test/e2e/realtime_e2e_test.dart).
+#
+# Versions are pinned to the ones these checks were verified with; bump them
+# deliberately, not implicitly.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.38.1"
+  SUPABASE_CLI_VERSION: "2.107.0"
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+  edge-functions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22.18+ runs the .ts helpers directly (type stripping).
+          node-version: "22.19.0"
+
+      - name: Edge function unit tests
+        run: node --test "supabase/functions/**/*.test.mjs"
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Start Supabase
+        # Same services as local development; the rest are not needed.
+        run: supabase start -x studio,imgproxy,inbucket,edge-runtime,logflare,vector,supavisor
+
+      - name: Apply every migration from scratch
+        run: supabase db reset
+
+      - name: pgTAP security suite
+        run: supabase test db
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Realtime end-to-end (real server)
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
+          E2E_SUPABASE_URL="$API_URL" E2E_SUPABASE_ANON_KEY="$ANON_KEY" \
+            flutter test test/e2e/realtime_e2e_test.dart

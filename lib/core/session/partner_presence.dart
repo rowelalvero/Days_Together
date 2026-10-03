@@ -14,6 +14,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// [onChanged] is the owner's `notifyListeners` -- called only when
 /// [isPartnerOnline] actually flips, matching the "don't rebuild for no
 /// reason" contract the rest of the session follows.
+/// The couple's presence topic. Must match the exact shape
+/// public.is_couple_presence_topic() authorises.
+String presenceTopicFor(String coupleId) => 'couple_presence_$coupleId';
+
 class PartnerPresence {
   PartnerPresence({required VoidCallback onChanged}) : _onChanged = onChanged;
 
@@ -52,8 +56,13 @@ class PartnerPresence {
       return;
     }
 
+    // Private: Realtime authorises the join and every track() against the
+    // realtime.messages policies (20261003030000_private_couple_presence),
+    // which admit only this couple's current members. As a public channel,
+    // anyone with the couple id could watch or spoof presence.
     final channel = Supabase.instance.client.channel(
-      'couple_presence_$coupleId',
+      presenceTopicFor(coupleId),
+      opts: const RealtimeChannelConfig(private: true),
     );
     _channel = channel;
 

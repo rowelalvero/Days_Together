@@ -82,6 +82,9 @@ class CalendarController extends Notifier<CalendarState>
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from(Tables.calendarEvents)
@@ -89,7 +92,7 @@ class CalendarController extends Notifier<CalendarState>
           .eq('couple_id', coupleId!);
       final parsed = res.map((data) => _parseEvent(data)).toList();
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
       state = state.copyWith(events: parsed, isLoading: false);
       await _persistLocalOnly();
     } catch (e) {

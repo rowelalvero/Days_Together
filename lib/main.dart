@@ -66,13 +66,20 @@ Future<void> _initializeApp() async {
     debugPrint('Supabase initialization error: $e');
   }
 
-  try {
-    await NotificationService().init();
-  } catch (e) {
-    debugPrint('NotificationService initialization error: $e');
-  }
-
   runApp(buildAppRoot(child: const MyApp()));
+
+  // After the first frame, not before runApp: init() brings up Firebase and
+  // requests notification permission, and on Android 13+ that system dialog
+  // used to hold the app's very first frame. A notification tap that
+  // launched the app is still honoured -- init() resolves it then, and
+  // appRedirect's pending-deep-link queue replays it once the session loads.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await NotificationService().init();
+    } catch (e) {
+      debugPrint('NotificationService initialization error: $e');
+    }
+  });
 }
 
 /// The app's full widget root: a single `ProviderScope` -- the entire

@@ -132,7 +132,9 @@ class NotificationPreferencesController
           .eq('user_id', userId)
           .maybeSingle();
 
-      if (!ref.mounted) return;
+      // A response for a previous account must not become this account's
+      // preferences (audit F-15).
+      if (!ref.mounted || _userId != userId) return;
 
       String? localTz;
       try {
@@ -145,7 +147,7 @@ class NotificationPreferencesController
           'NotificationPreferencesController: timezone lookup failed: $e',
         );
       }
-      if (!ref.mounted) return;
+      if (!ref.mounted || _userId != userId) return;
 
       NotificationPreferences preferences;
       if (res != null) {

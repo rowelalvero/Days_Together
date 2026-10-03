@@ -85,6 +85,9 @@ class DailyMoodController extends Notifier<DailyMoodState>
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
     try {
       final List<dynamic> moodsRes = await Supabase.instance.client
           .from(Tables.moods)
@@ -136,7 +139,7 @@ class DailyMoodController extends Notifier<DailyMoodState>
         todayQuestion = _generateTodayQuestion();
       }
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
       state = state.copyWith(
         moods: incomingMyMoods,
         partnerMoods: incomingPartnerMoods,

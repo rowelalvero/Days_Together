@@ -11,6 +11,18 @@ class RecentActivityService {
       RecentActivityService._privateConstructor();
 
   Database? _database;
+
+  static const int _maxEntries = 200;
+
+  /// Insertion order breaks timestamp ties, so two entries logged in the
+  /// same instant always come back in the order they were logged.
+  static const String _newestFirst = 'timestamp DESC, rowid DESC';
+
+  /// Test-only: open this path instead of the on-device database file (the
+  /// test harness sets sqflite's in-memory path -- see
+  /// test/flutter_test_config.dart).
+  @visibleForTesting
+  static String? databasePathOverride;
   final ValueNotifier<List<LocalActivity>> activitiesNotifier =
       ValueNotifier<List<LocalActivity>>([]);
 
@@ -21,8 +33,9 @@ class RecentActivityService {
   }
 
   Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'days_together_local.db');
+    final path =
+        databasePathOverride ??
+        join(await getDatabasesPath(), 'days_together_local.db');
     return await openDatabase(
       path,
       version: 1,
@@ -53,8 +66,8 @@ class RecentActivityService {
       final db = await database;
       final List<Map<String, dynamic>> maps = await db.query(
         'local_activities',
-        orderBy: 'timestamp DESC',
-        limit: 200,
+        orderBy: _newestFirst,
+        limit: _maxEntries,
       );
       activitiesNotifier.value = maps
           .map((m) => LocalActivity.fromMap(m))
@@ -94,27 +107,22 @@ class RecentActivityService {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      // 2. Fetch all and enforce the 200-item limit in the DB
-      final List<Map<String, dynamic>> allMaps = await db.query(
-        'local_activities',
-        orderBy: 'timestamp DESC',
+      // 2. Keep only the newest entries, in one statement. This used to read
+      // and parse the whole table on every insert and delete by
+      // `timestamp < cutoff`, which kept the wrong rows when two entries
+      // shared a timestamp.
+      await db.rawDelete(
+        'DELETE FROM local_activities WHERE rowid NOT IN '
+        '(SELECT rowid FROM local_activities ORDER BY $_newestFirst LIMIT ?)',
+        [_maxEntries],
       );
-
-      List<LocalActivity> list = allMaps
+      final List<Map<String, dynamic>> maps = await db.query(
+        'local_activities',
+        orderBy: _newestFirst,
+      );
+      activitiesNotifier.value = maps
           .map((m) => LocalActivity.fromMap(m))
           .toList();
-
-      if (list.length > 200) {
-        final cutoffTimeStr = list[199].timestamp.toIso8601String();
-        await db.delete(
-          'local_activities',
-          where: 'timestamp < ?',
-          whereArgs: [cutoffTimeStr],
-        );
-        list = list.take(200).toList();
-      }
-
-      activitiesNotifier.value = list;
     } catch (e) {
       debugPrint('RecentActivityService: logActivity error: $e');
     }

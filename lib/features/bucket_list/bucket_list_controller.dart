@@ -70,6 +70,9 @@ class BucketListController extends Notifier<BucketListState>
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
     try {
       final List<dynamic> res = await Supabase.instance.client
           .from(Tables.bucketList)
@@ -78,7 +81,7 @@ class BucketListController extends Notifier<BucketListState>
       final parsed = res.map(_parseItem).toList()
         ..sort((a, b) => a.order.compareTo(b.order));
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
       state = state.copyWith(items: parsed, isLoading: false);
       await _persistLocalOnly();
     } catch (e) {

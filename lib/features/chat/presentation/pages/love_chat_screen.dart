@@ -8,7 +8,10 @@ import 'package:days_together/features/chat/presentation/widgets/chat_message_li
 import 'package:days_together/features/relationship/presence_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/core/models/scrapbook_ref.dart';
+import 'package:days_together/features/chat/domain/entities/love_chat_model.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 
 /// The couple's private chat: a message feed (plain notes or mirrored
@@ -69,6 +72,32 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     });
   }
 
+  /// Note ids already requested by this screen, so a note that no longer
+  /// exists is asked for once, not on every rebuild.
+  final Set<String> _requestedNoteIds = {};
+
+  /// Scrapbook-mirror messages refer to notes by id, and the scrapbook only
+  /// keeps its newest page loaded: fetch the ones older messages point at.
+  void _loadReferencedNotes(
+    List<LoveChatMessage> messages,
+    NoteitState noteit,
+  ) {
+    final missing = <String>[];
+    for (final m in messages) {
+      final id = ScrapbookRef.fromChatPayload(m.content)?.itemId.trim();
+      if (id == null || id.startsWith('{')) continue;
+      if (noteit.noteById(id) == null && _requestedNoteIds.add(id)) {
+        missing.add(id);
+      }
+    }
+    if (missing.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(noteitControllerProvider.notifier).ensureLoaded(missing);
+      }
+    });
+  }
+
   void _toggleReveal(String messageId) {
     setState(() {
       if (_revealedMessageIds.contains(messageId)) {
@@ -88,6 +117,7 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
     final chatState = ref.watch(loveChatControllerProvider);
     final chatNotifier = ref.read(loveChatControllerProvider.notifier);
     final noteitState = ref.watch(noteitControllerProvider);
+    _loadReferencedNotes(chatState.messages, noteitState);
 
     final yourName = profile.yourName ?? 'Me';
     final partnerName = profile.partnerName ?? 'Partner';
@@ -114,9 +144,12 @@ class _LoveChatScreenState extends ConsumerState<LoveChatScreen> {
               Expanded(
                 child: ChatMessageList(
                   messages: chatState.messages,
+                  paging: chatState.paging,
                   scrollController: _scrollController,
                   theme: theme,
-                  visibleNotes: noteitState.visibleNotes,
+                  // knownNotes: also the notes older messages refer to,
+                  // loaded on demand by _loadReferencedNotes.
+                  visibleNotes: noteitState.knownNotes,
                   revealedMessageIds: _revealedMessageIds,
                   onToggleReveal: _toggleReveal,
                   notifier: chatNotifier,

@@ -10,7 +10,7 @@
 begin;
 \ir _helpers.psql
 
-select plan(41);
+select plan(46);
 
 -- ---------------------------------------------------------------------------
 -- Code generation (S04)
@@ -180,6 +180,37 @@ select is(public.join_relationship_with_code('ZZZZZZZZ')->>'error_code', 'INVALI
 select tests.authenticate_as(:'k');
 select is(public.join_relationship_with_code('ZZZZZZZZ')->>'error_code', 'RATE_LIMITED', 'global storm: that user''s second failure is throttled');
 select throws_ok($$ select count(*) from public.pairing_attempt_failures $$, '42501', null, 'the global failure log is not readable by clients');
+
+-- ---------------------------------------------------------------------------
+-- Re-audit R-01: the throttle cannot be reset by deleting and recreating
+-- one's own profile row. Both counters used to reference public.users
+-- ON DELETE CASCADE, and a baseline policy let a user delete their own row,
+-- so `delete; insert` (the app's own self-heal shape) erased the lockout.
+-- ---------------------------------------------------------------------------
+select tests.create_user('z@test.local') as z \gset
+select tests.authenticate_as(:'z');
+select public.join_relationship_with_code('ZZZZZZZZ') from generate_series(1, 5);
+select is(public.join_relationship_with_code('ZZZZZZZY')->>'error_code', 'RATE_LIMITED', 'R-01: Z is locked out after 5 failures');
+
+select throws_ok($$ delete from public.users where id = auth.uid() $$, '42501', null,
+  'R-01: a user cannot delete their own profile row');
+select lives_ok($$ insert into public.users (id, display_name) values (auth.uid(), 'again') on conflict (id) do nothing $$,
+  'self-heal insert-if-absent still works (and is a no-op for an existing row)');
+select is(public.join_relationship_with_code('ZZZZZZZX')->>'error_code', 'RATE_LIMITED', 'R-01: the lockout survives the delete/recreate attempt');
+
+-- Defense in depth: even when a profile row IS removed by trusted code, the
+-- counters stay attached to the auth identity.
+select is(
+  array(
+    select conrelid::regclass::text || '->' || confrelid::regclass::text
+    from pg_constraint
+    where contype = 'f'
+      and conrelid in ('public.failed_pairing_attempts'::regclass, 'public.pairing_attempt_failures'::regclass)
+    order by 1
+  ),
+  array['failed_pairing_attempts->auth.users', 'pairing_attempt_failures->auth.users'],
+  'R-01: attempt counters reference auth.users, not the deletable profile row'
+);
 
 select * from finish();
 rollback;

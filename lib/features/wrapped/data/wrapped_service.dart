@@ -59,7 +59,9 @@ class WrappedService {
   // ─── Data Aggregation ───────────────────────────────────────────────────────
 
   /// Aggregates all provider data for [year] into an immutable [WrappedData].
-  /// Call this once before navigating to [WrappedScreen].
+  /// Call this once before navigating to [WrappedScreen], after loading the
+  /// year into the paged timeline and scrapbook (`ensureRangeLoaded`) --
+  /// this reads every memory/note loaded so far, not just the page window.
   static WrappedData aggregate({
     required int year,
     required WorkspaceState workspace,
@@ -81,7 +83,7 @@ class WrappedService {
         : DateHelper.relationshipTotalDays(startDate);
 
     // ── Memories ──────────────────────────────────────────────────────────────
-    final allMemories = tp.items;
+    final allMemories = tp.knownItems;
     final memoriesThisYear = allMemories
         .where((m) => m.date.year == year)
         .toList();
@@ -109,7 +111,7 @@ class WrappedService {
     }
 
     // ── Notes ─────────────────────────────────────────────────────────────────
-    final allNotes = np.visibleNotes;
+    final allNotes = np.knownNotes;
     final notesThisYear = allNotes
         .where((n) => n.createdAt.year == year)
         .toList();

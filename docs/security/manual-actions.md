@@ -101,3 +101,48 @@ The Phase 2 changes are client-side and only protect devices running a build
 that contains them. On older builds, logout still leaves the previous
 account's data and notification token behind. Nothing server-side needs to
 change.
+
+## 7. Apply the re-audit fix to the hosted project — NOT DONE
+
+`20261003020000_pairing_throttle_survives_profile_churn.sql` (re-audit R-01)
+has only been applied locally. It removes the client's ability to delete its
+own `public.users` row; account deletion is unaffected (it goes through
+`delete_current_user()`).
+
+## 8. Phase 3 on the hosted project — NOT DONE
+
+1. Push `20261003030000_private_couple_presence.sql` (the Realtime presence
+   policies).
+2. Ship the app build that joins presence as a private channel. Older builds
+   join it as a public channel, and since public and private channels with the
+   same name are separate, their "partner online" indicator won't see users on
+   the new build until both phones update.
+3. **Do NOT turn off "Allow public access"** in Realtime settings. An earlier
+   version of this document said to. It is not needed: verified against the
+   real Realtime server (`test/e2e/realtime_e2e_test.dart`), an outsider
+   joining the same topic as a public channel sees none of the couple's
+   private presence. And every feature stream (`.stream()`) joins a public
+   channel, so turning public access off risks breaking all live updates.
+
+## 9. Phases 5–7 on the hosted project — NOT DONE
+
+1. Push the remaining migrations: `20261003040000_query_matched_indexes.sql`,
+   `20261003050000_drop_legacy_objects.sql`,
+   `20261003060000_storage_cleanup_queue.sql`.
+2. Deploy both edge functions: `supabase functions deploy send-push-notification`
+   and `supabase functions deploy storage-cleanup`.
+3. Schedule `storage-cleanup`. It only accepts the project's service-role key
+   as its bearer token. One way is Supabase Cron (pg_cron + pg_net) calling the
+   function hourly, with the service-role key read from Supabase Vault, never
+   written into a migration or committed. Until it is scheduled, deleted
+   couples' photos stay queued (not lost, not removed). The function is
+   idempotent; a manual run is just a POST to `/functions/v1/storage-cleanup`.
+4. Couples deleted *before* the migration was applied were never queued. To
+   find their leftover folders, list `couples/<id>/` prefixes in the three
+   photo buckets whose `<id>` is no longer in `public.couples`, check them,
+   and remove them with
+   `supabase storage rm ss:///<bucket>/couples/<id> -r --experimental --yes`.
+5. Release signing: create `android/key.properties` and the upload keystore
+   on the build machine (not in the repository) before `flutter build
+   appbundle`; without it the release build now stops with an error instead
+   of silently producing a debug-signed bundle.

@@ -114,6 +114,11 @@ class NotificationService implements PushTokenRegistry {
     });
 
     _initialized = true;
+
+    // init() now runs after the first frame, so the session may already have
+    // tried (and failed, Firebase not yet up) to register this device's
+    // token. Register now; a no-op if signed out or already registered.
+    await syncTokenToSupabase();
   }
 
   Future<void> syncTokenToSupabase([String? explicitToken]) async {

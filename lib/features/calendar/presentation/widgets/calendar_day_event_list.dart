@@ -48,9 +48,7 @@ class CalendarDayEventList extends ConsumerWidget {
     final events = calendar.eventsForDay(selectedDay);
 
     // Check for other types
-    final timelineItems = timeline.items
-        .where((i) => isSameCalendarDay(i.date, selectedDay))
-        .toList();
+    final timelineItems = timeline.memoriesOn(selectedDay);
     final bucketItems = bucketList.items
         .where(
           (i) =>

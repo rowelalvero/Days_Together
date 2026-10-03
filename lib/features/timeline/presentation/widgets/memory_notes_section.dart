@@ -97,10 +97,9 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
     final tpState = ref.watch(timelineControllerProvider);
     final tp = ref.read(timelineControllerProvider.notifier);
 
-    final currentItem = tpState.items.firstWhere(
-      (i) => i.id == widget.item.id,
-      orElse: () => widget.item,
-    );
+    // Also covers a memory loaded outside the page window (opened from a
+    // notification), so new notes on it show live.
+    final currentItem = tpState.itemById(widget.item.id) ?? widget.item;
 
     // Sort notes: pinned first, then by date descending (newest first)
     final sortedNotes = List<CommentData>.from(currentItem.comments)

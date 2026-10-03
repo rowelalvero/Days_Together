@@ -63,7 +63,8 @@ class _InsightsBannerState extends State<InsightsBanner> {
   }
 
   void _generateInsights() {
-    final memCount = widget.timelineProvider.items.length;
+    // Whole timeline, not the loaded page window.
+    final memCount = widget.timelineProvider.memoryCount;
     final bucketPercent = widget.bucketProvider.progress * 100;
     final years = DateHelper.relationshipPreciseAge(
       widget.workspace.startDate,

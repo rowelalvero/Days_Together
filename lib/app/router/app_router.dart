@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:days_together/shared/models/timeline_model.dart';
 import 'package:days_together/core/session/couple_session.dart'
     show SessionStage, computeSessionStage, coupleSessionProvider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:days_together/features/timeline/timeline_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/app/shell/love_story_screen.dart';
 import 'package:days_together/features/authentication/presentation/pages/auth_screen.dart';
@@ -23,7 +21,7 @@ import 'package:days_together/features/theme/presentation/pages/theme_selector_s
 import 'package:days_together/features/love_studio/presentation/pages/ai_love_letter_screen.dart';
 import 'package:days_together/features/love_studio/presentation/pages/relationship_insights_screen.dart';
 import 'package:days_together/features/love_studio/presentation/pages/time_capsule_screen.dart';
-import 'package:days_together/features/timeline/presentation/pages/memory_detail_screen.dart';
+import 'package:days_together/features/timeline/presentation/pages/memory_route_screen.dart';
 import 'package:days_together/features/bucket_list/presentation/pages/bucket_list_screen.dart';
 import 'package:days_together/features/calendar/presentation/pages/calendar_screen.dart';
 import 'package:days_together/features/gift_reminders/presentation/pages/gift_reminders_screen.dart';
@@ -439,28 +437,11 @@ GoRouter ensureAppRouter({required Listenable refreshListenable}) {
       ),
       GoRoute(
         path: Routes.memoryPattern,
-        builder: (context, state) {
-          final itemId = state.pathParameters['itemId']!;
-          final items = ProviderScope.containerOf(
-            context,
-            listen: false,
-          ).read(timelineControllerProvider).items;
-          TimelineItemData? item;
-          try {
-            item = items.firstWhere((i) => i.id == itemId);
-          } catch (_) {
-            item = null;
-          }
-          // The item may not be loaded yet (deep link arriving before
-          // TimelineController syncs) or may no longer exist (deleted since
-          // the notification was sent) -- fall back to the home timeline
-          // tab rather than crashing, matching the try/catch discard the
-          // old notification_service.dart call site used.
-          if (item == null) {
-            return LoveStoryScreen(initialIndex: 1);
-          }
-          return MemoryDetailScreen(item: item);
-        },
+        // The timeline keeps only a page of memories loaded, so a tapped
+        // notification's memory may not be in memory: MemoryRouteScreen
+        // shows it if it is and fetches it if not (or says it was deleted).
+        builder: (context, state) =>
+            MemoryRouteScreen(itemId: state.pathParameters['itemId']!),
       ),
     ],
   );

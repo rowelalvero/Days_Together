@@ -21,6 +21,7 @@ import 'package:days_together/features/love_studio/time_capsule_controller.dart'
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
 import 'package:days_together/features/wrapped/data/wrapped_service.dart';
+import 'package:days_together/shared/widgets/safe_loading_dialog.dart';
 
 /// The "More" tab: profile summary, app settings, and account actions.
 ///
@@ -32,6 +33,33 @@ class SettingsTab extends ConsumerWidget {
 
   Future<void> _launchWrapped(BuildContext context, WidgetRef ref) async {
     final year = DateTime.now().year;
+    // The timeline and scrapbook keep only a page loaded; Wrapped summarizes
+    // the whole year, so load it first (months already loaded are skipped).
+    final from = DateTime(year);
+    final to = DateTime(year + 1);
+    final timeline = ref.read(timelineControllerProvider.notifier);
+    final noteit = ref.read(noteitControllerProvider.notifier);
+    final loaded = await SafeLoadingDialog.run<bool>(
+      context: context,
+      future: () async {
+        final (memories, notes) = await (
+          timeline.ensureRangeLoaded(from, to),
+          noteit.ensureRangeLoaded(from, to),
+        ).wait;
+        return memories && notes;
+      },
+      loadingMessage: 'Gathering your year...',
+    );
+    if (!context.mounted) return;
+    if (loaded != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't load this year's memories. Try again."),
+        ),
+      );
+      return;
+    }
+
     final workspace = ref.read(workspaceControllerProvider);
     final profile = ref.read(profileControllerProvider);
     final tp = ref.read(timelineControllerProvider);

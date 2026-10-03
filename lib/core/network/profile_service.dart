@@ -32,17 +32,6 @@ class ProfileService {
     );
   }
 
-  /// Updates relationship details in the `couples` table.
-  Future<void> updateCoupleDetails(
-    String coupleId,
-    Map<String, dynamic> data,
-  ) async {
-    await Supabase.instance.client
-        .from(Tables.couples)
-        .update(data)
-        .eq('id', coupleId);
-  }
-
   /// Updates fields in the `license_details` table.
   Future<void> updateLicenseDetails(
     String coupleId,

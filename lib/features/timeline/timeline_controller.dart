@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:days_together/core/models/paging_status.dart';
+import 'package:days_together/core/network/row_change.dart';
 import 'package:days_together/core/riverpod/supabase_lifecycle_notifier.dart';
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/timeline/timeline_state.dart';
@@ -34,20 +37,59 @@ import 'package:days_together/core/constants/tables.dart';
 /// just-deleted item via `_locallyDeletedIds` -- exactly as the original
 /// does, for the same reason (instant delete feedback matters more than a
 /// round-trip).
+///
+/// Paged: when paired, memories load [pageSize] at a time in display order
+/// ([loadMore], triggered from [setCurrentScrubIndex] near the end of the
+/// window), and live updates arrive as individual row changes, so the whole
+/// table is never downloaded. Whole-timeline figures come from
+/// [fetchServerStats] (see [TimelineState.memoryCount]). Screens that need
+/// memories by date or id rather than by position -- the calendar, Wrapped,
+/// a tapped notification -- load them with [ensureRangeLoaded] and
+/// [loadMemory] into [TimelineState.detached], never into the window.
 class TimelineController extends Notifier<TimelineState>
     with SupabaseLifecycleNotifier<TimelineState> {
+  static const int pageSize = 10;
+
+  /// Start fetching the next page this many items before the end.
+  static const int prefetchThreshold = 3;
+
+  /// Upper bound for a re-sync that keeps an already scrolled-through window.
+  static const int _maxResyncWindow = 200;
+
   final LocalPersistenceService _repository = LocalPersistenceService();
   final ImagePicker _picker = ImagePicker();
   final Set<String> _locallyDeletedIds = {};
   final Set<String> _localMutations = {};
+
+  /// Keyset position of the last memory paged in from the server, in the
+  /// current sort order. Realtime inserts don't move it, so they can never
+  /// make a page skip memories.
+  TimelineCursor? _cursor;
+
+  /// How many memories have been paged in from the server; a re-sync
+  /// (reconnect) reloads that many so the user keeps their place.
+  int _pagedCount = 0;
+  bool _loadingMore = false;
+  Timer? _statsDebounce;
+
+  /// In-flight range and single-memory loads, so overlapping requests for
+  /// the same data share one fetch.
+  final Map<String, Future<bool>> _rangeLoads = {};
+  final Map<String, Future<TimelineItemData?>> _memoryLoads = {};
+
+  /// The saved sort order and the local cache, loaded at build. The server
+  /// sync waits for both, so it pages in the right order and the (older)
+  /// cache can never land on top of the fresh page.
+  Future<void> _localLoad = Future.value();
 
   @override
   String get tableName => Tables.timelineItems;
 
   @override
   TimelineState build() {
+    ref.onDispose(() => _statsDebounce?.cancel());
+    _localLoad = _loadSortOrder().then((_) => _loadFromCache());
     initSessionLifecycle();
-    _loadSortOrder().then((_) => _loadFromCache());
     return const TimelineState();
   }
 
@@ -63,11 +105,13 @@ class TimelineController extends Notifier<TimelineState>
   }
 
   List<TimelineItemData> _sorted(List<TimelineItemData> items, bool ascending) {
+    // (date, id): the same order the server pages in.
     final sorted = List<TimelineItemData>.from(items)
-      ..sort(
-        (a, b) =>
-            ascending ? a.date.compareTo(b.date) : b.date.compareTo(a.date),
-      );
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        final cmp = byDate != 0 ? byDate : a.id.compareTo(b.id);
+        return ascending ? cmp : -cmp;
+      });
     for (var i = 0; i < sorted.length; i++) {
       sorted[i] = sorted[i].copyWith(position: i);
     }
@@ -80,6 +124,15 @@ class TimelineController extends Notifier<TimelineState>
         ? state.items[state.currentScrubIndex]
         : null;
     final nextAscending = !state.isAscending;
+    if (coupleId != null && state.paging.hasMore) {
+      // Only part of the timeline is loaded, so the other end is not here:
+      // start again from the first page in the new order.
+      state = state.copyWith(isAscending: nextAscending, currentScrubIndex: 0);
+      _pagedCount = 0;
+      await _saveSortOrder(nextAscending);
+      await syncInitialData();
+      return;
+    }
     final resorted = _sorted(state.items, nextAscending);
 
     var newIndex = state.currentScrubIndex;
@@ -94,18 +147,34 @@ class TimelineController extends Notifier<TimelineState>
       currentScrubIndex: TimelineState.clampIndex(resorted, newIndex),
     );
 
+    await _saveSortOrder(nextAscending);
+    await _persistLocalOnly();
+  }
+
+  Future<void> _saveSortOrder(bool ascending) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(PrefsKeys.timelineIsAscending, nextAscending);
+      await prefs.setBool(PrefsKeys.timelineIsAscending, ascending);
     } catch (e) {
       debugPrint('TimelineController.toggleSortOrder error: $e');
     }
-    await _persistLocalOnly();
   }
 
   @override
   Future<void> purgeCache() async {
-    state = state.copyWith(items: [], isLoading: false);
+    _cursor = null;
+    _pagedCount = 0;
+    _statsDebounce?.cancel();
+    _rangeLoads.clear();
+    _memoryLoads.clear();
+    state = state.copyWith(
+      items: [],
+      isLoading: false,
+      paging: const PagingStatus(),
+      detached: const {},
+      loadedMonths: const {},
+      clearServerStats: true,
+    );
     try {
       await _repository.saveTimelineItems([]);
     } catch (e) {
@@ -153,113 +222,516 @@ class TimelineController extends Notifier<TimelineState>
     );
   }
 
+  /// One page of memories in display order, strictly after [after] in that
+  /// order. Overridden in tests.
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchPage({
+    required bool ascending,
+    TimelineCursor? after,
+    required int limit,
+  }) => queryPage(
+    Supabase.instance.client,
+    coupleId: coupleId!,
+    ascending: ascending,
+    after: after,
+    limit: limit,
+  );
+
+  /// Whole-timeline figures the page window can't answer. Overridden in
+  /// tests.
+  @visibleForTesting
+  Future<TimelineServerStats> fetchServerStats() =>
+      queryServerStats(Supabase.instance.client, coupleId: coupleId!);
+
+  /// The page query: keyset on (date, id), matching [_sorted], served by the
+  /// (couple_id, date) index. Static so the e2e test runs this exact query
+  /// against a real server.
+  static Future<List<Map<String, dynamic>>> queryPage(
+    SupabaseClient client, {
+    required String coupleId,
+    required bool ascending,
+    TimelineCursor? after,
+    required int limit,
+  }) async {
+    var query = client
+        .from(Tables.timelineItems)
+        .select()
+        .eq('couple_id', coupleId);
+    if (after != null) {
+      final op = ascending ? 'gt' : 'lt';
+      final date = after.date.toUtc().toIso8601String();
+      query = query.or(
+        'date.$op."$date",and(date.eq."$date",id.$op.${after.id})',
+      );
+    }
+    return await query
+        .order('date', ascending: ascending)
+        .order('id', ascending: ascending)
+        .limit(limit);
+  }
+
+  /// Memories dated in [from, to), oldest first, after [after]; used to
+  /// load whole months/years for the calendar and Wrapped.
+  static Future<List<Map<String, dynamic>>> queryRange(
+    SupabaseClient client, {
+    required String coupleId,
+    required DateTime from,
+    required DateTime to,
+    TimelineCursor? after,
+    required int limit,
+  }) async {
+    var query = client
+        .from(Tables.timelineItems)
+        .select()
+        .eq('couple_id', coupleId)
+        .gte('date', from.toUtc().toIso8601String())
+        .lt('date', to.toUtc().toIso8601String());
+    if (after != null) {
+      final date = after.date.toUtc().toIso8601String();
+      query = query.or(
+        'date.gt."$date",and(date.eq."$date",id.gt.${after.id})',
+      );
+    }
+    return await query
+        .order('date', ascending: true)
+        .order('id', ascending: true)
+        .limit(limit);
+  }
+
+  /// One memory by id, or null if it doesn't exist (or isn't this
+  /// couple's: RLS hides it).
+  static Future<Map<String, dynamic>?> queryById(
+    SupabaseClient client, {
+    required String coupleId,
+    required String id,
+  }) {
+    return client
+        .from(Tables.timelineItems)
+        .select()
+        .eq('couple_id', coupleId)
+        .eq('id', id)
+        .maybeSingle();
+  }
+
+  /// Overridden in tests.
+  @visibleForTesting
+  Future<List<Map<String, dynamic>>> fetchRange({
+    required DateTime from,
+    required DateTime to,
+    TimelineCursor? after,
+    required int limit,
+  }) => queryRange(
+    Supabase.instance.client,
+    coupleId: coupleId!,
+    from: from,
+    to: to,
+    after: after,
+    limit: limit,
+  );
+
+  /// Overridden in tests.
+  @visibleForTesting
+  Future<Map<String, dynamic>?> fetchById(String id) =>
+      queryById(Supabase.instance.client, coupleId: coupleId!, id: id);
+
+  /// How many memories and photo memories the couple has, and the earliest
+  /// one. A photo memory is one with a non-empty image_path or
+  /// network_image_url, as in [TimelineState.hasPhoto].
+  static Future<TimelineServerStats> queryServerStats(
+    SupabaseClient client, {
+    required String coupleId,
+  }) async {
+    final (total, photos, earliest) = await (
+      client
+          .from(Tables.timelineItems)
+          .select('id')
+          .eq('couple_id', coupleId)
+          .limit(1)
+          .count(CountOption.exact),
+      client
+          .from(Tables.timelineItems)
+          .select('id')
+          .eq('couple_id', coupleId)
+          .or('image_path.neq."",network_image_url.neq.""')
+          .limit(1)
+          .count(CountOption.exact),
+      client
+          .from(Tables.timelineItems)
+          .select()
+          .eq('couple_id', coupleId)
+          .order('date', ascending: true)
+          .order('id', ascending: true)
+          .limit(1),
+    ).wait;
+    return (
+      total: total.count,
+      photos: photos.count,
+      earliest: earliest.isEmpty ? null : earliest.first,
+    );
+  }
+
+  static TimelineCursor? _cursorAfter(List<TimelineItemData> page) =>
+      page.isEmpty ? null : (date: page.last.date, id: page.last.id);
+
   @override
   Future<void> syncInitialData() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
+    // Also keeps every state read below out of build(), which can call this
+    // synchronously before the first state exists.
+    await _localLoad;
+    if (isStale(generation) || !ref.mounted) return;
+    final ascending = state.isAscending;
+    // A re-sync (reconnect) reloads the window the user has already scrolled
+    // through, so they keep their place.
+    final limit = _pagedCount.clamp(pageSize, _maxResyncWindow);
     try {
-      final List<dynamic> res = await Supabase.instance.client
-          .from(Tables.timelineItems)
-          .select()
-          .eq('couple_id', coupleId!)
-          .order('date', ascending: false)
-          .limit(100);
-      if (!ref.mounted) return;
+      final res = await fetchPage(ascending: ascending, limit: limit);
+      if (isStale(generation) || state.isAscending != ascending) return;
+      final page = res.map(_parseItem).toList();
+      _cursor = _cursorAfter(page);
+      _pagedCount = page.length;
       final parsed = _sorted(
-        res.map((data) => _parseItem(data)).toList(),
-        state.isAscending,
+        page.where((i) => !_locallyDeletedIds.contains(i.id)).toList(),
+        ascending,
       );
 
-      state = state.copyWith(items: parsed, isLoading: false);
+      state = state.copyWith(
+        items: parsed,
+        isLoading: false,
+        paging: PagingStatus(hasMore: page.length == limit),
+        currentScrubIndex: TimelineState.clampIndex(
+          parsed,
+          state.currentScrubIndex,
+        ),
+      );
       await _repository.saveTimelineItems(state.items);
     } catch (e) {
       debugPrint('TimelineController.syncInitialData error: $e');
+      if (isStale(generation) || !ref.mounted) return;
+      // The cached window (if any) stays on screen; the footer offers a
+      // retry, which re-runs this since no page has been loaded yet.
+      _cursor = null;
+      state = state.copyWith(
+        isLoading: false,
+        paging: const PagingStatus(hasMore: true, loadMoreFailed: true),
+      );
+      return;
+    }
+    await _refreshServerStats();
+  }
+
+  /// Appends the next page. Safe to call repeatedly: one fetch at a time,
+  /// and a no-op once the server has nothing more.
+  Future<void> loadMore() async {
+    final cursor = _cursor;
+    if (coupleId == null ||
+        !state.paging.hasMore ||
+        _loadingMore ||
+        cursor == null) {
+      return;
+    }
+    _loadingMore = true;
+    final generation = sessionGeneration;
+    final ascending = state.isAscending;
+    state = state.copyWith(
+      paging: state.paging.copyWith(isLoadingMore: true, loadMoreFailed: false),
+    );
+    try {
+      final res = await fetchPage(
+        ascending: ascending,
+        after: cursor,
+        limit: pageSize,
+      );
+      if (isStale(generation) || state.isAscending != ascending) return;
+      final page = res.map(_parseItem).toList();
+      _cursor = _cursorAfter(page) ?? cursor;
+      _pagedCount += page.length;
+      final byId = {for (final item in state.items) item.id: item};
+      for (final item in page) {
+        if (!_locallyDeletedIds.contains(item.id)) byId[item.id] = item;
+      }
+      final merged = _sorted(byId.values.toList(), ascending);
+      state = state.copyWith(
+        items: merged,
+        paging: PagingStatus(hasMore: page.length == pageSize),
+        currentScrubIndex: TimelineState.clampIndex(
+          merged,
+          state.currentScrubIndex,
+        ),
+      );
+      await _persistLocalOnly();
+    } catch (e) {
+      debugPrint('TimelineController.loadMore error: $e');
+      if (ref.mounted && !isStale(generation)) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(loadMoreFailed: true),
+        );
+      }
+    } finally {
+      _loadingMore = false;
+      if (ref.mounted && state.paging.isLoadingMore) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(isLoadingMore: false),
+        );
+      }
     }
   }
 
-  @override
-  void onRealtimeData(List<Map<String, dynamic>> dataList) {
-    if (!ref.mounted) return;
-    // Filter out locally deleted items to handle stream filter/delete timing issues.
-    final activeDataList = dataList
-        .where((data) => !_locallyDeletedIds.contains(data['id'] as String))
-        .toList();
-    final incoming = _sorted(
-      activeDataList.map((data) => _parseItem(data)).toList(),
-      state.isAscending,
-    );
-    final wasLoading = state.isLoading;
-    final oldItems = state.items;
-
-    if (!wasLoading) {
-      final added = incoming
-          .where((inc) => !oldItems.any((old) => old.id == inc.id))
-          .toList();
-      for (final item in added) {
-        if (_localMutations.contains(item.id)) {
-          _localMutations.remove(item.id);
-          continue;
-        }
-        RecentActivityService.instance.logActivity(
-          activityType: 'created',
-          title: 'Partner added a memory 📸',
-          description: 'Added: "${item.title}"',
-          icon: '📸',
-          referenceId: item.id,
-          route: 'timeline',
+  /// The footer's "Try again": reloads the first page if that is what
+  /// failed, otherwise the next one.
+  Future<void> retryLoad() async {
+    if (_cursor == null) {
+      _pagedCount = 0;
+      state = state.copyWith(
+        paging: state.paging.copyWith(isLoadingMore: true),
+      );
+      await syncInitialData();
+      if (ref.mounted && state.paging.isLoadingMore) {
+        state = state.copyWith(
+          paging: state.paging.copyWith(isLoadingMore: false),
         );
       }
+      return;
+    }
+    await loadMore();
+  }
 
-      for (final inc in incoming) {
-        final matchIndex = oldItems.indexWhere((old) => old.id == inc.id);
-        final match = matchIndex != -1 ? oldItems[matchIndex] : null;
-        if (match != null &&
-            (match.title != inc.title ||
-                match.description != inc.description ||
-                match.date != inc.date ||
-                match.networkImageUrl != inc.networkImageUrl)) {
-          if (_localMutations.contains(inc.id)) {
-            _localMutations.remove(inc.id);
-            continue;
-          }
-          RecentActivityService.instance.logActivity(
-            activityType: 'updated',
-            title: 'Partner updated a memory ✏️',
-            description: 'Updated: "${inc.title}"',
-            icon: '✏️',
-            referenceId: inc.id,
-            route: 'timeline',
-          );
-        }
-      }
-
-      final deleted = oldItems
-          .where(
-            (old) =>
-                !incoming.any((inc) => inc.id == old.id) &&
-                !_locallyDeletedIds.contains(old.id),
-          )
-          .toList();
-      for (final item in deleted) {
-        if (_localMutations.contains(item.id)) {
-          _localMutations.remove(item.id);
-          continue;
-        }
-        RecentActivityService.instance.logActivity(
-          activityType: 'deleted',
-          title: 'Partner deleted a memory 🗑️',
-          description: 'Deleted: "${item.title}"',
-          icon: '🗑️',
-          referenceId: item.id,
-          route: 'timeline',
-        );
+  /// Makes sure every memory dated in [from, to) is loaded (in the window or
+  /// [TimelineState.detached]), a whole month at a time; already-loaded
+  /// months are not fetched again, and overlapping calls share one fetch.
+  /// Returns false if the fetch failed. Unpaired, everything is local
+  /// already.
+  Future<bool> ensureRangeLoaded(DateTime from, DateTime to) async {
+    if (coupleId == null) return true;
+    final months = <DateTime>[];
+    for (
+      var m = DateTime(from.year, from.month);
+      m.isBefore(to);
+      m = DateTime(m.year, m.month + 1)
+    ) {
+      if (!state.loadedMonths.contains(TimelineState.monthKey(m))) {
+        months.add(m);
       }
     }
+    if (months.isEmpty) return true;
+    final start = months.first;
+    final end = DateTime(months.last.year, months.last.month + 1);
+    final key = '${start.toIso8601String()}|${end.toIso8601String()}';
+    return _rangeLoads[key] ??= _loadRange(start, end, months).whenComplete(() {
+      // Block body: remove() returns this very future, and whenComplete
+      // waits on whatever its callback returns -- an arrow body deadlocks.
+      _rangeLoads.remove(key);
+    });
+  }
 
+  /// [ensureRangeLoaded] for the month containing [month].
+  Future<bool> ensureMonthLoaded(DateTime month) => ensureRangeLoaded(
+    DateTime(month.year, month.month),
+    DateTime(month.year, month.month + 1),
+  );
+
+  Future<bool> _loadRange(
+    DateTime from,
+    DateTime to,
+    List<DateTime> months,
+  ) async {
+    final generation = sessionGeneration;
+    const chunk = 500;
+    final found = <TimelineItemData>[];
+    try {
+      TimelineCursor? after;
+      while (true) {
+        final rows = await fetchRange(
+          from: from,
+          to: to,
+          after: after,
+          limit: chunk,
+        );
+        if (isStale(generation)) return false;
+        final page = rows.map(_parseItem).toList();
+        found.addAll(page);
+        if (page.length < chunk) break;
+        after = _cursorAfter(page);
+      }
+    } catch (e) {
+      debugPrint('TimelineController.ensureRangeLoaded error: $e');
+      return false;
+    }
+    if (!ref.mounted) return false;
+    final detached = {...state.detached};
+    for (final item in found) {
+      if (!_locallyDeletedIds.contains(item.id)) detached[item.id] = item;
+    }
     state = state.copyWith(
-      items: incoming,
+      detached: detached,
+      loadedMonths: {
+        ...state.loadedMonths,
+        for (final m in months) TimelineState.monthKey(m),
+      },
+    );
+    return true;
+  }
+
+  /// A memory by id, fetched if it isn't loaded -- for a tapped notification
+  /// or a link to a memory outside the window. Null if it no longer exists;
+  /// throws if it couldn't be fetched, so the caller can offer a retry.
+  Future<TimelineItemData?> loadMemory(String id) {
+    final known = state.itemById(id);
+    if (known != null) return Future.value(known);
+    if (coupleId == null || _locallyDeletedIds.contains(id)) {
+      return Future.value(null);
+    }
+    return _memoryLoads[id] ??= _fetchMemory(id).whenComplete(() {
+      // Block body: remove() returns this very future, and whenComplete
+      // waits on whatever its callback returns -- an arrow body deadlocks.
+      _memoryLoads.remove(id);
+    });
+  }
+
+  Future<TimelineItemData?> _fetchMemory(String id) async {
+    final generation = sessionGeneration;
+    final row = await fetchById(id);
+    if (isStale(generation) || !ref.mounted || row == null) return null;
+    if (_locallyDeletedIds.contains(id)) return null;
+    // Arrived via realtime meanwhile.
+    final known = state.itemById(id);
+    if (known != null) return known;
+    final item = _parseItem(row);
+    state = state.copyWith(detached: {...state.detached, id: item});
+    return item;
+  }
+
+  Future<void> _refreshServerStats() async {
+    if (coupleId == null) return;
+    final generation = sessionGeneration;
+    try {
+      final stats = await fetchServerStats();
+      if (isStale(generation)) return;
+      final earliest = stats.earliest == null
+          ? null
+          : _parseItem(stats.earliest!);
+      state = state
+          .copyWith(clearServerStats: true)
+          .copyWith(
+            totalCount: stats.total,
+            photoCount: stats.photos,
+            earliestItem: earliest,
+          );
+    } catch (e) {
+      debugPrint('TimelineController._refreshServerStats error: $e');
+    }
+  }
+
+  void _scheduleStatsRefresh() {
+    _statsDebounce?.cancel();
+    _statsDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (ref.mounted) _refreshServerStats();
+    });
+  }
+
+  /// Row changes, not the whole table on every launch, reconnect and edit
+  /// (the `.stream()` this replaces re-sent every memory each time).
+  @override
+  bool get usesRowChanges => true;
+
+  @override
+  void onRowChange(RowChange change) {
+    if (!ref.mounted) return;
+    final id = change.id;
+    if (id == null) return;
+    final oldItems = state.items;
+    final index = oldItems.indexWhere((item) => item.id == id);
+    final detachedOld = state.detached[id];
+    final known = index != -1 ? oldItems[index] : detachedOld;
+    final logActivity = !state.isLoading;
+
+    if (change.type == RowChangeType.delete) {
+      _scheduleStatsRefresh();
+      if (known == null) return;
+      if (detachedOld != null) {
+        state = state.copyWith(detached: {...state.detached}..remove(id));
+      }
+      if (index != -1) _setItems([...oldItems]..removeAt(index));
+      if (_localMutations.remove(id) || !logActivity) return;
+      RecentActivityService.instance.logActivity(
+        activityType: 'deleted',
+        title: 'Partner deleted a memory 🗑️',
+        description: 'Deleted: "${known.title}"',
+        icon: '🗑️',
+        referenceId: id,
+        route: 'timeline',
+      );
+      return;
+    }
+
+    // Guards against an in-flight echo resurrecting a just-deleted memory.
+    if (_locallyDeletedIds.contains(id)) return;
+    final incoming = _parseItem(change.newRecord);
+
+    if (known == null) {
+      final monthLoaded = state.loadedMonths.contains(
+        TimelineState.monthKey(incoming.date),
+      );
+      if (change.type == RowChangeType.insert || !state.paging.hasMore) {
+        // New memories show straight away (and with nothing left to page
+        // in, an unknown one is new to this device too).
+        _setItems([...oldItems, incoming]);
+      } else if (monthLoaded) {
+        // Moved into a month the calendar has loaded.
+        state = state.copyWith(detached: {...state.detached, id: incoming});
+        return;
+      } else {
+        // Outside the window: it arrives with its page.
+        return;
+      }
+      _scheduleStatsRefresh();
+      if (_localMutations.remove(id) || !logActivity) return;
+      RecentActivityService.instance.logActivity(
+        activityType: 'created',
+        title: 'Partner added a memory 📸',
+        description: 'Added: "${incoming.title}"',
+        icon: '📸',
+        referenceId: id,
+        route: 'timeline',
+      );
+      return;
+    }
+
+    if (detachedOld != null) {
+      state = state.copyWith(detached: {...state.detached, id: incoming});
+    }
+    if (index != -1) _setItems([...oldItems]..[index] = incoming);
+    if (TimelineState.hasPhoto(known) != TimelineState.hasPhoto(incoming) ||
+        known.date != incoming.date) {
+      _scheduleStatsRefresh();
+    }
+    final changed =
+        known.title != incoming.title ||
+        known.description != incoming.description ||
+        known.date != incoming.date ||
+        known.networkImageUrl != incoming.networkImageUrl;
+    if (!changed) return;
+    if (_localMutations.remove(id) || !logActivity) return;
+    RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Partner updated a memory ✏️',
+      description: 'Updated: "${incoming.title}"',
+      icon: '✏️',
+      referenceId: id,
+      route: 'timeline',
+    );
+  }
+
+  void _setItems(List<TimelineItemData> items) {
+    final sorted = _sorted(items, state.isAscending);
+    state = state.copyWith(
+      items: sorted,
       isLoading: false,
       currentScrubIndex: TimelineState.clampIndex(
-        incoming,
+        sorted,
         state.currentScrubIndex,
       ),
     );
@@ -417,8 +889,10 @@ class TimelineController extends Notifier<TimelineState>
     TimelineItemData updatedItem,
   ) async {
     _localMutations.add(id);
-    final index = state.items.indexWhere((item) => item.id == id);
-    if (index == -1) {
+    // The window or a memory loaded on its own (e.g. opened from a
+    // notification).
+    final existing = state.itemById(id);
+    if (existing == null) {
       debugPrint('TimelineController.updateTimelineItem: id $id not found');
       return;
     }
@@ -427,7 +901,7 @@ class TimelineController extends Notifier<TimelineState>
       try {
         String? imageRef = updatedItem.networkImageUrl;
         if (updatedItem.imagePath != null &&
-            updatedItem.imagePath != state.items[index].imagePath) {
+            updatedItem.imagePath != existing.imagePath) {
           final file = File(updatedItem.imagePath!);
           if (await file.exists()) {
             final storagePath =
@@ -521,6 +995,9 @@ class TimelineController extends Notifier<TimelineState>
   }
 
   void _applyLocalUpdate(String id, TimelineItemData updatedItem) {
+    if (state.detached.containsKey(id)) {
+      state = state.copyWith(detached: {...state.detached, id: updatedItem});
+    }
     final index = state.items.indexWhere((item) => item.id == id);
     if (index == -1) return;
     final items = [...state.items];
@@ -537,8 +1014,8 @@ class TimelineController extends Notifier<TimelineState>
 
   Future<void> deleteTimelineItem(String id) async {
     _localMutations.add(id);
-    final index = state.items.indexWhere((item) => item.id == id);
-    if (index == -1) {
+    final item = state.itemById(id);
+    if (item == null) {
       debugPrint('TimelineController.deleteTimelineItem: id $id not found');
       return;
     }
@@ -546,7 +1023,6 @@ class TimelineController extends Notifier<TimelineState>
     // Add to locally deleted set to prevent stream updates from bringing it back.
     _locallyDeletedIds.add(id);
 
-    final item = state.items[index];
     if (item.imagePath != null) {
       try {
         await _repository.deleteImage(item.imagePath!);
@@ -559,7 +1035,10 @@ class TimelineController extends Notifier<TimelineState>
     // original -- delete is always optimistic-local, paired or not, unlike
     // add/update.
     if (!ref.mounted) return;
-    final remaining = [...state.items]..removeAt(index);
+    if (state.detached.containsKey(id)) {
+      state = state.copyWith(detached: {...state.detached}..remove(id));
+    }
+    final remaining = state.items.where((i) => i.id != id).toList();
     for (var i = 0; i < remaining.length; i++) {
       remaining[i] = remaining[i].copyWith(position: i);
     }
@@ -677,6 +1156,10 @@ class TimelineController extends Notifier<TimelineState>
     state = state.copyWith(
       currentScrubIndex: TimelineState.clampIndex(state.items, index),
     );
+    if (state.paging.canAutoLoad &&
+        state.currentScrubIndex >= state.items.length - prefetchThreshold) {
+      loadMore();
+    }
   }
 
   Future<String?> pickImage(BuildContext context) async {
@@ -722,10 +1205,10 @@ class TimelineController extends Notifier<TimelineState>
     String content,
     String authorName,
   ) async {
-    final index = state.items.indexWhere((item) => item.id == itemId);
-    if (index == -1) return;
+    final existing = state.itemById(itemId);
+    if (existing == null) return;
 
-    final updatedComments = List<CommentData>.from(state.items[index].comments)
+    final updatedComments = List<CommentData>.from(existing.comments)
       ..add(
         CommentData(
           authorName: authorName,
@@ -734,7 +1217,7 @@ class TimelineController extends Notifier<TimelineState>
         ),
       );
 
-    final updatedItem = state.items[index].copyWith(comments: updatedComments);
+    final updatedItem = existing.copyWith(comments: updatedComments);
     await updateTimelineItem(itemId, updatedItem);
 
     if (coupleId != null) {
@@ -754,27 +1237,36 @@ class TimelineController extends Notifier<TimelineState>
   }
 
   Future<void> deleteCommentFromItem(String itemId, String commentId) async {
-    final index = state.items.indexWhere((item) => item.id == itemId);
-    if (index == -1) return;
+    final existing = state.itemById(itemId);
+    if (existing == null) return;
 
-    final updatedComments = state.items[index].comments
+    final updatedComments = existing.comments
         .where((c) => c.id != commentId)
         .toList();
-    final updatedItem = state.items[index].copyWith(comments: updatedComments);
+    final updatedItem = existing.copyWith(comments: updatedComments);
     await updateTimelineItem(itemId, updatedItem);
   }
 
   Future<void> togglePinComment(String itemId, String commentId) async {
-    final index = state.items.indexWhere((item) => item.id == itemId);
-    if (index == -1) return;
+    final existing = state.itemById(itemId);
+    if (existing == null) return;
 
-    final updatedComments = state.items[index].comments.map((c) {
+    final updatedComments = existing.comments.map((c) {
       return c.id == commentId ? c.copyWith(isPinned: !c.isPinned) : c;
     }).toList();
-    final updatedItem = state.items[index].copyWith(comments: updatedComments);
+    final updatedItem = existing.copyWith(comments: updatedComments);
     await updateTimelineItem(itemId, updatedItem);
   }
 }
+
+/// Keyset position in the timeline's (date, id) order.
+typedef TimelineCursor = ({DateTime date, String id});
+
+typedef TimelineServerStats = ({
+  int total,
+  int photos,
+  Map<String, dynamic>? earliest,
+});
 
 final timelineControllerProvider =
     NotifierProvider.autoDispose<TimelineController, TimelineState>(

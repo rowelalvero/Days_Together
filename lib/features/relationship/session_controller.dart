@@ -35,11 +35,18 @@ class SessionController extends Notifier<SessionState> {
       isCreator: session.isCreator,
       onboardingCompleted: session.onboardingCompleted,
       showPartnerDeletedNotice: session.showPartnerDeletedNotice,
+      partnerKeyChanged: session.partnerKeyChanged,
     );
     if (next != state) {
       state = next;
     }
   }
+
+  Future<String?> loadSafetyNumber() =>
+      ref.read(coupleSessionProvider).loadSafetyNumber();
+
+  Future<void> acceptPartnerKeyChange() =>
+      ref.read(coupleSessionProvider).acceptPartnerKeyChange();
 
   Future<bool> joinWithCode(String code) =>
       ref.read(coupleSessionProvider).joinWithCode(code);

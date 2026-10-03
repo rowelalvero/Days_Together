@@ -8,7 +8,7 @@ import 'package:days_together/features/love_studio/presentation/widgets/generate
 import 'package:days_together/features/love_studio/presentation/widgets/generating_letter_state.dart';
 import 'package:days_together/features/love_studio/presentation/widgets/love_letter_app_bar.dart';
 import 'package:days_together/features/love_studio/presentation/widgets/love_letter_card.dart';
-import 'package:days_together/features/love_studio/presentation/widgets/memory_dropdown.dart';
+import 'package:days_together/features/love_studio/presentation/widgets/memory_picker.dart';
 import 'package:days_together/features/love_studio/presentation/widgets/no_memories_state.dart';
 
 /// Turns a chosen timeline memory into an AI-authored love letter.
@@ -45,9 +45,14 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
       return;
     }
 
-    final selectedMemory = timelineProvider.items.firstWhere(
-      (item) => item.id == _selectedMemoryId,
-    );
+    final selectedMemory = timelineProvider.itemById(_selectedMemoryId!);
+    if (selectedMemory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('That memory is no longer available.')),
+      );
+      setState(() => _selectedMemoryId = null);
+      return;
+    }
 
     setState(() {
       _isGenerating = true;
@@ -113,11 +118,11 @@ class _AILoveLetterScreenState extends ConsumerState<AILoveLetterScreen> {
                   if (memories.isEmpty)
                     NoMemoriesState(theme: theme)
                   else ...[
-                    MemoryDropdown(
-                      memories: memories,
-                      selectedMemoryId: _selectedMemoryId,
-                      onChanged: (val) =>
-                          setState(() => _selectedMemoryId = val),
+                    MemoryPicker(
+                      selected: _selectedMemoryId == null
+                          ? null
+                          : timelineProvider.itemById(_selectedMemoryId!),
+                      onChanged: (id) => setState(() => _selectedMemoryId = id),
                       theme: theme,
                     ),
                     const SizedBox(height: 24),

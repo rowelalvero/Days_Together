@@ -7,6 +7,7 @@ import 'package:days_together/features/timeline/presentation/widgets/timeline_em
 import 'package:days_together/features/timeline/presentation/widgets/timeline_item.dart';
 import 'package:days_together/features/timeline/presentation/widgets/storybook_view.dart';
 import 'package:days_together/features/timeline/presentation/widgets/ruler_picker_scrubber.dart';
+import 'package:days_together/shared/widgets/paged_list_footer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer, Provider;
@@ -292,7 +293,15 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
                           if (items.isEmpty)
                             SliverFillRemaining(
                               hasScrollBody: false,
-                              child: TimelineEmptyState(theme: theme),
+                              // Nothing cached and the first page failed:
+                              // offer a retry, not "your story begins here".
+                              child: timelineState.paging.loadMoreFailed
+                                  ? PagedListFooter(
+                                      status: timelineState.paging,
+                                      onRetry: timelineController.retryLoad,
+                                      color: theme.textColor,
+                                    )
+                                  : TimelineEmptyState(theme: theme),
                             )
                           else
                             SliverToBoxAdapter(
@@ -342,6 +351,19 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
                                     },
                                   ),
                                 ],
+                              ),
+                            ),
+                          if (items.isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: PagedListFooter(
+                                status: timelineState.paging,
+                                onRetry: timelineController.retryLoad,
+                                color: theme.textColor,
+                                // Only once paging actually happened.
+                                endLabel:
+                                    items.length > TimelineController.pageSize
+                                    ? "That's every memory 💕"
+                                    : null,
                               ),
                             ),
                           const SliverToBoxAdapter(

@@ -7,6 +7,7 @@ import 'package:days_together/features/calendar/presentation/sheets/event_form_s
 import 'package:days_together/features/calendar/presentation/widgets/calendar_day_event_list.dart';
 import 'package:days_together/features/calendar/presentation/widgets/calendar_month_grid.dart';
 import 'package:days_together/features/calendar/presentation/widgets/calendar_month_header.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
 
 /// The Calendar feature's home screen: a month grid plus the selected day's
 /// events, anniversary, and cross-feature reminders.
@@ -26,6 +27,41 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
+
+  /// The timeline loads memories a page at a time, so the focused month's
+  /// memories may not be loaded yet; this fetches the month (once -- the
+  /// controller skips months it already has).
+  bool _loadingMonth = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMonth());
+  }
+
+  Future<void> _loadMonth() async {
+    final month = _focusedDay;
+    final load = ref
+        .read(timelineControllerProvider.notifier)
+        .ensureMonthLoaded(month);
+    setState(() => _loadingMonth = true);
+    final ok = await load;
+    if (!mounted || month != _focusedDay) return;
+    setState(() => _loadingMonth = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Couldn't load this month's memories."),
+          action: SnackBarAction(label: 'Retry', onPressed: _loadMonth),
+        ),
+      );
+    }
+  }
+
+  void _focusMonth(DateTime month) {
+    setState(() => _focusedDay = month);
+    _loadMonth();
+  }
 
   void _showEventSheet(BuildContext context, {CalendarEvent? existingEvent}) {
     showModalBottomSheet(
@@ -58,18 +94,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   theme: theme,
                   focusedMonth: _focusedDay,
                   onBack: () => Navigator.pop(context),
-                  onPreviousMonth: () => setState(
-                    () => _focusedDay = DateTime(
-                      _focusedDay.year,
-                      _focusedDay.month - 1,
-                    ),
+                  onPreviousMonth: () => _focusMonth(
+                    DateTime(_focusedDay.year, _focusedDay.month - 1),
                   ),
-                  onNextMonth: () => setState(
-                    () => _focusedDay = DateTime(
-                      _focusedDay.year,
-                      _focusedDay.month + 1,
-                    ),
+                  onNextMonth: () => _focusMonth(
+                    DateTime(_focusedDay.year, _focusedDay.month + 1),
                   ),
+                ),
+                SizedBox(
+                  height: 2,
+                  child: _loadingMonth
+                      ? LinearProgressIndicator(
+                          minHeight: 2,
+                          color: theme.accentColor,
+                          backgroundColor: Colors.transparent,
+                        )
+                      : null,
                 ),
                 CalendarMonthGrid(
                   theme: theme,

@@ -19,6 +19,9 @@ class SessionState {
   final bool onboardingCompleted;
   final bool showPartnerDeletedNotice;
 
+  /// See CoupleSession.partnerKeyChanged.
+  final bool partnerKeyChanged;
+
   const SessionState({
     this.isInitialized = false,
     this.userId,
@@ -28,6 +31,7 @@ class SessionState {
     this.isCreator = false,
     this.onboardingCompleted = false,
     this.showPartnerDeletedNotice = false,
+    this.partnerKeyChanged = false,
   });
 
   bool get isOnboardingComplete => onboardingCompleted && coupleId != null;
@@ -43,7 +47,8 @@ class SessionState {
         other.isPaired == isPaired &&
         other.isCreator == isCreator &&
         other.onboardingCompleted == onboardingCompleted &&
-        other.showPartnerDeletedNotice == showPartnerDeletedNotice;
+        other.showPartnerDeletedNotice == showPartnerDeletedNotice &&
+        other.partnerKeyChanged == partnerKeyChanged;
   }
 
   @override
@@ -56,5 +61,6 @@ class SessionState {
     isCreator,
     onboardingCompleted,
     showPartnerDeletedNotice,
+    partnerKeyChanged,
   );
 }

@@ -99,6 +99,9 @@ class CurrentlyController extends Notifier<CurrentlyState>
 
   Future<void> _loadHistory() async {
     if (coupleId == null) return;
+    // Dropped if the user/couple changes while this is in flight
+    // (audit F-15) -- see SupabaseLifecycleNotifier.isStale.
+    final generation = sessionGeneration;
 
     try {
       final List<dynamic> rows = await Supabase.instance.client
@@ -107,7 +110,7 @@ class CurrentlyController extends Notifier<CurrentlyState>
           .eq('couple_id', coupleId!)
           .order('date', ascending: false);
 
-      if (!ref.mounted) return;
+      if (isStale(generation)) return;
 
       if (rows.isEmpty) {
         state = state.copyWith(history: const LoveTapHistory());

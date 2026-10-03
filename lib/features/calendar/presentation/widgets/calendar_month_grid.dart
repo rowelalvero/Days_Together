@@ -107,9 +107,9 @@ class CalendarMonthGrid extends ConsumerWidget {
 
               // Event checking
               final calendarEvents = calendar.eventsForDay(date);
-              final hasTimeline = timeline.items.any(
-                (i) => isSameCalendarDay(i.date, date),
-              );
+              // Covers memories outside the timeline's page window too
+              // (CalendarScreen loads the focused month).
+              final hasTimeline = timeline.memoriesOn(date).isNotEmpty;
               final hasBucket = bucketList.items.any(
                 (i) =>
                     i.scheduledAt != null &&
