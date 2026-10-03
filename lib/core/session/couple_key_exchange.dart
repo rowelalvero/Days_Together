@@ -48,19 +48,17 @@ class CoupleKeyExchange {
 
   String? _lastWrappedForPartnerId;
 
-  /// A wrapped key that arrived before the partner identity was known.
-  /// Unwrapping needs the partner's public key, so the row cannot be applied
-  /// yet -- and the stream will not re-emit an unchanged row, so dropping it
-  /// would mean the couple photo key is never obtained on this device. Held
-  /// until the couples stream resolves a partner, which drains it via
-  /// [drainPending].
-  String? _pendingWrappedKey;
+  /// Rows can arrive before the user and couple streams resolve the current
+  /// relationship. Keep their couple ids so an old relationship's wrapped
+  /// key can never take precedence over the current one.
+  List<Map<String, dynamic>>? _pendingRows;
 
   /// The wrapped key most recently unwrapped and stored, so a re-emission of
   /// the same row is a no-op. A field rather than a closure local because
   /// [_applyWrappedKey] is also reached from [drainPending], outside the
   /// listener.
   String? _lastAppliedWrappedKey;
+  String? _lastAppliedCoupleId;
 
   /// Completes as soon as this device holds the couple photo key, so callers
   /// that must encrypt something during onboarding (the avatar upload) can
@@ -80,24 +78,7 @@ class CoupleKeyExchange {
         .eq('recipient_user_id', userId)
         .listen(
           (rows) async {
-            if (rows.isEmpty) return;
-            final wrappedKeyBase64 = rows.first['wrapped_key'] as String?;
-            if (wrappedKeyBase64 == null ||
-                wrappedKeyBase64 == _lastAppliedWrappedKey) {
-              return;
-            }
-            // The partner's public key is required to unwrap, and the partner
-            // id is routinely still null here: this stream is deliberately
-            // scoped to the user rather than the couple, so it can (and on a
-            // fresh join usually does) emit before the couples stream has
-            // resolved a partner. Hold the row rather than dropping it --
-            // Realtime will not re-send an unchanged row, so a drop was
-            // permanent for the lifetime of that wrapped key.
-            if (_identity().partnerId == null) {
-              _pendingWrappedKey = wrappedKeyBase64;
-              return;
-            }
-            await _applyWrappedKey(userId, wrappedKeyBase64);
+            await _handleRows(userId, rows);
           },
           onError: (error) {
             debugPrint('couple_key_exchanges stream error: $error');
@@ -105,12 +86,51 @@ class CoupleKeyExchange {
         );
   }
 
+  Future<void> _handleRows(
+    String userId,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    final id = _identity();
+    if (id.coupleId == null || id.partnerId == null) {
+      _pendingRows = rows;
+      return;
+    }
+
+    _pendingRows = null;
+    final wrappedKeyBase64 = wrappedKeyForCouple(rows, id.coupleId!);
+    if (wrappedKeyBase64 == null ||
+        (wrappedKeyBase64 == _lastAppliedWrappedKey &&
+            id.coupleId == _lastAppliedCoupleId)) {
+      return;
+    }
+    await _applyWrappedKey(userId, id.coupleId!, wrappedKeyBase64);
+  }
+
+  @visibleForTesting
+  static String? wrappedKeyForCouple(
+    List<Map<String, dynamic>> rows,
+    String coupleId,
+  ) {
+    for (final row in rows) {
+      if (row['couple_id'] == coupleId) {
+        return row['wrapped_key'] as String?;
+      }
+    }
+    return null;
+  }
+
   /// Unwraps [wrappedKeyBase64] with the partner's public key and caches the
   /// resulting couple photo key in secure storage.
-  Future<void> _applyWrappedKey(String userId, String wrappedKeyBase64) async {
+  Future<void> _applyWrappedKey(
+    String userId,
+    String coupleId,
+    String wrappedKeyBase64,
+  ) async {
     final id = _identity();
     final partnerId = id.partnerId;
-    if (partnerId == null) return;
+    if (partnerId == null || id.coupleId != coupleId || id.userId != userId) {
+      return;
+    }
     try {
       final partnerData = await Supabase.instance.client
           .from(Tables.users)
@@ -125,8 +145,15 @@ class CoupleKeyExchange {
         wrappedKeyBase64: wrappedKeyBase64,
         partnerPublicKeyBase64: partnerPublicKey,
       );
-      await _keys.storeCoupleKey(userId, coupleKeyBytes, coupleId: id.coupleId);
+      final current = _identity();
+      if (current.userId != userId ||
+          current.coupleId != coupleId ||
+          current.partnerId != partnerId) {
+        return;
+      }
+      await _keys.storeCoupleKey(userId, coupleKeyBytes, coupleId: coupleId);
       _lastAppliedWrappedKey = wrappedKeyBase64;
+      _lastAppliedCoupleId = coupleId;
       completeWaiter();
     } catch (e) {
       debugPrint('Error unwrapping couple photo key: $e');
@@ -136,12 +163,16 @@ class CoupleKeyExchange {
   /// Applies a wrapped key that arrived before the partner identity was
   /// known. Called by the couples stream the moment a partner resolves.
   void drainPending() {
-    final pending = _pendingWrappedKey;
+    final pending = _pendingRows;
     final id = _identity();
     final userId = id.userId;
-    if (pending == null || userId == null || id.partnerId == null) return;
-    _pendingWrappedKey = null;
-    _applyWrappedKey(userId, pending);
+    if (pending == null ||
+        userId == null ||
+        id.partnerId == null ||
+        id.coupleId == null) {
+      return;
+    }
+    _handleRows(userId, pending);
   }
 
   /// Resolves once this device holds the couple photo key, or after [timeout]
@@ -228,8 +259,9 @@ class CoupleKeyExchange {
   /// *next* pairing's [wrapForPartnerIfHeld] push the dead relationship's key
   /// to the new partner.
   void clearCachedExchangeState() {
-    _pendingWrappedKey = null;
+    _pendingRows = null;
     _lastAppliedWrappedKey = null;
+    _lastAppliedCoupleId = null;
     _lastWrappedForPartnerId = null;
   }
 

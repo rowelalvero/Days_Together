@@ -49,3 +49,6 @@ app.*.map.json
 
 # Google Cloud Service Account
 service-account.json
+
+.mcp.json
+.metadata

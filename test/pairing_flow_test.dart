@@ -226,4 +226,53 @@ void main() {
       },
     );
   });
+
+  group('CoupleSession.recoverRelationship', () {
+    test('keeps invalid codes as a normal failed result', () async {
+      final fake = FakeCoupleService()
+        ..recoverWithCodeResponse = {
+          'success': false,
+          'error_code': 'INVALID_CODE',
+        };
+      final session = CoupleSession(
+        coupleService: fake,
+        keyManagementService: fakeKeyManagementService,
+      );
+      await Future.delayed(Duration.zero);
+
+      expect(await session.recoverRelationship('WRONG-CODE'), false);
+      expect(session.coupleId, isNull);
+    });
+
+    test(
+      'reports a persisted lockout without claiming the code is invalid',
+      () async {
+        final fake = FakeCoupleService()
+          ..recoverWithCodeResponse = {
+            'success': false,
+            'error_code': 'USER_LOCKED',
+            'retry_after': DateTime.now()
+                .add(const Duration(minutes: 5))
+                .toUtc()
+                .toIso8601String(),
+          };
+        final session = CoupleSession(
+          coupleService: fake,
+          keyManagementService: fakeKeyManagementService,
+        );
+        await Future.delayed(Duration.zero);
+
+        await expectLater(
+          session.recoverRelationship('WRONG-CODE'),
+          throwsA(
+            predicate(
+              (error) =>
+                  error.toString().contains('Too many recovery attempts'),
+            ),
+          ),
+        );
+        expect(session.coupleId, isNull);
+      },
+    );
+  });
 }

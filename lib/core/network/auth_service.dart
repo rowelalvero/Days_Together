@@ -45,6 +45,9 @@ class AuthService {
 
   /// Triggers account deletion for the currently authenticated user via Database RPC.
   Future<void> deleteUserAccount() async {
-    await Supabase.instance.client.rpc('delete_current_user');
+    final result = await Supabase.instance.client.rpc('delete_current_user');
+    if (result is! Map || result['success'] != true) {
+      throw StateError('Account deletion was not confirmed by the server.');
+    }
   }
 }

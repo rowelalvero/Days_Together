@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:days_together/core/errors/app_failure.dart';
@@ -133,11 +134,23 @@ class NotificationPreferencesController
 
       if (!ref.mounted) return;
 
+      String? localTz;
+      try {
+        localTz = (await FlutterTimezone.getLocalTimezone()).identifier;
+      } catch (e) {
+        // Keep the stored value when the platform cannot supply an IANA id.
+        // DateTime.timeZoneName is not a safe fallback: it can be an
+        // abbreviation rejected by the notification function.
+        debugPrint(
+          'NotificationPreferencesController: timezone lookup failed: $e',
+        );
+      }
+      if (!ref.mounted) return;
+
       NotificationPreferences preferences;
       if (res != null) {
         preferences = NotificationPreferences.fromJson(res);
-        final localTz = DateTime.now().timeZoneName;
-        if (preferences.timezone != localTz) {
+        if (localTz != null && preferences.timezone != localTz) {
           state = state.copyWith(preferences: preferences, isLoading: false);
           await updatePreference('timezone', localTz);
           return;
@@ -145,7 +158,7 @@ class NotificationPreferencesController
       } else {
         preferences = NotificationPreferences(
           userId: userId,
-          timezone: DateTime.now().timeZoneName,
+          timezone: localTz ?? 'UTC',
         );
         await client
             .from(Tables.userNotificationPreferences)

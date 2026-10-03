@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8"
+import { isWithinQuietHours } from "./quiet_hours.ts"
 
 const FIREBASE_SERVICE_ACCOUNT = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -12,16 +13,45 @@ serve(async (req) => {
   }
 
   try {
-    const { sender_id, title, body, feature, item_id, data } = await req.json();
-
-    if (!sender_id || !title || !body) {
-      return new Response(JSON.stringify({ error: "Missing parameters" }), {
-        status: 400,
+    const authorization = req.headers.get('Authorization');
+    const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
         headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
       });
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    // The gateway's JWT check alone does not establish the caller's identity
+    // inside this handler. Verify the supplied user token before using the
+    // service-role client for any privileged lookup.
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData.user) {
+      return new Response(JSON.stringify({ error: "Invalid user token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    const sender_id = authData.user.id;
+    const { sender_id: claimedSenderId, title, body, feature, item_id, data } = await req.json();
+
+    // Older app versions send sender_id. Accept it only when it agrees with
+    // the authenticated user; a body field must never select the sender.
+    if (claimedSenderId != null && claimedSenderId !== sender_id) {
+      return new Response(JSON.stringify({ error: "Sender does not match the authenticated user" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    if (typeof title !== 'string' || !title.trim() || typeof body !== 'string' || !body.trim()) {
+      return new Response(JSON.stringify({ error: "Missing parameters" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
 
     // 1. Get the sender's couple_id
     const { data: sender, error: senderErr } = await supabase
@@ -81,39 +111,7 @@ serve(async (req) => {
 
       // Check Quiet Hours
       if (prefs.quiet_hours_enabled) {
-        let isQuietHours = false;
-        try {
-          const targetTz = prefs.timezone || 'UTC';
-          const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: targetTz,
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: false
-          });
-          const parts = formatter.formatToParts(new Date());
-          const hourPart = parts.find(p => p.type === 'hour');
-          const minPart = parts.find(p => p.type === 'minute');
-          if (hourPart && minPart) {
-            const currentHour = parseInt(hourPart.value, 10);
-            const currentMin = parseInt(minPart.value, 10);
-            const currentMinutes = currentHour * 60 + currentMin;
-
-            const [startHour, startMin] = prefs.quiet_hours_start.split(':').map(Number);
-            const [endHour, endMin] = prefs.quiet_hours_end.split(':').map(Number);
-            const startMinutes = startHour * 60 + startMin;
-            const endMinutes = endHour * 60 + endMin;
-
-            if (startMinutes < endMinutes) {
-              isQuietHours = currentMinutes >= startMinutes && currentMinutes <= endMinutes;
-            } else {
-              isQuietHours = currentMinutes >= startMinutes || currentMinutes <= endMinutes;
-            }
-          }
-        } catch (e) {
-          console.error("Error checking quiet hours:", e);
-        }
-
-        if (isQuietHours) {
+        if (isWithinQuietHours(prefs)) {
           return new Response(JSON.stringify({ success: true, message: "Quiet hours active, skipped" }), {
             status: 200,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
@@ -156,9 +154,10 @@ serve(async (req) => {
       deep_link: feature ? `app://days_together/${feature}` : "",
     };
 
-    if (data) {
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const reserved = new Set(Object.keys(fcmData));
       for (const [key, val] of Object.entries(data)) {
-        fcmData[key] = String(val);
+        if (!reserved.has(key)) fcmData[key] = String(val);
       }
     }
 

@@ -42,6 +42,7 @@ dependencies:
   # once this became the last thing depending on it.
   flutter_cache_manager: ^3.4.1
   flutter_secure_storage: ^9.0.0
+  flutter_timezone: ^5.1.0
   flutter_launcher_icons: ^0.13.1
   sqflite: ^2.3.0
   flutter_painter_v2: 2.1.0+1

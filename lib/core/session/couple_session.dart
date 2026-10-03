@@ -1473,6 +1473,21 @@ class CoupleSession extends ChangeNotifier {
         publicKey: publicKey,
       );
       final bool success = result['success'] as bool? ?? false;
+      final errorCode = result['error_code'] as String?;
+      if (!success &&
+          (errorCode == 'USER_LOCKED' || errorCode == 'COUPLE_LOCKED')) {
+        final retryAfter = DateTime.tryParse(
+          result['retry_after'] as String? ?? '',
+        );
+        final minutes = retryAfter == null
+            ? 15
+            : (retryAfter.difference(DateTime.now()).inSeconds / 60)
+                  .ceil()
+                  .clamp(1, 15);
+        throw Exception(
+          'Too many recovery attempts. Please try again in $minutes minute${minutes == 1 ? '' : 's'}.',
+        );
+      }
       if (success) {
         _coupleId = result['couple_id'] as String;
 
@@ -1586,30 +1601,31 @@ class CoupleSession extends ChangeNotifier {
   }
 
   Future<void> deleteAccount() async {
-    // Every key for this identity goes, not just the couple key: the account
-    // itself is being destroyed, so the X25519 private key has nothing left
-    // to unwrap for. Done before logout(), which clears _userId.
-    if (_userId != null) {
-      await _keyManagementService.clearAllKeysForUser(_userId!);
+    final userId = _userId;
+    if (!isSupabaseAvailable || userId == null) {
+      throw StateError('Sign in and connect before deleting your account.');
     }
-    if (isSupabaseAvailable && _userId != null) {
-      try {
-        await AuthService.instance.deleteUserAccount();
-      } catch (e) {
-        debugPrint('Error calling delete_current_user RPC: $e');
-        try {
-          await Supabase.instance.client
-              .from(Tables.users)
-              .delete()
-              .eq('id', _userId!);
-        } catch (e) {
-          debugPrint(
-            'CoupleSession: fallback direct delete of the users row failed: $e',
-          );
-        }
-      }
+
+    // Preserve the only local copy of the photo key until the server has
+    // confirmed deletion. A network/RPC failure leaves the account and its
+    // photos usable, so it must also leave these keys and the session intact.
+    await AuthService.instance.deleteUserAccount();
+
+    try {
+      await _keyManagementService.clearAllKeysForUser(userId);
+    } catch (e) {
+      // The remote account is already gone. Continue clearing the local
+      // session even if secure-storage cleanup fails on this device.
+      debugPrint('CoupleSession: local key cleanup after deletion failed: $e');
     }
-    await logout(wipeAll: true);
+    try {
+      await logout(wipeAll: true);
+    } catch (e) {
+      // The server has already deleted the account. A local sign-out failure
+      // cannot turn that into a retryable deletion failure in the UI.
+      debugPrint('CoupleSession: local sign-out after deletion failed: $e');
+      notifyListeners();
+    }
   }
 
   Future<void> signUpWithEmail(String email, String password) async {

@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptography/cryptography.dart';
 import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/core/security/key_management_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -362,5 +364,18 @@ void main() {
         expect(content.contains('"creator_id"'), false);
       },
     );
+  });
+
+  test('offline account deletion preserves the only local photo key', () async {
+    SharedPreferences.setMockInitialValues({'user_id': 'user-1'});
+    final keys = KeyManagementService.withKeyPair(await X25519().newKeyPair());
+    final originalKey = await keys.generateCoupleKey();
+    await keys.storeCoupleKey('user-1', originalKey, coupleId: 'couple-1');
+    final session = CoupleSession(keyManagementService: keys);
+    await Future.delayed(Duration.zero);
+
+    await expectLater(session.deleteAccount(), throwsStateError);
+    expect(await keys.loadCoupleKey('user-1'), originalKey);
+    expect(session.userId, 'user-1');
   });
 }
