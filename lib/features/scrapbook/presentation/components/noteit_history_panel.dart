@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
+import 'package:days_together/core/utils/date_helper.dart';
 import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/features/scrapbook/noteit_state.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
@@ -19,11 +20,15 @@ class NoteitHistoryPanel extends StatelessWidget {
   final NoteitState state;
   final NoteitController notifier;
 
+  /// Switches to the canvas tab; drives the empty state's call to action.
+  final VoidCallback? onStartCanvas;
+
   const NoteitHistoryPanel({
     super.key,
     required this.theme,
     required this.state,
     required this.notifier,
+    this.onStartCanvas,
   });
 
   @override
@@ -40,25 +45,7 @@ class NoteitHistoryPanel extends StatelessWidget {
       );
     }
     if (list.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.history_toggle_off_rounded,
-              size: 48,
-              color: theme.textColor.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No scrapbook canvases exchanged yet.',
-              style: AppTypography.body(
-                color: theme.textColor.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
-      );
+      return _EmptyHistory(theme: theme, onStartCanvas: onStartCanvas);
     }
 
     return NotificationListener<ScrollNotification>(
@@ -73,11 +60,11 @@ class NoteitHistoryPanel extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             sliver: SliverGrid.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 220,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 0.9,
+                childAspectRatio: 0.82,
               ),
               itemCount: list.length,
               itemBuilder: (ctx, idx) => _tile(context, list[idx]),
@@ -99,60 +86,90 @@ class NoteitHistoryPanel extends StatelessWidget {
   }
 
   Widget _tile(BuildContext context, NoteitItem item) {
-    return GestureDetector(
-      onTap: () => showNoteitEnlargeDialog(context, item, theme),
+    final fromYou = item.sender == 'you';
+    final when = DateHelper.formatRelativeTimeShort(item.createdAt);
+    return Semantics(
+      button: true,
+      label:
+          '${fromYou ? 'Sent by you' : 'From your partner'}, $when. '
+          '${_statusLabel(item) ?? ''}',
+      onLongPressHint: 'Delete',
+      excludeSemantics: true,
+      onTap: () => _enlarge(context, item),
       onLongPress: () => _confirmDelete(context, item),
-      child: Container(
-        decoration: BoxDecoration(
-          color:
-              item.backgroundColor ?? theme.textColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: Stack(
+      child: Material(
+        color: theme.textColor.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(theme.radii.md + 4),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _enlarge(context, item),
+          onLongPress: () => _confirmDelete(context, item),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Positioned.fill(
+              Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: NoteitCanvasThumbnail(item: item),
-                ),
-              ),
-              Positioned(
-                top: 6,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    item.sender == 'you'
-                        ? (item.syncStatus == SyncStatus.sending
-                              ? '📤 Sending'
-                              : item.syncStatus == SyncStatus.failed
-                              ? '⚠️ Failed'
-                              : '✅ Sent')
-                        : 'Received',
-                    style: AppTypography.bodyLarge(
-                      fontSize: 8,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.all(6),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(theme.radii.md),
+                    child: ColoredBox(
+                      color: noteitThumbnailBackdrop(item),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: NoteitCanvasThumbnail(item: item),
+                          ),
+                          if (fromYou && item.syncStatus != SyncStatus.synced)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: NoteitSyncStatusBadge(
+                                item: item,
+                                theme: theme,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-              if (item.sender == 'you')
-                Positioned(
-                  bottom: 6,
-                  right: 8,
-                  child: NoteitSyncStatusBadge(item: item, theme: theme),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      fromYou
+                          ? Icons.north_east_rounded
+                          : Icons.south_west_rounded,
+                      size: 14,
+                      color: fromYou
+                          ? theme.textColor.withValues(alpha: 0.7)
+                          : theme.accentColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        fromYou ? 'You' : 'Partner',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: theme.textColor,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      when,
+                      style: AppTypography.caption(
+                        fontSize: 12,
+                        color: theme.textColor.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),
@@ -160,46 +177,151 @@ class NoteitHistoryPanel extends StatelessWidget {
     );
   }
 
+  void _enlarge(BuildContext context, NoteitItem item) {
+    showNoteitEnlargeDialog(
+      context,
+      item,
+      theme,
+      onDelete: () => notifier.deleteNote(item.id),
+    );
+  }
+
   void _confirmDelete(BuildContext context, NoteitItem item) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: theme.backgroundColor,
-        title: Text(
-          'Delete Canvas?',
-          style: AppTypography.heading(
-            color: theme.textColor,
-            fontWeight: FontWeight.bold,
+    confirmNoteitDelete(context, theme).then((confirmed) {
+      if (confirmed) notifier.deleteNote(item.id);
+    });
+  }
+}
+
+String? _statusLabel(NoteitItem item) {
+  if (item.sender != 'you') return null;
+  return switch (item.syncStatus) {
+    SyncStatus.sending => 'Sending',
+    SyncStatus.failed => 'Failed to send',
+    SyncStatus.synced => null,
+  };
+}
+
+/// Shared "delete this canvas?" confirmation; resolves true on confirm.
+Future<bool> confirmNoteitDelete(
+  BuildContext context,
+  LoveStoryTheme theme,
+) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: theme.backgroundColor,
+      title: Text(
+        'Delete canvas?',
+        style: AppTypography.heading(
+          color: theme.textColor,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Text(
+        'This removes it from the scrapbook for both of you.',
+        style: AppTypography.body(
+          color: theme.textColor.withValues(alpha: 0.85),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(
+            'Keep',
+            style: AppTypography.button(color: theme.textColor),
           ),
         ),
-        content: Text(
-          'Are you sure you want to delete this canvas from history?',
-          style: AppTypography.body(
-            color: theme.textColor.withValues(alpha: 0.8),
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          TextButton(
-            child: Text(
-              'Delete',
-              style: AppTypography.button(color: Colors.redAccent),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(
+            'Delete',
+            style: AppTypography.button(
+              color: theme.semantic.error,
+              fontWeight: FontWeight.bold,
             ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              notifier.deleteNote(item.id);
-            },
           ),
-        ],
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory({required this.theme, required this.onStartCanvas});
+
+  final LoveStoryTheme theme;
+  final VoidCallback? onStartCanvas;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: theme.accentColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.auto_stories_rounded,
+                size: 40,
+                color: theme.accentColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Your scrapbook is empty',
+              textAlign: TextAlign.center,
+              style: AppTypography.heading(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.textColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Doodles, notes and photos you send each other will be kept here.',
+              textAlign: TextAlign.center,
+              style: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.75),
+              ),
+            ),
+            if (onStartCanvas != null) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: onStartCanvas,
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.accentColor,
+                  foregroundColor: theme.onAccentColor,
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                ),
+                icon: const Icon(Icons.draw_rounded),
+                label: Text(
+                  'Make the first one',
+                  style: AppTypography.button(
+                    color: theme.onAccentColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
 /// Sync status indicator badge for scrapbook items in the history panel.
+/// Sending shows a spinner; failed is a tappable "Retry" chip.
 class NoteitSyncStatusBadge extends StatelessWidget {
   final NoteitItem item;
   final LoveStoryTheme theme;
@@ -214,75 +336,72 @@ class NoteitSyncStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (item.syncStatus) {
       case SyncStatus.sending:
-        return Container(
-          padding: const EdgeInsets.all(4),
-          decoration: const BoxDecoration(
-            color: Colors.black54,
-            shape: BoxShape.circle,
-          ),
-          child: const SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        return Semantics(
+          label: 'Sending',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(theme.radii.pill),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Sending',
+                  style: AppTypography.caption(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         );
       case SyncStatus.failed:
-        return GestureDetector(
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                backgroundColor: theme.backgroundColor,
-                title: Text(
-                  'Sync Failed',
-                  style: AppTypography.heading(
-                    color: theme.textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                content: Text(
-                  'This canvas note couldn\'t be sent to your partner. Would you like to try sending it again?',
-                  style: AppTypography.body(
-                    color: theme.textColor.withValues(alpha: 0.8),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text(
-                      'Cancel',
-                      style: AppTypography.button(
-                        color: theme.textColor.withValues(alpha: 0.6),
+        return Tooltip(
+          message: 'Couldn\'t send. Tap to retry.',
+          child: Material(
+            color: theme.semantic.error,
+            shape: const StadiumBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => _confirmRetry(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 32),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.refresh_rounded,
+                        size: 14,
+                        color: Colors.white,
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Retry',
+                        style: AppTypography.caption(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      NoteitSyncManager.instance.retryTask(item.id);
-                    },
-                    child: Text(
-                      'Retry Now',
-                      style: AppTypography.button(color: theme.accentColor),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              color: Colors.redAccent,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.refresh_rounded,
-              size: 12,
-              color: Colors.white,
             ),
           ),
         );
@@ -290,63 +409,156 @@ class NoteitSyncStatusBadge extends StatelessWidget {
         return const SizedBox.shrink();
     }
   }
-}
 
-/// Displays an enlarged popup dialog showing the selected note item.
-void showNoteitEnlargeDialog(
-  BuildContext context,
-  NoteitItem item,
-  LoveStoryTheme theme,
-) {
-  showDialog(
-    context: context,
-    builder: (ctx) => Dialog(
-      backgroundColor: Colors.transparent,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 320,
-            height: 320,
-            decoration: BoxDecoration(
-              color: item.backgroundColor ?? Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: theme.textColor.withValues(alpha: 0.2),
-                width: 2,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(26),
-              child: NoteitCanvasThumbnail(item: item),
+  void _confirmRetry(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: theme.backgroundColor,
+        title: Text(
+          'Couldn\'t send',
+          style: AppTypography.heading(
+            color: theme.textColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'This canvas didn\'t reach your partner. Try sending it again?',
+          style: AppTypography.body(
+            color: theme.textColor.withValues(alpha: 0.85),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Not now',
+              style: AppTypography.button(color: theme.textColor),
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black54,
-              borderRadius: BorderRadius.circular(16),
-            ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              NoteitSyncManager.instance.retryTask(item.id);
+            },
             child: Text(
-              item.sender == 'you'
-                  ? (item.syncStatus == SyncStatus.sending
-                        ? 'Sending Canvas...'
-                        : item.syncStatus == SyncStatus.failed
-                        ? 'Failed to Send'
-                        : 'Sent by You')
-                  : 'Received from Partner',
-              style: AppTypography.bodyLarge(
-                color: Colors.white,
-                fontSize: 13,
+              'Retry now',
+              style: AppTypography.button(
+                color: theme.accentColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
         ],
       ),
-    ),
+    );
+  }
+}
+
+/// Displays an enlarged popup dialog showing the selected note item, sized
+/// to the screen, with its sender/time and an optional delete action.
+void showNoteitEnlargeDialog(
+  BuildContext context,
+  NoteitItem item,
+  LoveStoryTheme theme, {
+  VoidCallback? onDelete,
+}) {
+  final fromYou = item.sender == 'you';
+  final status = _statusLabel(item);
+  final caption = [
+    fromYou ? 'Sent by you' : 'From your partner',
+    DateHelper.formatRelativeTimeShort(item.createdAt),
+    ?status,
+  ].join(' · ');
+
+  showDialog(
+    context: context,
+    builder: (ctx) {
+      final side = (MediaQuery.sizeOf(ctx).width - 48).clamp(200.0, 480.0);
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: side,
+              height: side,
+              decoration: BoxDecoration(
+                color: noteitThumbnailBackdrop(item),
+                borderRadius: BorderRadius.circular(theme.radii.lg + 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(theme.radii.lg + 4),
+                child: NoteitCanvasThumbnail(item: item),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+              decoration: BoxDecoration(
+                color: theme.backgroundColor.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(theme.radii.pill),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      caption,
+                      style: AppTypography.bodyLarge(
+                        color: theme.textColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  if (onDelete != null)
+                    IconButton(
+                      tooltip: 'Delete',
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: theme.semantic.error,
+                      ),
+                      onPressed: () async {
+                        final confirmed = await confirmNoteitDelete(ctx, theme);
+                        if (!confirmed || !ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        onDelete();
+                      },
+                    ),
+                  IconButton(
+                    tooltip: 'Close',
+                    icon: Icon(Icons.close_rounded, color: theme.textColor),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
   );
+}
+
+/// Backdrop behind a thumbnail when the note carries no background color.
+/// Rendered canvases are opaque PNGs, but legacy drawing/text notes paint
+/// white strokes and text, so they need a dark backdrop to be visible.
+Color noteitThumbnailBackdrop(NoteitItem item) {
+  if (item.backgroundColor != null) return item.backgroundColor!;
+  final hasImage =
+      item.imagePath != null ||
+      (item.imageUrl != null && item.imageUrl!.isNotEmpty);
+  return hasImage ? Colors.white : const Color(0xFF2B2235);
 }
 
 /// Thumbnail renderer for a scrapbook note item (image, drawing strokes, or text).
@@ -371,10 +583,16 @@ class NoteitCanvasThumbnail extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        placeholder: (context) =>
-            const Center(child: CircularProgressIndicator()),
-        errorWidget: (context) =>
-            const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+        placeholder: (context) => const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context) => const Center(
+          child: Icon(Icons.broken_image_rounded, color: Colors.grey),
+        ),
       );
     }
 

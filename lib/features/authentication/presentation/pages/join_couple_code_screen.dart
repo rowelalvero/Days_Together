@@ -5,6 +5,7 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
+import 'package:days_together/shared/widgets/otp_input.dart';
 
 class JoinCoupleCodeScreen extends ConsumerStatefulWidget {
   const JoinCoupleCodeScreen({super.key});
@@ -19,29 +20,11 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
   /// (20261003000200_harden_pairing.sql).
   static const int _codeLength = 8;
 
-  final List<TextEditingController> _controllers = List.generate(
-    _codeLength,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(
-    _codeLength,
-    (_) => FocusNode(),
-  );
+  String _code = '';
   String? _errorMessage;
   bool _isValidating = false;
 
-  @override
-  void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
-    super.dispose();
-  }
-
-  String get _fullCode => _controllers.map((c) => c.text).join().toUpperCase();
+  bool get _isComplete => _code.length == _codeLength;
 
   @override
   Widget build(BuildContext context) {
@@ -87,101 +70,46 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
                     ),
                   ),
                   const SizedBox(height: 60),
-                  // One box per character. Expanded (not a fixed width) so
-                  // eight boxes still fit a narrow phone.
-                  Row(
-                    children: List.generate(_codeLength, (index) {
-                      return Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
-                          child: SizedBox(
-                            height: 60,
-                            child: TextField(
-                              controller: _controllers[index],
-                              focusNode: _focusNodes[index],
-                              textAlign: TextAlign.center,
-                              maxLength: 1,
-                              textCapitalization: TextCapitalization.characters,
-                              style: AppTypography.body(
-                                color: theme.textColor,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              decoration: InputDecoration(
-                                counterText: '',
-                                filled: true,
-                                fillColor: theme.textColor.withValues(
-                                  alpha: 0.05,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(
-                                    color: _errorMessage != null
-                                        ? theme.accentColor
-                                        : theme.textColor.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(
-                                    color: _errorMessage != null
-                                        ? theme.accentColor
-                                        : theme.textColor.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: BorderSide(
-                                    color: theme.accentColor,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                              onChanged: (value) {
-                                setState(() => _errorMessage = null);
-                                if (value.isNotEmpty &&
-                                    index < _codeLength - 1) {
-                                  _focusNodes[index + 1].requestFocus();
-                                }
-                                if (_fullCode.length == _codeLength &&
-                                    !_isValidating) {
-                                  _validateCode();
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
+                  OtpInput(
+                    theme: theme,
+                    length: _codeLength,
+                    charset: OtpCharset.alphanumeric,
+                    groupSize: 4,
+                    hint: 'Letters and numbers, any case.',
+                    autofocus: true,
+                    semanticLabel: 'Connection code',
+                    status: _errorMessage != null
+                        ? OtpStatus.error
+                        : OtpStatus.idle,
+                    errorMessage: _errorMessage,
+                    onChanged: (code) {
+                      setState(() {
+                        _code = code;
+                        _errorMessage = null;
+                      });
+                      // Re-checks on every full code, so fixing one
+                      // character after a miss submits again.
+                      if (_isComplete) _validateCode();
+                    },
                   ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 20),
-                    Text(
-                      _errorMessage!,
-                      style: AppTypography.body(
-                        color: theme.accentColor,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 40),
                   SizedBox(
                     width: double.infinity,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed:
-                          _fullCode.length == _codeLength && !_isValidating
+                      onPressed: _isComplete && !_isValidating
                           ? _validateCode
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.accentColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: theme.onAccentColor,
+                        // Disabled reads as "not yet" but its label stays
+                        // legible: text ink on a faint accent wash.
                         disabledBackgroundColor: theme.accentColor.withValues(
-                          alpha: 0.3,
+                          alpha: 0.18,
+                        ),
+                        disabledForegroundColor: theme.textColor.withValues(
+                          alpha: 0.55,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -189,11 +117,11 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
                         elevation: 0,
                       ),
                       child: _isValidating
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: theme.textColor,
                                 strokeWidth: 2,
                               ),
                             )
@@ -224,7 +152,7 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
     });
     try {
       final session = ref.read(sessionControllerProvider.notifier);
-      final success = await session.joinWithCode(_fullCode);
+      final success = await session.joinWithCode(_code);
       if (!mounted) return;
       if (success) {
         context.push(Routes.avatar);

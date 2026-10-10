@@ -87,7 +87,7 @@ class ThemeSelectorScreen extends ConsumerWidget {
                     style: AppTypography.caption(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      color: theme.textColor.withValues(alpha: 0.4),
+                      color: theme.textColor.withValues(alpha: 0.6),
                     ).copyWith(letterSpacing: 2),
                   ),
                   const SizedBox(height: 16),

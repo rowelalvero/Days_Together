@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:days_together/features/authentication/presentation/pages/genesis_screen.dart';
-import 'package:days_together/features/authentication/presentation/widgets/code_actions_row.dart';
+import 'package:days_together/features/authentication/presentation/widgets/auth_page_frame.dart';
 import 'package:days_together/features/authentication/presentation/widgets/connection_code_card.dart';
 import 'package:days_together/features/authentication/presentation/widgets/continue_button.dart';
-import 'package:days_together/features/authentication/presentation/widgets/generate_new_code_button.dart';
 import 'package:days_together/features/authentication/presentation/widgets/recovery_code_card.dart';
 import 'package:days_together/features/authentication/presentation/widgets/recovery_saved_checkbox.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +51,16 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
     _animController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
-    )..forward();
+    );
+    // Respect reduce-motion: start settled instead of animating in.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+        _animController.value = 1;
+      } else {
+        _animController.forward();
+      }
+    });
 
     // Check/refresh active pairing code on open & schedule periodic checks
     workspace.refreshPairingCode();
@@ -94,8 +102,10 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
     if (mounted && newCode != null) {
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('✨ Generated a fresh connection code!'),
-          duration: Duration(seconds: 2),
+          content: Text(
+            'New connection code ready. The old one no longer works.',
+          ),
+          duration: Duration(seconds: 3),
         ),
       );
     }
@@ -120,6 +130,40 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
     );
   }
 
+  /// Leaving this screen cancels the brand-new workspace, so ask first --
+  /// the codes on screen stop working the moment it's gone.
+  Future<void> _confirmLeave() async {
+    final theme = ref.read(themeControllerProvider).currentLoveTheme;
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave without connecting?'),
+        content: const Text(
+          'This cancels your new workspace. Your connection code and '
+          'recovery code will stop working.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Stay'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: theme.semantic.error),
+            child: const Text('Cancel workspace'),
+          ),
+        ],
+      ),
+    );
+    if (leave != true || !mounted) return;
+    final session = ref.read(sessionControllerProvider.notifier);
+    await SafeLoadingDialog.run(
+      context: context,
+      future: () => session.unlinkPartner(),
+      loadingMessage: 'Canceling workspace...',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = ref.watch(themeControllerProvider);
@@ -127,103 +171,75 @@ class _CreateCoupleCodeScreenState extends ConsumerState<CreateCoupleCodeScreen>
     final workspace = ref.watch(workspaceControllerProvider);
     final codeToDisplay = workspace.coupleCode ?? _code;
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            // A plain Column (with a trailing Spacer) overflowed on shorter
-            // screens -- this screen has a lot of stacked content (code
-            // display, copy/share row, generate-new-code button, recovery
-            // code panel, checkbox, continue button) and nothing here
-            // scales down, so on a Redmi 8 the bottom of that content --
-            // including the "Generate New Code" button -- was getting
-            // clipped off-screen instead of just being scrollable.
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                IconButton(
-                  onPressed: () async {
-                    final session = ref.read(
-                      sessionControllerProvider.notifier,
-                    );
-                    await SafeLoadingDialog.run(
-                      context: context,
-                      future: () => session.unlinkPartner(),
-                      loadingMessage: 'Canceling workspace...',
-                    );
-                  },
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: theme.textColor,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmLeave();
+      },
+      child: AuthPageFrame(
+        theme: theme,
+        gradient: themeProvider.currentGradient,
+        onBack: _confirmLeave,
+        title: 'Invite your partner',
+        subtitle:
+            'Share your connection code so they can join your story, then '
+            'save your recovery code.',
+        bottom: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Says why Continue is disabled instead of leaving a dead button.
+            if (!_savedRecoveryCode)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Save your recovery code to continue.',
+                  style: AppTypography.body(
+                    fontSize: 13,
+                    color: theme.textColor.withValues(alpha: 0.75),
                   ),
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  'Your unique\nconnection code.',
-                  style: AppTypography.cormorant(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textColor,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Share this with your partner to invite them into your story.',
-                  style: AppTypography.spectral(
-                    fontSize: 14,
-                    color: theme.textColor.withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ConnectionCodeCard(
-                  animController: _animController,
-                  codeToDisplay: codeToDisplay,
-                  theme: theme,
-                ),
-                const SizedBox(height: 20),
-                CodeActionsRow(
-                  copied: _copied,
-                  hasCode: codeToDisplay.isNotEmpty,
-                  onCopy: () => _copyCode(codeToDisplay),
-                  onShare: () => Share.share(
-                    'Connect with me on Days Together! Enter my connection code: $codeToDisplay to link our hearts 💕',
-                  ),
-                  theme: theme,
-                ),
-                const SizedBox(height: 12),
-                GenerateNewCodeButton(
-                  theme: theme,
-                  onPressed: _generateNewCode,
-                ),
-                const SizedBox(height: 16),
-                RecoveryCodeCard(
-                  recoveryCode: workspace.recoveryCode,
-                  copied: _copiedRecovery,
-                  onCopy: () => _copyRecoveryCode(workspace.recoveryCode),
-                  theme: theme,
-                ),
-                const SizedBox(height: 24),
-                RecoverySavedCheckbox(
-                  value: _savedRecoveryCode,
-                  onChanged: (val) =>
-                      setState(() => _savedRecoveryCode = val ?? false),
-                  theme: theme,
-                ),
-                const SizedBox(height: 16),
-                ContinueButton(
-                  onPressed: _savedRecoveryCode ? _continue : null,
-                  theme: theme,
-                ),
-                const SizedBox(height: 20),
-              ],
+              ),
+            ContinueButton(
+              onPressed: _savedRecoveryCode ? _continue : null,
+              theme: theme,
+            ),
+          ],
+        ),
+        children: [
+          AuthStepHeader(number: 1, title: 'Share your code', theme: theme),
+          const SizedBox(height: 12),
+          ConnectionCodeCard(
+            animController: _animController,
+            codeToDisplay: codeToDisplay,
+            copied: _copied,
+            onCopy: () => _copyCode(codeToDisplay),
+            onShare: () => Share.share(
+              'Connect with me on Days Together! Enter my connection code: '
+              '$codeToDisplay to link our hearts 💕',
+            ),
+            onNewCode: _generateNewCode,
+            theme: theme,
+          ),
+          const SizedBox(height: 28),
+          AuthStepHeader(
+            number: 2,
+            title: 'Save your recovery code',
+            theme: theme,
+          ),
+          const SizedBox(height: 12),
+          RecoveryCodeCard(
+            recoveryCode: workspace.recoveryCode,
+            copied: _copiedRecovery,
+            onCopy: () => _copyRecoveryCode(workspace.recoveryCode),
+            theme: theme,
+            footer: RecoverySavedCheckbox(
+              value: _savedRecoveryCode,
+              onChanged: (val) =>
+                  setState(() => _savedRecoveryCode = val ?? false),
+              theme: theme,
             ),
           ),
-        ),
+        ],
       ),
     );
   }

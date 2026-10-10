@@ -39,10 +39,7 @@ void main() {
     ) async {
       await _pump(tester);
 
-      expect(
-        find.text('Recover Existing\nRelationship Workspace'),
-        findsOneWidget,
-      );
+      expect(find.text('Recover your workspace'), findsOneWidget);
       expect(find.text('RECOVERY CODE'), findsOneWidget);
       expect(find.byType(TextFormField), findsOneWidget);
       expect(find.text('Recover Workspace'), findsOneWidget);
@@ -67,7 +64,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Invalid format. Code must contain a hyphen'),
+        find.textContaining('doesn\'t look like a recovery code'),
         findsOneWidget,
       );
     });
@@ -86,9 +83,10 @@ void main() {
 
       expect(find.text('Recovery code is required'), findsNothing);
       expect(
-        find.text('Invalid format. Code must contain a hyphen'),
+        find.textContaining('doesn\'t look like a recovery code'),
         findsNothing,
       );
+      expect(find.text('ABC123-RVT7-H9MK-PQ82-JXW5'), findsWidgets);
     });
 
     testWidgets('the paste button fills the field from the clipboard', (
@@ -114,6 +112,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('ABC123-RVT7-H9MK-PQ82-JXW5'), findsOneWidget);
+    });
+
+    testWidgets('typing upper-cases and drops characters a code never has', (
+      tester,
+    ) async {
+      await _pump(tester);
+
+      await tester.enterText(find.byType(TextFormField), 'abc 12_3-rvt7');
+      await tester.pump();
+
+      expect(find.text('ABC123-RVT7'), findsOneWidget);
+      expect(find.text('abc 12_3-rvt7'), findsNothing);
+    });
+
+    testWidgets('the submit button stays pinned and labelled', (tester) async {
+      await _pump(tester);
+
+      final button = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Recover Workspace'),
+      );
+      expect(button.onPressed, isNotNull);
+      expect(find.byTooltip('Back'), findsOneWidget);
     });
   });
 }

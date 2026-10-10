@@ -43,50 +43,56 @@ class ColorSlotSelector extends StatelessWidget {
       runSpacing: 12,
       children: slots.map((slot) {
         final isActive = activeSlot == slot.key;
-        return GestureDetector(
-          onTap: () => onSlotSelected(slot.key),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? theme.accentColor.withValues(alpha: 0.2)
-                  : theme.textColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
+        return Semantics(
+          button: true,
+          selected: isActive,
+          child: InkWell(
+            onTap: () => onSlotSelected(slot.key),
+            borderRadius: BorderRadius.circular(16),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              constraints: const BoxConstraints(minHeight: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
                 color: isActive
-                    ? theme.accentColor
-                    : theme.textColor.withValues(alpha: 0.1),
-                width: isActive ? 2 : 1,
+                    ? theme.accentColor.withValues(alpha: 0.2)
+                    : theme.textColor.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isActive
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.1),
+                  width: isActive ? 2 : 1,
+                ),
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: Color(slot.colorValue),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.textColor.withValues(alpha: 0.3),
-                      width: 1,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: Color(slot.colorValue),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.textColor.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  slot.label,
-                  style: AppTypography.caption(
-                    fontSize: 12,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive
-                        ? theme.accentColor
-                        : theme.textColor.withValues(alpha: 0.6),
+                  const SizedBox(width: 8),
+                  Text(
+                    slot.label,
+                    style: AppTypography.caption(
+                      fontSize: 12,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive
+                          ? theme.accentColor
+                          : theme.textColor.withValues(alpha: 0.75),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

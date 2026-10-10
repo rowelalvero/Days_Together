@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:days_together/features/relationship/profile_controller.dart';
 import 'package:days_together/features/authentication/presentation/pages/avatar_creation_screen.dart';
+import 'package:days_together/features/authentication/presentation/widgets/auth_page_frame.dart';
 import 'package:days_together/features/authentication/presentation/widgets/recover_button.dart';
 import 'package:days_together/features/authentication/presentation/widgets/recovery_code_input_card.dart';
 import 'package:days_together/shared/widgets/safe_loading_dialog.dart';
@@ -64,7 +64,7 @@ class _RecoverRelationshipScreenState
   }
 
   Future<void> _handleRecover() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_isLoading || !_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
@@ -121,6 +121,7 @@ class _RecoverRelationshipScreenState
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception:', '').trim();
       });
@@ -138,68 +139,33 @@ class _RecoverRelationshipScreenState
     final themeProvider = ref.watch(themeControllerProvider);
     final theme = themeProvider.currentLoveTheme;
 
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: theme.textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Text(
-                      'Recover Existing\nRelationship Workspace',
-                      style: AppTypography.cormorant(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textColor,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Enter your recovery code to restore your shared workspace, settings, and memories.',
-                      style: AppTypography.spectral(
-                        fontSize: 16,
-                        color: theme.textColor.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    RecoveryCodeInputCard(
-                      controller: _codeController,
-                      errorMessage: _errorMessage,
-                      onPasted: () => setState(() => _errorMessage = null),
-                      theme: theme,
-                    ),
-                    const SizedBox(height: 40),
-                    RecoverButton(
-                      isLoading: _isLoading,
-                      onPressed: _handleRecover,
-                      theme: theme,
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
+    return AuthPageFrame(
+      theme: theme,
+      gradient: themeProvider.currentGradient,
+      onBack: () => Navigator.pop(context),
+      title: 'Recover your workspace',
+      subtitle:
+          'Enter your recovery code to bring back your shared workspace, '
+          'settings, and memories on this device.',
+      bottom: RecoverButton(
+        isLoading: _isLoading,
+        onPressed: _handleRecover,
+        theme: theme,
+      ),
+      children: [
+        Form(
+          key: _formKey,
+          child: RecoveryCodeInputCard(
+            controller: _codeController,
+            errorMessage: _errorMessage,
+            onEdited: () {
+              if (_errorMessage != null) setState(() => _errorMessage = null);
+            },
+            onSubmitted: _handleRecover,
+            theme: theme,
           ),
         ),
-      ),
+      ],
     );
   }
 }

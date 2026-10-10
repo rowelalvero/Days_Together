@@ -25,45 +25,50 @@ class ModeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.accentColor.withValues(alpha: 0.2)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
             color: isSelected
-                ? theme.accentColor
-                : theme.textColor.withValues(alpha: 0.08),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
+                ? theme.accentColor.withValues(alpha: 0.2)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
               color: isSelected
                   ? theme.accentColor
-                  : theme.textColor.withValues(alpha: 0.4),
+                  : theme.textColor.withValues(alpha: 0.08),
+              width: isSelected ? 2 : 1,
             ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: AppTypography.caption(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
                 color: isSelected
                     ? theme.accentColor
-                    : theme.textColor.withValues(alpha: 0.5),
+                    : theme.textColor.withValues(alpha: 0.6),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppTypography.caption(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.75),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

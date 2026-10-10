@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:days_together/app/theme/theme_manager.dart';
+
 /// The curated romantic color swatches in the custom theme designer.
 /// Extracted from `_CustomThemeDesignerState._buildColorPalette` (Migration
 /// audit item 6), along with the palette's color list itself.
@@ -49,38 +51,58 @@ class ColorPalette extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: 4,
+      runSpacing: 4,
       children: colors.map((colorValue) {
+        final color = Color(colorValue);
         final isSelected = activeColor == colorValue;
-        return GestureDetector(
-          onTap: () => onColorSelected(colorValue),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Color(colorValue),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? Colors.white : Colors.transparent,
-                width: isSelected ? 3 : 0,
+        // The ring and check use whichever ink contrasts with the swatch,
+        // so the selection stays visible on white and pastel swatches too.
+        final ink = ThemeContrast.onColor(color);
+        final hex = colorValue
+            .toRadixString(16)
+            .padLeft(8, '0')
+            .substring(2)
+            .toUpperCase();
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: 'Color #$hex',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => onColorSelected(colorValue),
+            // 48x48 touch target around a 40px swatch.
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? ink : ink.withValues(alpha: 0.15),
+                      width: isSelected ? 3 : 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.5),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: isSelected
+                      ? Center(child: Icon(Icons.check, color: ink, size: 18))
+                      : null,
+                ),
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: Color(colorValue).withValues(alpha: 0.5),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : [],
             ),
-            child: isSelected
-                ? const Center(
-                    child: Icon(Icons.check, color: Colors.white, size: 18),
-                  )
-                : null,
           ),
         );
       }).toList(),

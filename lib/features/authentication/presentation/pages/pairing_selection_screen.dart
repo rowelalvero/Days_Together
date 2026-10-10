@@ -18,7 +18,42 @@ class PairingSelectionScreen extends ConsumerStatefulWidget {
 
 class _PairingSelectionScreenState
     extends ConsumerState<PairingSelectionScreen> {
+  /// Swallows a second tap while the first one is still navigating.
+  ///
+  /// Cleared when a screen pushed on top of this one is popped -- observed
+  /// through this route's secondary animation settling back to dismissed --
+  /// rather than when `context.push(...)`'s Future completes: go_router drops
+  /// that Future whenever the router refreshes while the pushed screen is
+  /// open (it refreshes on every session change), which used to leave this
+  /// flag stuck and every card dead after coming back.
   bool _isNavigating = false;
+  Animation<double>? _coverAnimation;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final cover = ModalRoute.of(context)?.secondaryAnimation;
+    if (cover != _coverAnimation) {
+      _coverAnimation?.removeStatusListener(_onCoverChanged);
+      _coverAnimation = cover?..addStatusListener(_onCoverChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _coverAnimation?.removeStatusListener(_onCoverChanged);
+    super.dispose();
+  }
+
+  void _onCoverChanged(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed) _isNavigating = false;
+  }
+
+  void _push(String route) {
+    if (_isNavigating) return;
+    _isNavigating = true;
+    context.push(route);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,16 +126,22 @@ class _PairingSelectionScreenState
                     final workspaceNotifier = ref.read(
                       workspaceControllerProvider.notifier,
                     );
-                    await SafeLoadingDialog.run<bool>(
-                      context: context,
-                      future: () async {
-                        await workspaceNotifier.createRelationshipWorkspace();
-                        return true;
-                      },
-                      timeoutSeconds: 15,
-                      loadingMessage: 'Creating workspace...',
-                    );
-                    if (mounted) _isNavigating = false;
+                    try {
+                      await SafeLoadingDialog.run<bool>(
+                        context: context,
+                        future: () async {
+                          await workspaceNotifier.createRelationshipWorkspace();
+                          return true;
+                        },
+                        timeoutSeconds: 15,
+                        loadingMessage: 'Creating workspace...',
+                      );
+                    } finally {
+                      // A dialog doesn't move this route's secondary
+                      // animation, so clear the flag here as well -- on
+                      // error, timeout or cancel too.
+                      if (mounted) _isNavigating = false;
+                    }
                   },
                 ),
                 const SizedBox(height: 16),
@@ -111,13 +152,7 @@ class _PairingSelectionScreenState
                       "Connect to your partner's newly created workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
-                  onTap: () {
-                    if (_isNavigating) return;
-                    _isNavigating = true;
-                    context.push(Routes.joinCode).then((_) {
-                      if (mounted) _isNavigating = false;
-                    });
-                  },
+                  onTap: () => _push(Routes.joinCode),
                 ),
                 const SizedBox(height: 16),
                 _PairingCard(
@@ -127,13 +162,7 @@ class _PairingSelectionScreenState
                       "Reconnect to a workspace you previously belonged to.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
-                  onTap: () {
-                    if (_isNavigating) return;
-                    _isNavigating = true;
-                    context.push(Routes.recover).then((_) {
-                      if (mounted) _isNavigating = false;
-                    });
-                  },
+                  onTap: () => _push(Routes.recover),
                 ),
                 const SizedBox(height: 40),
               ],

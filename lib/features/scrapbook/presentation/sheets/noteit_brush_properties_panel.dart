@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/features/scrapbook/presentation/widgets/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/noteit_color_swatch.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
-/// Properties sheet for brush/drawing configurations (stroke width slider,
-/// shape type dropdown, and color palette picker).
+/// Properties sheet for brush/drawing configurations (stroke size slider
+/// with a live preview dot, shape picker, and color palette).
 class NoteitBrushPropertiesPanel extends StatelessWidget {
   final LoveStoryTheme theme;
   final String activeMode;
@@ -29,137 +30,200 @@ class NoteitBrushPropertiesPanel extends StatelessWidget {
     required this.onBrushColorChanged,
   });
 
+  static const _shapes = [
+    (value: 'rectangle', icon: Icons.crop_square_rounded, label: 'Rectangle'),
+    (value: 'oval', icon: Icons.circle_outlined, label: 'Oval'),
+    (value: 'line', icon: Icons.horizontal_rule_rounded, label: 'Line'),
+    (value: 'arrow', icon: Icons.north_east_rounded, label: 'Arrow'),
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final isEraser = activeMode == 'eraser';
+    // Preview matches what the eraser/marker actually paint with.
+    final previewSize =
+        (isEraser
+                ? strokeWidth * 3
+                : activeMode == 'marker'
+                ? strokeWidth * 2.5
+                : strokeWidth)
+            .clamp(2.0, 28.0);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.backgroundColor.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+      decoration: noteitPanelDecoration(theme),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Row with Stroke Width and Shape selection
+          if (activeMode == 'shapes')
+            Row(
+              children: [
+                NoteitPanelLabel('Shape', theme: theme),
+                for (final shape in _shapes)
+                  _ShapeChoice(
+                    icon: shape.icon,
+                    label: shape.label,
+                    isSelected: activeShape == shape.value,
+                    theme: theme,
+                    onTap: () => onShapeChanged(shape.value),
+                  ),
+              ],
+            ),
           Row(
             children: [
-              Text(
-                'Width:',
-                style: AppTypography.body(color: theme.textColor, fontSize: 13),
-              ),
+              NoteitPanelLabel('Size', theme: theme),
               Expanded(
                 child: Slider(
                   value: strokeWidth,
                   min: 1.0,
                   max: 20.0,
+                  label: strokeWidth.round().toString(),
+                  semanticFormatterCallback: (v) => 'Brush size ${v.round()}',
                   activeColor: theme.accentColor,
-                  inactiveColor: theme.textColor.withValues(alpha: 0.1),
+                  inactiveColor: theme.textColor.withValues(alpha: 0.15),
                   onChanged: onStrokeWidthChanged,
                 ),
               ),
-              if (activeMode == 'shapes') ...[
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: activeShape,
-                  dropdownColor: theme.backgroundColor,
-                  style: AppTypography.body(color: theme.textColor),
-                  underline: const SizedBox.shrink(),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'rectangle',
-                      child: Text('Rectangle'),
+              SizedBox(
+                width: 36,
+                height: 36,
+                child: Center(
+                  child: Container(
+                    width: previewSize,
+                    height: previewSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isEraser
+                          ? Colors.transparent
+                          : brushColor.withValues(
+                              alpha: activeMode == 'marker' ? 0.35 : 1,
+                            ),
+                      border: Border.all(
+                        color: theme.textColor.withValues(alpha: 0.4),
+                        width: isEraser ? 1.5 : 0.5,
+                      ),
                     ),
-                    DropdownMenuItem(value: 'oval', child: Text('Oval')),
-                    DropdownMenuItem(value: 'line', child: Text('Line')),
-                    DropdownMenuItem(value: 'arrow', child: Text('Arrow')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) onShapeChanged(val);
-                  },
+                  ),
                 ),
-              ],
+              ),
             ],
           ),
-
-          // Row with color palette picker
-          if (activeMode != 'eraser') ...[
-            SizedBox(
-              height: 38,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: paletteColors.length + 1,
-                itemBuilder: (ctx, i) {
-                  if (i == paletteColors.length) {
-                    return GestureDetector(
-                      onTap: () async {
-                        final pickedColor = await showDialog<Color>(
-                          context: context,
-                          builder: (ctx2) => ColorPickerDialog(
-                            initialColor: brushColor,
+          if (!isEraser)
+            Row(
+              children: [
+                NoteitPanelLabel('Color', theme: theme),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final color in paletteColors)
+                          NoteitColorSwatch(
+                            color: color,
                             theme: theme,
+                            isSelected:
+                                brushColor.toARGB32() == color.toARGB32(),
+                            onTap: () => onBrushColorChanged(color),
                           ),
-                        );
-                        if (pickedColor != null) {
-                          onBrushColorChanged(pickedColor);
-                        }
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: theme.textColor.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                          gradient: const SweepGradient(
-                            colors: [
-                              Colors.red,
-                              Colors.yellow,
-                              Colors.green,
-                              Colors.blue,
-                              Colors.red,
-                            ],
-                          ),
+                        NoteitCustomColorButton(
+                          theme: theme,
+                          onTap: () async {
+                            final pickedColor = await showDialog<Color>(
+                              context: context,
+                              builder: (ctx2) => ColorPickerDialog(
+                                initialColor: brushColor,
+                                theme: theme,
+                              ),
+                            );
+                            if (pickedColor != null) {
+                              onBrushColorChanged(pickedColor);
+                            }
+                          },
                         ),
-                        child: Icon(
-                          Icons.add_rounded,
-                          color: theme.textColor,
-                          size: 18,
-                        ),
-                      ),
-                    );
-                  }
-
-                  final color = paletteColors[i];
-                  final isSelected = brushColor.toARGB32() == color.toARGB32();
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => onBrushColorChanged(color),
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.textColor
-                                : Colors.transparent,
-                            width: 2.0,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
-                  );
-                },
+                  ),
+                ),
+              ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4, right: 6),
+              child: Text(
+                'Drag over strokes to erase them.',
+                style: AppTypography.caption(
+                  fontSize: 12,
+                  color: theme.textColor.withValues(alpha: 0.7),
+                ),
               ),
             ),
-          ],
         ],
+      ),
+    );
+  }
+}
+
+class _ShapeChoice extends StatelessWidget {
+  const _ShapeChoice({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.theme,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final LoveStoryTheme theme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: label,
+        excludeSemantics: true,
+        onTap: onTap,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 22,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Center(
+              child: AnimatedContainer(
+                duration: theme.motion.fast,
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.accentColor.withValues(alpha: 0.18)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(theme.radii.sm + 2),
+                  border: Border.all(
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.15),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.8),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

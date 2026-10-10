@@ -71,11 +71,18 @@ void main() {
     ) async {
       await _pump(tester);
 
-      expect(find.text('ABC123'), findsOneWidget);
+      // The code is shown in two halves for readability.
+      expect(find.text('ABC'), findsOneWidget);
+      expect(find.text('123'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('Connection code: A B C 1 2 3'),
+        findsOneWidget,
+      );
       expect(find.text('XYZ-000'), findsOneWidget);
       expect(find.text('Copy Code'), findsOneWidget);
       expect(find.text('Share'), findsOneWidget);
-      expect(find.text('Generate New Code'), findsOneWidget);
+      expect(find.text('Get a new code'), findsOneWidget);
+      expect(find.text('Save your recovery code to continue.'), findsOneWidget);
       expect(find.text('Copy Recovery Code'), findsOneWidget);
       expect(find.text('Continue'), findsOneWidget);
 
@@ -93,7 +100,7 @@ void main() {
       await tester.tap(find.text('Copy Code'));
       await tester.pump();
 
-      expect(find.text('✓ Copied'), findsOneWidget);
+      expect(find.text('Copied'), findsOneWidget);
       expect(find.text('Copy Code'), findsNothing);
 
       await tester.pump(const Duration(seconds: 3));
@@ -128,6 +135,7 @@ void main() {
           find.widgetWithText(ElevatedButton, 'Continue'),
         );
         expect(continueButton.onPressed, isNotNull);
+        expect(find.text('Save your recovery code to continue.'), findsNothing);
       },
     );
 
@@ -144,8 +152,36 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(session.recoveryCode, isNull);
-        expect(find.text('Your unique\nconnection code.'), findsNothing);
+        expect(find.text('Invite your partner'), findsNothing);
       },
     );
+
+    testWidgets('tapping the confirmation label also checks the box', (
+      tester,
+    ) async {
+      await _pump(tester);
+
+      await tester.tap(
+        find.text('I\'ve saved my recovery code somewhere safe.'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    });
+
+    testWidgets('Back asks before canceling the workspace', (tester) async {
+      await _pump(tester);
+      expect(find.text('Invite your partner'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Leave without connecting?'), findsOneWidget);
+      await tester.tap(find.text('Stay'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Leave without connecting?'), findsNothing);
+      expect(find.text('Invite your partner'), findsOneWidget);
+    });
   });
 }

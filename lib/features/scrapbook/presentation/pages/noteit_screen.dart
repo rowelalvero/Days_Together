@@ -462,26 +462,24 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
       builder: (ctx) => AlertDialog(
         backgroundColor: theme.backgroundColor,
         title: Text(
-          'Clear Canvas?',
+          'Clear the canvas?',
           style: AppTypography.heading(
             color: theme.textColor,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
-          'Are you sure you want to clear all doodles, shapes, text, and reset the canvas background?',
+          'Every doodle, shape, photo and note on it will be removed and the background reset.',
           style: AppTypography.body(
-            color: theme.textColor.withValues(alpha: 0.8),
+            color: theme.textColor.withValues(alpha: 0.85),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
-              style: AppTypography.button(
-                color: theme.textColor.withValues(alpha: 0.6),
-              ),
+              'Keep',
+              style: AppTypography.button(color: theme.textColor),
             ),
           ),
           TextButton(
@@ -495,8 +493,11 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
               });
             },
             child: Text(
-              'Clear All',
-              style: AppTypography.button(color: Colors.redAccent),
+              'Clear',
+              style: AppTypography.button(
+                color: theme.semantic.error,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -572,11 +573,9 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
 
     if (_controller.drawables.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please add some drawings, shapes, or notes to the canvas! 🎨',
-          ),
-          backgroundColor: Colors.redAccent,
+        SnackBar(
+          content: const Text('Draw, write or add a photo first.'),
+          backgroundColor: theme.semantic.info,
         ),
       );
       return;
@@ -620,9 +619,9 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
           _tabController.animateTo(1);
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Canvas sent to partner! 🚀'),
-                backgroundColor: Colors.green,
+              SnackBar(
+                content: const Text('Sent to your partner 💌'),
+                backgroundColor: theme.semantic.success,
               ),
             );
           }
@@ -635,7 +634,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
                 content: Text(
                   'Saved to scrapbook, but couldn\'t notify chat: ${result.failure.message}',
                 ),
-                backgroundColor: Colors.orangeAccent,
+                backgroundColor: theme.semantic.warning,
               ),
             );
           }
@@ -644,7 +643,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Failed to send: ${result.failure.message}'),
-                backgroundColor: Colors.redAccent,
+                backgroundColor: theme.semantic.error,
               ),
             );
           }
@@ -655,7 +654,7 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: theme.semantic.error,
           ),
         );
       }
@@ -697,130 +696,107 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
     super.dispose();
   }
 
-  Widget _buildConfigurationSheets(LoveStoryTheme theme) {
+  Widget _textPanel(LoveStoryTheme theme, TextDrawable? selectedText) {
+    return NoteitTextPropertiesPanel(
+      theme: theme,
+      selectedText: selectedText,
+      activeFontFamily: _activeFontFamily,
+      fontFamilies: _fontFamilies,
+      fontSize: _fontSize,
+      brushColor: _brushColor,
+      paletteColors: _paletteColors,
+      highlightColor: _highlightColor,
+      highlightColors: _highlightColors,
+      isBold: _isBold,
+      isItalic: _isItalic,
+      isUnderline: _isUnderline,
+      textAlign: _textAlign,
+      controller: _controller,
+      onFontFamilyChanged: (font) => setState(() => _activeFontFamily = font),
+      onFontSizeChanged: (val) => setState(() => _fontSize = val),
+      onTextColorChanged: (color) => setState(() => _brushColor = color),
+      onHighlightColorChanged: (color) =>
+          setState(() => _highlightColor = color),
+      onToggleBold: () => setState(() => _isBold = !_isBold),
+      onToggleItalic: () => setState(() => _isItalic = !_isItalic),
+      onToggleUnderline: () => setState(() => _isUnderline = !_isUnderline),
+      onAlignmentChanged: (align) => setState(() => _textAlign = align),
+    );
+  }
+
+  Widget _brushPanel(LoveStoryTheme theme) {
+    return NoteitBrushPropertiesPanel(
+      theme: theme,
+      activeMode: _activeMode,
+      strokeWidth: _strokeWidth,
+      activeShape: _activeShape,
+      brushColor: _brushColor,
+      paletteColors: _paletteColors,
+      onStrokeWidthChanged: (val) => setState(() {
+        _strokeWidth = val;
+        _updateSettings();
+      }),
+      onShapeChanged: (val) => setState(() {
+        _activeShape = val;
+        _updateSettings();
+      }),
+      onBrushColorChanged: (color) => setState(() {
+        _brushColor = color;
+        _updateSettings();
+      }),
+    );
+  }
+
+  Widget _buildConfigurationSheets(
+    LoveStoryTheme theme,
+    NoteitController notifier,
+  ) {
     final selectedObj = _controller.value.selectedObjectDrawable;
+    final Widget? panel = !_isPropertiesPanelExpanded
+        ? null
+        : selectedObj is TextDrawable
+        ? _textPanel(theme, selectedObj)
+        : selectedObj != null
+        ? _brushPanel(theme)
+        : _activeMode == 'text'
+        ? _textPanel(theme, null)
+        : _activeMode != 'select'
+        ? _brushPanel(theme)
+        : null;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_isPropertiesPanelExpanded) ...[
-          if (selectedObj != null)
-            (selectedObj is TextDrawable
-                ? NoteitTextPropertiesPanel(
-                    theme: theme,
-                    selectedText: selectedObj,
-                    activeFontFamily: _activeFontFamily,
-                    fontFamilies: _fontFamilies,
-                    brushColor: _brushColor,
-                    paletteColors: _paletteColors,
-                    highlightColor: _highlightColor,
-                    highlightColors: _highlightColors,
-                    isBold: _isBold,
-                    isItalic: _isItalic,
-                    isUnderline: _isUnderline,
-                    textAlign: _textAlign,
-                    controller: _controller,
-                    onFontFamilyChanged: (font) =>
-                        setState(() => _activeFontFamily = font),
-                    onTextColorChanged: (color) =>
-                        setState(() => _brushColor = color),
-                    onHighlightColorChanged: (color) =>
-                        setState(() => _highlightColor = color),
-                    onToggleBold: () => setState(() => _isBold = !_isBold),
-                    onToggleItalic: () =>
-                        setState(() => _isItalic = !_isItalic),
-                    onToggleUnderline: () =>
-                        setState(() => _isUnderline = !_isUnderline),
-                    onAlignmentChanged: (align) =>
-                        setState(() => _textAlign = align),
-                  )
-                : NoteitBrushPropertiesPanel(
-                    theme: theme,
-                    activeMode: _activeMode,
-                    strokeWidth: _strokeWidth,
-                    activeShape: _activeShape,
-                    brushColor: _brushColor,
-                    paletteColors: _paletteColors,
-                    onStrokeWidthChanged: (val) => setState(() {
-                      _strokeWidth = val;
-                      _updateSettings();
-                    }),
-                    onShapeChanged: (val) => setState(() {
-                      _activeShape = val;
-                      _updateSettings();
-                    }),
-                    onBrushColorChanged: (color) => setState(() {
-                      _brushColor = color;
-                      _updateSettings();
-                    }),
-                  ))
-          else if (_activeMode == 'text')
-            NoteitTextPropertiesPanel(
-              theme: theme,
-              selectedText: null,
-              activeFontFamily: _activeFontFamily,
-              fontFamilies: _fontFamilies,
-              brushColor: _brushColor,
-              paletteColors: _paletteColors,
-              highlightColor: _highlightColor,
-              highlightColors: _highlightColors,
-              isBold: _isBold,
-              isItalic: _isItalic,
-              isUnderline: _isUnderline,
-              textAlign: _textAlign,
-              controller: _controller,
-              onFontFamilyChanged: (font) =>
-                  setState(() => _activeFontFamily = font),
-              onTextColorChanged: (color) =>
-                  setState(() => _brushColor = color),
-              onHighlightColorChanged: (color) =>
-                  setState(() => _highlightColor = color),
-              onToggleBold: () => setState(() => _isBold = !_isBold),
-              onToggleItalic: () => setState(() => _isItalic = !_isItalic),
-              onToggleUnderline: () =>
-                  setState(() => _isUnderline = !_isUnderline),
-              onAlignmentChanged: (align) => setState(() => _textAlign = align),
-            )
-          else if (_activeMode != 'select')
-            NoteitBrushPropertiesPanel(
-              theme: theme,
-              activeMode: _activeMode,
-              strokeWidth: _strokeWidth,
-              activeShape: _activeShape,
-              brushColor: _brushColor,
-              paletteColors: _paletteColors,
-              onStrokeWidthChanged: (val) => setState(() {
-                _strokeWidth = val;
-                _updateSettings();
-              }),
-              onShapeChanged: (val) => setState(() {
-                _activeShape = val;
-                _updateSettings();
-              }),
-              onBrushColorChanged: (color) => setState(() {
-                _brushColor = color;
-                _updateSettings();
-              }),
-            ),
-        ],
-        NoteitFloatingToolbar(
-          theme: theme,
-          activeMode: _activeMode,
-          isPropertiesPanelExpanded: _isPropertiesPanelExpanded,
-          onModeChanged: (mode) {
-            setState(() {
-              _activeMode = mode;
-              _isPropertiesPanelExpanded = true;
-              _updateSettings();
-            });
-          },
-          onToggleProperties: () {
-            setState(() {
-              _isPropertiesPanelExpanded = !_isPropertiesPanelExpanded;
-            });
-          },
-          onAddText: () => _startInlineEditing(),
-          onImportImage: _importImage,
+        AnimatedSize(
+          duration: theme.motion.fast,
+          curve: theme.motion.emphasized,
+          alignment: Alignment.bottomCenter,
+          child: panel ?? const SizedBox(width: double.infinity),
         ),
+        // While typing, the keyboard owns the bottom of the screen; the
+        // text sheet stays so the text can be styled as it is written.
+        if (!_isInlineEditing)
+          NoteitFloatingToolbar(
+            theme: theme,
+            activeMode: _activeMode,
+            isPropertiesPanelExpanded: _isPropertiesPanelExpanded,
+            isSaving: _isSaving,
+            onModeChanged: (mode) {
+              setState(() {
+                _activeMode = mode;
+                _isPropertiesPanelExpanded = true;
+                _updateSettings();
+              });
+            },
+            onToggleProperties: () {
+              setState(() {
+                _isPropertiesPanelExpanded = !_isPropertiesPanelExpanded;
+              });
+            },
+            onAddText: () => _startInlineEditing(),
+            onImportImage: _importImage,
+            onSend: () => _sendCanvas(notifier, theme),
+          ),
       ],
     );
   }
@@ -855,36 +831,79 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
+          tooltip: 'Back',
           onPressed: () => Navigator.pop(context),
         ),
         actions: _currentTabIndex == 0
             ? [
+                // `color` + `disabledColor` on the button (not the Icon) so
+                // undo/redo visibly dim when there is nothing to undo.
                 IconButton(
-                  icon: Icon(Icons.undo_rounded, color: theme.textColor),
+                  icon: const Icon(Icons.undo_rounded),
+                  color: theme.textColor,
+                  disabledColor: theme.textColor.withValues(alpha: 0.3),
                   onPressed: _controller.canUndo
                       ? () => _controller.undo()
                       : null,
                   tooltip: 'Undo',
                 ),
                 IconButton(
-                  icon: Icon(Icons.redo_rounded, color: theme.textColor),
+                  icon: const Icon(Icons.redo_rounded),
+                  color: theme.textColor,
+                  disabledColor: theme.textColor.withValues(alpha: 0.3),
                   onPressed: _controller.canRedo
                       ? () => _controller.redo()
                       : null,
                   tooltip: 'Redo',
                 ),
-                IconButton(
-                  icon: Icon(Icons.layers_rounded, color: theme.textColor),
-                  onPressed: () => _showBackgroundSettingsDialog(theme),
-                  tooltip: 'Background Settings',
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.delete_outline_rounded,
-                    color: theme.textColor,
+                PopupMenuButton<String>(
+                  tooltip: 'More',
+                  icon: Icon(Icons.more_vert_rounded, color: theme.textColor),
+                  color: theme.backgroundColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(theme.radii.md),
                   ),
-                  onPressed: () => _clearCanvas(theme),
-                  tooltip: 'Clear Canvas',
+                  onSelected: (value) {
+                    if (value == 'background') {
+                      _showBackgroundSettingsDialog(theme);
+                    } else if (value == 'clear') {
+                      _clearCanvas(theme);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'background',
+                      child: Row(
+                        children: [
+                          Icon(Icons.wallpaper_rounded, color: theme.textColor),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Canvas background',
+                            style: AppTypography.body(color: theme.textColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'clear',
+                      enabled: _controller.drawables.isNotEmpty,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_sweep_rounded,
+                            color: theme.semantic.error,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Clear canvas',
+                            style: AppTypography.body(
+                              color: theme.semantic.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ]
             : null,
@@ -892,11 +911,34 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
           controller: _tabController,
           indicatorColor: theme.accentColor,
           labelColor: theme.accentColor,
-          unselectedLabelColor: theme.textColor.withValues(alpha: 0.5),
+          unselectedLabelColor: theme.textColor.withValues(alpha: 0.75),
+          indicatorSize: TabBarIndicatorSize.label,
+          dividerColor: Colors.transparent,
           labelStyle: AppTypography.body(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: AppTypography.body(),
           tabs: const [
-            Tab(text: 'Canvas', icon: Icon(Icons.draw_rounded, size: 20)),
-            Tab(text: 'History', icon: Icon(Icons.history_rounded, size: 20)),
+            Tab(
+              height: 44,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.draw_rounded, size: 18),
+                  SizedBox(width: 6),
+                  Text('Canvas'),
+                ],
+              ),
+            ),
+            Tab(
+              height: 44,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.history_rounded, size: 18),
+                  SizedBox(width: 6),
+                  Text('History'),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -934,10 +976,6 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
                 activeFontFamily: _activeFontFamily,
                 highlightColor: _highlightColor,
                 textAlign: _textAlign,
-                isPropertiesPanelExpanded: _isPropertiesPanelExpanded,
-                activeMode: _activeMode,
-                isSaving: _isSaving,
-                onSendCanvas: () => _sendCanvas(noteitNotifier, theme),
                 onDeselect: () {
                   setState(() {
                     _isPropertiesPanelExpanded = false;
@@ -949,13 +987,16 @@ class _NoteitScreenState extends ConsumerState<NoteitScreen>
                 onDuplicateSelected: _duplicateSelected,
                 onBringForward: _bringForward,
                 onSendBackward: _sendBackward,
-                onFontSizeChanged: (val) => setState(() => _fontSize = val),
-                bottomConfigurationSheets: _buildConfigurationSheets(theme),
+                bottomConfigurationSheets: _buildConfigurationSheets(
+                  theme,
+                  noteitNotifier,
+                ),
               ),
               NoteitHistoryPanel(
                 theme: theme,
                 state: noteitState,
                 notifier: noteitNotifier,
+                onStartCanvas: () => _tabController.animateTo(0),
               ),
             ],
           ),

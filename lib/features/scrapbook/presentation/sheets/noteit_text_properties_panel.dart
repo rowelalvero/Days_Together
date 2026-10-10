@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_painter_v2/flutter_painter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:days_together/features/scrapbook/presentation/widgets/color_picker_dialog.dart';
+import 'package:days_together/features/scrapbook/presentation/widgets/noteit_color_swatch.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/scrapbook/domain/canvas_mapping.dart';
@@ -40,13 +41,18 @@ TextStyle getNoteitTextStyle({
   }
 }
 
-/// Rich text properties sheet for styling text drawables (font choice, text color,
-/// background highlight box, bold/italic/underline, and text alignment).
+/// Rich text properties sheet for styling text drawables (font choice, size,
+/// text color, background highlight, bold/italic/underline, alignment).
+///
+/// Every control both updates the screen's "next text" defaults through its
+/// callback and, when a text object is selected, restyles that object in
+/// place.
 class NoteitTextPropertiesPanel extends StatelessWidget {
   final LoveStoryTheme theme;
   final TextDrawable? selectedText;
   final String activeFontFamily;
   final List<String> fontFamilies;
+  final double fontSize;
   final Color brushColor;
   final List<Color> paletteColors;
   final Color highlightColor;
@@ -57,6 +63,7 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
   final TextAlign textAlign;
   final PainterController controller;
   final void Function(String font) onFontFamilyChanged;
+  final ValueChanged<double> onFontSizeChanged;
   final void Function(Color color) onTextColorChanged;
   final void Function(Color color) onHighlightColorChanged;
   final VoidCallback onToggleBold;
@@ -70,6 +77,7 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
     required this.selectedText,
     required this.activeFontFamily,
     required this.fontFamilies,
+    required this.fontSize,
     required this.brushColor,
     required this.paletteColors,
     required this.highlightColor,
@@ -80,6 +88,7 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
     required this.textAlign,
     required this.controller,
     required this.onFontFamilyChanged,
+    required this.onFontSizeChanged,
     required this.onTextColorChanged,
     required this.onHighlightColorChanged,
     required this.onToggleBold,
@@ -88,55 +97,51 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
     required this.onAlignmentChanged,
   });
 
-  IconData _getAlignIcon(TextAlign align) {
-    switch (align) {
-      case TextAlign.left:
-        return Icons.format_align_left_rounded;
-      case TextAlign.right:
-        return Icons.format_align_right_rounded;
-      case TextAlign.center:
-      default:
-        return Icons.format_align_center_rounded;
-    }
-  }
-
-  TextAlign _getNextAlign(TextAlign align) {
-    switch (align) {
-      case TextAlign.left:
-        return TextAlign.center;
-      case TextAlign.center:
-        return TextAlign.right;
-      case TextAlign.right:
-      default:
-        return TextAlign.left;
-    }
-  }
+  static const _alignments = [
+    (
+      align: TextAlign.left,
+      icon: Icons.format_align_left_rounded,
+      label: 'Align left',
+    ),
+    (
+      align: TextAlign.center,
+      icon: Icons.format_align_center_rounded,
+      label: 'Align center',
+    ),
+    (
+      align: TextAlign.right,
+      icon: Icons.format_align_right_rounded,
+      label: 'Align right',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final bool textIsBold = selectedText != null
-        ? (selectedText!.style.fontWeight == FontWeight.bold)
+    final selected = selectedText;
+    final style = selected?.style;
+    final bool textIsBold = style != null
+        ? style.fontWeight == FontWeight.bold
         : isBold;
-    final bool textIsItalic = selectedText != null
-        ? (selectedText!.style.fontStyle == FontStyle.italic)
+    final bool textIsItalic = style != null
+        ? style.fontStyle == FontStyle.italic
         : isItalic;
-    final bool textIsUnderline = selectedText != null
-        ? (selectedText!.style.decoration == TextDecoration.underline)
+    final bool textIsUnderline = style != null
+        ? style.decoration == TextDecoration.underline
         : isUnderline;
-    final Color activeColor = selectedText != null
-        ? (selectedText!.style.color ?? brushColor)
+    final Color activeColor = style != null
+        ? (style.color ?? brushColor)
         : brushColor;
-    final Color activeHighlight = selectedText != null
-        ? (selectedText!.style.backgroundColor ?? Colors.transparent)
+    final Color activeHighlight = style != null
+        ? (style.backgroundColor ?? Colors.transparent)
         : highlightColor;
-    final TextAlign activeAlign =
-        (selectedText != null && selectedText is CustomTextDrawable)
-        ? (selectedText as CustomTextDrawable).textAlign
+    final double activeSize = style?.fontSize ?? fontSize;
+    final TextAlign activeAlign = selected is CustomTextDrawable
+        ? selected.textAlign
         : textAlign;
 
     String matchedFont = activeFontFamily;
-    if (selectedText != null && selectedText!.style.fontFamily != null) {
-      final family = selectedText!.style.fontFamily!
+    if (style?.fontFamily != null) {
+      final family = style!.fontFamily!
           .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
           .toLowerCase();
       for (final f in fontFamilies) {
@@ -148,35 +153,81 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
       }
     }
 
+    /// Restyles the selected text object (if any) with one property changed.
+    void restyle({
+      double? size,
+      Color? color,
+      bool? bold,
+      bool? italic,
+      bool? underline,
+      String? font,
+      Color? highlight,
+    }) {
+      if (selected == null) return;
+      final updated = selected.copyWith(
+        style: getNoteitTextStyle(
+          fontSize: size ?? activeSize,
+          color: color ?? activeColor,
+          isBold: bold ?? textIsBold,
+          isItalic: italic ?? textIsItalic,
+          isUnderline: underline ?? textIsUnderline,
+          fontFamily: font ?? matchedFont,
+          highlightColor: highlight ?? activeHighlight,
+        ),
+      );
+      controller.replaceDrawable(selected, updated);
+      controller.selectObjectDrawable(updated);
+    }
+
+    void setAlignment(TextAlign nextAlign) {
+      onAlignmentChanged(nextAlign);
+      if (selected is! CustomTextDrawable) return;
+      final renderBox =
+          controller.painterKey.currentContext?.findRenderObject()
+              as RenderBox?;
+      final canvasWidth = renderBox?.size.width ?? 600.0;
+      final textWidth = selected.getSize().width * selected.scale;
+      const double margin = 20.0;
+      final newX = switch (nextAlign) {
+        TextAlign.left => (textWidth / 2) + margin,
+        TextAlign.right => canvasWidth - (textWidth / 2) - margin,
+        _ => canvasWidth / 2,
+      };
+      final updated = selected.copyWith(
+        textAlign: nextAlign,
+        position: Offset(newX, selected.position.dy),
+      );
+      controller.replaceDrawable(selected, updated);
+      controller.selectObjectDrawable(updated);
+    }
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.backgroundColor.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 6),
+      decoration: noteitPanelDecoration(theme),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Font Family selector list
+          // Font family, each chip previewed in its own face
           SizedBox(
-            height: 36,
-            child: ListView.builder(
+            height: 40,
+            child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: fontFamilies.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 6),
               itemBuilder: (ctx, idx) {
                 final font = fontFamilies[idx];
                 final isSelected = matchedFont == font;
-
-                TextStyle fontStyle = const TextStyle();
+                final chipColor = isSelected
+                    ? theme.accentColor
+                    : theme.textColor.withValues(alpha: 0.85);
+                TextStyle fontStyle;
                 try {
                   fontStyle = GoogleFonts.getFont(
                     font,
-                    color: isSelected
-                        ? theme.accentColor
-                        : theme.textColor.withValues(alpha: 0.8),
-                    fontSize: 12,
+                    color: chipColor,
+                    fontSize: 14,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
@@ -184,493 +235,241 @@ class NoteitTextPropertiesPanel extends StatelessWidget {
                 } catch (_) {
                   fontStyle = TextStyle(
                     fontFamily: font,
-                    color: isSelected
-                        ? theme.accentColor
-                        : theme.textColor.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    color: chipColor,
+                    fontSize: 14,
                   );
                 }
 
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    label: Text(font, style: fontStyle),
-                    selected: isSelected,
-                    selectedColor: theme.accentColor.withValues(alpha: 0.15),
-                    backgroundColor: Colors.transparent,
-                    side: BorderSide(
-                      color: isSelected
-                          ? theme.accentColor
-                          : theme.textColor.withValues(alpha: 0.15),
-                      width: isSelected ? 1.5 : 1.0,
-                    ),
-                    showCheckmark: false,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        onFontFamilyChanged(font);
-                        if (selectedText != null) {
-                          final updated = selectedText!.copyWith(
-                            style: getNoteitTextStyle(
-                              fontSize: selectedText!.style.fontSize ?? 20.0,
-                              color: selectedText!.style.color ?? brushColor,
-                              isBold:
-                                  selectedText!.style.fontWeight ==
-                                  FontWeight.bold,
-                              isItalic:
-                                  selectedText!.style.fontStyle ==
-                                  FontStyle.italic,
-                              isUnderline:
-                                  selectedText!.style.decoration ==
-                                  TextDecoration.underline,
-                              fontFamily: font,
-                              highlightColor: activeHighlight,
-                            ),
-                          );
-                          controller.replaceDrawable(selectedText!, updated);
-                          controller.selectObjectDrawable(updated);
-                        }
-                      }
-                    },
+                return ChoiceChip(
+                  label: Text(font, style: fontStyle),
+                  selected: isSelected,
+                  selectedColor: theme.accentColor.withValues(alpha: 0.15),
+                  backgroundColor: Colors.transparent,
+                  side: BorderSide(
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.18),
+                    width: isSelected ? 1.5 : 1.0,
                   ),
+                  showCheckmark: false,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  onSelected: (picked) {
+                    if (!picked) return;
+                    onFontFamilyChanged(font);
+                    restyle(font: font);
+                  },
                 );
               },
             ),
           ),
-          const SizedBox(height: 8),
 
-          // Row 2: Text Color Selection
+          // Size
           Row(
             children: [
-              Text(
-                'Text:',
-                style: AppTypography.body(
-                  color: theme.textColor,
-                  fontSize: 12,
-                ).copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
+              NoteitPanelLabel('Size', theme: theme),
               Expanded(
-                child: SizedBox(
-                  height: 32,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: paletteColors.length + 1,
-                    itemBuilder: (ctx, i) {
-                      if (i == paletteColors.length) {
-                        return GestureDetector(
-                          onTap: () async {
-                            final pickedColor = await showDialog<Color>(
-                              context: context,
-                              builder: (ctx2) => ColorPickerDialog(
-                                initialColor: activeColor,
-                                theme: theme,
-                              ),
-                            );
-                            if (pickedColor != null) {
-                              onTextColorChanged(pickedColor);
-                              if (selectedText != null) {
-                                final updated = selectedText!.copyWith(
-                                  style: getNoteitTextStyle(
-                                    fontSize:
-                                        selectedText!.style.fontSize ?? 20.0,
-                                    color: pickedColor,
-                                    isBold:
-                                        selectedText!.style.fontWeight ==
-                                        FontWeight.bold,
-                                    isItalic:
-                                        selectedText!.style.fontStyle ==
-                                        FontStyle.italic,
-                                    isUnderline:
-                                        selectedText!.style.decoration ==
-                                        TextDecoration.underline,
-                                    fontFamily: matchedFont,
-                                    highlightColor: activeHighlight,
-                                  ),
-                                );
-                                controller.replaceDrawable(
-                                  selectedText!,
-                                  updated,
-                                );
-                                controller.selectObjectDrawable(updated);
-                              }
-                            }
-                          },
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.textColor.withValues(alpha: 0.3),
-                                width: 1.2,
-                              ),
-                              gradient: const SweepGradient(
-                                colors: [
-                                  Colors.red,
-                                  Colors.yellow,
-                                  Colors.green,
-                                  Colors.blue,
-                                  Colors.red,
-                                ],
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.add_rounded,
-                              color: theme.textColor,
-                              size: 16,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final color = paletteColors[i];
-                      final isSelected =
-                          activeColor.toARGB32() == color.toARGB32();
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: GestureDetector(
-                          onTap: () {
-                            onTextColorChanged(color);
-                            if (selectedText != null) {
-                              final updated = selectedText!.copyWith(
-                                style: getNoteitTextStyle(
-                                  fontSize:
-                                      selectedText!.style.fontSize ?? 20.0,
-                                  color: color,
-                                  isBold:
-                                      selectedText!.style.fontWeight ==
-                                      FontWeight.bold,
-                                  isItalic:
-                                      selectedText!.style.fontStyle ==
-                                      FontStyle.italic,
-                                  isUnderline:
-                                      selectedText!.style.decoration ==
-                                      TextDecoration.underline,
-                                  fontFamily: matchedFont,
-                                  highlightColor: activeHighlight,
-                                ),
-                              );
-                              controller.replaceDrawable(
-                                selectedText!,
-                                updated,
-                              );
-                              controller.selectObjectDrawable(updated);
-                            }
-                          },
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected
-                                    ? theme.textColor
-                                    : Colors.transparent,
-                                width: 1.8,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                child: Slider(
+                  value: activeSize.clamp(10.0, 80.0),
+                  min: 10.0,
+                  max: 80.0,
+                  label: activeSize.round().toString(),
+                  semanticFormatterCallback: (v) => 'Text size ${v.round()}',
+                  activeColor: theme.accentColor,
+                  inactiveColor: theme.textColor.withValues(alpha: 0.15),
+                  onChanged: (val) {
+                    onFontSizeChanged(val);
+                    restyle(size: val);
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 32,
+                child: Text(
+                  '${activeSize.round()}',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.captionMono(
+                    fontSize: 12,
+                    color: theme.textColor.withValues(alpha: 0.8),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
 
-          // Row 3: Highlight Color Selection
-          Row(
-            children: [
-              Text(
-                'Highlight:',
-                style: AppTypography.body(
-                  color: theme.textColor,
-                  fontSize: 12,
-                ).copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 32,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: highlightColors.length + 1,
-                    itemBuilder: (ctx, i) {
-                      if (i == highlightColors.length) {
-                        return GestureDetector(
-                          onTap: () async {
-                            final pickedColor = await showDialog<Color>(
-                              context: context,
-                              builder: (ctx2) => ColorPickerDialog(
-                                initialColor:
-                                    activeHighlight == Colors.transparent
-                                    ? Colors.yellow.withValues(alpha: 0.3)
-                                    : activeHighlight,
-                                theme: theme,
-                              ),
-                            );
-                            if (pickedColor != null) {
-                              onHighlightColorChanged(pickedColor);
-                              if (selectedText != null) {
-                                final updated = selectedText!.copyWith(
-                                  style: getNoteitTextStyle(
-                                    fontSize:
-                                        selectedText!.style.fontSize ?? 20.0,
-                                    color: activeColor,
-                                    isBold:
-                                        selectedText!.style.fontWeight ==
-                                        FontWeight.bold,
-                                    isItalic:
-                                        selectedText!.style.fontStyle ==
-                                        FontStyle.italic,
-                                    isUnderline:
-                                        selectedText!.style.decoration ==
-                                        TextDecoration.underline,
-                                    fontFamily: matchedFont,
-                                    highlightColor: pickedColor,
-                                  ),
-                                );
-                                controller.replaceDrawable(
-                                  selectedText!,
-                                  updated,
-                                );
-                                controller.selectObjectDrawable(updated);
-                              }
-                            }
-                          },
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.textColor.withValues(alpha: 0.3),
-                                width: 1.2,
-                              ),
-                              gradient: const SweepGradient(
-                                colors: [
-                                  Colors.red,
-                                  Colors.yellow,
-                                  Colors.green,
-                                  Colors.blue,
-                                  Colors.red,
-                                ],
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.add_rounded,
-                              color: theme.textColor,
-                              size: 16,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final color = highlightColors[i];
-                      final isSelected =
-                          activeHighlight.toARGB32() == color.toARGB32();
-                      final isTransparent = color == Colors.transparent;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: GestureDetector(
-                          onTap: () {
-                            onHighlightColorChanged(color);
-                            if (selectedText != null) {
-                              final updated = selectedText!.copyWith(
-                                style: getNoteitTextStyle(
-                                  fontSize:
-                                      selectedText!.style.fontSize ?? 20.0,
-                                  color: activeColor,
-                                  isBold:
-                                      selectedText!.style.fontWeight ==
-                                      FontWeight.bold,
-                                  isItalic:
-                                      selectedText!.style.fontStyle ==
-                                      FontStyle.italic,
-                                  isUnderline:
-                                      selectedText!.style.decoration ==
-                                      TextDecoration.underline,
-                                  fontFamily: matchedFont,
-                                  highlightColor: color,
-                                ),
-                              );
-                              controller.replaceDrawable(
-                                selectedText!,
-                                updated,
-                              );
-                              controller.selectObjectDrawable(updated);
-                            }
-                          },
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: isTransparent
-                                  ? Colors.grey.withValues(alpha: 0.2)
-                                  : color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected
-                                    ? theme.textColor
-                                    : Colors.transparent,
-                                width: 1.8,
-                              ),
-                            ),
-                            child: isTransparent
-                                ? Icon(
-                                    Icons.format_color_reset_rounded,
-                                    size: 14,
-                                    color: theme.textColor.withValues(
-                                      alpha: 0.6,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
+          // Text color
+          _ColorRow(
+            label: 'Color',
+            theme: theme,
+            colors: paletteColors,
+            active: activeColor,
+            onPicked: (color) {
+              onTextColorChanged(color);
+              restyle(color: color);
+            },
+            customInitial: activeColor,
           ),
-          const SizedBox(height: 8),
 
-          // Row 4: Formatting controls
+          // Highlight color
+          _ColorRow(
+            label: 'Highlight',
+            theme: theme,
+            colors: highlightColors,
+            active: activeHighlight,
+            onPicked: (color) {
+              onHighlightColorChanged(color);
+              restyle(highlight: color);
+            },
+            customInitial: activeHighlight == Colors.transparent
+                ? Colors.yellow.withValues(alpha: 0.3)
+                : activeHighlight,
+          ),
+
+          // Formatting and alignment
           Row(
             children: [
-              IconButton(
-                icon: Icon(
-                  Icons.format_bold,
-                  color: textIsBold
-                      ? theme.accentColor
-                      : theme.textColor.withValues(alpha: 0.6),
-                ),
-                onPressed: () {
+              _FormatToggle(
+                icon: Icons.format_bold_rounded,
+                label: 'Bold',
+                isOn: textIsBold,
+                theme: theme,
+                onTap: () {
                   onToggleBold();
-                  if (selectedText != null) {
-                    final updated = selectedText!.copyWith(
-                      style: getNoteitTextStyle(
-                        fontSize: selectedText!.style.fontSize ?? 20.0,
-                        color: activeColor,
-                        isBold: !textIsBold,
-                        isItalic: textIsItalic,
-                        isUnderline: textIsUnderline,
-                        fontFamily: matchedFont,
-                        highlightColor: activeHighlight,
-                      ),
-                    );
-                    controller.replaceDrawable(selectedText!, updated);
-                    controller.selectObjectDrawable(updated);
-                  }
+                  restyle(bold: !textIsBold);
                 },
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.format_italic,
-                  color: textIsItalic
-                      ? theme.accentColor
-                      : theme.textColor.withValues(alpha: 0.6),
-                ),
-                onPressed: () {
+              _FormatToggle(
+                icon: Icons.format_italic_rounded,
+                label: 'Italic',
+                isOn: textIsItalic,
+                theme: theme,
+                onTap: () {
                   onToggleItalic();
-                  if (selectedText != null) {
-                    final updated = selectedText!.copyWith(
-                      style: getNoteitTextStyle(
-                        fontSize: selectedText!.style.fontSize ?? 20.0,
-                        color: activeColor,
-                        isBold: textIsBold,
-                        isItalic: !textIsItalic,
-                        isUnderline: textIsUnderline,
-                        fontFamily: matchedFont,
-                        highlightColor: activeHighlight,
-                      ),
-                    );
-                    controller.replaceDrawable(selectedText!, updated);
-                    controller.selectObjectDrawable(updated);
-                  }
+                  restyle(italic: !textIsItalic);
                 },
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.format_underlined,
-                  color: textIsUnderline
-                      ? theme.accentColor
-                      : theme.textColor.withValues(alpha: 0.6),
-                ),
-                onPressed: () {
+              _FormatToggle(
+                icon: Icons.format_underlined_rounded,
+                label: 'Underline',
+                isOn: textIsUnderline,
+                theme: theme,
+                onTap: () {
                   onToggleUnderline();
-                  if (selectedText != null) {
-                    final updated = selectedText!.copyWith(
-                      style: getNoteitTextStyle(
-                        fontSize: selectedText!.style.fontSize ?? 20.0,
-                        color: activeColor,
-                        isBold: textIsBold,
-                        isItalic: textIsItalic,
-                        isUnderline: !textIsUnderline,
-                        fontFamily: matchedFont,
-                        highlightColor: activeHighlight,
-                      ),
-                    );
-                    controller.replaceDrawable(selectedText!, updated);
-                    controller.selectObjectDrawable(updated);
-                  }
+                  restyle(underline: !textIsUnderline);
                 },
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: Icon(
-                  _getAlignIcon(activeAlign),
-                  color: theme.accentColor,
+              const Spacer(),
+              for (final a in _alignments)
+                _FormatToggle(
+                  icon: a.icon,
+                  label: a.label,
+                  isOn: activeAlign == a.align,
+                  theme: theme,
+                  onTap: () => setAlignment(a.align),
                 ),
-                onPressed: () {
-                  final nextAlign = _getNextAlign(activeAlign);
-                  onAlignmentChanged(nextAlign);
-                  if (selectedText != null &&
-                      selectedText is CustomTextDrawable) {
-                    final renderBox =
-                        controller.painterKey.currentContext?.findRenderObject()
-                            as RenderBox?;
-                    final canvasWidth = renderBox?.size.width ?? 600.0;
-                    final textWidth =
-                        selectedText!.getSize().width * selectedText!.scale;
-
-                    double newX = selectedText!.position.dx;
-                    const double margin = 20.0;
-
-                    if (nextAlign == TextAlign.left) {
-                      newX = (textWidth / 2) + margin;
-                    } else if (nextAlign == TextAlign.center) {
-                      newX = canvasWidth / 2;
-                    } else if (nextAlign == TextAlign.right) {
-                      newX = canvasWidth - (textWidth / 2) - margin;
-                    }
-
-                    final updated = (selectedText as CustomTextDrawable)
-                        .copyWith(
-                          textAlign: nextAlign,
-                          position: Offset(newX, selectedText!.position.dy),
-                        );
-                    controller.replaceDrawable(selectedText!, updated);
-                    controller.selectObjectDrawable(updated);
-                  }
-                },
-                tooltip: 'Cycle Text Alignment',
-              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ColorRow extends StatelessWidget {
+  const _ColorRow({
+    required this.label,
+    required this.theme,
+    required this.colors,
+    required this.active,
+    required this.onPicked,
+    required this.customInitial,
+  });
+
+  final String label;
+  final LoveStoryTheme theme;
+  final List<Color> colors;
+  final Color active;
+  final ValueChanged<Color> onPicked;
+  final Color customInitial;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        NoteitPanelLabel(label, theme: theme),
+        Expanded(
+          child: SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final color in colors)
+                  NoteitColorSwatch(
+                    color: color,
+                    theme: theme,
+                    isSelected: active.toARGB32() == color.toARGB32(),
+                    semanticLabel: color.a == 0
+                        ? 'No ${label.toLowerCase()}'
+                        : null,
+                    onTap: () => onPicked(color),
+                  ),
+                NoteitCustomColorButton(
+                  theme: theme,
+                  onTap: () async {
+                    final pickedColor = await showDialog<Color>(
+                      context: context,
+                      builder: (ctx2) => ColorPickerDialog(
+                        initialColor: customInitial,
+                        theme: theme,
+                      ),
+                    );
+                    if (pickedColor != null) onPicked(pickedColor);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FormatToggle extends StatelessWidget {
+  const _FormatToggle({
+    required this.icon,
+    required this.label,
+    required this.isOn,
+    required this.theme,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isOn;
+  final LoveStoryTheme theme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      tooltip: label,
+      isSelected: isOn,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      style: IconButton.styleFrom(
+        backgroundColor: isOn
+            ? theme.accentColor.withValues(alpha: 0.18)
+            : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(theme.radii.sm + 2),
+        ),
+      ),
+      icon: Icon(
+        icon,
+        size: 22,
+        color: isOn
+            ? theme.accentColor
+            : theme.textColor.withValues(alpha: 0.75),
       ),
     );
   }

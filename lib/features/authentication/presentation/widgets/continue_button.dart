@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
+import 'package:days_together/features/authentication/presentation/widgets/primary_action_button.dart';
 
-/// The "Continue" button at the bottom of [CreateCoupleCodeScreen],
-/// enabled once the recovery code has been acknowledged. Extracted from
-/// its inline `build()` (Migration audit item 6).
+/// The "Continue" call to action on [CreateCoupleCodeScreen] and
+/// [GenesisScreen].
 class ContinueButton extends StatelessWidget {
   const ContinueButton({
     super.key,
@@ -17,29 +16,10 @@ class ContinueButton extends StatelessWidget {
   final LoveStoryTheme theme;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 60,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: theme.accentColor,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: theme.accentColor.withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          'Continue',
-          style: AppTypography.button(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => PrimaryActionButton(
+    label: 'Continue',
+    icon: Icons.arrow_forward_rounded,
+    onPressed: onPressed,
+    theme: theme,
+  );
 }

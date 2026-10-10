@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:days_together/shared/models/app_settings.dart';
 import 'package:flutter/material.dart';
 
@@ -60,18 +62,39 @@ class ThemeManager {
   }
 
   /// Build a custom theme from AppSettings color values.
+  ///
+  /// The Dark/Light toggle picks the text ink, but a user can pair "Dark"
+  /// with pastel colors (or "Light" with deep ones) and end up with ~1:1
+  /// text. When the requested ink falls below 3:1 against any gradient stop
+  /// and the opposite ink reads better, the opposite ink wins -- and
+  /// `isDark`/`cardColor` follow it so surfaces stay coherent with the text.
   static LoveStoryTheme buildCustomTheme(AppSettings settings) {
+    final surfaces = [
+      Color(settings.customPrimaryColor),
+      Color(settings.customSecondaryColor),
+      Color(settings.customBackgroundColor),
+    ];
+    final requested = settings.customIsDark
+        ? ThemeContrast.lightInk
+        : ThemeContrast.darkInk;
+    final opposite = settings.customIsDark
+        ? ThemeContrast.darkInk
+        : ThemeContrast.lightInk;
+    final requestedRatio = ThemeContrast.minRatio(requested, surfaces);
+    final flip =
+        requestedRatio < ThemeContrast.minLargeText &&
+        ThemeContrast.minRatio(opposite, surfaces) > requestedRatio;
+    final isDark = flip ? !settings.customIsDark : settings.customIsDark;
+
     return LoveStoryTheme(
       name: 'Custom',
-      primaryColor: Color(settings.customPrimaryColor),
-      secondaryColor: Color(settings.customSecondaryColor),
-      backgroundColor: Color(settings.customBackgroundColor),
-      textColor: settings.customIsDark ? Colors.white : const Color(0xFF3D2C3E),
-      cardColor: settings.customIsDark
-          ? const Color(0x1AFFFFFF)
-          : const Color(0x15D4778A),
+      primaryColor: surfaces[0],
+      secondaryColor: surfaces[1],
+      backgroundColor: surfaces[2],
+      textColor: isDark ? ThemeContrast.lightInk : ThemeContrast.darkInk,
+      cardColor: isDark ? const Color(0x1AFFFFFF) : const Color(0x15D4778A),
       accentColor: Color(settings.customAccentColor),
-      isDark: settings.customIsDark,
+      isDark: isDark,
     );
   }
 
@@ -94,6 +117,34 @@ class ThemeManager {
       stops: const [0.0, 0.5, 1.0],
     );
   }
+}
+
+/// WCAG 2.x contrast math for theme colors. Used to keep user-chosen custom
+/// colors readable and to pick the ink drawn on top of an accent fill.
+abstract final class ThemeContrast {
+  static const Color lightInk = Colors.white;
+  static const Color darkInk = Color(0xFF3D2C3E);
+
+  /// WCAG minimum for body text.
+  static const double minBodyText = 4.5;
+
+  /// WCAG minimum for large text and UI components.
+  static const double minLargeText = 3.0;
+
+  /// Contrast ratio between two opaque colors, from 1 (none) to 21.
+  static double ratio(Color a, Color b) {
+    final la = a.computeLuminance();
+    final lb = b.computeLuminance();
+    return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+  }
+
+  /// The worst contrast [ink] has against any of [surfaces].
+  static double minRatio(Color ink, Iterable<Color> surfaces) =>
+      surfaces.map((s) => ratio(ink, s)).reduce(math.min);
+
+  /// Whichever of [lightInk]/[darkInk] reads better on [surface].
+  static Color onColor(Color surface) =>
+      ratio(lightInk, surface) >= ratio(darkInk, surface) ? lightInk : darkInk;
 }
 
 /// Spacing scale (Phase 7 of the architecture migration, design-system.md).
@@ -217,6 +268,11 @@ class LoveStoryTheme extends ThemeExtension<LoveStoryTheme> {
     this.motion = const LoveStoryMotion(),
     this.semantic = const LoveStorySemantic(),
   });
+
+  /// Text/icon color for content drawn on an [accentColor] fill. Several
+  /// accents are pastel (Azure, Rose Quartz, Neon Violet), where white
+  /// sits below 2:1.
+  Color get onAccentColor => ThemeContrast.onColor(accentColor);
 
   @override
   LoveStoryTheme copyWith({

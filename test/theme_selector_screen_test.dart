@@ -132,6 +132,57 @@ void main() {
       expect(settings.customPrimaryColor, 0xFFFF6B9D);
     });
 
+    testWidgets('an incomplete hex code shows an error and changes nothing', (
+      tester,
+    ) async {
+      await _pump(tester, theme: ThemeState(currentTheme: ThemeType.custom));
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Enter hex (e.g. FF4D6D)'),
+        'ABC',
+      );
+      await tester.tap(find.byIcon(Icons.check_circle_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Use 6 hex digits, like FF4D6D'), findsOneWidget);
+      final settings = ProviderScope.containerOf(
+        tester.element(find.byType(ThemeSelectorScreen)),
+      ).read(themeControllerProvider).settings;
+      expect(settings.customPrimaryColor, 0xFFFF6B9D);
+    });
+
+    testWidgets('shows a readability check for the custom colors', (
+      tester,
+    ) async {
+      await _pump(tester, theme: ThemeState(currentTheme: ThemeType.custom));
+
+      expect(find.text('READABILITY'), findsOneWidget);
+      expect(find.text('Aa'), findsNWidgets(3));
+      // The default custom pink is too light for white text.
+      expect(find.textContaining('hard to read on Primary'), findsOneWidget);
+    });
+
+    testWidgets('says when Dark mode was overridden for readability', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        theme: ThemeState(
+          currentTheme: ThemeType.custom,
+          settings: AppSettings(
+            currentTheme: ThemeType.custom,
+            customPrimaryColor: 0xFFFFC4D6,
+            customSecondaryColor: 0xFFFFF0F5,
+            customBackgroundColor: 0xFFFFF8FA,
+            customIsDark: true,
+          ),
+        ),
+      );
+
+      expect(find.text('Easy to read'), findsOneWidget);
+      expect(find.textContaining('Using dark text'), findsOneWidget);
+    });
+
     testWidgets('toggling Light mode applies it', (tester) async {
       await _pump(tester, theme: ThemeState(currentTheme: ThemeType.custom));
 

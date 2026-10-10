@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:days_together/core/session/couple_session.dart';
 import 'package:days_together/features/authentication/presentation/pages/join_couple_code_screen.dart';
+import 'package:days_together/shared/widgets/otp_input.dart';
 
 const _notFound =
     'Hmm, we couldn\'t find that connection code. Please check it with your partner.';
@@ -32,10 +33,10 @@ Future<void> _pump(WidgetTester tester, {required double width}) async {
   await tester.pumpAndSettle();
 }
 
+/// Types one character at a time into OtpInput's single hidden field.
 Future<void> _typeCode(WidgetTester tester, String code) async {
-  final fields = find.byType(TextField);
-  for (var i = 0; i < code.length; i++) {
-    await tester.enterText(fields.at(i), code[i]);
+  for (final ch in code.split('')) {
+    await tester.enterText(find.byType(TextField), ch);
     await tester.pump();
   }
   await tester.pumpAndSettle();
@@ -53,7 +54,8 @@ void main() {
   ) async {
     await _pump(tester, width: 360);
 
-    expect(find.byType(TextField), findsNWidgets(8));
+    expect(find.byType(OtpInput), findsOneWidget);
+    expect(tester.widget<OtpInput>(find.byType(OtpInput)).length, 8);
     expect(
       find.text('Enter the 8-character connection code sent by your partner.'),
       findsOneWidget,
@@ -76,6 +78,19 @@ void main() {
 
     await _typeCode(tester, 'ABCD1234');
 
+    expect(find.text(_notFound), findsOneWidget);
+  });
+
+  testWidgets('a pasted lower-case code fills every slot and submits', (
+    tester,
+  ) async {
+    await _pump(tester, width: 400);
+
+    await tester.enterText(find.byType(TextField), 'abcd1234');
+    await tester.pumpAndSettle();
+
+    expect(find.text('A'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
     expect(find.text(_notFound), findsOneWidget);
   });
 }

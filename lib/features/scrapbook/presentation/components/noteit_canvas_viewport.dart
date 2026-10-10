@@ -7,8 +7,15 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/scrapbook/domain/canvas_mapping.dart';
 
-/// Interactive workspace wrapping the multi-layer RasterCanvas, inline text
-/// editing overlays, floating selected-object controls, font size sliders, and send buttons.
+/// Interactive workspace wrapping the multi-layer RasterCanvas, the inline
+/// text editing overlay, the selected-object action bar, and the bottom
+/// dock (property sheets + toolbar).
+///
+/// The canvas keeps a fixed footprint -- it is laid out against a constant
+/// dock reservation, not the live height of the sheets -- because drawables
+/// are positioned in canvas pixels: resizing the canvas whenever a sheet
+/// opened would shift everything already drawn. Sheets float over the
+/// canvas's lower edge instead and can be folded away from the toolbar.
 class NoteitCanvasViewport extends StatelessWidget {
   final PainterController controller;
   final LoveStoryTheme theme;
@@ -25,17 +32,15 @@ class NoteitCanvasViewport extends StatelessWidget {
   final String activeFontFamily;
   final Color highlightColor;
   final TextAlign textAlign;
-  final bool isPropertiesPanelExpanded;
-  final String activeMode;
-  final bool isSaving;
-  final VoidCallback onSendCanvas;
   final VoidCallback onDeselect;
   final void Function(CustomTextDrawable) onStartInlineEditing;
   final void Function(ObjectDrawable) onDuplicateSelected;
   final void Function(Drawable) onBringForward;
   final void Function(Drawable) onSendBackward;
-  final ValueChanged<double> onFontSizeChanged;
   final Widget bottomConfigurationSheets;
+
+  /// Height kept clear below the canvas for the toolbar.
+  static const double dockReservation = 76;
 
   const NoteitCanvasViewport({
     super.key,
@@ -54,16 +59,11 @@ class NoteitCanvasViewport extends StatelessWidget {
     required this.activeFontFamily,
     required this.highlightColor,
     required this.textAlign,
-    required this.isPropertiesPanelExpanded,
-    required this.activeMode,
-    required this.isSaving,
-    required this.onSendCanvas,
     required this.onDeselect,
     required this.onStartInlineEditing,
     required this.onDuplicateSelected,
     required this.onBringForward,
     required this.onSendBackward,
-    required this.onFontSizeChanged,
     required this.bottomConfigurationSheets,
   });
 
@@ -79,333 +79,306 @@ class NoteitCanvasViewport extends StatelessWidget {
       },
       child: Stack(
         children: [
-          // The Infinite Canvas
+          // The canvas
           Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 120),
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1.0,
-                  child: Container(
-                    margin: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                        ),
+            bottom: dockReservation,
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  margin: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(theme.radii.lg),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.12),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(theme.radii.lg),
+                    child: Stack(
+                      children: [
+                        RasterCanvas(controller: controller),
+                        if (isInlineEditing) ..._inlineEditor(),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Stack(
-                        children: [
-                          RasterCanvas(controller: controller),
-                          if (isInlineEditing) ...[
-                            Positioned.fill(
-                              child: GestureDetector(
-                                onTap: onFinishInlineEditing,
-                                child: BackdropFilter(
-                                  filter: ui.ImageFilter.blur(
-                                    sigmaX: 3.0,
-                                    sigmaY: 3.0,
-                                  ),
-                                  child: Container(
-                                    color: Colors.black.withValues(alpha: 0.35),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                child: TextField(
-                                  controller: inlineTextController,
-                                  focusNode: inlineTextFocusNode,
-                                  autofocus: true,
-                                  maxLines: null,
-                                  keyboardType: TextInputType.multiline,
-                                  textAlign: textAlign,
-                                  cursorColor: brushColor,
-                                  style: getNoteitTextStyle(
-                                    fontSize: fontSize,
-                                    color: brushColor,
-                                    isBold: isBold,
-                                    isItalic: isItalic,
-                                    isUnderline: isUnderline,
-                                    fontFamily: activeFontFamily,
-                                    highlightColor: highlightColor,
-                                  ),
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                    hintText: '',
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.check_circle_rounded,
-                                  size: 28,
-                                  color: Colors.greenAccent,
-                                ),
-                                onPressed: onFinishInlineEditing,
-                                tooltip: 'Save Text',
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              left: 8,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.cancel_rounded,
-                                  size: 28,
-                                  color: Colors.redAccent,
-                                ),
-                                onPressed: onCancelInlineEditing,
-                                tooltip: 'Cancel',
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ),
             ),
           ),
 
-          // Floating Selected Object toolbar
-          if (selectedObj != null)
-            Positioned(
-              top: 10,
-              left: 20,
-              right: 20,
-              child: GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.backgroundColor.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.textColor.withValues(alpha: 0.15),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          selectedObj.locked
-                              ? Icons.lock_rounded
-                              : Icons.lock_open_rounded,
-                          color: theme.textColor,
-                        ),
-                        onPressed: () {
-                          final updated = selectedObj.copyWith(
-                            locked: !selectedObj.locked,
-                          );
-                          controller.replaceDrawable(selectedObj, updated);
-                          controller.selectObjectDrawable(updated);
-                        },
-                        tooltip: selectedObj.locked
-                            ? 'Unlock Object'
-                            : 'Lock Object',
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.flip_to_back_rounded,
-                          color: theme.textColor,
-                        ),
-                        onPressed: () => onSendBackward(selectedObj),
-                        tooltip: 'Send Backward',
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.flip_to_front_rounded,
-                          color: theme.textColor,
-                        ),
-                        onPressed: () => onBringForward(selectedObj),
-                        tooltip: 'Bring Forward',
-                      ),
-                      if (selectedObj is TextDrawable)
-                        IconButton(
-                          icon: Icon(
-                            Icons.edit_rounded,
-                            color: theme.textColor,
-                          ),
-                          onPressed: () {
-                            if (selectedObj is CustomTextDrawable) {
-                              onStartInlineEditing(selectedObj);
-                            }
-                          },
-                          tooltip: 'Edit Text Content',
-                        ),
-                      IconButton(
-                        icon: Icon(Icons.copy_rounded, color: theme.textColor),
-                        onPressed: () => onDuplicateSelected(selectedObj),
-                        tooltip: 'Duplicate',
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.delete_forever_rounded,
-                          color: Colors.redAccent,
-                        ),
-                        onPressed: () {
-                          controller.removeDrawable(selectedObj);
-                          controller.deselectObjectDrawable();
-                        },
-                        tooltip: 'Delete',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          // Floating Send Button
+          // Selected-object action bar
           Positioned(
-            bottom: 110,
-            right: 20,
-            child: GestureDetector(
-              onTap: () {},
-              child: FloatingActionButton.extended(
-                onPressed: isSaving ? null : onSendCanvas,
-                backgroundColor: theme.accentColor,
-                elevation: 4,
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.send_rounded, color: Colors.white),
-                label: Text(
-                  'Send',
-                  style: AppTypography.body(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+            top: 8,
+            left: 0,
+            right: 0,
+            child: AnimatedSwitcher(
+              duration: theme.motion.fast,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, -0.3),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
                 ),
               ),
+              child: selectedObj != null && !isInlineEditing
+                  ? Center(
+                      key: const ValueKey('selection-bar'),
+                      child: _SelectionBar(
+                        selected: selectedObj,
+                        controller: controller,
+                        theme: theme,
+                        onStartInlineEditing: onStartInlineEditing,
+                        onDuplicateSelected: onDuplicateSelected,
+                        onBringForward: onBringForward,
+                        onSendBackward: onSendBackward,
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('no-selection')),
             ),
           ),
 
-          // Floating Font Size Slider (Only visible when adding/editing text)
-          if (isPropertiesPanelExpanded &&
-              (activeMode == 'text' || selectedObj is TextDrawable))
-            Positioned(
-              left: 12,
-              top: 160,
-              bottom: 290,
-              child: GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.backgroundColor.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.textColor.withValues(alpha: 0.15),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.text_fields_rounded,
-                        color: theme.textColor,
-                        size: 16,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${(selectedObj is TextDrawable ? (selectedObj.style.fontSize ?? fontSize) : fontSize).round()}',
-                        style: AppTypography.body(
-                          color: theme.textColor,
-                          fontSize: 10,
-                        ).copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: RotatedBox(
-                          quarterTurns: 3,
-                          child: Slider(
-                            value: selectedObj is TextDrawable
-                                ? (selectedObj.style.fontSize ?? fontSize)
-                                : fontSize,
-                            min: 10.0,
-                            max: 80.0,
-                            activeColor: theme.accentColor,
-                            inactiveColor: theme.textColor.withValues(
-                              alpha: 0.1,
-                            ),
-                            onChanged: (val) {
-                              onFontSizeChanged(val);
-                              if (selectedObj is TextDrawable) {
-                                final updated = selectedObj.copyWith(
-                                  style: selectedObj.style.copyWith(
-                                    fontSize: val,
-                                  ),
-                                );
-                                controller.replaceDrawable(
-                                  selectedObj,
-                                  updated,
-                                );
-                                controller.selectObjectDrawable(updated);
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          // Bottom Configuration Sheets
+          // Bottom dock: property sheets above the toolbar
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
+            // Absorbs taps so they don't reach the deselect handler above.
             child: GestureDetector(
               onTap: () {},
               child: bottomConfigurationSheets,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  List<Widget> _inlineEditor() {
+    return [
+      Positioned.fill(
+        child: GestureDetector(
+          onTap: onFinishInlineEditing,
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+            child: Container(color: Colors.black.withValues(alpha: 0.4)),
+          ),
+        ),
+      ),
+      Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: TextField(
+            controller: inlineTextController,
+            focusNode: inlineTextFocusNode,
+            autofocus: true,
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            textAlign: textAlign,
+            cursorColor: brushColor,
+            style: getNoteitTextStyle(
+              fontSize: fontSize,
+              color: brushColor,
+              isBold: isBold,
+              isItalic: isItalic,
+              isUnderline: isUnderline,
+              fontFamily: activeFontFamily,
+              highlightColor: highlightColor,
+            ),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              hintText: 'Write something sweet…',
+              hintStyle: AppTypography.body(
+                fontSize: 18,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
+            ),
+          ),
+        ),
+      ),
+      Positioned(
+        top: 10,
+        left: 10,
+        right: 10,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _OverlayPill(
+              icon: Icons.close_rounded,
+              label: 'Cancel',
+              background: Colors.black.withValues(alpha: 0.55),
+              foreground: Colors.white,
+              onTap: onCancelInlineEditing,
+            ),
+            _OverlayPill(
+              icon: Icons.check_rounded,
+              label: 'Done',
+              background: theme.accentColor,
+              foreground: theme.onAccentColor,
+              onTap: onFinishInlineEditing,
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+}
+
+class _OverlayPill extends StatelessWidget {
+  const _OverlayPill({
+    required this.icon,
+    required this.label,
+    required this.background,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: background,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTypography.button(
+                  color: foreground,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectionBar extends StatelessWidget {
+  const _SelectionBar({
+    required this.selected,
+    required this.controller,
+    required this.theme,
+    required this.onStartInlineEditing,
+    required this.onDuplicateSelected,
+    required this.onBringForward,
+    required this.onSendBackward,
+  });
+
+  final ObjectDrawable selected;
+  final PainterController controller;
+  final LoveStoryTheme theme;
+  final void Function(CustomTextDrawable) onStartInlineEditing;
+  final void Function(ObjectDrawable) onDuplicateSelected;
+  final void Function(Drawable) onBringForward;
+  final void Function(Drawable) onSendBackward;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = theme.textColor.withValues(alpha: 0.9);
+    final selected = this.selected;
+    return GestureDetector(
+      // Absorbs taps so they don't reach the deselect handler.
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: theme.backgroundColor.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(theme.radii.pill),
+          border: Border.all(color: theme.textColor.withValues(alpha: 0.12)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected is CustomTextDrawable)
+              IconButton(
+                icon: Icon(Icons.edit_note_rounded, color: iconColor),
+                onPressed: () => onStartInlineEditing(selected),
+                tooltip: 'Edit text',
+              ),
+            IconButton(
+              icon: Icon(
+                selected.locked ? Icons.lock_rounded : Icons.lock_open_rounded,
+                color: selected.locked ? theme.accentColor : iconColor,
+              ),
+              isSelected: selected.locked,
+              onPressed: () {
+                final updated = selected.copyWith(locked: !selected.locked);
+                controller.replaceDrawable(selected, updated);
+                controller.selectObjectDrawable(updated);
+              },
+              tooltip: selected.locked ? 'Unlock' : 'Lock in place',
+            ),
+            IconButton(
+              icon: Icon(Icons.flip_to_back_rounded, color: iconColor),
+              onPressed: () => onSendBackward(selected),
+              tooltip: 'Send backward',
+            ),
+            IconButton(
+              icon: Icon(Icons.flip_to_front_rounded, color: iconColor),
+              onPressed: () => onBringForward(selected),
+              tooltip: 'Bring forward',
+            ),
+            IconButton(
+              icon: Icon(Icons.copy_rounded, color: iconColor),
+              onPressed: () => onDuplicateSelected(selected),
+              tooltip: 'Duplicate',
+            ),
+            Container(
+              width: 1,
+              height: 24,
+              color: theme.textColor.withValues(alpha: 0.15),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                color: theme.semantic.error,
+              ),
+              onPressed: () {
+                controller.removeDrawable(selected);
+                controller.deselectObjectDrawable();
+              },
+              tooltip: 'Delete',
+            ),
+          ],
+        ),
       ),
     );
   }

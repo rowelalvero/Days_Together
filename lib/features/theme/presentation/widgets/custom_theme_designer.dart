@@ -6,6 +6,7 @@ import 'package:days_together/features/theme/presentation/widgets/color_palette.
 import 'package:days_together/features/theme/presentation/widgets/color_slot_selector.dart';
 import 'package:days_together/features/theme/presentation/widgets/dark_light_toggle.dart';
 import 'package:days_together/features/theme/presentation/widgets/hex_color_input.dart';
+import 'package:days_together/features/theme/presentation/widgets/readability_preview.dart';
 import 'package:days_together/features/theme/presentation/widgets/section_label.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/models/app_settings.dart';
@@ -115,6 +116,16 @@ class _CustomThemeDesignerState extends ConsumerState<CustomThemeDesigner> {
           onChanged: (isDark) => ref
               .read(themeControllerProvider.notifier)
               .setCustomIsDark(isDark),
+        ),
+        const SizedBox(height: 24),
+
+        // Readability check for the colors above
+        SectionLabel(text: 'Readability', theme: theme),
+        const SizedBox(height: 8),
+        ReadabilityPreview(
+          customTheme: ThemeManager.buildCustomTheme(settings),
+          requestedDark: settings.customIsDark,
+          parentTheme: theme,
         ),
         const SizedBox(height: 32),
       ],
