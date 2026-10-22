@@ -1,0 +1,241 @@
+import 'package:days_together/app/theme/theme_manager.dart';
+import 'package:flutter/material.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+
+class RelationshipStatistics extends ConsumerWidget {
+  final LoveStoryTheme theme;
+
+  const RelationshipStatistics({super.key, required this.theme});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timeline = ref.watch(timelineControllerProvider);
+    final bucket = ref.watch(bucketListControllerProvider);
+    final noteit = ref.watch(noteitControllerProvider);
+    final capsule = ref.watch(timeCapsuleControllerProvider);
+    final workspace = ref.watch(workspaceControllerProvider);
+
+    // Whole-timeline counts: items is only the loaded page window.
+    final totalMemories = timeline.memoryCount;
+    final bucketStats = '${bucket.completedItems}/${bucket.totalItems}';
+    final totalNotes = noteit.noteCount; // whole scrapbook, not the page
+    // Sourced from timeline photo memories since the Secret Vault was
+    // removed; it was previously the vault's item count.
+    final totalPhotos = timeline.photoMemoryCount;
+    final totalCapsules = capsule.capsules.length;
+
+    // Calculate timeline years from start date
+    final startDate = workspace.startDate ?? DateTime.now();
+    final daysDiff = DateTime.now().difference(startDate).inDays;
+    final timelineYears = (daysDiff / 365.25).toStringAsFixed(1);
+
+    final stats = [
+      _StatItem(
+        label: 'Total Memories',
+        value: '$totalMemories',
+        color: const Color(0xFFEC4899), // Pink
+      ),
+      _StatItem(
+        label: 'Total Photos',
+        value: '$totalPhotos',
+        color: const Color(0xFF8B5CF6), // Purple
+      ),
+      _StatItem(
+        label: 'Timeline Years',
+        value: timelineYears,
+        color: const Color(0xFFF59E0B), // Yellow/Amber
+      ),
+      _StatItem(
+        label: 'Bucket Completed',
+        value: bucketStats,
+        color: const Color(0xFF10B981), // Green
+      ),
+      _StatItem(
+        label: 'Capsules',
+        value: '$totalCapsules',
+        color: const Color(0xFF06B6D4), // Cyan
+      ),
+      _StatItem(
+        label: 'Shared Notes',
+        value: '$totalNotes',
+        color: const Color(0xFFEF4444), // Red
+      ),
+    ];
+
+    return GlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 28,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Icon(
+                  Icons.show_chart_rounded,
+                  color: theme.accentColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Synced Relationship',
+                      style: AppTypography.body(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textColor,
+                        height: 1.2,
+                      ),
+                    ),
+                    Text(
+                      'Statistics',
+                      style: AppTypography.body(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textColor,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'METRICS SYNC',
+                    style: AppTypography.caption(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      color: theme.textColor.withValues(alpha: 0.38),
+                    ).copyWith(letterSpacing: 1.2),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '100%',
+                    style: AppTypography.caption(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: theme.textColor.withValues(alpha: 0.38),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.6,
+            ),
+            itemCount: stats.length,
+            itemBuilder: (context, index) {
+              final item = stats[index];
+              final numericValue = double.tryParse(item.value);
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.textColor.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.04),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (numericValue != null)
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0, end: numericValue),
+                        duration: Duration(milliseconds: 900 + index * 100),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          final display = item.value.contains('.')
+                              ? value.toStringAsFixed(1)
+                              : value.toInt().toString();
+                          return Text(
+                            display,
+                            style: AppTypography.body(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: item.color,
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0, end: 1),
+                        duration: Duration(milliseconds: 600 + index * 100),
+                        curve: Curves.easeIn,
+                        builder: (context, value, _) {
+                          return Opacity(
+                            opacity: value,
+                            child: Text(
+                              item.value,
+                              style: AppTypography.body(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                color: item.color,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.label,
+                      style: AppTypography.caption(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: theme.secondaryTextColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatItem {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+}

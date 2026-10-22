@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/services/storage_url_service.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
 
 /// These cover the pure classification/parsing surface of [StorageUrlService],
 /// which is where a subtle bug would silently corrupt every stored image ref.
@@ -28,7 +28,9 @@ void main() {
         isFalse,
       );
       expect(
-        StorageUrlService.isLocalFileRef('$proj/storage/v1/object/public/avatars/x.jpg'),
+        StorageUrlService.isLocalFileRef(
+          '$proj/storage/v1/object/public/avatars/x.jpg',
+        ),
         isFalse,
       );
     });
@@ -43,10 +45,10 @@ void main() {
   group('pathFrom — legacy URLs', () {
     test('extracts the path from a legacy public URL', () {
       final url =
-          '$proj/storage/v1/object/public/vault-photos/couples/c1/vault_photos/p1.jpg';
+          '$proj/storage/v1/object/public/timeline/couples/c1/photos/p1.jpg';
       expect(
-        StorageUrlService.pathFrom(url, bucket: StorageBuckets.vaultPhotos),
-        'couples/c1/vault_photos/p1.jpg',
+        StorageUrlService.pathFrom(url, bucket: StorageBuckets.timeline),
+        'couples/c1/photos/p1.jpg',
       );
     });
 
@@ -81,7 +83,7 @@ void main() {
       // Must not cross-key: signing this against `avatars` would fail anyway,
       // but a wrong cacheKey would collide across buckets.
       final url =
-          '$proj/storage/v1/object/public/vault-photos/couples/c1/vault_photos/p1.jpg';
+          '$proj/storage/v1/object/public/timeline/couples/c1/photos/p1.jpg';
       expect(
         StorageUrlService.pathFrom(url, bucket: StorageBuckets.avatars),
         isNull,
@@ -144,10 +146,10 @@ void main() {
     test('strips a redundant leading bucket segment', () {
       expect(
         StorageUrlService.pathFrom(
-          'vault-photos/couples/c1/vault_photos/p1.jpg',
-          bucket: StorageBuckets.vaultPhotos,
+          'timeline/couples/c1/photos/p1.jpg',
+          bucket: StorageBuckets.timeline,
         ),
-        'couples/c1/vault_photos/p1.jpg',
+        'couples/c1/photos/p1.jpg',
       );
     });
 
@@ -155,7 +157,7 @@ void main() {
       expect(
         StorageUrlService.pathFrom(
           '/data/user/0/com.app/cache/img.jpg',
-          bucket: StorageBuckets.vaultPhotos,
+          bucket: StorageBuckets.timeline,
         ),
         isNull,
       );
@@ -178,33 +180,42 @@ void main() {
   });
 
   group('cacheKeyFor', () {
-    test('is stable across the legacy URL and the bare path for one object', () {
-      // The whole point: a signed URL rotates, but the cacheKey must not, or
-      // cached_network_image re-downloads every image on every rotation.
-      const path = 'couples/c1/avatars/u1_1700000000.jpg';
-      final legacy =
-          '$proj/storage/v1/object/public/avatars/$path?t=1700000000';
+    test(
+      'is stable across the legacy URL and the bare path for one object',
+      () {
+        // The whole point: a signed URL rotates, but the cacheKey must not, or
+        // cached_network_image re-downloads every image on every rotation.
+        const path = 'couples/c1/avatars/u1_1700000000.jpg';
+        final legacy =
+            '$proj/storage/v1/object/public/avatars/$path?t=1700000000';
 
-      final fromPath = StorageUrlService.cacheKeyFor(
-        bucket: StorageBuckets.avatars,
-        ref: path,
-      );
-      final fromLegacy = StorageUrlService.cacheKeyFor(
-        bucket: StorageBuckets.avatars,
-        ref: legacy,
-      );
+        final fromPath = StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.avatars,
+          ref: path,
+        );
+        final fromLegacy = StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.avatars,
+          ref: legacy,
+        );
 
-      expect(fromPath, fromLegacy);
-      expect(fromPath, 'avatars|$path');
-    });
+        expect(fromPath, fromLegacy);
+        expect(fromPath, 'avatars|$path');
+      },
+    );
 
     test('does not collide across buckets for identical sub-paths', () {
+      // Two *different* buckets is the whole point of this test -- the second
+      // one was `vaultPhotos` before the Secret Vault removal deleted that
+      // bucket, so it is now `avatars`.
       const path = 'couples/c1/shared/x.jpg';
       expect(
-        StorageUrlService.cacheKeyFor(bucket: StorageBuckets.timeline, ref: path),
+        StorageUrlService.cacheKeyFor(
+          bucket: StorageBuckets.timeline,
+          ref: path,
+        ),
         isNot(
           StorageUrlService.cacheKeyFor(
-            bucket: StorageBuckets.vaultPhotos,
+            bucket: StorageBuckets.avatars,
             ref: path,
           ),
         ),
@@ -234,8 +245,10 @@ void main() {
     test('passes a foreign URL straight through without signing', () {
       const url = 'https://lh3.googleusercontent.com/a/ACg8ocK=s96-c';
       expect(
-        StorageUrlService.instance
-            .resolveCached(bucket: StorageBuckets.avatars, ref: url),
+        StorageUrlService.instance.resolveCached(
+          bucket: StorageBuckets.avatars,
+          ref: url,
+        ),
         url,
       );
     });
@@ -253,7 +266,7 @@ void main() {
     test('returns null for a local file ref', () {
       expect(
         StorageUrlService.instance.resolveCached(
-          bucket: StorageBuckets.vaultPhotos,
+          bucket: StorageBuckets.timeline,
           ref: '/data/user/0/com.app/cache/img.jpg',
         ),
         isNull,

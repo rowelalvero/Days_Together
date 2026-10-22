@@ -1,0 +1,389 @@
+import 'package:days_together/app/theme/theme_manager.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:intl/intl.dart';
+import 'package:days_together/app/router/route_names.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
+import 'package:days_together/shared/models/timeline_model.dart';
+import 'package:days_together/shared/widgets/storage_image.dart';
+
+class MemoryHighlightCarousel extends StatefulWidget {
+  final TimelineState timelineProvider;
+  final LoveStoryTheme theme;
+
+  const MemoryHighlightCarousel({
+    super.key,
+    required this.timelineProvider,
+    required this.theme,
+  });
+
+  @override
+  State<MemoryHighlightCarousel> createState() =>
+      _MemoryHighlightCarouselState();
+}
+
+class _MemoryHighlightCarouselState extends State<MemoryHighlightCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.9);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.timelineProvider.items;
+    final theme = widget.theme;
+
+    if (items.isEmpty) {
+      return GlassContainer(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+        borderRadius: 24,
+        child: Column(
+          children: [
+            Icon(
+              Icons.auto_awesome_motion_rounded,
+              color: theme.accentColor.withValues(alpha: 0.4),
+              size: 44,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No memories captured yet',
+              style: AppTypography.bodyLarge(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: theme.textColor.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Start documenting your milestones and daily stories.',
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMedium(
+                fontSize: 12,
+                color: theme.textColor.withValues(alpha: 0.38),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Limit to latest 5 memories for the dashboard highlights
+    final displayItems = items.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemCount: displayItems.length,
+            itemBuilder: (context, index) {
+              final item = displayItems[index];
+              final hasImage =
+                  item.isImageCard &&
+                  ((item.imagePath != null &&
+                          File(item.imagePath!).existsSync()) ||
+                      (item.networkImageUrl != null &&
+                          item.networkImageUrl!.isNotEmpty));
+
+              return AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  double value = 1.0;
+                  if (_pageController.position.haveDimensions) {
+                    value = (_pageController.page! - index);
+                    value = (1 - (value.abs() * 0.08)).clamp(0.8, 1.0);
+                  }
+                  return Center(
+                    child: SizedBox(
+                      height: Curves.easeOut.transform(value) * 180,
+                      width:
+                          Curves.easeOut.transform(value) *
+                          MediaQuery.of(context).size.width,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: OpenContainerWrapper(
+                    item: item,
+                    theme: theme,
+                    child: hasImage
+                        ? _buildImageCard(item, theme)
+                        : _buildTextCard(item, theme),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (displayItems.length > 1) ...[
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              displayItems.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: _currentPage == index ? 16 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: _currentPage == index
+                      ? theme.accentColor
+                      : Colors.white24,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildImageCard(TimelineItemData item, LoveStoryTheme theme) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: theme.textColor.withValues(alpha: 0.05),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            StorageImageBuilder(
+              bucket: StorageBuckets.timeline,
+              storageRef: item.networkImageUrl,
+              localPath: item.imagePath,
+              builder: (context, image, _, _) => Image(
+                image: image ?? const AssetImage('assets/images/app_icon.png'),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: theme.textColor.withValues(alpha: 0.1),
+                  child: Center(
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      color: theme.textColor.withValues(alpha: 0.2),
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black38,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          item.mood,
+                          style: AppTypography.body(fontSize: 14),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (item.location != null &&
+                          item.location!.isNotEmpty) ...[
+                        Icon(
+                          Icons.location_on_rounded,
+                          size: 12,
+                          color: theme.accentColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            item.location!,
+                            style: AppTypography.caption(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.title,
+                    style: AppTypography.body(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('MMMM dd, yyyy').format(item.date),
+                    style: AppTypography.caption(
+                      fontSize: 10,
+                      color: Colors.white54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextCard(TimelineItemData item, LoveStoryTheme theme) {
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 24,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  item.title,
+                  style: AppTypography.body(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(item.mood, style: AppTypography.body(fontSize: 14)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Text(
+              item.description,
+              style: AppTypography.heading(
+                fontSize: 12,
+                color: theme.textColor.withValues(alpha: 0.7),
+                height: 1.4,
+              ).copyWith(fontStyle: FontStyle.italic),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MMMM dd, yyyy').format(item.date),
+                style: AppTypography.caption(
+                  fontSize: 10,
+                  color: theme.textColor.withValues(alpha: 0.38),
+                ),
+              ),
+              if (item.location != null && item.location!.isNotEmpty)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      size: 10,
+                      color: theme.accentColor,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      item.location!,
+                      style: AppTypography.caption(
+                        fontSize: 10,
+                        color: theme.textColor.withValues(alpha: 0.38),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class OpenContainerWrapper extends StatelessWidget {
+  final TimelineItemData item;
+  final LoveStoryTheme theme;
+  final Widget child;
+
+  const OpenContainerWrapper({
+    super.key,
+    required this.item,
+    required this.theme,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => context.push(Routes.memory(item.id)),
+          borderRadius: BorderRadius.circular(24),
+          child: child,
+        ),
+      ),
+    );
+  }
+}

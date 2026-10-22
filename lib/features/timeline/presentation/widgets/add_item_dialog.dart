@@ -1,0 +1,576 @@
+import 'dart:io';
+import 'package:days_together/shared/models/timeline_model.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/app/theme/theme_manager.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:intl/intl.dart';
+
+class AddItemDialog extends ConsumerStatefulWidget {
+  const AddItemDialog({super.key});
+
+  @override
+  ConsumerState<AddItemDialog> createState() => _AddItemDialogState();
+}
+
+class _AddItemDialogState extends ConsumerState<AddItemDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
+  String? _imagePath;
+  bool _isImageCard = true;
+  bool _isSaving = false;
+  String _selectedMood = '😍';
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
+
+  final List<String> _moods = ['😍', '🥳', '😂', '😢', '🏠'];
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = ref.watch(themeControllerProvider);
+    final theme = themeProvider.currentLoveTheme;
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(gradient: themeProvider.currentGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(context, theme),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildPreview(theme),
+                        const SizedBox(height: 24),
+                        _buildDateTimeSection(theme),
+                        const SizedBox(height: 24),
+                        _buildToggleSection(theme),
+                        const SizedBox(height: 32),
+                        _buildMoodSelector(theme),
+                        const SizedBox(height: 32),
+                        _buildTextField(
+                          'Title',
+                          _titleController,
+                          theme,
+                          hint: 'e.g., Our First Date',
+                        ),
+                        const SizedBox(height: 24),
+                        _buildTextField(
+                          'Where did it happen?',
+                          _locationController,
+                          theme,
+                          hint: 'e.g., Central Park, NYC',
+                        ),
+                        const SizedBox(height: 24),
+                        _buildTextField(
+                          'Description',
+                          _descriptionController,
+                          theme,
+                          hint: 'Write the story...',
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 32),
+                        if (_isImageCard) _buildImageButton(theme),
+                        const SizedBox(height: 96),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context, LoveStoryTheme theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            tooltip: 'Close',
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.close_rounded, color: theme.textColor, size: 28),
+          ),
+          Text(
+            'New Memory',
+            style: AppTypography.display(
+              color: theme.textColor,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Save memory',
+            onPressed: _isSaving ? null : _saveItem,
+            icon: _isSaving
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.accentColor,
+                    ),
+                  )
+                : Icon(Icons.check_rounded, color: theme.accentColor, size: 28),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreview(LoveStoryTheme theme) {
+    return GlassContainer(
+      height: 220,
+      width: double.infinity,
+      borderRadius: 28,
+      padding: EdgeInsets.zero,
+      child: _isImageCard
+          ? _buildImagePreview(theme)
+          : _buildTextPreview(theme),
+    );
+  }
+
+  Widget _buildImagePreview(LoveStoryTheme theme) {
+    return Column(
+      children: [
+        Expanded(
+          flex: 2,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: _imagePath != null && File(_imagePath!).existsSync()
+                ? Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: FileImage(File(_imagePath!)),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: double.infinity,
+                    color: theme.textColor.withValues(alpha: 0.05),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: theme.textColor.withValues(alpha: 0.3),
+                            size: 40,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No photo selected',
+                            style: AppTypography.bodyMedium(
+                              color: theme.textColor.withValues(alpha: 0.3),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _titleController.text.isEmpty
+                      ? 'Title'
+                      : _titleController.text,
+                  style: AppTypography.bodyLarge(
+                    color: theme.textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _descriptionController.text.isEmpty
+                      ? 'Description...'
+                      : _descriptionController.text,
+                  style: AppTypography.bodyMedium(
+                    color: theme.secondaryTextColor,
+                    fontSize: 11,
+                  ),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextPreview(LoveStoryTheme theme) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _titleController.text.isEmpty ? 'Title' : _titleController.text,
+            style: AppTypography.bodyLarge(
+              color: theme.textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _descriptionController.text.isEmpty
+                ? 'Your beautiful story goes here...'
+                : _descriptionController.text,
+            style: AppTypography.lora(
+              color: theme.textColor.withValues(alpha: 0.7),
+              fontSize: 14,
+              height: 1.5,
+            ).copyWith(fontStyle: FontStyle.italic),
+            maxLines: 5,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateTimeSection(LoveStoryTheme theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'WHEN DID IT HAPPEN?',
+          style: AppTypography.bodyLarge(
+            color: theme.textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ).copyWith(letterSpacing: 1.5),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.fromSeed(
+                                seedColor: theme.accentColor,
+                                brightness: theme.isDark
+                                    ? Brightness.dark
+                                    : Brightness.light,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setState(() => _selectedDate = picked);
+                      }
+                    },
+                    child: GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: theme.accentColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            DateFormat('MMM dd, yyyy').format(_selectedDate),
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.fromSeed(
+                                seedColor: theme.accentColor,
+                                brightness: theme.isDark
+                                    ? Brightness.dark
+                                    : Brightness.light,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setState(() => _selectedTime = picked);
+                      }
+                    },
+                    child: GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 18,
+                            color: theme.accentColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            _selectedTime.format(context),
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToggleSection(LoveStoryTheme theme) {
+    return GlassContainer(
+      borderRadius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Include a Photo',
+            style: AppTypography.bodyLarge(
+              color: theme.textColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Switch.adaptive(
+            value: _isImageCard,
+            activeTrackColor: theme.accentColor,
+            onChanged: (val) => setState(() => _isImageCard = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoodSelector(LoveStoryTheme theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'HOW DID IT FEEL?',
+          style: AppTypography.bodyLarge(
+            color: theme.textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ).copyWith(letterSpacing: 1.5),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: _moods.map((m) {
+            final isSelected = _selectedMood == m;
+            return MergeSemantics(
+              child: Semantics(
+                button: true,
+                selected: isSelected,
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedMood = m),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      // Selection reads as an accent-coloured ring rather than a
+                      // solid accent fill, so the emoji stays legible against the
+                      // sheet's own background instead of sitting on a saturated
+                      // disc.
+                      color: isSelected
+                          ? Colors.transparent
+                          : theme.textColor.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? theme.accentColor
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(m, style: AppTypography.body(fontSize: 24)),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    LoveStoryTheme theme, {
+    int maxLines = 1,
+    String? hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: AppTypography.bodyLarge(
+            color: theme.textColor.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ).copyWith(letterSpacing: 1.5),
+        ),
+        const SizedBox(height: 12),
+        GlassContainer(
+          borderRadius: 20,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: TextField(
+            controller: controller,
+            maxLines: maxLines,
+            style: AppTypography.body(color: theme.textColor),
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTypography.body(
+                color: theme.textColor.withValues(alpha: 0.24),
+              ),
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageButton(LoveStoryTheme theme) {
+    return ElevatedButton.icon(
+      onPressed: _pickImage,
+      icon: const Icon(Icons.add_photo_alternate_rounded),
+      label: Text(_imagePath != null ? 'Change Photo' : 'Select Photo'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: theme.textColor.withValues(alpha: 0.05),
+        foregroundColor: theme.textColor,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
+        ),
+        elevation: 0,
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    final path = await ref
+        .read(timelineControllerProvider.notifier)
+        .pickImage(context);
+    if (path != null) setState(() => _imagePath = path);
+  }
+
+  Future<void> _saveItem() async {
+    if (_titleController.text.trim().isEmpty) return;
+    setState(() => _isSaving = true);
+    try {
+      final combinedDate = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+      final newItem = TimelineItemData(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        location: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
+        imagePath: _imagePath,
+        date: combinedDate,
+        isImageCard: _isImageCard,
+        position: ref.read(timelineControllerProvider).items.length,
+        mood: _selectedMood,
+      );
+      await ref
+          .read(timelineControllerProvider.notifier)
+          .addTimelineItem(newItem);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      setState(() => _isSaving = false);
+    }
+  }
+}

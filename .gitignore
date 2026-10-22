@@ -46,8 +46,11 @@ app.*.map.json
 
 # Environment variables
 .env
+.env.*
 
-# Google Cloud Service Account
+# Google Cloud Service Account / private key material. A service-account key
+# was committed once (4c7e2f7) -- these patterns exist so it cannot recur.
+# test/secret_scan_test.dart fails the build if one slips through anyway.
 service-account.json
 
 # graphify knowledge graph output (any level)

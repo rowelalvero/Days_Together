@@ -1,48 +1,51 @@
 import 'dart:ui';
-import 'package:days_together/providers/bucket_list_provider.dart';
-import 'package:days_together/providers/daily_mood_provider.dart';
-import 'package:days_together/providers/gift_reminder_provider.dart';
-import 'package:days_together/providers/theme_provider.dart';
-import 'package:days_together/providers/time_capsule_provider.dart';
-import 'package:days_together/providers/timeline_provider.dart';
-import 'package:days_together/providers/relationship_provider.dart';
-import 'package:days_together/providers/vault_provider.dart';
-import 'package:days_together/providers/calendar_provider.dart';
-import 'package:days_together/providers/topic_cards_provider.dart';
-import 'package:days_together/providers/noteit_provider.dart';
-import 'package:days_together/providers/recent_activity_provider.dart';
-import 'package:days_together/providers/love_chat_provider.dart';
-import 'package:days_together/providers/notification_preferences_provider.dart';
-import 'package:days_together/providers/currently_provider.dart';
-import 'package:days_together/screens/love_story_screen.dart';
-import 'package:days_together/screens/onboarding/welcome_screen.dart';
-import 'package:days_together/screens/onboarding/pairing_selection_screen.dart';
-import 'package:days_together/screens/onboarding/loading_screen.dart';
-import 'package:days_together/screens/onboarding/create_couple_code_screen.dart';
-import 'package:days_together/screens/onboarding/genesis_screen.dart';
-import 'package:days_together/screens/onboarding/avatar_creation_screen.dart';
+import 'package:days_together/core/session/couple_session.dart';
+import 'package:days_together/features/theme/theme_controller.dart';
+import 'package:days_together/features/relationship/license_controller.dart';
+import 'package:days_together/features/relationship/profile_controller.dart';
+import 'package:days_together/features/relationship/workspace_controller.dart';
+import 'package:days_together/features/relationship/presence_controller.dart';
+import 'package:days_together/features/relationship/session_controller.dart';
+import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
+import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
+import 'package:days_together/features/calendar/calendar_controller.dart';
+import 'package:days_together/features/love_studio/time_capsule_controller.dart';
+import 'package:days_together/features/timeline/timeline_controller.dart';
+import 'package:days_together/features/scrapbook/noteit_controller.dart';
+import 'package:days_together/features/chat/love_chat_controller.dart';
+import 'package:days_together/features/topic_cards/topic_cards_controller.dart';
+import 'package:days_together/features/mood/daily_mood_controller.dart';
+import 'package:days_together/features/currently/currently_controller.dart';
+import 'package:days_together/features/settings/notification_preferences_controller.dart';
+import 'package:days_together/app/router/app_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show
+        ConsumerStatefulWidget,
+        ConsumerState,
+        ConsumerWidget,
+        WidgetRef,
+        ProviderScope;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:days_together/app_config.dart';
-import 'package:days_together/services/notification_service.dart';
-import 'package:days_together/navigator_key.dart';
-import 'package:days_together/services/home_widget_service.dart';
+import 'package:days_together/app/config/app_config.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
 
 @pragma('vm:entry-point')
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Handle Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('Captured FlutterError: ${details.exception}');
+    debugPrintStack(stackTrace: details.stack, label: 'FlutterError stack');
   };
 
   // Handle platform errors
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     debugPrint('Captured PlatformDispatcher error: $error');
+    debugPrintStack(stackTrace: stack, label: 'PlatformDispatcher stack');
     return true;
   };
 
@@ -50,90 +53,219 @@ void main() {
 }
 
 Future<void> _initializeApp() async {
+  // Each initialization step gets its own guard: they are independent, and a
+  // single shared try/catch meant one failing step silently skipped every
+  // later one (a throw inside NotificationService.init() took the home widget
+  // and FCM token-refresh registration down with it).
   try {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
       publishableKey: AppConfig.supabaseAnonKey,
     );
-    await NotificationService().init();
-    await HomeWidgetService.instance.initialize();
   } catch (e) {
-    debugPrint('Initialization error: $e');
+    debugPrint('Supabase initialization error: $e');
   }
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => RelationshipProvider()),
-        ChangeNotifierProvider(create: (_) => RecentActivityProvider()),
-        ChangeNotifierProxyProvider<RelationshipProvider, TimelineProvider>(
-          create: (_) => TimelineProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, BucketListProvider>(
-          create: (_) => BucketListProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, TimeCapsuleProvider>(
-          create: (_) => TimeCapsuleProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, DailyMoodProvider>(
-          create: (_) => DailyMoodProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, GiftReminderProvider>(
-          create: (_) => GiftReminderProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, VaultProvider>(
-          create: (_) => VaultProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, CalendarProvider>(
-          create: (_) => CalendarProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, TopicCardsProvider>(
-          create: (_) => TopicCardsProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, NoteitProvider>(
-          create: (_) => NoteitProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, LoveChatProvider>(
-          create: (_) => LoveChatProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, CurrentlyProvider>(
-          create: (_) => CurrentlyProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-        ChangeNotifierProxyProvider<RelationshipProvider, NotificationPreferencesProvider>(
-          create: (_) => NotificationPreferencesProvider(),
-          update: (_, relationship, provider) =>
-              provider!..updateRelationship(relationship),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(buildAppRoot(child: const MyApp()));
+
+  // After the first frame, not before runApp: init() brings up Firebase and
+  // requests notification permission, and on Android 13+ that system dialog
+  // used to hold the app's very first frame. A notification tap that
+  // launched the app is still honoured -- init() resolves it then, and
+  // appRedirect's pending-deep-link queue replays it once the session loads.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await NotificationService().init();
+    } catch (e) {
+      debugPrint('NotificationService initialization error: $e');
+    }
+  });
 }
 
-class MyApp extends StatelessWidget {
+/// The app's full widget root: a single `ProviderScope` -- the entire
+/// `provider`-package tree (`MultiProvider`/`ChangeNotifierProvider`/the
+/// nested `ProviderScope` + `Consumer<CoupleSession>` strangler bridge from
+/// Phase 2, ADR-002) is gone as of Item 3 gap-fix Phase 3 (front 4 of the
+/// architecture migration's `provider`-removal item): [coupleSessionProvider]
+/// now constructs the single, process-lifetime `CoupleSession` instance
+/// itself (see `couple_session.dart`), so there is no second container to
+/// bridge into. Factored out of [runApp] so `test/riverpod_bridge_test.dart`
+/// can pump the exact production wiring around a probe widget of its
+/// choosing instead of a hand-maintained duplicate that could drift.
+Widget buildAppRoot({required Widget child}) {
+  return ProviderScope(child: _CoupleSessionBridge(child: child));
+}
+
+/// The single bridge from `CoupleSession`'s raw `ChangeNotifier` world into
+/// every Riverpod hub/domain controller (Item 3 gap-fix, Phase 3, front 4 of
+/// the architecture migration's `provider`-removal item). Replaces the 5
+/// separate `provider`-package bridge widgets this migration built up over
+/// Phases 5/6a/6b-1 (`_LicenseLifecycleBridge`, `_ProfileControllerBridge`,
+/// `_WorkspaceControllerBridge`, `_PresenceControllerBridge`,
+/// `_DomainProvidersBridge`) -- those each independently subscribed to
+/// `CoupleSession` via `context.watch<CoupleSession>()`, so a single
+/// `notifyListeners()` call triggered 5 separate widget rebuilds, each
+/// scheduling its own `postFrameCallback`. Now that `provider` is gone
+/// entirely, this registers exactly one `CoupleSession.addListener` in
+/// `initState` and pushes into every controller from one place, preserving
+/// the old bridges' combined behavior and ordering exactly:
+///
+/// 1. `_LicenseLifecycleBridge`'s identity-cleared-invalidate check
+///    (logout/unlink/account deletion invalidates [licenseControllerProvider]
+///    so a signed-out user's cached license data can never leak into a
+///    second account signed into the same app session).
+/// 2. `profileControllerProvider`/`workspaceControllerProvider`/
+///    `presenceControllerProvider`/`sessionControllerProvider`'s
+///    `updateFromSession` mirrors (Phase 5/6b-1's four-plus-one hub
+///    controllers).
+/// 3. All 12 domain controllers' `SupabaseLifecycleNotifier.updateSession`
+///    (Phase 6a) -- REST sync/cache-purge still runs unconditionally on
+///    every session change regardless of which screen is open, exactly as
+///    before, since `ref.read(x.notifier)` creates an `autoDispose`
+///    controller on demand even with no active watcher.
+///
+/// The identity-diff bookkeeping (`_lastUserId`/`_lastCoupleId`/`_seeded`)
+/// runs synchronously in [_onSessionChanged] (cheap, pure `State` fields,
+/// not a Riverpod mutation); the actual provider-affecting calls stay
+/// deferred to a `postFrameCallback`, matching the old bridges' reasoning
+/// for using one at all (avoiding "modify a provider during build" -- moot
+/// here since `_onSessionChanged` runs from a raw `ChangeNotifier` callback,
+/// not from inside a widget's `build()`, but kept anyway as the
+/// conservative, behavior-preserving choice for this migration's riskiest
+/// rewrite).
+class _CoupleSessionBridge extends ConsumerStatefulWidget {
+  final Widget child;
+  const _CoupleSessionBridge({required this.child});
+
+  @override
+  ConsumerState<_CoupleSessionBridge> createState() =>
+      _CoupleSessionBridgeState();
+}
+
+class _CoupleSessionBridgeState extends ConsumerState<_CoupleSessionBridge> {
+  // Cached rather than re-read via `ref.read(coupleSessionProvider)` on every
+  // use: `ref` is unsafe to touch inside `dispose()` (Riverpod asserts on
+  // it, since the widget may already be deactivated by then) and a
+  // postFrameCallback can likewise fire after unmount -- a plain field
+  // holding the instance itself has no such lifecycle restriction.
+  late final CoupleSession _session;
+  String? _lastUserId;
+  String? _lastCoupleId;
+  int? _lastPartnerProfileVersion;
+  bool _seeded = false;
+  // Coalesces every notifyListeners() firing that happens before the next
+  // frame into a single push. CoupleSession methods commonly call
+  // notifyListeners() 2-3 times per logical operation (start/success/
+  // finally); the old 5-separate-bridge-widget design coalesced these for
+  // free via Flutter's own widget-rebuild batching (multiple
+  // context.watch<CoupleSession>()-driven rebuilds requested before the next
+  // frame collapse into one). A single addListener callback has no such
+  // batching, so without this flag every one of those 2-3 calls would
+  // independently schedule its own postFrameCallback, multiplying how many
+  // concurrent in-flight `updateSession()` calls run against the 12
+  // autoDispose domain controllers and increasing the odds one gets disposed
+  // by Riverpod while still awaiting a network call mid-`syncInitialData()`
+  // -- which poisons that controller into a cached error state visible the
+  // next time any screen actually watches it (found via a manual on-device
+  // smoke test: BentoGrid/TogetherTab throwing "Tried to use a provider that
+  // is in error state" after creating a workspace).
+  bool _updateScheduled = false;
+  bool _pendingInvalidateLicense = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _session = ref.read(coupleSessionProvider);
+    _session.addListener(_onSessionChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _onSessionChanged();
+    });
+  }
+
+  @override
+  void dispose() {
+    _session.removeListener(_onSessionChanged);
+    super.dispose();
+  }
+
+  void _onSessionChanged() {
+    final session = _session;
+    final userId = session.userId;
+    final coupleId = session.coupleId;
+
+    if (!_seeded) {
+      // First call: record the starting identity without treating it as a
+      // transition (there is nothing to invalidate on cold start).
+      _seeded = true;
+      _lastUserId = userId;
+      _lastCoupleId = coupleId;
+      _lastPartnerProfileVersion = session.partnerProfileVersion;
+    } else if (userId != _lastUserId || coupleId != _lastCoupleId) {
+      final identityCleared =
+          (_lastUserId != null && userId == null) ||
+          (_lastCoupleId != null && coupleId == null);
+      _lastUserId = userId;
+      _lastCoupleId = coupleId;
+      if (identityCleared) {
+        _pendingInvalidateLicense = true;
+      }
+    }
+
+    // The partner's Relationship License fields (gender..signature) are
+    // mirrored into SharedPreferences by CoupleSession._applyPartnerUserFields
+    // but LicenseController only reads those on its own build() -- it has no
+    // live subscription of its own. Bumping this version whenever a field
+    // actually changed (not on every unrelated presence/activity ping) is
+    // what lets a completed license actually appear without the user
+    // needing to leave and re-enter the License screen.
+    if (session.partnerProfileVersion != _lastPartnerProfileVersion) {
+      _lastPartnerProfileVersion = session.partnerProfileVersion;
+      _pendingInvalidateLicense = true;
+    }
+
+    if (_updateScheduled) return;
+    _updateScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateScheduled = false;
+      if (!mounted) return;
+      final shouldInvalidateLicense = _pendingInvalidateLicense;
+      _pendingInvalidateLicense = false;
+      if (shouldInvalidateLicense) {
+        ref.invalidate(licenseControllerProvider);
+      }
+      ref.read(profileControllerProvider.notifier).updateFromSession(session);
+      ref.read(workspaceControllerProvider.notifier).updateFromSession(session);
+      ref.read(presenceControllerProvider.notifier).updateFromSession(session);
+      ref.read(sessionControllerProvider.notifier).updateFromSession(session);
+      ref.read(bucketListControllerProvider.notifier).updateSession(session);
+      ref.read(giftReminderControllerProvider.notifier).updateSession(session);
+      ref.read(calendarControllerProvider.notifier).updateSession(session);
+      ref.read(timeCapsuleControllerProvider.notifier).updateSession(session);
+      ref.read(timelineControllerProvider.notifier).updateSession(session);
+      ref.read(noteitControllerProvider.notifier).updateSession(session);
+      ref.read(loveChatControllerProvider.notifier).updateSession(session);
+      ref.read(topicCardsControllerProvider.notifier).updateSession(session);
+      ref.read(dailyMoodControllerProvider.notifier).updateSession(session);
+      ref.read(currentlyControllerProvider.notifier).updateSession(session);
+      ref
+          .read(notificationPreferencesControllerProvider.notifier)
+          .updateSession(session);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// The app's top-level widget. Navigation is now entirely `go_router`'s
+/// responsibility (Phase 3 of the architecture migration, ADR-007) --
+/// `AppHome`'s old inline `SessionStage` switch is gone; the identical
+/// mapping now lives once, in `lib/routing/app_router.dart`'s
+/// `appRedirect`/route table, which is also what `notification_service.dart`
+/// and every screen-to-screen push now goes through instead of constructing
+/// `MaterialPageRoute`s by hand.
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   TextTheme _resolveTextTheme(Brightness brightness) {
@@ -146,14 +278,27 @@ class MyApp extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final theme = themeProvider.currentLoveTheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(themeControllerProvider);
+    final theme = themeState.currentLoveTheme;
     final brightness = theme.isDark ? Brightness.dark : Brightness.light;
 
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Our Love Story',
+    // Read (not watch) deliberately: this is the app's single,
+    // process-lifetime session instance -- ensureAppRouter only needs it
+    // once, to build the Listenable the router re-evaluates its redirect
+    // against on every change. `CoupleSession` stays a real ChangeNotifier
+    // (its ~1400 lines of Supabase auth/realtime logic are unchanged by the
+    // provider-removal migration -- only who constructs/reads it changed),
+    // so it remains a valid `Listenable` reached via Riverpod instead of
+    // `provider`. `app_router.dart`'s `appRedirect` reads the same session's
+    // mirrored fields via `sessionControllerProvider`/`workspaceControllerProvider`
+    // instead of this raw instance, for real Riverpod reactivity.
+    final session = ref.read(coupleSessionProvider);
+    final router = ensureAppRouter(refreshListenable: session);
+
+    return MaterialApp.router(
+      routerConfig: router,
+      title: 'Days Together',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Spectral',
@@ -166,54 +311,12 @@ class MyApp extends StatelessWidget {
           brightness: brightness,
         ),
         cardColor: theme.cardColor,
+        // Registers the full LoveStoryTheme (including the Phase 7 design
+        // tokens) as a typed accessor via Theme.of(context).extension<LoveStoryTheme>(),
+        // composing with Material's own ColorScheme/TextTheme above rather
+        // than replacing them -- see docs/architecture/design-system.md.
+        extensions: <ThemeExtension<dynamic>>[theme],
       ),
-      home: const AppHome(),
     );
-  }
-}
-
-class AppHome extends StatelessWidget {
-  const AppHome({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final rp = Provider.of<RelationshipProvider>(context);
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      child: _buildHomeContent(rp),
-    );
-  }
-
-  Widget _buildHomeContent(RelationshipProvider rp) {
-    if (!rp.isInitialized) {
-      return const LoadingScreen(key: ValueKey('loading'));
-    }
-
-    if (rp.userId == null) {
-      return const WelcomeScreen(key: ValueKey('welcome'));
-    }
-
-    if (rp.isOnboardingComplete) {
-      return const LoveStoryScreen(key: ValueKey('home'));
-    }
-
-    // Resume onboarding flow if a workspace has already been created/joined
-    if (rp.relationshipId != null) {
-      if (rp.isCreator) {
-        // If not paired yet and start date not set, show the couple code screen
-        if (!rp.isPaired && rp.startDate == null) {
-          return const CreateCoupleCodeScreen(key: ValueKey('couple_code'));
-        }
-        // If paired but start date not set, go to GenesisScreen
-        if (rp.startDate == null) {
-          return const GenesisScreen(key: ValueKey('genesis'));
-        }
-      }
-      // Otherwise (not creator, or creator with start date set), go to AvatarCreationScreen
-      return const AvatarCreationScreen(key: ValueKey('avatar'));
-    }
-
-    return const PairingSelectionScreen(key: ValueKey('pairing'));
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:days_together/models/relationship_workspace.dart';
+import 'package:days_together/features/relationship/domain/entities/relationship_workspace.dart';
 
 void main() {
   group('RelationshipWorkspace Model', () {

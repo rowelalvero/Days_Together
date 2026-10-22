@@ -1,0 +1,170 @@
+import 'package:days_together/app/theme/theme_manager.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/shared/widgets/glass_container.dart';
+import 'package:days_together/features/timeline/timeline_state.dart';
+import 'package:days_together/features/bucket_list/bucket_list_state.dart';
+import 'package:days_together/features/relationship/workspace_state.dart';
+import 'package:days_together/features/relationship/profile_state.dart';
+import 'package:days_together/features/relationship/presence_state.dart';
+import 'package:days_together/core/utils/date_helper.dart';
+
+class InsightsBanner extends StatefulWidget {
+  final TimelineState timelineProvider;
+  final BucketListState bucketProvider;
+  final WorkspaceState workspace;
+  final ProfileState profile;
+  final PresenceState presence;
+  final LoveStoryTheme theme;
+
+  const InsightsBanner({
+    super.key,
+    required this.timelineProvider,
+    required this.bucketProvider,
+    required this.workspace,
+    required this.profile,
+    required this.presence,
+    required this.theme,
+  });
+
+  @override
+  State<InsightsBanner> createState() => _InsightsBannerState();
+}
+
+class _InsightsBannerState extends State<InsightsBanner> {
+  int _index = 0;
+  Timer? _timer;
+  List<String> _insights = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _generateInsights();
+    _timer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (mounted && _insights.isNotEmpty) {
+        setState(() {
+          _index = (_index + 1) % _insights.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant InsightsBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _generateInsights();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _generateInsights() {
+    // Whole timeline, not the loaded page window.
+    final memCount = widget.timelineProvider.memoryCount;
+    final bucketPercent = widget.bucketProvider.progress * 100;
+    final years = DateHelper.relationshipPreciseAge(
+      widget.workspace.startDate,
+      widget.workspace.startTime,
+    )['years']!;
+    final partnerName = widget.profile.partnerName ?? 'Partner';
+    final isOnline = widget.presence.isPartnerOnline;
+
+    _insights = [
+      '💖 You created $memCount memories together.',
+      '📅 Your relationship timeline is $years years strong.',
+      '📈 You completed ${bucketPercent.toStringAsFixed(0)}% of your bucket list items.',
+      if (isOnline)
+        '⏰ $partnerName is active right now. Send a love touch! 💌'
+      else
+        '💡 Tip: Check out Scrapbook or Topic Cards for a late-night chat.',
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_insights.isEmpty) return const SizedBox.shrink();
+
+    return GlassContainer(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 20,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: widget.theme.accentColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.auto_awesome,
+              color: widget.theme.accentColor,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'RELATIONSHIP INSIGHTS',
+                  style: AppTypography.caption(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: widget.theme.accentTextColor,
+                  ).copyWith(letterSpacing: 1),
+                ),
+                const SizedBox(height: 2),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _insights[_index],
+                    key: ValueKey(_insights[_index]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodyLarge(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: widget.theme.textColor.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Previous insight',
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              color: widget.theme.textColor.withValues(alpha: 0.3),
+              size: 18,
+            ),
+            onPressed: () {
+              setState(() {
+                _index = (_index - 1 + _insights.length) % _insights.length;
+              });
+            },
+          ),
+          IconButton(
+            tooltip: 'Next insight',
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              color: widget.theme.textColor.withValues(alpha: 0.3),
+              size: 18,
+            ),
+            onPressed: () {
+              setState(() {
+                _index = (_index + 1) % _insights.length;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -1,0 +1,126 @@
+-- Shared helpers for the pgTAP security suite. Included by every test file
+-- with `\ir _helpers.psql` (the .psql extension keeps `supabase test db` from
+-- running it as a test of its own).
+--
+-- Everything here is created inside the calling test's transaction and
+-- vanishes with its ROLLBACK -- nothing is left behind in the database.
+--
+-- Identity switching mirrors what PostgREST does per request: set the
+-- `authenticated` (or `anon`) role and the JWT claims GUC that auth.uid()
+-- reads. That is exactly the context RLS policies and SECURITY DEFINER
+-- functions see in production, so these tests exercise the real policies.
+
+create extension if not exists pgtap with schema extensions;
+
+create schema if not exists tests;
+grant usage on schema tests to anon, authenticated;
+
+-- Creates an auth user; public.users is populated by the real
+-- on_auth_user_created trigger, not by the test. SECURITY DEFINER so a test
+-- can create fixtures mid-impersonation without switching back first.
+create or replace function tests.create_user(p_email text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_id uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at)
+  values (v_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          p_email, '{}'::jsonb, now(), now());
+  return v_id;
+end;
+$$;
+
+create or replace function tests.authenticate_as(p_user uuid)
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', p_user, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+end;
+$$;
+
+create or replace function tests.as_anon()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+  perform set_config('role', 'anon', true);
+end;
+$$;
+
+-- Back to the superuser the test session started as (bypasses RLS) -- used
+-- only for fixture setup and for reading ground truth.
+create or replace function tests.as_postgres()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', '', true);
+  perform set_config('role', 'postgres', true);
+end;
+$$;
+
+-- Executes a write as the current role and returns how many rows it touched
+-- (a data-modifying CTE cannot be nested inside an assertion expression).
+create or replace function tests.rows_affected(p_sql text)
+returns int
+language plpgsql
+as $$
+declare
+  v_rows int;
+begin
+  execute p_sql;
+  get diagnostics v_rows = row_count;
+  return v_rows;
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated;
+
+-- Pairs two users through the real RPCs (create as A, join as B) and returns
+-- the couple id. Leaves the session as postgres.
+create or replace function tests.pair(p_a uuid, p_b uuid)
+returns uuid
+language plpgsql
+as $$
+declare
+  v_created json;
+  v_joined json;
+begin
+  perform tests.authenticate_as(p_a);
+  v_created := public.create_relationship_workspace();
+  perform tests.authenticate_as(p_b);
+  v_joined := public.join_relationship_with_code(v_created->>'pairing_code');
+  perform tests.as_postgres();
+  if coalesce((v_joined->>'success')::boolean, false) is not true then
+    raise exception 'tests.pair: join failed: %', v_joined;
+  end if;
+  return (v_created->>'couple_id')::uuid;
+end;
+$$;
+
+-- Creates a workspace for A only (status 'waiting') and returns the RPC's
+-- full result (couple_id, pairing_code, recovery_code). Leaves the session as
+-- postgres.
+create or replace function tests.create_workspace(p_a uuid)
+returns json
+language plpgsql
+as $$
+declare
+  v_created json;
+begin
+  perform tests.authenticate_as(p_a);
+  v_created := public.create_relationship_workspace();
+  perform tests.as_postgres();
+  return v_created;
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated;

@@ -1,0 +1,1925 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:days_together/app/config/app_config.dart';
+import 'package:days_together/core/constants/prefs_keys.dart';
+import 'package:days_together/core/notifications/notification_service.dart';
+import 'package:days_together/core/network/auth_service.dart';
+import 'package:days_together/core/network/couple_service.dart';
+import 'package:days_together/core/network/profile_service.dart';
+import 'package:days_together/core/network/realtime_subscription_manager.dart';
+import 'package:days_together/core/activity/recent_activity_service.dart';
+import 'package:days_together/core/session/session_data_wiper.dart';
+import 'package:days_together/core/session/couple_key_exchange.dart';
+import 'package:days_together/core/security/key_management_service.dart';
+import 'package:days_together/core/session/partner_presence.dart';
+import 'package:days_together/core/storage/storage_url_service.dart';
+import 'package:days_together/shared/widgets/storage_image.dart'
+    show evictStorageImageCache;
+import 'package:days_together/core/constants/tables.dart';
+
+enum RelationshipStatus { waiting, active, disconnected, archived }
+
+/// The app's single readiness/routing state, replacing today's inline
+/// conditional chain in `main.dart`'s `AppHome._buildHomeContent`.
+///
+/// CURRENT STATE (Phase 1 of the architecture migration): computing this
+/// correctly needs one field beyond `CoupleSession`'s own five identity
+/// fields -- [startDate] -- to distinguish [needsWorkspace]/[needsGenesis]/
+/// [needsAvatar]. The roadmap's original Phase 1 text ("computed once from
+/// the five identity fields") undercounted this by one field; `startDate`
+/// belongs to `WorkspaceController` (Phase 5), so until that extraction
+/// lands, callers pass it in from `RelationshipProvider` directly. See
+/// docs/architecture/migration-roadmap.md, Phase 1.
+enum SessionStage {
+  loading,
+  unauthenticated,
+  needsWorkspace,
+  needsCouple,
+  needsGenesis,
+  needsAvatar,
+  ready,
+}
+
+/// Pure readiness computation -- the one function in the codebase that
+/// decides "is the user ready for the main app," matching
+/// `main.dart`'s pre-Phase-1 `_buildHomeContent` branch-for-branch
+/// (verified against `main.dart:188-218`).
+/// Whether the partner's `users` subscription needs (re)opening.
+///
+/// An identity change is not the only trigger. On a warm start
+/// `CoupleSession._loadLocalData` restores `partnerId` from
+/// `SharedPreferences` before any stream resolves -- deliberately, because the
+/// E2EE key exchange needs it to unwrap an incoming wrapped key. That made a
+/// bare `oldPartnerId != newPartnerId` check false on every warm launch, so
+/// the partner subscription was never opened: name, avatar, activity, join
+/// date and the mirrored license fields stayed frozen at their cached values
+/// for the whole session, and `CoupleKeyExchange.wrapForPartnerIfHeld`'s
+/// documented "a fresh app launch re-observing the same partner counts" retry
+/// never fired.
+///
+/// Subscription liveness is the real condition -- the same shape as the
+/// couples stream's own `coupleIdChanged || _coupleSub == null` guard.
+/// [hasLiveSubscription] is only consulted when there is a partner to
+/// subscribe to, so an unpaired session stays quiet instead of re-running the
+/// teardown on every couple-row update.
+///
+/// Pure and top-level for the same reason [computeSessionStage] is: the
+/// method that uses it needs a live Supabase stream, so this is the only part
+/// of the decision a unit test can reach.
+bool shouldResubscribePartner({
+  required String? oldPartnerId,
+  required String? newPartnerId,
+  required bool hasLiveSubscription,
+}) {
+  if (oldPartnerId != newPartnerId) return true;
+  return newPartnerId != null && !hasLiveSubscription;
+}
+
+/// Whether [code] (already trimmed and upper-cased) is worth sending to
+/// `join_relationship_with_code`. Codes are 8 characters since
+/// 20261003000200_harden_pairing.sql; a 6-character code issued before that
+/// stays valid until it expires (at most 20 minutes), so both are accepted.
+/// The server re-validates -- this only spares an obviously malformed round
+/// trip.
+bool isPlausiblePairingCode(String code) =>
+    RegExp(r'^[A-Z0-9]{6,8}$').hasMatch(code);
+
+/// Maps a failed `join_relationship_with_code` result to the message shown to
+/// the user, keyed on the RPC's stable `error_code` -- never on Postgres
+/// exception text. Pure and top-level for the same reason
+/// [computeSessionStage] is: the join itself needs a live session, so this is
+/// the part a unit test can reach.
+String pairingFailureMessage(Map<String, dynamic> result, {DateTime? now}) {
+  switch (result['error_code']) {
+    case 'INVALID_CODE':
+      return 'Hmm, we couldn\'t find that connection code. Please check it with your partner.';
+    case 'CODE_EXPIRED':
+      return 'That code has expired. Ask your partner for their new code.';
+    case 'ALREADY_PAIRED':
+      return 'You\'re already connected to a partner.';
+    case 'INVALID_SESSION':
+      return 'Your session has expired. Please sign in again.';
+    case 'RATE_LIMITED':
+      final retryAfter = DateTime.tryParse(
+        result['retry_after'] as String? ?? '',
+      );
+      final minutes = retryAfter == null
+          ? 15
+          : (retryAfter.difference(now ?? DateTime.now()).inSeconds / 60)
+                .ceil()
+                .clamp(1, 15);
+      return 'Too many attempts. Please try again in $minutes minute${minutes == 1 ? '' : 's'}.';
+    default:
+      return 'Pairing failed. Please try again.';
+  }
+}
+
+SessionStage computeSessionStage({
+  required bool isInitialized,
+  required String? userId,
+  required String? coupleId,
+  required bool isCreator,
+  required bool isPaired,
+  required bool onboardingCompleted,
+  required DateTime? startDate,
+}) {
+  if (!isInitialized) return SessionStage.loading;
+  if (userId == null) return SessionStage.unauthenticated;
+  if (onboardingCompleted && coupleId != null) return SessionStage.ready;
+
+  if (coupleId != null) {
+    if (isCreator) {
+      if (!isPaired && startDate == null) return SessionStage.needsWorkspace;
+      if (startDate == null) return SessionStage.needsGenesis;
+    }
+    return SessionStage.needsAvatar;
+  }
+
+  return SessionStage.needsCouple;
+}
+
+/// The app's real session/identity/pairing engine (Phase 6b-1 of the
+/// architecture migration, "make CoupleSession real").
+///
+/// CURRENT STATE: owns the entire Supabase auth listener chain --
+/// `onAuthStateChange` -> the `users` row stream -> the `couples` row
+/// stream -- plus the partner-row stream and the presence channel, all of
+/// which used to live on `RelationshipProvider`. This class is the *sole*
+/// owner of realtime subscriptions on the `users`/`couples` tables: the
+/// auth callback's `removeAllChannels()` call (fired on every auth event,
+/// including routine hourly `tokenRefreshed` events, not just sign-in/out)
+/// tears down every realtime channel in the app, so a second independent
+/// listener anywhere else would race destructively against this one. See
+/// docs/architecture/migration-roadmap.md's Phase 6b section for the full
+/// investigation that led here.
+///
+/// `RelationshipProvider` no longer owns any of this. It becomes a thin
+/// pass-through facade over the live `CoupleSession` instance -- every
+/// getter reads straight through, every write method delegates straight
+/// through -- via a plain `ChangeNotifier.addListener` subscription (not a
+/// `ChangeNotifierProxyProvider`, whose `update` callback only runs on the
+/// *next* frame; `addListener` fires synchronously in the same call stack,
+/// which is what `app_router.dart`'s `appRedirect` depends on to read
+/// current values immediately after an `await session.joinWithCode(...)`
+/// completes). This preserves every one of `RelationshipProvider`'s
+/// existing getters and methods unchanged, so none of the ~24 UI files
+/// that read it directly need to change in this step -- only the
+/// underlying engine moved. UI files are converted to call `CoupleSession`
+/// directly in a later step (Phase 6b-2), as originally planned.
+class CoupleSession extends ChangeNotifier {
+  RelationshipStatus _status = RelationshipStatus.disconnected;
+  String? _recoveryCode;
+  bool _onboardingCompleted = false;
+
+  RelationshipStatus get status => _status;
+  String? get recoveryCode => _recoveryCode;
+  String? get relationshipId => _coupleId;
+
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
+
+  /// Safety valve: allows LoadingScreen to unblock the user after a timeout.
+  /// The auth listener will correct state once connectivity returns.
+  void forceInitialized() {
+    if (!_isInitialized) {
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  /// Validates a cached avatar ref against storage.
+  ///
+  /// Returns the ref when it is usable, or `null` ONLY when the object is
+  /// definitively gone. A transient failure (offline, 403 while unpaired) must
+  /// never return null — the caller deletes the cached ref on null, and doing
+  /// that on a network blip wipes the user's avatar for no reason.
+  ///
+  /// Replaces an earlier HTTP HEAD probe, which cannot work now that the
+  /// buckets are private: every HEAD would 403 and every avatar would be
+  /// deleted on the next launch.
+  Future<String?> _validateAvatarRef(String ref) async {
+    if (StorageUrlService.isLocalFileRef(ref)) return ref;
+
+    // A foreign URL (e.g. a Google OAuth avatar) is not ours to validate.
+    if (StorageUrlService.pathFrom(ref, bucket: StorageBuckets.avatars) ==
+        null) {
+      return ref;
+    }
+
+    final url = await StorageUrlService.instance.resolve(
+      bucket: StorageBuckets.avatars,
+      ref: ref,
+    );
+    if (url != null) return ref;
+
+    final gone = StorageUrlService.instance.lastFailureWasNotFound(
+      bucket: StorageBuckets.avatars,
+      ref: ref,
+    );
+    return gone ? null : ref;
+  }
+
+  /// Clears a stale avatar ref from SharedPreferences and drops its cached
+  /// image bytes.
+  Future<void> _clearStaleAvatarCache(String prefsKey, String? ref) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(prefsKey);
+    if (ref == null || ref.trim().isEmpty) return;
+
+    await StorageUrlService.instance.evict(
+      bucket: StorageBuckets.avatars,
+      ref: ref,
+    );
+
+    await evictStorageImageCache(bucket: StorageBuckets.avatars, ref: ref);
+  }
+
+  DateTime? _startDate;
+  TimeOfDay? _startTime;
+  String? _partnerName;
+  String? _yourName;
+  String? _yourAvatarPath;
+  String? _partnerAvatarPath;
+  String? _coupleCode;
+  bool _isPaired = false;
+  bool _isPremium = false;
+  bool _isGeneratingCode = false;
+  bool _isJoining = false;
+  bool _isUnlinking = false;
+  bool _showPartnerDeletedNotice = false;
+  String? _storyTitle;
+  // The 24 license fields (12 your*/partner* pairs) live on LicenseController
+  // (lib/features/relationship/license_controller.dart, Phase 5 of the
+  // architecture migration).
+  StreamSubscription? _userSub;
+  StreamSubscription? _partnerUserSub;
+  StreamSubscription? _coupleSub;
+  StreamSubscription? _authSub;
+
+  /// Both halves of the E2EE photo-key exchange, and the four pieces of
+  /// wrapped-key bookkeeping they need. Owns its own
+  /// `couple_key_exchanges` subscription, which is scoped to the
+  /// authenticated user rather than the couple and so lives and dies
+  /// alongside [_userSub].
+  late final CoupleKeyExchange _keyExchange;
+  // Bumped whenever _applyPartnerUserFields actually changes one of the 12
+  // Relationship License fields mirrored from the partner's `users` row.
+  // main.dart's _CoupleSessionBridge diffs this (like _lastUserId) to decide
+  // when to invalidate licenseControllerProvider -- cheap enough to check on
+  // every session change without unconditionally invalidating (and
+  // thrashing) License on every unrelated presence/activity ping.
+  int _partnerProfileVersion = 0;
+  int get partnerProfileVersion => _partnerProfileVersion;
+  String? _coupleId;
+  String? _userId;
+  String? _partnerId;
+
+  // Real-time presence & connection dates
+  late final PartnerPresence _presence;
+  DateTime? _yourJoinDate;
+  DateTime? _partnerJoinDate;
+
+  String? _yourActivity;
+  String? _partnerActivity;
+
+  DateTime? get startDate => _startDate;
+  TimeOfDay? get startTime => _startTime;
+  String? get partnerName => _partnerName;
+  String? get yourName => _yourName;
+  String? get yourAvatarPath => _yourAvatarPath;
+  String? get partnerAvatarPath => _partnerAvatarPath;
+  String? get coupleCode => _coupleCode;
+  bool get isPaired => _isPaired;
+  bool get isOnboardingComplete => _onboardingCompleted && _coupleId != null;
+
+  /// The raw persisted flag, distinct from [isOnboardingComplete] which also
+  /// requires a non-null [coupleId].
+  bool get onboardingCompleted => _onboardingCompleted;
+  bool get isPremium => _isPremium;
+  String get storyTitle => _storyTitle ?? 'Our Story';
+  String? get coupleId => _coupleId;
+  String? get userId => _userId;
+  String? get partnerId => _partnerId;
+  bool _isCreator = false;
+  bool get isCreator => _isCreator;
+
+  /// The server presented a partner public key that differs from the one
+  /// this device pinned (re-audit R-03 / audit F-14). While set, the couple
+  /// photo key is neither sent to nor accepted from the partner; the user
+  /// must compare safety numbers and call [acceptPartnerKeyChange].
+  bool _partnerKeyChanged = false;
+  bool get partnerKeyChanged => _partnerKeyChanged;
+
+  /// The safety number for this device's key and the partner's CURRENT
+  /// server-side key (so, during a pending key change, the new one -- the
+  /// one the user is being asked to verify). Null when there is no partner
+  /// or the partner has not posted a key yet.
+  Future<String?> loadSafetyNumber() async {
+    final userId = _userId;
+    final partnerId = _partnerId;
+    if (userId == null || partnerId == null) return null;
+    final partnerKey = await _keyExchange.currentPartnerPublicKey(partnerId);
+    if (partnerKey == null) return null;
+    final ownKey = await _keyManagementService.getOrCreatePublicKeyBase64(
+      userId,
+    );
+    return KeyManagementService.safetyNumber(ownKey, partnerKey);
+  }
+
+  /// The user verified the partner's new key: pin it and resume the photo
+  /// key exchange it held up.
+  Future<void> acceptPartnerKeyChange() async {
+    final partnerId = _partnerId;
+    if (partnerId == null) return;
+    await _keyExchange.acceptPartnerKey(partnerId);
+    _partnerKeyChanged = false;
+    notifyListeners();
+  }
+
+  bool get isPartnerOnline => _presence.isPartnerOnline;
+  DateTime? get yourJoinDate => _yourJoinDate;
+  DateTime? get partnerJoinDate => _partnerJoinDate;
+  String? get yourActivity => _yourActivity;
+  String? get partnerActivity => _partnerActivity;
+
+  bool get isSupabaseAvailable {
+    try {
+      Supabase.instance.client;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  final CoupleService _coupleService;
+  final KeyManagementService _keyManagementService;
+  final PushTokenRegistry _pushTokens;
+  final SessionDataWiper _dataWiper;
+  final Future<void> Function()? _signOutOverride;
+
+  /// [coupleService] defaults to the real [CoupleService.instance], and
+  /// [keyManagementService] to the real [KeyManagementService.instance] --
+  /// both injectable only so a test can substitute a fake/test-seam instance
+  /// for pairing-flow coverage (ADR-010's exception: "singletons convert to
+  /// providers only when a specific test needs a fake"), no behavior change
+  /// for the app. [pushTokens], [dataWiper] and [signOut] follow the same
+  /// rule, for the account-isolation test (test/account_isolation_test.dart):
+  /// they default to [NotificationService], a real [SessionDataWiper], and
+  /// Supabase + Google sign-out.
+  CoupleSession({
+    CoupleService? coupleService,
+    KeyManagementService? keyManagementService,
+    PushTokenRegistry? pushTokens,
+    SessionDataWiper? dataWiper,
+    Future<void> Function()? signOut,
+  }) : _coupleService = coupleService ?? CoupleService.instance,
+       _keyManagementService =
+           keyManagementService ?? KeyManagementService.instance,
+       _pushTokens = pushTokens ?? NotificationService(),
+       _dataWiper = dataWiper ?? SessionDataWiper(),
+       _signOutOverride = signOut {
+    _keyExchange = CoupleKeyExchange(
+      // Read through a closure rather than captured: all three fields
+      // resolve asynchronously and at different times, and the ordering
+      // between them is exactly what the exchange exists to handle.
+      identity: () =>
+          (userId: _userId, partnerId: _partnerId, coupleId: _coupleId),
+      keyManagementService: _keyManagementService,
+      onPartnerKeyChanged: (_) {
+        _partnerKeyChanged = true;
+        notifyListeners();
+      },
+    );
+    _presence = PartnerPresence(onChanged: notifyListeners);
+    _loadLocalData().then((_) {
+      if (isSupabaseAvailable) {
+        _initSupabaseSync();
+      }
+    });
+  }
+
+  Future<void> _loadLocalData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dateStr = prefs.getString(PrefsKeys.relationshipStartDate);
+    if (dateStr != null) {
+      _startDate = DateTime.parse(dateStr);
+    }
+    final hour = prefs.getInt(PrefsKeys.relationshipStartHour);
+    final minute = prefs.getInt(PrefsKeys.relationshipStartMinute);
+    if (hour != null && minute != null) {
+      _startTime = TimeOfDay(hour: hour, minute: minute);
+    }
+    _yourName = prefs.getString(PrefsKeys.yourName);
+    _partnerName = prefs.getString(PrefsKeys.partnerName);
+    _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
+    _partnerAvatarPath = prefs.getString(PrefsKeys.partnerAvatarPath);
+    _coupleCode = prefs.getString(PrefsKeys.coupleCode);
+    _userId = prefs.getString(PrefsKeys.userId);
+    _coupleId = prefs.getString(PrefsKeys.coupleId);
+    // Restored, not merely written: the E2EE key-exchange stream is scoped to
+    // the user and can emit a wrapped key before the couples stream resolves
+    // a partner, and unwrapping needs the partner's public key. Without this,
+    // _partnerId was null at subscribe time on every single launch.
+    _partnerId = prefs.getString(PrefsKeys.partnerId);
+    _isPaired = prefs.getBool(PrefsKeys.isPaired) ?? false;
+    _isCreator = prefs.getBool(PrefsKeys.isCreator) ?? false;
+    _onboardingCompleted =
+        prefs.getBool(PrefsKeys.onboardingCompleted) ?? false;
+    _isPremium = prefs.getBool(PrefsKeys.isPremium) ?? false;
+    _storyTitle = prefs.getString(PrefsKeys.storyTitle);
+
+    final yourJoinDateStr = prefs.getString(PrefsKeys.yourJoinDate);
+    if (yourJoinDateStr != null) {
+      _yourJoinDate = DateTime.parse(yourJoinDateStr);
+    }
+    final partnerJoinDateStr = prefs.getString(PrefsKeys.partnerJoinDate);
+    if (partnerJoinDateStr != null) {
+      _partnerJoinDate = DateTime.parse(partnerJoinDateStr);
+    }
+
+    if (_coupleId != null &&
+        _yourName != null &&
+        _yourName!.isNotEmpty &&
+        (_startDate != null || _isPaired)) {
+      _onboardingCompleted = true;
+    }
+
+    if (!isSupabaseAvailable || (_coupleId != null && _onboardingCompleted)) {
+      _isInitialized = true;
+    }
+    notifyListeners();
+
+    // Background-validate cached avatar URLs on startup.
+    // If a cached URL is stale (e.g. file deleted, 400/404), clear it
+    // immediately so the UI shows a placeholder instead of retrying.
+    _backgroundValidateAvatars();
+  }
+
+  /// Validates cached avatar refs in the background on startup, clearing only
+  /// those whose object is definitively gone so the UI stops retrying them.
+  ///
+  /// Local file refs are skipped: they are un-synced uploads, and the widget
+  /// layer already falls back to a placeholder when the file is missing.
+  void _backgroundValidateAvatars() {
+    final yourRef = _yourAvatarPath;
+    if (yourRef != null && !StorageUrlService.isLocalFileRef(yourRef)) {
+      _validateAvatarRef(yourRef).then((valid) {
+        if (valid == null && _yourAvatarPath == yourRef) {
+          debugPrint('Clearing stale your_avatar_path (object not found)');
+          _clearStaleAvatarCache(PrefsKeys.yourAvatarPath, yourRef);
+          _yourAvatarPath = null;
+          notifyListeners();
+        }
+      });
+    }
+    final partnerRef = _partnerAvatarPath;
+    if (partnerRef != null && !StorageUrlService.isLocalFileRef(partnerRef)) {
+      _validateAvatarRef(partnerRef).then((valid) {
+        if (valid == null && _partnerAvatarPath == partnerRef) {
+          debugPrint('Clearing stale partner_avatar_path (object not found)');
+          _clearStaleAvatarCache(PrefsKeys.partnerAvatarPath, partnerRef);
+          _partnerAvatarPath = null;
+          notifyListeners();
+        }
+      });
+    }
+  }
+
+  void _cancelActiveSubscriptions() {
+    _coupleSub?.cancel();
+    _partnerUserSub?.cancel();
+    _coupleSub = null;
+    _partnerUserSub = null;
+  }
+
+  /// Opens the one auth subscription the session owns. The per-event work
+  /// lives in [_handleAuthChange]; the two table streams it can start have
+  /// their own setup/handler pairs below.
+  ///
+  /// This was a single 352-line method holding the auth listener, the `users`
+  /// stream, and the `couples` stream nested three closures deep. Split into
+  /// named methods -- pure code motion, no behavior change: the listener
+  /// bodies captured no outer locals (each builds its own `prefs`), so each
+  /// lifted out whole.
+  void _initSupabaseSync() {
+    _authSub?.cancel();
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen(
+      _handleAuthChange,
+      onError: (error) {
+        debugPrint('Supabase AuthStateChange error: $error');
+      },
+    );
+  }
+
+  /// Tears the previous session down and, when someone is signed in, rebuilds
+  /// it: key exchange restarts and the `users` stream is resubscribed.
+  Future<void> _handleAuthChange(AuthState data) async {
+    final user = data.session?.user;
+
+    // Supabase emits `onAuthStateChange` for routine background events as
+    // well as real sign-in/sign-out: `tokenRefreshed` fires roughly hourly
+    // for the lifetime of the session, and `userUpdated` after any auth
+    // profile mutation. Neither changes *which* account is signed in, but
+    // the teardown below would drop every realtime channel (love chat,
+    // note-its, presence) and flip `_isInitialized` back to false, which
+    // makes `computeSessionStage()` report `SessionStage.loading` and
+    // bounces `appRedirect` to the loading route -- yanking the user out
+    // of whatever screen they were on mid-session. supabase_flutter
+    // re-authenticates the existing realtime socket itself on refresh, so
+    // for these events, while the same user stays signed in, there is
+    // nothing to rebuild.
+    final isSameUserBackgroundRefresh =
+        (data.event == AuthChangeEvent.tokenRefreshed ||
+            data.event == AuthChangeEvent.userUpdated) &&
+        user != null &&
+        user.id == _userId;
+    if (isSameUserBackgroundRefresh) {
+      return;
+    }
+
+    try {
+      await Supabase.instance.client.removeAllChannels();
+    } catch (e) {
+      debugPrint(
+        'CoupleSession: removeAllChannels() during auth change failed: $e',
+      );
+    }
+    // Every shared feature stream just lost its channel. End them all so
+    // each controller re-subscribes on a live one (audit F-16).
+    RealtimeSubscriptionManager.instance.reset();
+
+    _cancelActiveSubscriptions();
+    _userSub?.cancel();
+    _userSub = null;
+    _keyExchange.reset();
+
+    if (user == null) {
+      // Identity exit that did not go through logout(): a server-side
+      // revocation, an expired refresh token, a sign-out from elsewhere.
+      // Wipe exactly as logout() does (audit F-06) -- this path used to drop
+      // only the userId mirror, leaving the previous account's profile,
+      // partner PII and activity log for whoever signed in next. The FCM
+      // token cannot be unregistered here (no JWT any more); the next
+      // account's registration takes the token over server-side.
+      _presence.disconnect();
+      _resetIdentityState();
+      await _dataWiper.wipeAccountData();
+      _isInitialized = true;
+      notifyListeners();
+      return;
+    }
+
+    // A different account than the one this device last held -- either in
+    // memory or persisted from a previous run. Normally logout()/the branch
+    // above already wiped, but if the previous session never got the chance
+    // (killed mid-logout, an account switch with no sign-out event), its data
+    // must not survive into this one.
+    final previousUserId = _userId ?? await _persistedUserId();
+    if (previousUserId != null && previousUserId != user.id) {
+      _presence.disconnect();
+      _resetIdentityState();
+      await _dataWiper.wipeAccountData();
+    }
+
+    _userId = user.id;
+    _isInitialized = false;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(PrefsKeys.userId, user.id);
+    } catch (e) {
+      debugPrint('CoupleSession: persisting the user id failed: $e');
+    }
+
+    if (isSupabaseAvailable) {
+      _keyExchange.start();
+      _subscribeToUserRow();
+    }
+  }
+
+  Future<String?> _persistedUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(PrefsKeys.userId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Resets every in-memory field that belongs to an account or its
+  /// relationship. The on-disk counterpart is [SessionDataWiper]; every
+  /// identity exit (logout, auth session gone, account switch) runs both.
+  void _resetIdentityState() {
+    _userId = null;
+    _coupleId = null;
+    _partnerId = null;
+    _status = RelationshipStatus.disconnected;
+    _recoveryCode = null;
+    _startDate = null;
+    _startTime = null;
+    _partnerName = null;
+    _yourName = null;
+    _yourAvatarPath = null;
+    _partnerAvatarPath = null;
+    _coupleCode = null;
+    _isPaired = false;
+    _isCreator = false;
+    _onboardingCompleted = false;
+    _isPremium = false;
+    _showPartnerDeletedNotice = false;
+    _partnerKeyChanged = false;
+    _storyTitle = null;
+    _yourActivity = null;
+    _partnerActivity = null;
+    _yourJoinDate = null;
+    _partnerJoinDate = null;
+  }
+
+  /// Test seams onto the auth/row handlers. The real entry points are
+  /// Supabase streams, which a plain `flutter test` cannot open; these let
+  /// test/account_isolation_test.dart drive a real sign-in / sign-out /
+  /// account-switch sequence through the production handlers.
+  @visibleForTesting
+  Future<void> handleAuthChangeForTest(AuthState data) =>
+      _handleAuthChange(data);
+
+  @visibleForTesting
+  Future<void> handleUserRowForTest(List<Map<String, dynamic>> rows) =>
+      _handleUserRow(rows);
+
+  @visibleForTesting
+  Future<void> handleCoupleRowForTest(List<Map<String, dynamic>> rows) =>
+      _handleCoupleRow(rows);
+
+  @visibleForTesting
+  Future<void> handlePartnerRowForTest(Map<String, dynamic> row) async {
+    _partnerActivity = row['current_activity'] as String?;
+    await _applyPartnerUserFields(row);
+    notifyListeners();
+  }
+
+  /// Subscribes to this user's own `users` row.
+  void _subscribeToUserRow() {
+    _userSub = Supabase.instance.client
+        .from(Tables.users)
+        .stream(primaryKey: ['id'])
+        .eq('id', _userId!)
+        .listen(
+          _handleUserRow,
+          onError: (error) {
+            debugPrint('Supabase users stream error: $error');
+            _isInitialized = true;
+            notifyListeners();
+          },
+        );
+  }
+
+  /// Mirrors the user's own row into session state -- couple id, display
+  /// name, avatar, onboarding flag, join date -- and (re)subscribes to the
+  /// couple whenever the couple id changes.
+  Future<void> _handleUserRow(List<Map<String, dynamic>> dataList) async {
+    if (dataList.isEmpty) {
+      try {
+        // Self-heal a missing public.users row. Deliberately an
+        // insert-if-absent, NOT an upsert: the stream can yield an
+        // empty list transiently (reconnect, RLS hiccup) even when
+        // the row exists, and an upsert would then degrade to
+        // `UPDATE ... SET couple_id = NULL` and silently wipe a
+        // live pairing. couple_id is omitted entirely so this can
+        // never clear an existing link.
+        await Supabase.instance.client.from(Tables.users).upsert({
+          'id': _userId!,
+          'display_name': _yourName,
+        }, ignoreDuplicates: true);
+      } catch (e) {
+        debugPrint(
+          'CoupleSession: self-heal insert of missing public.users row failed: $e',
+        );
+      }
+      _isInitialized = true;
+      notifyListeners();
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final userData = dataList.first;
+    final newCoupleId = userData['couple_id'] as String?;
+
+    final partnerDeletedNotice =
+        userData['partner_deleted_notice'] as bool? ?? false;
+    if (partnerDeletedNotice) {
+      _showPartnerDeletedNotice = true;
+      if (isSupabaseAvailable) {
+        Supabase.instance.client
+            .from(Tables.users)
+            .update({'partner_deleted_notice': false})
+            .eq('id', _userId!)
+            .then((_) {});
+      }
+    }
+
+    bool coupleIdChanged = _coupleId != newCoupleId;
+    _coupleId = newCoupleId;
+    if (_coupleId != null) {
+      await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+    } else {
+      await prefs.remove(PrefsKeys.coupleId);
+    }
+
+    // Associate this device's push token with the signed-in account. Per
+    // account, not once per process (see NotificationService._syncedUserId).
+    _pushTokens.register();
+
+    _yourName =
+        userData['display_name'] as String? ??
+        prefs.getString(PrefsKeys.yourName);
+    _yourActivity = userData['current_activity'] as String?;
+    if (_yourName != null) {
+      await prefs.setString(PrefsKeys.yourName, _yourName!);
+    }
+    final userAvatar = userData['avatar_url'] as String?;
+    if (userAvatar != null && userAvatar.isNotEmpty) {
+      _yourAvatarPath = userAvatar;
+      await prefs.setString(PrefsKeys.yourAvatarPath, userAvatar);
+    }
+
+    final storedComp = prefs.getBool(PrefsKeys.onboardingCompleted);
+    if (storedComp != null) {
+      _onboardingCompleted = storedComp;
+    } else if (_coupleId != null &&
+        _yourName != null &&
+        _yourName!.isNotEmpty &&
+        (_startDate != null || _isPaired)) {
+      _onboardingCompleted = true;
+      await prefs.setBool(PrefsKeys.onboardingCompleted, true);
+    }
+
+    // Restore preserved onboarding details if unpaired
+    if (_coupleId == null) {
+      _isPaired = false;
+      _status = RelationshipStatus.disconnected;
+      await prefs.setBool(PrefsKeys.isPaired, false);
+      final dateStr = prefs.getString(PrefsKeys.relationshipStartDate);
+      if (dateStr != null) {
+        _startDate = DateTime.parse(dateStr);
+      }
+      final hour = prefs.getInt(PrefsKeys.relationshipStartHour);
+      final minute = prefs.getInt(PrefsKeys.relationshipStartMinute);
+      if (hour != null && minute != null) {
+        _startTime = TimeOfDay(hour: hour, minute: minute);
+      }
+      _yourAvatarPath = prefs.getString(PrefsKeys.yourAvatarPath);
+    }
+
+    // Load and cache your join date
+    final createdAtStr = userData['created_at'] as String?;
+    if (createdAtStr != null) {
+      _yourJoinDate = DateTime.parse(createdAtStr);
+    } else if (isSupabaseAvailable) {
+      final authCreated = Supabase.instance.client.auth.currentUser?.createdAt;
+      if (authCreated != null) {
+        _yourJoinDate = DateTime.parse(authCreated);
+      }
+    }
+
+    if (_yourJoinDate != null) {
+      await prefs.setString(
+        PrefsKeys.yourJoinDate,
+        _yourJoinDate!.toIso8601String(),
+      );
+    }
+
+    if (_coupleId != null) {
+      if (coupleIdChanged || _coupleSub == null) {
+        _cancelActiveSubscriptions();
+        _partnerActivity = null;
+        _syncLocalDetailsToCloud();
+
+        if (isSupabaseAvailable) _subscribeToCouple();
+      } else {
+        _isInitialized = true;
+        notifyListeners();
+      }
+    } else {
+      _cancelActiveSubscriptions();
+      _partnerActivity = null;
+      _isInitialized = true;
+      notifyListeners();
+    }
+  }
+
+  /// Subscribes to the couple row shared by both partners.
+  void _subscribeToCouple() {
+    _coupleSub = Supabase.instance.client
+        .from(Tables.couples)
+        .stream(primaryKey: ['id'])
+        .eq('id', _coupleId!)
+        .listen(
+          _handleCoupleRow,
+          onError: (error) {
+            debugPrint('Supabase couples stream error: $error');
+            _isInitialized = true;
+            notifyListeners();
+          },
+        );
+  }
+
+  /// Mirrors the couple row into session state and reacts to a partner
+  /// identity appearing or changing: partner sync, E2EE key wrap/drain, and
+  /// presence.
+  Future<void> _handleCoupleRow(
+    List<Map<String, dynamic>> coupleDataList,
+  ) async {
+    if (coupleDataList.isEmpty) return;
+    final coupleData = coupleDataList.first;
+
+    _storyTitle = coupleData['story_title'] as String?;
+    final startStr = coupleData['start_date'] as String?;
+    if (startStr != null) {
+      _startDate = DateTime.parse(startStr);
+    }
+    final hour = coupleData['start_time_hour'] as int?;
+    final minute = coupleData['start_time_minute'] as int?;
+    if (hour != null && minute != null) {
+      _startTime = TimeOfDay(hour: hour, minute: minute);
+    }
+    _isPremium = coupleData['is_premium'] as bool? ?? false;
+
+    final dbCode = coupleData['pairing_code'] as String?;
+    if (dbCode != null && dbCode.isNotEmpty) {
+      _coupleCode = dbCode;
+    }
+
+    final partnerAId = coupleData['partner_a_id'] as String?;
+    final partnerBId = coupleData['partner_b_id'] as String?;
+
+    final oldPartnerId = _partnerId;
+    _partnerId = (partnerAId == _userId) ? partnerBId : partnerAId;
+    _isPaired = _coupleId != null && _partnerId != null;
+
+    final statusStr = coupleData['status'] as String? ?? 'waiting';
+    _status = RelationshipStatus.values.firstWhere(
+      (e) => e.name == statusStr,
+      orElse: () => RelationshipStatus.waiting,
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(PrefsKeys.isPaired, _isPaired);
+    // Mirrored so a warm start knows the partner
+    // before any stream resolves -- the E2EE key
+    // exchange needs _partnerId to unwrap an incoming
+    // wrapped key (see CoupleKeyExchange.start), and
+    // only joinWithCode used to persist it, leaving
+    // the creator's device with a null _partnerId on
+    // every launch.
+    if (_partnerId != null) {
+      await prefs.setString(PrefsKeys.partnerId, _partnerId!);
+    } else {
+      await prefs.remove(PrefsKeys.partnerId);
+    }
+    if (_storyTitle != null) {
+      await prefs.setString(PrefsKeys.storyTitle, _storyTitle!);
+    }
+    if (_startDate != null) {
+      await prefs.setString(
+        PrefsKeys.relationshipStartDate,
+        _startDate!.toIso8601String(),
+      );
+    }
+    if (_startTime != null) {
+      await prefs.setInt(PrefsKeys.relationshipStartHour, _startTime!.hour);
+      await prefs.setInt(PrefsKeys.relationshipStartMinute, _startTime!.minute);
+    }
+    await prefs.setBool(PrefsKeys.isPremium, _isPremium);
+
+    if (_startDate != null || _isPaired || statusStr == 'active') {
+      _onboardingCompleted = true;
+      await prefs.setBool(PrefsKeys.onboardingCompleted, true);
+    }
+
+    // Safety net against a couple photo key that
+    // outlived the relationship it belongs to (see
+    // KeyManagementService.clearCoupleKey): if this
+    // device is now in a *different* couple than the
+    // stored key was issued for, drop it rather than
+    // re-wrapping the previous relationship's key for
+    // the new partner below.
+    if (_userId != null && _coupleId != null) {
+      await _keyManagementService.purgeCoupleKeyIfForDifferentCouple(
+        _userId!,
+        _coupleId!,
+      );
+    }
+
+    // See [shouldResubscribePartner] for why an identity change alone is the
+    // wrong condition on a warm start. Everything in here opens network
+    // subscriptions, hence the availability guard (always true in the app).
+    if (isSupabaseAvailable &&
+        shouldResubscribePartner(
+          oldPartnerId: oldPartnerId,
+          newPartnerId: _partnerId,
+          hasLiveSubscription: _partnerUserSub != null,
+        )) {
+      _initPartnerUserSync();
+      if (_partnerId != null) {
+        _keyExchange.wrapForPartnerIfHeld(_partnerId!);
+        // A wrapped key may have arrived before this
+        // partner identity was known; it is held
+        // rather than dropped, and applied here.
+        _keyExchange.drainPending();
+      }
+    }
+
+    if (isSupabaseAvailable) _initPresence();
+    _isInitialized = true;
+    notifyListeners();
+  }
+
+  void _initPartnerUserSync() {
+    _partnerUserSub?.cancel();
+    _partnerUserSub = null;
+
+    if (_partnerId == null) {
+      _partnerJoinDate = null;
+      _partnerActivity = null;
+      notifyListeners();
+      return;
+    }
+
+    _partnerUserSub = Supabase.instance.client
+        .from(Tables.users)
+        .stream(primaryKey: ['id'])
+        .eq('id', _partnerId!)
+        .listen((pDataList) async {
+          if (pDataList.isNotEmpty) {
+            final pData = pDataList.first;
+            _partnerActivity = pData['current_activity'] as String?;
+            await _applyPartnerUserFields(pData);
+            notifyListeners();
+          }
+        });
+
+    Supabase.instance.client
+        .from(Tables.users)
+        .select()
+        .eq('id', _partnerId!)
+        .maybeSingle()
+        .then((pData) async {
+          if (pData != null) {
+            final prefs = await SharedPreferences.getInstance();
+
+            final pCreated = pData['created_at'] as String?;
+            if (pCreated != null) {
+              _partnerJoinDate = DateTime.parse(pCreated);
+              await prefs.setString(PrefsKeys.partnerJoinDate, pCreated);
+            }
+
+            await _applyPartnerUserFields(pData);
+            notifyListeners();
+          }
+        })
+        .catchError((error) {
+          debugPrint('Error loading partner profile details: $error');
+        });
+  }
+
+  /// Mirrors the partner's own `users` row fields into this device's local
+  /// state/SharedPreferences -- the same pattern `display_name`/`avatar_url`
+  /// already used, extended to the 12 Relationship License fields
+  /// (`gender` through `signature`). Without this, `LicenseController`
+  /// (which reads `PrefsKeys.partner*` purely from local prefs, with no
+  /// Supabase read path of its own) never learns what the partner entered
+  /// for themselves -- the License screen would show "Waiting for Partner"
+  /// forever even after both sides filled in their details, since each
+  /// side's own submission never reaches the other's local cache.
+  ///
+  /// Only writes when a field is present (matches the existing
+  /// display_name/avatar_url behavior): clearing a field on one device does
+  /// not propagate as a clear on the partner's, only a fresh value does.
+  Future<void> _applyPartnerUserFields(Map<String, dynamic> pData) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final partnerDisplayName = pData['display_name'] as String?;
+    if (partnerDisplayName != null && partnerDisplayName.isNotEmpty) {
+      _partnerName = partnerDisplayName;
+      await prefs.setString(PrefsKeys.partnerName, partnerDisplayName);
+    }
+
+    final partnerAvatar = pData['avatar_url'] as String?;
+    if (partnerAvatar != null && partnerAvatar.isNotEmpty) {
+      _partnerAvatarPath = partnerAvatar;
+      await prefs.setString(PrefsKeys.partnerAvatarPath, partnerAvatar);
+    }
+
+    Future<void> mirror(String column, String prefsKey) async {
+      final value = pData[column] as String?;
+      if (value == null) return;
+      if (prefs.getString(prefsKey) != value) {
+        _partnerProfileVersion++;
+      }
+      await prefs.setString(prefsKey, value);
+    }
+
+    await mirror('gender', PrefsKeys.partnerGender);
+    await mirror('phone', PrefsKeys.partnerPhone);
+    await mirror('birthdate', PrefsKeys.partnerBirthdate);
+    await mirror('address', PrefsKeys.partnerAddress);
+    await mirror('nationality', PrefsKeys.partnerNationality);
+    await mirror('weight', PrefsKeys.partnerWeight);
+    await mirror('height', PrefsKeys.partnerHeight);
+    await mirror('blood_type', PrefsKeys.partnerBloodType);
+    await mirror('eye_color', PrefsKeys.partnerEyeColor);
+    await mirror('conditions', PrefsKeys.partnerConditions);
+    await mirror('date_issued', PrefsKeys.partnerDateIssued);
+    await mirror('signature', PrefsKeys.partnerSignature);
+  }
+
+  /// Watches `couple_key_exchanges` for a row wrapped for this device -- the
+  /// receiving half of E2EE photo-key exchange. RLS restricts this table to
+  /// `recipient_user_id = auth.uid()`, so this stream can only ever surface
+  /// rows meant for this device; when one arrives, it's unwrapped with the
+  /// partner's public key (X25519 ECDH guarantees the same shared secret
+  /// regardless of which side computes it) and the plaintext couple photo
+  /// key is cached in secure storage via KeyManagementService.
+  ///
+  /// Scoped to `_userId`, not `_coupleId`: the row can arrive before the
+  /// couples-stream even resolves _partnerId (e.g. right after joinWithCode
+  /// returns), and it must also survive this device later becoming the
+  /// "surviving partner" that re-wraps for a recovered partner, which is a
+  /// symmetric, ongoing relationship rather than a one-time pairing event.
+  /// Resolves once this device holds the couple photo key, or returns
+  /// after a timeout if it never arrives. See [CoupleKeyExchange.waitForKey].
+  Future<void> waitForCoupleKey({
+    Duration timeout = const Duration(seconds: 10),
+  }) => _keyExchange.waitForKey(timeout: timeout);
+
+  void _initPresence() {
+    _presence.connect(
+      userId: _userId,
+      coupleId: _coupleId,
+      partnerId: _partnerId,
+    );
+  }
+
+  Future<void> updateCurrentActivity(String? activity) async {
+    _yourActivity = activity;
+    notifyListeners();
+    if (_userId != null) {
+      try {
+        await Supabase.instance.client
+            .from(Tables.users)
+            .update({'current_activity': activity})
+            .eq('id', _userId!);
+      } catch (e) {
+        debugPrint('Error updating current activity: $e');
+      }
+    }
+  }
+
+  Future<void> setYourName(String name) async {
+    _yourName = name;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(PrefsKeys.yourName, name);
+
+    if (isSupabaseAvailable && _userId != null) {
+      try {
+        await ProfileService.instance.updateUserDetails(_userId!, {
+          'display_name': name,
+        });
+      } catch (e) {
+        debugPrint('Supabase setYourName display_name update failed: $e');
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> _syncLocalDetailsToCloud() async {
+    if (!isSupabaseAvailable || _coupleId == null) return;
+
+    // 1. Sync self profile details to public.users
+    if (_userId != null) {
+      try {
+        final userUpdates = <String, dynamic>{};
+        if (_yourName != null) userUpdates['display_name'] = _yourName;
+        if (_yourAvatarPath != null) {
+          userUpdates['avatar_url'] = _yourAvatarPath;
+        }
+        // The 12 license fields (gender..signature) used to get a second
+        // sync attempt here on newly pairing, in case their write-time push
+        // (now LicenseController.updateFields, still try/catch-silent on
+        // failure exactly like the code this replaced) had failed earlier.
+        // Neither RelationshipProvider nor CoupleSession holds those fields
+        // to re-push -- narrower resync coverage than before for this one
+        // edge case (offline-set license fields whose original push failed,
+        // never edited again), acknowledged and left as a known gap rather
+        // than building new Riverpod-from-non-widget plumbing to close it
+        // (see migration-roadmap.md's Phase 5 corrections).
+
+        if (userUpdates.isNotEmpty) {
+          await ProfileService.instance.updateUserDetails(
+            _userId!,
+            userUpdates,
+          );
+        }
+      } catch (e) {
+        debugPrint('_syncLocalDetailsToCloud users update failed: $e');
+      }
+    }
+
+    // 2. Sync couples table details
+    try {
+      final coupleUpdates = <String, dynamic>{};
+      if (_storyTitle != null) coupleUpdates['story_title'] = _storyTitle;
+      if (_startDate != null) {
+        coupleUpdates['start_date'] = _startDate!.toIso8601String();
+      }
+      if (_startTime != null) {
+        coupleUpdates['start_time_hour'] = _startTime!.hour;
+        coupleUpdates['start_time_minute'] = _startTime!.minute;
+      }
+      if (coupleUpdates.isNotEmpty) {
+        await Supabase.instance.client
+            .from(Tables.couples)
+            .update(coupleUpdates)
+            .eq('id', _coupleId!);
+      }
+    } catch (e) {
+      debugPrint('CoupleSession: persisting couple start date/time failed: $e');
+    }
+
+    // 3. Upload the avatar if it is still only a local file.
+    // Must test for a real device path, NOT `!startsWith('http')`: avatar refs
+    // are now bare storage paths, so the old check would treat an
+    // already-uploaded avatar as pending and try to re-upload a file that no
+    // longer exists, throwing on every sync.
+    if (StorageUrlService.isLocalFileRef(_yourAvatarPath)) {
+      final path = _yourAvatarPath!;
+      await setAvatars(yourPath: path);
+    }
+  }
+
+  Future<void> setStoryTitle(String title) async {
+    _storyTitle = title;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(PrefsKeys.storyTitle, title);
+    if (_coupleId != null) {
+      Supabase.instance.client
+          .from(Tables.couples)
+          .update({'story_title': title})
+          .eq('id', _coupleId!)
+          .then((_) {});
+    }
+    notifyListeners();
+  }
+
+  Future<void> setStartDate(DateTime date) async {
+    _startDate = date;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      PrefsKeys.relationshipStartDate,
+      date.toIso8601String(),
+    );
+    if (_coupleId != null) {
+      Supabase.instance.client
+          .from(Tables.couples)
+          .update({'start_date': date.toIso8601String()})
+          .eq('id', _coupleId!)
+          .then((_) {});
+    }
+    notifyListeners();
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Anniversary changed 💕',
+      description: 'Anniversary changed to ${date.toString().substring(0, 10)}',
+      icon: '💕',
+      referenceId: 'anniversary_date',
+      route: 'relationship_profile',
+    );
+  }
+
+  Future<void> setStartTime(TimeOfDay time) async {
+    _startTime = time;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(PrefsKeys.relationshipStartHour, time.hour);
+    await prefs.setInt(PrefsKeys.relationshipStartMinute, time.minute);
+    if (_coupleId != null) {
+      Supabase.instance.client
+          .from(Tables.couples)
+          .update({
+            'start_time_hour': time.hour,
+            'start_time_minute': time.minute,
+          })
+          .eq('id', _coupleId!)
+          .then((_) {});
+    }
+    notifyListeners();
+  }
+
+  Future<void> setNames(String yours, String partner) async {
+    _yourName = yours;
+    _partnerName = partner;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(PrefsKeys.yourName, yours);
+    await prefs.setString(PrefsKeys.partnerName, partner);
+
+    if (isSupabaseAvailable) {
+      if (_userId != null) {
+        try {
+          await ProfileService.instance.updateUserDetails(_userId!, {
+            'display_name': yours,
+          });
+        } catch (e) {
+          debugPrint('Supabase setNames self update failed: $e');
+        }
+      }
+      if (_partnerId != null) {
+        try {
+          await ProfileService.instance.updatePartnerProfile(_partnerId!, {
+            'display_name': partner,
+          });
+        } catch (e) {
+          debugPrint('Supabase setNames partner update failed: $e');
+        }
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Persists an avatar ref that needs no upload -- either a storage path
+  /// that is already uploaded, or the empty string, which clears the stored
+  /// ref.
+  Future<String> _persistAvatarRef(
+    SharedPreferences prefs,
+    String prefsKey,
+    String ref,
+  ) async {
+    if (ref.isEmpty) {
+      await prefs.remove(prefsKey);
+    } else {
+      await prefs.setString(prefsKey, ref);
+    }
+    return ref;
+  }
+
+  /// Applies one partner's avatar change, uploading first when [path] is a
+  /// real device file, and returns the ref to store on the session.
+  ///
+  /// The "your" and "partner" halves of [setAvatars] were near-identical
+  /// 35-line blocks differing only in which field, prefs key, and owner id
+  /// they used. This is that block, parameterised once.
+  Future<String> _applyAvatarChange({
+    required SharedPreferences prefs,
+    required String path,
+    required String prefsKey,
+    required String? supersededRef,
+    required String ownerId,
+    required String missingFileMessage,
+  }) async {
+    // Only a real device path means "upload this". A bare storage path is an
+    // avatar that is already uploaded.
+    if (!StorageUrlService.isLocalFileRef(path)) {
+      return _persistAvatarRef(prefs, prefsKey, path);
+    }
+
+    if (!await File(path).exists()) {
+      throw Exception(missingFileMessage);
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    // Returns the storage path, not a URL.
+    final ref = await ProfileService.instance.uploadAvatar(
+      bucketName: StorageBuckets.avatars,
+      filePath: path,
+      storagePath: 'couples/$_coupleId/avatars/${ownerId}_$timestamp.jpg',
+    );
+
+    // Reclaim the disk cache held by the superseded object. No cache busting
+    // is needed on the new ref: the path embeds a timestamp, so it is already
+    // a distinct cache key.
+    await _clearStaleAvatarCache(prefsKey, supersededRef);
+
+    await prefs.setString(prefsKey, ref);
+    return ref;
+  }
+
+  Future<void> setAvatars({String? yourPath, String? partnerPath}) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (isSupabaseAvailable && _coupleId != null) {
+      if (yourPath != null) {
+        _yourAvatarPath = await _applyAvatarChange(
+          prefs: prefs,
+          path: yourPath,
+          prefsKey: PrefsKeys.yourAvatarPath,
+          supersededRef: _yourAvatarPath,
+          ownerId: _userId ?? 'user',
+          missingFileMessage: 'Selected avatar image file does not exist.',
+        );
+      }
+
+      if (partnerPath != null) {
+        _partnerAvatarPath = await _applyAvatarChange(
+          prefs: prefs,
+          path: partnerPath,
+          prefsKey: PrefsKeys.partnerAvatarPath,
+          supersededRef: _partnerAvatarPath,
+          ownerId: _partnerId ?? 'partner',
+          missingFileMessage:
+              'Selected partner avatar image file does not exist.',
+        );
+      }
+
+      if (yourPath != null && _yourAvatarPath != null && _userId != null) {
+        await ProfileService.instance.updateUserDetails(_userId!, {
+          'avatar_url': _yourAvatarPath,
+        });
+      }
+      if (partnerPath != null &&
+          _partnerAvatarPath != null &&
+          _partnerId != null) {
+        await ProfileService.instance.updatePartnerProfile(_partnerId!, {
+          'avatar_url': _partnerAvatarPath,
+        });
+      }
+
+      try {
+        NotificationService().sendPartnerNotification(
+          title: 'Profile Photo Updated 📸',
+          body: 'Your partner updated their profile photo.',
+          feature: 'relationship',
+        );
+      } catch (e) {
+        debugPrint(
+          'CoupleSession: profile-photo partner notification failed: $e',
+        );
+      }
+    } else {
+      // Offline, or not yet in a couple: nothing to upload to, so both sides
+      // are just stored locally.
+      if (yourPath != null) {
+        _yourAvatarPath = await _persistAvatarRef(
+          prefs,
+          PrefsKeys.yourAvatarPath,
+          yourPath,
+        );
+      }
+      if (partnerPath != null) {
+        _partnerAvatarPath = await _persistAvatarRef(
+          prefs,
+          PrefsKeys.partnerAvatarPath,
+          partnerPath,
+        );
+      }
+    }
+    notifyListeners();
+
+    await RecentActivityService.instance.logActivity(
+      activityType: 'updated',
+      title: 'Profile photo updated 💕',
+      description: 'Updated profile avatar photo',
+      icon: '📸',
+      referenceId: 'relationship_profile_avatar',
+      route: 'relationship_profile',
+    );
+  }
+
+  Future<void> createRelationshipWorkspace() async {
+    if (_isGeneratingCode) return;
+    _isGeneratingCode = true;
+    notifyListeners();
+    try {
+      // E2EE photo encryption: this device mints the couple's photo key --
+      // it never leaves this device except AES-GCM-wrapped for a partner's
+      // public key (see CoupleKeyExchange.wrapForPartnerIfHeld) -- and posts its own
+      // public key so the joining partner can eventually be wrapped for.
+      // Keyed by _userId (falling back to a fixed slot only when genuinely
+      // offline/unauthenticated, e.g. this app's own no-network test/dev
+      // path) so two different real accounts never share one keypair --
+      // see KeyManagementService's class doc for the bug this fixes.
+      final keyOwnerId = _userId ?? 'offline';
+      final publicKey = await _keyManagementService.getOrCreatePublicKeyBase64(
+        keyOwnerId,
+      );
+      final coupleKeyBytes = await _keyManagementService.generateCoupleKey();
+
+      final result = await _coupleService.createRelationshipWorkspace(
+        publicKey: publicKey,
+      );
+      _coupleId = result['couple_id'] as String;
+
+      // Stored only once the workspace exists, so the key is tagged with the
+      // couple id it actually belongs to (see
+      // KeyManagementService.purgeCoupleKeyIfForDifferentCouple). Storing it
+      // before the RPC tagged it with whatever _coupleId happened to hold --
+      // null on a first pairing, the *previous* relationship's id on a
+      // re-pair.
+      await _keyManagementService.storeCoupleKey(
+        keyOwnerId,
+        coupleKeyBytes,
+        coupleId: _coupleId,
+      );
+      _keyExchange.completeWaiter();
+
+      _coupleCode = result['pairing_code'] as String;
+      _recoveryCode = result['recovery_code'] as String;
+      _status = RelationshipStatus.waiting;
+      _isPaired = false;
+      _isCreator = true;
+      _onboardingCompleted = false;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(PrefsKeys.coupleCode, _coupleCode!);
+      await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+      await prefs.setBool(PrefsKeys.isPaired, false);
+      await prefs.setBool(PrefsKeys.isCreator, true);
+      await prefs.setBool(PrefsKeys.onboardingCompleted, false);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error in createRelationshipWorkspace: $e');
+      rethrow;
+    } finally {
+      _isGeneratingCode = false;
+      notifyListeners();
+    }
+  }
+
+  String generateCoupleCode({bool forceRegenerate = false}) {
+    if (_coupleCode != null) {
+      return _coupleCode!;
+    }
+    createRelationshipWorkspace();
+    return '';
+  }
+
+  /// Refreshes or rotates the 20-minute pairing code for the relationship workspace.
+  Future<String?> refreshPairingCode({bool forceRotate = false}) async {
+    if (!isSupabaseAvailable || _coupleId == null) return _coupleCode;
+    try {
+      final result = await _coupleService.getOrRotatePairingCode(
+        forceRotate: forceRotate,
+      );
+      if (result['success'] == true) {
+        final newCode = result['pairing_code'] as String?;
+        if (newCode != null && newCode.isNotEmpty) {
+          _coupleCode = newCode;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(PrefsKeys.coupleCode, newCode);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in refreshPairingCode: $e');
+    }
+    return _coupleCode;
+  }
+
+  Future<bool> joinWithCode(String code) async {
+    if (_isJoining) return false;
+    _isJoining = true;
+    notifyListeners();
+
+    try {
+      final cleanCode = code.trim().toUpperCase();
+      if (!isPlausiblePairingCode(cleanCode)) return false;
+
+      _coupleCode = cleanCode;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(PrefsKeys.coupleCode, cleanCode);
+
+      if (isSupabaseAvailable && _userId != null) {
+        // E2EE photo encryption: post this device's public key so the
+        // creator can wrap the couple photo key for it (see
+        // CoupleKeyExchange.wrapForPartnerIfHeld, triggered on their end once their
+        // couples-stream observes this partner_id).
+        final publicKey = await _keyManagementService
+            .getOrCreatePublicKeyBase64(_userId!);
+        final result = await _coupleService.joinWithCode(
+          cleanCode,
+          publicKey: publicKey,
+        );
+        final bool success = result['success'] as bool? ?? false;
+
+        if (!success) {
+          debugPrint(
+            'join_relationship_with_code failed: ${result['error_code']}',
+          );
+          throw Exception(pairingFailureMessage(result));
+        }
+
+        final joinedCoupleId = result['couple_id'] as String;
+        final creatorId = result['partner_id'] as String;
+
+        _coupleId = joinedCoupleId;
+        _partnerId = creatorId;
+        _isPaired = true;
+        _status = RelationshipStatus.active;
+        _onboardingCompleted = false;
+
+        await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+        await prefs.setString(PrefsKeys.partnerId, _partnerId!);
+        await prefs.setBool(PrefsKeys.isPaired, true);
+        await prefs.setBool(PrefsKeys.onboardingCompleted, false);
+
+        try {
+          await NotificationService().sendPartnerNotification(
+            title: 'Connected! 💞',
+            body: 'You and your partner are now paired!',
+            feature: 'relationship',
+          );
+        } catch (e) {
+          debugPrint('CoupleSession: pairing partner notification failed: $e');
+        }
+
+        final coupleData = await Supabase.instance.client
+            .from(Tables.couples)
+            .select()
+            .eq('id', _coupleId!)
+            .maybeSingle();
+
+        if (coupleData != null) {
+          final startStr = coupleData['start_date'] as String?;
+          if (startStr != null) {
+            _startDate = DateTime.parse(startStr);
+            await prefs.setString(PrefsKeys.relationshipStartDate, startStr);
+          }
+          final hour = coupleData['start_time_hour'] as int?;
+          final minute = coupleData['start_time_minute'] as int?;
+          if (hour != null && minute != null) {
+            _startTime = TimeOfDay(hour: hour, minute: minute);
+            await prefs.setInt(PrefsKeys.relationshipStartHour, hour);
+            await prefs.setInt(PrefsKeys.relationshipStartMinute, minute);
+          }
+          _storyTitle = coupleData['story_title'] as String? ?? 'Our Story';
+          await prefs.setString(PrefsKeys.storyTitle, _storyTitle!);
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error in joinWithCode: $e');
+      rethrow;
+    } finally {
+      _isJoining = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> completeOnboarding() async {
+    _onboardingCompleted = true;
+    _isPaired = _coupleId != null && _partnerId != null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(PrefsKeys.isPaired, _isPaired);
+    await prefs.setBool(PrefsKeys.onboardingCompleted, true);
+
+    if (isSupabaseAvailable && _userId != null) {
+      final updates = <String, dynamic>{};
+      if (_yourName != null) updates['display_name'] = _yourName;
+      if (_yourAvatarPath != null) updates['avatar_url'] = _yourAvatarPath;
+      if (updates.isNotEmpty) {
+        try {
+          await Supabase.instance.client
+              .from(Tables.users)
+              .update(updates)
+              .eq('id', _userId!);
+        } catch (e) {
+          debugPrint(
+            'CoupleSession: persisting display name/avatar to users failed: $e',
+          );
+        }
+      }
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> setPremium(bool value) async {
+    _isPremium = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(PrefsKeys.isPremium, _isPremium);
+    // Deliberately no server write: couples.is_premium is server-controlled.
+    // protect_premium_status always reverted a client's write, and since
+    // 20261003010300_couples_mutation_boundary.sql clients hold no UPDATE
+    // privilege on that column at all.
+    notifyListeners();
+  }
+
+  Future<bool> recoverRelationship(String code) async {
+    if (_isJoining) return false;
+    _isJoining = true;
+    notifyListeners();
+    try {
+      // E2EE photo encryption: a recovering device lost whatever keypair it
+      // had (that's the premise of recovery), so this always mints a fresh
+      // one and posts it -- the surviving partner re-wraps the couple photo
+      // key for it once their app next observes this new partner identity
+      // (CoupleKeyExchange.wrapForPartnerIfHeld).
+      final publicKey = await _keyManagementService.getOrCreatePublicKeyBase64(
+        _userId ?? 'offline',
+      );
+      final result = await _coupleService.recoverWithCode(
+        code,
+        publicKey: publicKey,
+      );
+      final bool success = result['success'] as bool? ?? false;
+      final errorCode = result['error_code'] as String?;
+      if (!success &&
+          (errorCode == 'USER_LOCKED' || errorCode == 'COUPLE_LOCKED')) {
+        final retryAfter = DateTime.tryParse(
+          result['retry_after'] as String? ?? '',
+        );
+        final minutes = retryAfter == null
+            ? 15
+            : (retryAfter.difference(DateTime.now()).inSeconds / 60)
+                  .ceil()
+                  .clamp(1, 15);
+        throw Exception(
+          'Too many recovery attempts. Please try again in $minutes minute${minutes == 1 ? '' : 's'}.',
+        );
+      }
+      if (success) {
+        _coupleId = result['couple_id'] as String;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(PrefsKeys.coupleId, _coupleId!);
+
+        // Triggers active sync streams
+        _initSupabaseSync();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error in recoverRelationship: $e');
+      rethrow;
+    } finally {
+      _isJoining = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> regenerateRecoveryCode() async {
+    try {
+      final result = await _coupleService.regenerateRecoveryCode();
+      _recoveryCode = result['recovery_code'] as String;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error in regenerateRecoveryCode: $e');
+      rethrow;
+    }
+  }
+
+  void clearRecoveryCode() {
+    _recoveryCode = null;
+    notifyListeners();
+  }
+
+  Future<void> unlinkPartner() async {
+    if (_isUnlinking) return;
+    _isUnlinking = true;
+    notifyListeners();
+
+    try {
+      _isPaired = false;
+      _coupleCode = null;
+      _recoveryCode = null;
+      _partnerName = null;
+      _partnerAvatarPath = null;
+      _partnerJoinDate = null;
+      _partnerActivity = null;
+      // The relationship's own fields go with it. Keeping the start date in
+      // particular let _syncLocalDetailsToCloud push the PREVIOUS
+      // relationship's anniversary into the next couple's row (audit F-06).
+      _startDate = null;
+      _startTime = null;
+      _storyTitle = null;
+      _isCreator = false;
+      _isPremium = false;
+      _cancelActiveSubscriptions();
+      _presence.disconnect();
+
+      // Partner PII, relationship dates, feature caches, the activity log and
+      // image caches -- see SessionDataWiper for the couple scope.
+      await _dataWiper.wipeCoupleData();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(PrefsKeys.isPaired, false);
+      _onboardingCompleted = false;
+      await prefs.setBool(PrefsKeys.onboardingCompleted, false);
+
+      if (isSupabaseAvailable && _userId != null) {
+        try {
+          await NotificationService().sendPartnerNotification(
+            title: 'Relationship Unlinked 💔',
+            body: 'Your partner has unlinked from the relationship.',
+            feature: 'relationship',
+          );
+        } catch (e) {
+          debugPrint('CoupleSession: unlink partner notification failed: $e');
+        }
+        await _coupleService.disconnectRelationshipWorkspace();
+      }
+
+      // The couple photo key belongs to the relationship being left, not to
+      // this device. Keeping it would make the *next* pairing's
+      // CoupleKeyExchange.wrapForPartnerIfHeld push this dead relationship's key to
+      // the new partner, permanently diverging the two devices' key material.
+      if (_userId != null) {
+        await _keyManagementService.clearCoupleKey(_userId!);
+      }
+      _keyExchange.clearCachedExchangeState();
+      _partnerKeyChanged = false;
+
+      await prefs.remove(PrefsKeys.partnerId);
+      _coupleId = null;
+      _partnerId = null;
+      _status = RelationshipStatus.disconnected;
+    } catch (e) {
+      debugPrint('Error in unlinkPartner: $e');
+    } finally {
+      _isUnlinking = false;
+      notifyListeners();
+    }
+  }
+
+  bool get showPartnerDeletedNotice => _showPartnerDeletedNotice;
+
+  void clearPartnerDeletedNotice() {
+    _showPartnerDeletedNotice = false;
+    notifyListeners();
+    if (isSupabaseAvailable && _userId != null) {
+      Supabase.instance.client
+          .from(Tables.users)
+          .update({'partner_deleted_notice': false})
+          .eq('id', _userId!)
+          .then((_) {});
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    final userId = _userId;
+    if (!isSupabaseAvailable || userId == null) {
+      throw StateError('Sign in and connect before deleting your account.');
+    }
+
+    // Preserve the only local copy of the photo key until the server has
+    // confirmed deletion. A network/RPC failure leaves the account and its
+    // photos usable, so it must also leave these keys and the session intact.
+    await AuthService.instance.deleteUserAccount();
+
+    try {
+      await _keyManagementService.clearAllKeysForUser(userId);
+    } catch (e) {
+      // The remote account is already gone. Continue clearing the local
+      // session even if secure-storage cleanup fails on this device.
+      debugPrint('CoupleSession: local key cleanup after deletion failed: $e');
+    }
+    try {
+      await logout();
+    } catch (e) {
+      // The server has already deleted the account. A local sign-out failure
+      // cannot turn that into a retryable deletion failure in the UI.
+      debugPrint('CoupleSession: local sign-out after deletion failed: $e');
+      notifyListeners();
+    }
+  }
+
+  Future<void> signUpWithEmail(String email, String password) async {
+    await AuthService.instance.signUpWithEmail(email, password);
+  }
+
+  Future<void> signInWithEmail(String email, String password) async {
+    await AuthService.instance.signInWithEmail(email, password);
+  }
+
+  Future<void> signInWithGoogle() async {
+    final webClientId = AppConfig.googleClientIdWeb;
+    final iosClientId = AppConfig.googleClientIdIos;
+
+    final googleSignIn = GoogleSignIn(
+      serverClientId: webClientId == 'YOUR_WEB_CLIENT_ID' || webClientId.isEmpty
+          ? null
+          : webClientId,
+      clientId: iosClientId == 'YOUR_IOS_CLIENT_ID' || iosClientId.isEmpty
+          ? null
+          : iosClientId,
+    );
+    try {
+      await googleSignIn.signOut();
+    } catch (e) {
+      debugPrint(
+        'CoupleSession: Google sign-out during account deletion failed: $e',
+      );
+    }
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) {
+      throw 'Sign in aborted by user';
+    }
+    final googleAuth = await googleUser.authentication;
+    final accessToken = googleAuth.accessToken;
+    final idToken = googleAuth.idToken;
+
+    if (idToken == null) {
+      throw 'No ID Token found. Make sure serverClientId (Web Client ID) is configured correctly.';
+    }
+
+    await AuthService.instance.signInWithIdToken(
+      idToken: idToken,
+      accessToken: accessToken ?? '',
+    );
+  }
+
+  /// Signs out and removes every trace of the account from this device
+  /// (audit F-06/F-07, invariants S11/S12). Order matters:
+  ///
+  /// 1. Unregister this device's push token FIRST, while the session's JWT
+  ///    still authorises deleting the token row. After sign-out the device
+  ///    would otherwise keep receiving this account's partner notifications.
+  /// 2. Reset in-memory state and wipe on-device data via [SessionDataWiper]
+  ///    -- everything but device chrome. (This used to deliberately keep the
+  ///    name, avatar, start date and onboarding flag, which the next account
+  ///    signing in then inherited and even synced into its own rows.)
+  /// 3. Tear down subscriptions, then sign out.
+  ///
+  /// The E2EE keys in secure storage are user-scoped and survive -- see
+  /// KeyManagementService.clearCoupleKey's doc.
+  Future<void> logout() async {
+    await _pushTokens.unregister();
+
+    _resetIdentityState();
+    await _dataWiper.wipeAccountData();
+    // LicenseController's cached state is invalidated by main.dart's
+    // _CoupleSessionBridge when the identity clears.
+
+    _userSub?.cancel();
+    _userSub = null;
+    _partnerUserSub?.cancel();
+    _partnerUserSub = null;
+    _coupleSub?.cancel();
+    _coupleSub = null;
+    // In-memory key-exchange state only. The stored couple photo key itself
+    // deliberately survives a sign-out -- see
+    // KeyManagementService.clearCoupleKey's doc for why.
+    _keyExchange.reset();
+    _keyExchange.completeWaiter();
+    _presence.disconnect();
+
+    await _signOut();
+
+    notifyListeners();
+  }
+
+  Future<void> _signOut() async {
+    final override = _signOutOverride;
+    if (override != null) return override();
+    if (!isSupabaseAvailable) return;
+    await AuthService.instance.signOut();
+    try {
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+    } catch (e) {
+      debugPrint('CoupleSession: Google sign-out during logout failed: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    _userSub?.cancel();
+    _partnerUserSub?.cancel();
+    _coupleSub?.cancel();
+    _keyExchange.dispose();
+    _presence.dispose();
+    super.dispose();
+  }
+}
+
+/// The single, process-lifetime [CoupleSession] instance -- Item 3 gap-fix
+/// Phase 3 (front 4 of the architecture migration's `provider`-removal item)
+/// made this provider construct the instance itself, retiring the Phase 2
+/// strangler bridge (ADR-002) that used to feed it a `provider`-package
+/// `ChangeNotifierProvider`'s instance via `overrideWithValue` inside a
+/// nested `ProviderScope`. `CoupleSession`'s class, constructor, and
+/// `ChangeNotifier` nature are unchanged by this -- its ~1400 lines of
+/// Supabase auth/realtime/presence logic don't need to change at all; only
+/// who constructs it changed.
+///
+/// Deliberately a plain `Provider<CoupleSession>`, not a `Notifier`/
+/// `AsyncNotifier`: every one of the 5 hub controllers and all 12 domain
+/// controllers reads individual mirrored fields from their own Riverpod
+/// state, never from this provider's value directly (its value never
+/// changes identity, so watching it for field-level reactivity wouldn't
+/// work -- see `main.dart`'s `_CoupleSessionBridge`, which pushes changes
+/// into those controllers via `CoupleSession.addListener`, not via this
+/// provider). Keeping this a plain `Provider` also means every existing
+/// `coupleSessionProvider.overrideWithValue(CoupleSession(...))` call across
+/// this repo's test suite keeps working unchanged.
+final coupleSessionProvider = Provider<CoupleSession>((ref) {
+  final session = CoupleSession();
+  ref.onDispose(session.dispose);
+  return session;
+});
