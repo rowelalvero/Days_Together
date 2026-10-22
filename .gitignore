@@ -49,3 +49,6 @@ app.*.map.json
 
 # Google Cloud Service Account
 service-account.json
+
+# graphify knowledge graph output (any level)
+graphify-out/
