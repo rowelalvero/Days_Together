@@ -78,6 +78,7 @@ class _PairingSelectionScreenState
               children: [
                 const SizedBox(height: 20),
                 IconButton(
+                  tooltip: 'Back to sign in',
                   // This screen is only ever reached via appRedirect's
                   // stage-based redirect (SessionStage.needsCouple), never
                   // pushed from another screen -- there is nothing beneath
@@ -120,6 +121,7 @@ class _PairingSelectionScreenState
                   subtitle: "Start a new shared relationship workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
+                  subtitleColor: theme.secondaryTextColor,
                   onTap: () async {
                     if (_isNavigating) return;
                     _isNavigating = true;
@@ -152,6 +154,7 @@ class _PairingSelectionScreenState
                       "Connect to your partner's newly created workspace.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
+                  subtitleColor: theme.secondaryTextColor,
                   onTap: () => _push(Routes.joinCode),
                 ),
                 const SizedBox(height: 16),
@@ -162,6 +165,7 @@ class _PairingSelectionScreenState
                       "Reconnect to a workspace you previously belonged to.",
                   accentColor: theme.accentColor,
                   textColor: theme.textColor,
+                  subtitleColor: theme.secondaryTextColor,
                   onTap: () => _push(Routes.recover),
                 ),
                 const SizedBox(height: 40),
@@ -180,6 +184,7 @@ class _PairingCard extends StatelessWidget {
   final String subtitle;
   final Color accentColor;
   final Color textColor;
+  final Color subtitleColor;
   final VoidCallback onTap;
 
   const _PairingCard({
@@ -188,58 +193,67 @@ class _PairingCard extends StatelessWidget {
     required this.subtitle,
     required this.accentColor,
     required this.textColor,
+    required this.subtitleColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: textColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: textColor.withValues(alpha: 0.1)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: accentColor, size: 28),
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: textColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: textColor.withValues(alpha: 0.1)),
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.body(
-                      color: textColor,
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: AppTypography.caption(
-                      color: textColor.withValues(alpha: 0.6),
-                      fontSize: 13,
-                    ),
+                  child: Icon(icon, color: accentColor, size: 28),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.body(
+                          color: textColor,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: AppTypography.caption(
+                          color: subtitleColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: textColor.withValues(alpha: 0.4),
+                ),
+              ],
             ),
-            Icon(Icons.chevron_right, color: textColor.withValues(alpha: 0.4)),
-          ],
+          ),
         ),
       ),
     );

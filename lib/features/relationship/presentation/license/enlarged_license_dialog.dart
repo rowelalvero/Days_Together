@@ -33,6 +33,7 @@ class EnlargedLicenseDialog extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
+                tooltip: 'Close',
                 icon: const Icon(
                   Icons.close_rounded,
                   color: Colors.white,

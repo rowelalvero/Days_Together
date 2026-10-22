@@ -58,7 +58,7 @@ class PremiumPaywallSheet extends StatelessWidget {
             'Unlock the full magic of AI and digital connection.',
             textAlign: TextAlign.center,
             style: AppTypography.body(
-              color: theme.textColor.withValues(alpha: 0.6),
+              color: theme.secondaryTextColor,
               fontSize: 14,
             ),
           ),

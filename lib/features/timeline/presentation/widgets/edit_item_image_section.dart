@@ -27,76 +27,81 @@ class EditItemImageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassContainer(
-        height: 200,
-        width: double.infinity,
-        borderRadius: 28,
-        padding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: StorageImageBuilder(
-                  bucket: StorageBuckets.timeline,
-                  storageRef: networkImageUrl,
-                  localPath: localPath,
-                  builder: (context, image, _, _) => Image(
-                    image: image ?? kTimelineFallbackImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: theme.textColor.withValues(alpha: 0.1),
-                      child: Center(
-                        child: Icon(
-                          Icons.broken_image_rounded,
-                          color: theme.textColor.withValues(alpha: 0.2),
-                          size: 48,
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: GlassContainer(
+            height: 200,
+            width: double.infinity,
+            borderRadius: 28,
+            padding: EdgeInsets.zero,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: StorageImageBuilder(
+                      bucket: StorageBuckets.timeline,
+                      storageRef: networkImageUrl,
+                      localPath: localPath,
+                      builder: (context, image, _, _) => Image(
+                        image: image ?? kTimelineFallbackImage,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: theme.textColor.withValues(alpha: 0.1),
+                          child: Center(
+                            child: Icon(
+                              Icons.broken_image_rounded,
+                              color: theme.textColor.withValues(alpha: 0.2),
+                              size: 48,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black26,
-                      Colors.black.withValues(alpha: 0.6),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black26,
+                          Colors.black.withValues(alpha: 0.6),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.camera_alt_rounded,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Change Photo',
+                        style: AppTypography.bodyLarge(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.camera_alt_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Change Photo',
-                    style: AppTypography.bodyLarge(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

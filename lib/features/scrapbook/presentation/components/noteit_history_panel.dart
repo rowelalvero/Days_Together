@@ -101,76 +101,82 @@ class NoteitHistoryPanel extends StatelessWidget {
         color: theme.textColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(theme.radii.md + 4),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => _enlarge(context, item),
-          onLongPress: () => _confirmDelete(context, item),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(theme.radii.md),
-                    child: ColoredBox(
-                      color: noteitThumbnailBackdrop(item),
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: NoteitCanvasThumbnail(item: item),
-                          ),
-                          if (fromYou && item.syncStatus != SyncStatus.synced)
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: NoteitSyncStatusBadge(
-                                item: item,
-                                theme: theme,
+        child: MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => _enlarge(context, item),
+              onLongPress: () => _confirmDelete(context, item),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(theme.radii.md),
+                        child: ColoredBox(
+                          color: noteitThumbnailBackdrop(item),
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: NoteitCanvasThumbnail(item: item),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
-                child: Row(
-                  children: [
-                    Icon(
-                      fromYou
-                          ? Icons.north_east_rounded
-                          : Icons.south_west_rounded,
-                      size: 14,
-                      color: fromYou
-                          ? theme.textColor.withValues(alpha: 0.7)
-                          : theme.accentColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        fromYou ? 'You' : 'Partner',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: theme.textColor,
+                              if (fromYou &&
+                                  item.syncStatus != SyncStatus.synced)
+                                Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: NoteitSyncStatusBadge(
+                                    item: item,
+                                    theme: theme,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    Text(
-                      when,
-                      style: AppTypography.caption(
-                        fontSize: 12,
-                        color: theme.textColor.withValues(alpha: 0.7),
-                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          fromYou
+                              ? Icons.north_east_rounded
+                              : Icons.south_west_rounded,
+                          size: 14,
+                          color: fromYou
+                              ? theme.textColor.withValues(alpha: 0.7)
+                              : theme.accentColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            fromYou ? 'You' : 'Partner',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.caption(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: theme.textColor,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          when,
+                          style: AppTypography.caption(
+                            fontSize: 12,
+                            color: theme.textColor.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -375,30 +381,35 @@ class NoteitSyncStatusBadge extends StatelessWidget {
             color: theme.semantic.error,
             shape: const StadiumBorder(),
             clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => _confirmRetry(context),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 32),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.refresh_rounded,
-                        size: 14,
-                        color: Colors.white,
+            child: MergeSemantics(
+              child: Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: () => _confirmRetry(context),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 32),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.refresh_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Retry',
+                            style: AppTypography.caption(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Retry',
-                        style: AppTypography.caption(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -444,7 +455,7 @@ class NoteitSyncStatusBadge extends StatelessWidget {
             child: Text(
               'Retry now',
               style: AppTypography.button(
-                color: theme.accentColor,
+                color: theme.accentTextColor,
                 fontWeight: FontWeight.bold,
               ),
             ),

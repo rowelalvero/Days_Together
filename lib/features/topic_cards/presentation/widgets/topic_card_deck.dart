@@ -106,36 +106,48 @@ class TopicCardDeck extends StatelessWidget {
             // Top draggable & interactive card
             Positioned(
               bottom: 25,
-              child: GestureDetector(
-                onHorizontalDragUpdate: onHorizontalDragUpdate,
-                onHorizontalDragEnd: onHorizontalDragEnd,
+              // The card's own tap flips it; swiping has button
+              // equivalents (TopicCardRoundButton) below the deck. Not merged:
+              // the back face holds its own delete/share/favorite buttons.
+              child: Semantics(
+                container: true,
                 onTap: onTap,
-                child: Transform.translate(
-                  offset: dragOffset,
-                  child: Transform.rotate(
-                    angle: isSwipeAnimating
-                        ? rotationAnimation.value
-                        : (dragOffset.dx / 1000).clamp(-0.15, 0.15),
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0.0, end: flipRotation),
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeInOut,
-                      builder: (context, angle, child) {
-                        final isBack = angle >= pi / 2;
-                        return Transform(
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.001) // perspective
-                            ..rotateY(angle),
-                          alignment: Alignment.center,
-                          child: isBack
-                              ? TopicCardBack(
-                                  theme: theme,
-                                  card: deck[index],
-                                  notifier: notifier,
-                                )
-                              : TopicCardFront(theme: theme, card: deck[index]),
-                        );
-                      },
+                onTapHint: 'flip card',
+                child: GestureDetector(
+                  excludeFromSemantics: true,
+                  onHorizontalDragUpdate: onHorizontalDragUpdate,
+                  onHorizontalDragEnd: onHorizontalDragEnd,
+                  onTap: onTap,
+                  child: Transform.translate(
+                    offset: dragOffset,
+                    child: Transform.rotate(
+                      angle: isSwipeAnimating
+                          ? rotationAnimation.value
+                          : (dragOffset.dx / 1000).clamp(-0.15, 0.15),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0.0, end: flipRotation),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOut,
+                        builder: (context, angle, child) {
+                          final isBack = angle >= pi / 2;
+                          return Transform(
+                            transform: Matrix4.identity()
+                              ..setEntry(3, 2, 0.001) // perspective
+                              ..rotateY(angle),
+                            alignment: Alignment.center,
+                            child: isBack
+                                ? TopicCardBack(
+                                    theme: theme,
+                                    card: deck[index],
+                                    notifier: notifier,
+                                  )
+                                : TopicCardFront(
+                                    theme: theme,
+                                    card: deck[index],
+                                  ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

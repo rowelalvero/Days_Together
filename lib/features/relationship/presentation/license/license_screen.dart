@@ -229,6 +229,7 @@ class _RelationshipLicenseScreenState
         elevation: 0,
 
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: () => Navigator.pop(context),
         ),

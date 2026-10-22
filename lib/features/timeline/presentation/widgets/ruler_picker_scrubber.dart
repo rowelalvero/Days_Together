@@ -176,63 +176,71 @@ class _RulerPickerScrubberState extends ConsumerState<RulerPickerScrubber> {
           final isSelected = index == chronoSelectedIndex;
           final isYear = _isYearStart(index, chronoItems);
 
-          return GestureDetector(
-            onTap: () {
-              _isManualScrolling = false;
-              final mainIndex = widget.isAscending
-                  ? index
-                  : widget.items.length - 1 - index;
-              widget.onIndexChanged(mainIndex);
-              HapticFeedback.selectionClick();
-              _scrollToChronoIndex(index);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: _tickWidth,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // The Tick Mark
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: isSelected ? 3.0 : 1.5,
-                    height: isYear ? 28.0 : 12.0,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? theme.accentColor
-                          : (isYear ? Colors.white70 : Colors.white30),
-                      borderRadius: BorderRadius.circular(2),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: theme.accentColor.withValues(alpha: 0.6),
-                                blurRadius: 6,
-                                spreadRadius: 1,
-                              ),
-                            ]
-                          : null,
-                    ),
+          return MergeSemantics(
+            child: Semantics(
+              button: true,
+              selected: isSelected,
+              child: GestureDetector(
+                onTap: () {
+                  _isManualScrolling = false;
+                  final mainIndex = widget.isAscending
+                      ? index
+                      : widget.items.length - 1 - index;
+                  widget.onIndexChanged(mainIndex);
+                  HapticFeedback.selectionClick();
+                  _scrollToChronoIndex(index);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: _tickWidth,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // The Tick Mark
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: isSelected ? 3.0 : 1.5,
+                        height: isYear ? 28.0 : 12.0,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? theme.accentColor
+                              : (isYear ? Colors.white70 : Colors.white30),
+                          borderRadius: BorderRadius.circular(2),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: theme.accentColor.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Year text or small spacing
+                      SizedBox(
+                        height: 14,
+                        child: isYear
+                            ? Text(
+                                '${item.date.year}',
+                                style: AppTypography.caption(
+                                  fontSize: 9,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? theme.accentTextColor
+                                      : Colors.white70,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  // Year text or small spacing
-                  SizedBox(
-                    height: 14,
-                    child: isYear
-                        ? Text(
-                            '${item.date.year}',
-                            style: AppTypography.caption(
-                              fontSize: 9,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                              color: isSelected
-                                  ? theme.accentColor
-                                  : Colors.white70,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+                ),
               ),
             ),
           );

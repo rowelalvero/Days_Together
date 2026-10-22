@@ -78,6 +78,7 @@ class AuthFormFields extends StatelessWidget {
             icon: Icons.lock_outline_rounded,
             theme: theme,
             suffixIcon: IconButton(
+              tooltip: obscurePassword ? 'Show password' : 'Hide password',
               icon: Icon(
                 obscurePassword
                     ? Icons.visibility_off_outlined
@@ -110,6 +111,9 @@ class AuthFormFields extends StatelessWidget {
               icon: Icons.lock_outline_rounded,
               theme: theme,
               suffixIcon: IconButton(
+                tooltip: obscureConfirmPassword
+                    ? 'Show password'
+                    : 'Hide password',
                 icon: Icon(
                   obscureConfirmPassword
                       ? Icons.visibility_off_outlined

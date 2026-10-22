@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:days_together/shared/models/noteit_model.dart';
-import 'package:days_together/features/scrapbook/noteit_controller.dart';
 import 'package:days_together/core/storage/encrypted_storage_service.dart';
 import 'package:days_together/core/notifications/notification_service.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
@@ -63,13 +62,54 @@ class NoteitSyncTask {
   }
 }
 
+/// What [NoteitSyncManager] needs from its owner: the credentials to upload
+/// under, and a sink for per-item status. `NoteitController` implements it;
+/// taking the interface rather than the controller keeps `data/` from
+/// importing the feature's controller (which imports `data/`).
+abstract interface class NoteitSyncHost {
+  String? get coupleId;
+  String? get sessionUserId;
+  void updateItemSyncStatus(String id, SyncStatus status);
+}
+
 class NoteitSyncManager {
   static const String _queueKey = 'noteit_sync_queue';
   static final NoteitSyncManager instance = NoteitSyncManager._internal();
 
-  NoteitSyncManager._internal();
+  NoteitSyncManager._internal({
+    Stream<List<ConnectivityResult>> Function()? connectivityChanges,
+    Future<bool> Function()? isOnline,
+  }) : _connectivityChanges = connectivityChanges,
+       _isOnline = isOnline;
 
-  NoteitController? _provider;
+  /// A private instance with the connectivity plugin replaced, so tests
+  /// never touch its platform channels.
+  @visibleForTesting
+  factory NoteitSyncManager.forTest({
+    Stream<List<ConnectivityResult>> Function()? connectivityChanges,
+    Future<bool> Function()? isOnline,
+  }) => NoteitSyncManager._internal(
+    connectivityChanges: connectivityChanges ?? () => const Stream.empty(),
+    isOnline: isOnline ?? () async => false,
+  );
+
+  final Stream<List<ConnectivityResult>> Function()? _connectivityChanges;
+  final Future<bool> Function()? _isOnline;
+
+  NoteitSyncHost? _provider;
+
+  /// The couple the in-memory [_queue] belongs to. The queue is never
+  /// carried across a couple change: SessionDataWiper removes the persisted
+  /// copy on unlink/logout, and this singleton outlives both, so without
+  /// the reset the previous relationship's pending notes would upload into
+  /// the next one (and be written back to prefs by the next save).
+  String? _coupleId;
+
+  /// Bumped whenever [_queue] is replaced wholesale, so an in-flight load or
+  /// sync loop started for the previous queue stops touching it.
+  int _generation = 0;
+  Future<void> _loaded = Future.value();
+
   List<NoteitSyncTask> _queue = [];
   bool _isSyncing = false;
   Timer? _backoffTimer;
@@ -78,23 +118,65 @@ class NoteitSyncManager {
   bool get hasPendingItems => _queue.isNotEmpty;
   List<NoteitSyncTask> get queue => List.unmodifiable(_queue);
 
-  void initialize(NoteitController provider) {
+  /// Binds the queue to [provider]'s current couple and loads it. Called on
+  /// every session change, so it is a no-op unless the owner or the couple
+  /// actually changed -- reloading would replace [_queue] under a concurrent
+  /// [enqueue] or [triggerSync].
+  Future<void> initialize(NoteitSyncHost provider) {
+    final coupleId = provider.coupleId;
+    if (identical(provider, _provider) && coupleId == _coupleId) {
+      return _loaded;
+    }
     _provider = provider;
-    _loadQueue();
+    if (coupleId != _coupleId) {
+      _clearQueue();
+      _coupleId = coupleId;
+      _loaded = _loadQueue(_generation);
+    }
     _startConnectivityCheck();
+    return _loaded;
   }
 
-  Future<void> _loadQueue() async {
+  /// Drops all in-memory state. Called when the owning controller purges
+  /// (disconnect/logout); the persisted queue is SessionDataWiper's job.
+  void reset() {
+    _clearQueue();
+    _provider = null;
+    _coupleId = null;
+    _loaded = Future.value();
+    _connectivitySub?.cancel();
+    _connectivitySub = null;
+  }
+
+  void _clearQueue() {
+    _generation++;
+    _backoffTimer?.cancel();
+    _backoffTimer = null;
+    _queue = [];
+  }
+
+  Future<void> _loadQueue(int generation) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (generation != _generation) return;
       final jsonString = prefs.getString(_queueKey);
-      if (jsonString != null) {
-        final List<dynamic> jsonList = jsonDecode(jsonString) as List;
-        _queue = jsonList
-            .map((j) => NoteitSyncTask.fromJson(Map<String, dynamic>.from(j)))
-            .toList();
-        // Sort chronologically (oldest first)
-        _queue.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      if (jsonString == null) {
+        _queue = [];
+        return;
+      }
+      final List<dynamic> jsonList = jsonDecode(jsonString) as List;
+      _queue =
+          jsonList
+              .map((j) => NoteitSyncTask.fromJson(Map<String, dynamic>.from(j)))
+              .toList()
+            // Sort chronologically (oldest first)
+            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      // 'syncing' is only true while this process's sync loop holds the
+      // task. Loaded from disk it means the app died mid-upload; the loop
+      // skips 'syncing' tasks, so leaving it would strand the note forever
+      // (and the history panel only offers Retry for failed ones).
+      for (final task in _queue) {
+        if (task.status == 'syncing') task.status = 'pending';
       }
     } catch (e) {
       debugPrint('NoteitSyncManager: Failed to load queue: $e');
@@ -102,8 +184,10 @@ class NoteitSyncManager {
   }
 
   Future<void> _saveQueue() async {
+    final generation = _generation;
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (generation != _generation) return;
       final jsonList = _queue.map((t) => t.toJson()).toList();
       await prefs.setString(_queueKey, jsonEncode(jsonList));
     } catch (e) {
@@ -112,6 +196,9 @@ class NoteitSyncManager {
   }
 
   Future<void> enqueue(NoteitSyncTask task) async {
+    // A load still in flight would replace _queue and drop this task.
+    await _loaded;
+
     // Prevent duplicate task ID enqueuing
     if (_queue.any((t) => t.id == task.id)) return;
 
@@ -122,6 +209,7 @@ class NoteitSyncManager {
   }
 
   Future<void> retryTask(String taskId) async {
+    await _loaded;
     final taskIndex = _queue.indexWhere((t) => t.id == taskId);
     if (taskIndex != -1) {
       _queue[taskIndex].status = 'pending';
@@ -134,9 +222,9 @@ class NoteitSyncManager {
 
   void _startConnectivityCheck() {
     _connectivitySub?.cancel();
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((
-      results,
-    ) async {
+    final changes =
+        _connectivityChanges?.call() ?? Connectivity().onConnectivityChanged;
+    _connectivitySub = changes.listen((results) async {
       final isOnline = results.any((r) => r != ConnectivityResult.none);
       if (isOnline && hasPendingItems && !_isSyncing) {
         triggerSync();
@@ -145,6 +233,8 @@ class NoteitSyncManager {
   }
 
   Future<bool> checkConnection() async {
+    final isOnline = _isOnline;
+    if (isOnline != null) return isOnline();
     try {
       final results = await Connectivity().checkConnectivity();
       return results.any((r) => r != ConnectivityResult.none);
@@ -156,17 +246,23 @@ class NoteitSyncManager {
   Future<void> triggerSync() async {
     if (_isSyncing) return;
     _isSyncing = true;
+    final generation = _generation;
 
     try {
-      final coupleId = _provider?.coupleId;
+      final coupleId = _coupleId;
       final userId = _provider?.sessionUserId;
 
-      if (coupleId == null || userId == null) {
+      if (coupleId == null ||
+          userId == null ||
+          _provider?.coupleId != coupleId) {
         _isSyncing = false;
         return;
       }
 
-      // Process tasks sequentially (one at a time, oldest first)
+      // Process tasks sequentially (one at a time, oldest first). After each
+      // await, a changed generation means the queue was reset or rebound to
+      // another couple: stop rather than index into a list this loop no
+      // longer owns.
       for (int i = 0; i < _queue.length; i++) {
         final task = _queue[i];
 
@@ -179,6 +275,7 @@ class NoteitSyncManager {
 
         // Check connection before processing each task
         final isOnline = await checkConnection();
+        if (generation != _generation) break;
         if (!isOnline) {
           _scheduleBackoff(task);
           break; // Stop sync loop if offline
@@ -188,6 +285,7 @@ class NoteitSyncManager {
         await _saveQueue();
 
         final success = await _executeTask(task, coupleId, userId);
+        if (generation != _generation) break;
 
         if (success) {
           // Clean up local persistent file if any to prevent storage leaks
@@ -206,6 +304,7 @@ class NoteitSyncManager {
               );
             }
           }
+          if (generation != _generation) break;
 
           _queue.removeAt(i);
           i--; // Adjust index after removal

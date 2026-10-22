@@ -106,7 +106,7 @@ class _DeleteAccountConfirmationDialogState
                 'Are you absolutely sure you want to delete your account? This action is permanent. All your personal data will be erased immediately. If you are paired, your partner will be returned to a single state and all shared memories and notes will be deleted forever.',
                 style: AppTypography.body(
                   fontSize: 14,
-                  color: theme.textColor.withValues(alpha: 0.6),
+                  color: theme.secondaryTextColor,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -134,7 +134,7 @@ class _DeleteAccountConfirmationDialogState
                         child: Text(
                           'Cancel',
                           style: AppTypography.body(
-                            color: theme.textColor.withValues(alpha: 0.4),
+                            color: theme.secondaryTextColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

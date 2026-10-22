@@ -35,6 +35,7 @@ class CalendarMonthHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: 'Back',
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               color: theme.textColor,
@@ -52,10 +53,12 @@ class CalendarMonthHeader extends StatelessWidget {
           Row(
             children: [
               IconButton(
+                tooltip: 'Previous month',
                 icon: Icon(Icons.chevron_left, color: theme.textColor),
                 onPressed: onPreviousMonth,
               ),
               IconButton(
+                tooltip: 'Next month',
                 icon: Icon(Icons.chevron_right, color: theme.textColor),
                 onPressed: onNextMonth,
               ),

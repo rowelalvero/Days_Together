@@ -254,37 +254,42 @@ class _SendButton extends StatelessWidget {
         color: theme.accentColor,
         shape: const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: isSaving ? null : onSend,
-          child: AnimatedSize(
-            duration: theme.motion.fast,
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isSaving)
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: onAccent,
+        child: MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: isSaving ? null : onSend,
+              child: AnimatedSize(
+                duration: theme.motion.fast,
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isSaving)
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: onAccent,
+                          ),
+                        )
+                      else
+                        Icon(Icons.send_rounded, size: 18, color: onAccent),
+                      const SizedBox(width: 8),
+                      Text(
+                        isSaving ? 'Sending' : 'Send',
+                        style: AppTypography.button(
+                          color: onAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    )
-                  else
-                    Icon(Icons.send_rounded, size: 18, color: onAccent),
-                  const SizedBox(width: 8),
-                  Text(
-                    isSaving ? 'Sending' : 'Send',
-                    style: AppTypography.button(
-                      color: onAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

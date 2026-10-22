@@ -42,7 +42,7 @@ class EditItemDeleteButton extends StatelessWidget {
                   child: Text(
                     'Cancel',
                     style: AppTypography.button(
-                      color: theme.textColor.withValues(alpha: 0.54),
+                      color: theme.secondaryTextColor,
                     ),
                   ),
                 ),
@@ -51,7 +51,7 @@ class EditItemDeleteButton extends StatelessWidget {
                   child: Text(
                     'Delete',
                     style: AppTypography.button(
-                      color: theme.accentColor,
+                      color: theme.accentTextColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

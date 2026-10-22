@@ -238,7 +238,7 @@ class _ExportStudioBottomSheetState
             style: AppTypography.body(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: widget.theme.textColor.withValues(alpha: 0.5),
+              color: widget.theme.secondaryTextColor,
             ),
           ),
           const SizedBox(height: 20),
@@ -384,31 +384,37 @@ class _ExportStudioBottomSheetState
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive
-              ? widget.theme.accentColor
-              : widget.theme.textColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive
-                ? widget.theme.accentColor
-                : widget.theme.textColor.withValues(alpha: 0.1),
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.body(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: isActive
-                ? Colors.white
-                : widget.theme.textColor.withValues(alpha: 0.7),
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? widget.theme.accentColor
+                  : widget.theme.textColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isActive
+                    ? widget.theme.accentColor
+                    : widget.theme.textColor.withValues(alpha: 0.1),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              label,
+              style: AppTypography.body(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isActive
+                    ? Colors.white
+                    : widget.theme.textColor.withValues(alpha: 0.7),
+              ),
+            ),
           ),
         ),
       ),
@@ -421,44 +427,50 @@ class _ExportStudioBottomSheetState
     required IconData icon,
   }) {
     final isSelected = _selectedTemplate == type;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTemplate = type),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? widget.theme.accentColor.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? widget.theme.accentColor
-                : widget.theme.textColor.withValues(alpha: 0.15),
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        child: GestureDetector(
+          onTap: () => setState(() => _selectedTemplate = type),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
               color: isSelected
-                  ? widget.theme.accentColor
-                  : widget.theme.textColor.withValues(alpha: 0.6),
-              size: 20,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-              style: AppTypography.body(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+                  ? widget.theme.accentColor.withValues(alpha: 0.1)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: isSelected
                     ? widget.theme.accentColor
-                    : widget.theme.textColor,
+                    : widget.theme.textColor.withValues(alpha: 0.15),
+                width: 1.5,
               ),
             ),
-          ],
+            child: Column(
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected
+                      ? widget.theme.accentColor
+                      : widget.theme.textColor.withValues(alpha: 0.6),
+                  size: 20,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  title,
+                  style: AppTypography.body(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected
+                        ? widget.theme.accentTextColor
+                        : widget.theme.textColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

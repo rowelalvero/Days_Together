@@ -45,6 +45,7 @@ class _JoinCoupleCodeScreenState extends ConsumerState<JoinCoupleCodeScreen> {
                 children: [
                   const SizedBox(height: 20),
                   IconButton(
+                    tooltip: 'Back',
                     onPressed: () => Navigator.pop(context),
                     icon: Icon(
                       Icons.arrow_back_ios_new_rounded,

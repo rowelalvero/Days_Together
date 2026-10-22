@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/wrapped/presentation/widgets/wrapped_share_card.dart';
+import 'package:days_together/shared/widgets/reduced_motion.dart';
 
 class WrappedPageFinale extends StatefulWidget {
   final WrappedData data;
@@ -37,10 +38,16 @@ class _WrappedPageFinaleState extends State<WrappedPageFinale>
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
-    )..repeat(reverse: true);
+    );
     Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) _confetti.play();
+      if (mounted && !prefersReducedMotion(context)) _confetti.play();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pulse.repeatUnlessReducedMotion(context, reverse: true);
   }
 
   @override

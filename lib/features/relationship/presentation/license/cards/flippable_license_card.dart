@@ -141,69 +141,36 @@ class FlippableLicenseCardState extends State<FlippableLicenseCard>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      container: true,
       onTap: flipCard,
+      onTapHint: 'flip license',
+      child: GestureDetector(
+        excludeFromSemantics: true,
+        onTap: flipCard,
 
-      child: AnimatedBuilder(
-        animation: _flipAnimation,
+        child: AnimatedBuilder(
+          animation: _flipAnimation,
 
-        builder: (context, child) {
-          final angle = _flipAnimation.value * math.pi;
+          builder: (context, child) {
+            final angle = _flipAnimation.value * math.pi;
 
-          final isFront = angle < math.pi / 2;
+            final isFront = angle < math.pi / 2;
 
-          return Transform(
-            alignment: Alignment.center,
+            return Transform(
+              alignment: Alignment.center,
 
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001)
-              ..rotateY(angle),
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateY(angle),
 
-            child: isFront
-                ? LicenseFront(
-                    holderName: widget.holderName,
-
-                    holderGender: widget.holderGender,
-
-                    holderAvatar: widget.holderAvatar,
-
-                    holderBirthdate: widget.holderBirthdate,
-
-                    holderAddress: widget.holderAddress,
-
-                    holderNationality: widget.holderNationality,
-
-                    holderWeight: widget.holderWeight,
-
-                    holderHeight: widget.holderHeight,
-
-                    holderBloodType: widget.holderBloodType,
-
-                    holderEyeColor: widget.holderEyeColor,
-
-                    holderConditions: widget.holderConditions,
-
-                    holderDateIssued: widget.holderDateIssued,
-
-                    holderSignature: widget.holderSignature,
-
-                    startDate: widget.startDate,
-
-                    calculatedAge: widget.calculatedAge,
-
-                    isYourLicense: widget.isYourLicense,
-
-                    onAvatarTap: widget.onAvatarTap,
-                  )
-                : Transform(
-                    alignment: Alignment.center,
-
-                    transform: Matrix4.identity()..rotateY(math.pi),
-
-                    child: LicenseBack(
+              child: isFront
+                  ? LicenseFront(
                       holderName: widget.holderName,
 
                       holderGender: widget.holderGender,
+
+                      holderAvatar: widget.holderAvatar,
 
                       holderBirthdate: widget.holderBirthdate,
 
@@ -223,17 +190,56 @@ class FlippableLicenseCardState extends State<FlippableLicenseCard>
 
                       holderDateIssued: widget.holderDateIssued,
 
-                      emergencyName: widget.emergencyName,
-
-                      emergencyPhone: widget.emergencyPhone,
-
-                      emergencyAddress: widget.emergencyAddress,
+                      holderSignature: widget.holderSignature,
 
                       startDate: widget.startDate,
+
+                      calculatedAge: widget.calculatedAge,
+
+                      isYourLicense: widget.isYourLicense,
+
+                      onAvatarTap: widget.onAvatarTap,
+                    )
+                  : Transform(
+                      alignment: Alignment.center,
+
+                      transform: Matrix4.identity()..rotateY(math.pi),
+
+                      child: LicenseBack(
+                        holderName: widget.holderName,
+
+                        holderGender: widget.holderGender,
+
+                        holderBirthdate: widget.holderBirthdate,
+
+                        holderAddress: widget.holderAddress,
+
+                        holderNationality: widget.holderNationality,
+
+                        holderWeight: widget.holderWeight,
+
+                        holderHeight: widget.holderHeight,
+
+                        holderBloodType: widget.holderBloodType,
+
+                        holderEyeColor: widget.holderEyeColor,
+
+                        holderConditions: widget.holderConditions,
+
+                        holderDateIssued: widget.holderDateIssued,
+
+                        emergencyName: widget.emergencyName,
+
+                        emergencyPhone: widget.emergencyPhone,
+
+                        emergencyAddress: widget.emergencyAddress,
+
+                        startDate: widget.startDate,
+                      ),
                     ),
-                  ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

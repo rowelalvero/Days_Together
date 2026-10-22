@@ -145,7 +145,7 @@ class JourneyFunFactsGrid extends StatelessWidget {
                           style: AppTypography.caption(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w600,
-                            color: theme.textColor.withValues(alpha: 0.45),
+                            color: theme.secondaryTextColor,
                           ),
                         ),
                       ],

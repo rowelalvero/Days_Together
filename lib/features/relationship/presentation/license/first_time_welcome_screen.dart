@@ -37,6 +37,7 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: () => Navigator.pop(context),
         ),
@@ -123,7 +124,7 @@ class FirstTimeLicenseWelcomeScreen extends ConsumerWidget {
                       style: AppTypography.body(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: theme.textColor.withValues(alpha: 0.6),
+                        color: theme.secondaryTextColor,
                         height: 1.5,
                       ),
                     ),

@@ -14,9 +14,7 @@ InputDecoration authInputDecoration({
 }) {
   return InputDecoration(
     labelText: label,
-    labelStyle: AppTypography.body(
-      color: theme.textColor.withValues(alpha: 0.4),
-    ),
+    labelStyle: AppTypography.body(color: theme.secondaryTextColor),
     prefixIcon: Icon(icon, color: theme.textColor.withValues(alpha: 0.4)),
     suffixIcon: suffixIcon,
     filled: true,

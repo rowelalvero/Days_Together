@@ -45,7 +45,7 @@ class MoodChartCard extends StatelessWidget {
             'Your shared mood trends over the last 30 days',
             style: AppTypography.caption(
               fontSize: 12,
-              color: theme.textColor.withValues(alpha: 0.6),
+              color: theme.secondaryTextColor,
             ),
           ),
           const SizedBox(height: 30),

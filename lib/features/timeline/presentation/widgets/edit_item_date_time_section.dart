@@ -43,54 +43,64 @@ class EditItemDateTimeSection extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: GestureDetector(
-                onTap: onDateTap,
-                child: GlassContainer(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 16,
-                        color: theme.accentColor,
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: onDateTap,
+                    child: GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16,
+                            color: theme.accentColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            DateFormat('MMM dd, yyyy').format(selectedDate),
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('MMM dd, yyyy').format(selectedDate),
-                        style: AppTypography.body(
-                          color: theme.textColor,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: GestureDetector(
-                onTap: onTimeTap,
-                child: GlassContainer(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: 16,
-                        color: theme.accentColor,
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: onTimeTap,
+                    child: GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 16,
+                            color: theme.accentColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            selectedTime.format(context),
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        selectedTime.format(context),
-                        style: AppTypography.body(
-                          color: theme.textColor,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

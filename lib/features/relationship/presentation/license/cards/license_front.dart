@@ -9,6 +9,8 @@ import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/widgets/storage_image.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// The relationship license card's front face -- photo ID layout with
 /// avatar, name, and vital-stats fields. Extracted out of
 /// relationship_license_screen.dart (Migration Phase 8) -- renamed from
@@ -134,7 +136,8 @@ class LicenseFront extends StatelessWidget {
                 width: 70,
                 child: Column(
                   children: [
-                    GestureDetector(
+                    SemanticTap(
+                      label: 'Change license photo',
                       onTap: onAvatarTap,
                       child: Stack(
                         alignment: Alignment.bottomRight,

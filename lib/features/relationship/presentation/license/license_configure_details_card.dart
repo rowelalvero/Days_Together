@@ -15,33 +15,42 @@ class LicenseConfigureDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => EditLicenseSheet(theme: theme),
-        );
-      },
-      child: GlassContainer(
-        borderRadius: 16,
-        opacity: 0.06,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.edit_note_rounded, color: theme.accentColor, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              'Configure License Details',
-              style: AppTypography.body(
-                fontSize: 14,
-                color: theme.textColor.withValues(alpha: 0.8),
-                fontWeight: FontWeight.bold,
-              ),
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (ctx) => EditLicenseSheet(theme: theme),
+            );
+          },
+          child: GlassContainer(
+            borderRadius: 16,
+            opacity: 0.06,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.edit_note_rounded,
+                  color: theme.accentColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Configure License Details',
+                  style: AppTypography.body(
+                    fontSize: 14,
+                    color: theme.textColor.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

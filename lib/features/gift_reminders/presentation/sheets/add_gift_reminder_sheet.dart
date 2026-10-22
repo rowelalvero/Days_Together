@@ -8,6 +8,8 @@ import 'package:days_together/features/gift_reminders/domain/entities/gift_remin
 import 'package:days_together/features/gift_reminders/gift_reminder_controller.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// The bottom sheet for adding or editing a gift reminder -- title, date,
 /// and optional time. Extracted from [GiftRemindersScreen]'s
 /// `_showReminderSheet` (Migration audit item 6): a proper
@@ -154,6 +156,7 @@ class _AddGiftReminderSheetState extends ConsumerState<AddGiftReminderSheet> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Close',
                   icon: Icon(
                     Icons.close,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -189,98 +192,119 @@ class _AddGiftReminderSheetState extends ConsumerState<AddGiftReminderSheet> {
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
-                    onTap: () => _pickDate(context, theme),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: theme.textColor.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _selectedDate == null
-                                  ? 'Select Date'
-                                  : DateFormat(
-                                      'MMM dd, yyyy',
-                                    ).format(_selectedDate!),
-                              style: AppTypography.body(
-                                color: _selectedDate == null
-                                    ? theme.textColor.withValues(alpha: 0.4)
-                                    : theme.textColor,
-                                fontSize: 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                  child: MergeSemantics(
+                    child: Semantics(
+                      button: true,
+                      child: InkWell(
+                        onTap: () => _pickDate(context, theme),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.textColor.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: theme.textColor.withValues(alpha: 0.1),
                             ),
                           ),
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 18,
-                            color: theme.textColor.withValues(alpha: 0.7),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _selectedDate == null
+                                      ? 'Select Date'
+                                      : DateFormat(
+                                          'MMM dd, yyyy',
+                                        ).format(_selectedDate!),
+                                  style: AppTypography.body(
+                                    color: _selectedDate == null
+                                        ? theme.secondaryTextColor
+                                        : theme.textColor,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 18,
+                                color: theme.textColor.withValues(alpha: 0.7),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: InkWell(
+                  child: Semantics(
+                    container: true,
+                    button: true,
+                    label: _selectedTime == null
+                        ? 'Set time'
+                        : 'Time, ${_selectedTime!.format(context)}',
                     onTap: () => _pickTime(context, theme),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: theme.textColor.withValues(alpha: 0.1),
+                    child: InkWell(
+                      excludeFromSemantics: true,
+                      onTap: () => _pickTime(context, theme),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _selectedTime == null
-                                  ? 'Set Time'
-                                  : _selectedTime!.format(context),
-                              style: AppTypography.body(
-                                color: _selectedDate == null
-                                    ? theme.textColor.withValues(alpha: 0.3)
-                                    : theme.textColor,
-                                fontSize: 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        decoration: BoxDecoration(
+                          color: theme.textColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: theme.textColor.withValues(alpha: 0.1),
                           ),
-                          if (_selectedTime != null)
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedTime = null),
-                              child: Icon(
-                                Icons.clear,
-                                size: 18,
-                                color: theme.textColor.withValues(alpha: 0.38),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: ExcludeSemantics(
+                                child: Text(
+                                  _selectedTime == null
+                                      ? 'Set Time'
+                                      : _selectedTime!.format(context),
+                                  style: AppTypography.body(
+                                    color: _selectedDate == null
+                                        ? theme.textColor.withValues(alpha: 0.3)
+                                        : theme.textColor,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            )
-                          else
-                            Icon(
-                              Icons.access_time_rounded,
-                              size: 18,
-                              color: theme.textColor.withValues(alpha: 0.7),
                             ),
-                        ],
+                            if (_selectedTime != null)
+                              SemanticTap(
+                                label: 'Clear time',
+                                minTapTarget: 24,
+                                onTap: () =>
+                                    setState(() => _selectedTime = null),
+                                child: Icon(
+                                  Icons.clear,
+                                  size: 18,
+                                  color: theme.textColor.withValues(
+                                    alpha: 0.38,
+                                  ),
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 18,
+                                color: theme.textColor.withValues(alpha: 0.7),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

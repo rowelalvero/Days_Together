@@ -8,6 +8,8 @@ import 'package:days_together/features/bucket_list/bucket_list_controller.dart';
 import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// The bottom sheet for adding or editing a bucket-list adventure --
 /// title, optional scheduled date/time. Extracted from
 /// [BucketListScreen]'s `_showAddItemSheet` (Migration audit item 6): a
@@ -157,6 +159,7 @@ class _AddBucketItemSheetState extends ConsumerState<AddBucketItemSheet> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Close',
                   icon: Icon(
                     Icons.close,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -193,67 +196,16 @@ class _AddBucketItemSheetState extends ConsumerState<AddBucketItemSheet> {
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
+                  child: Semantics(
+                    container: true,
+                    button: true,
+                    label: _selectedDate == null
+                        ? 'Set a date'
+                        : 'Date, ${DateFormat('MMM dd, yyyy').format(_selectedDate!)}',
                     onTap: () => _pickDate(context, theme),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.textColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: theme.textColor.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _selectedDate == null
-                                  ? 'Set a Date'
-                                  : DateFormat(
-                                      'MMM dd, yyyy',
-                                    ).format(_selectedDate!),
-                              style: AppTypography.body(
-                                color: _selectedDate == null
-                                    ? theme.textColor.withValues(alpha: 0.3)
-                                    : theme.textColor,
-                                fontSize: 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (_selectedDate != null)
-                            GestureDetector(
-                              onTap: () => setState(() {
-                                _selectedDate = null;
-                                _selectedTime = null;
-                              }),
-                              child: Icon(
-                                Icons.clear,
-                                size: 18,
-                                color: theme.textColor.withValues(alpha: 0.38),
-                              ),
-                            )
-                          else
-                            Icon(
-                              Icons.calendar_month,
-                              size: 18,
-                              color: theme.textColor.withValues(alpha: 0.7),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (_selectedDate != null) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
                     child: InkWell(
-                      onTap: () => _pickTime(context, theme),
+                      excludeFromSemantics: true,
+                      onTap: () => _pickDate(context, theme),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -270,23 +222,31 @@ class _AddBucketItemSheetState extends ConsumerState<AddBucketItemSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                _selectedTime == null
-                                    ? 'Set Time'
-                                    : _selectedTime!.format(context),
-                                style: AppTypography.body(
-                                  color: _selectedTime == null
-                                      ? theme.textColor.withValues(alpha: 0.3)
-                                      : theme.textColor,
-                                  fontSize: 14,
+                              child: ExcludeSemantics(
+                                child: Text(
+                                  _selectedDate == null
+                                      ? 'Set a Date'
+                                      : DateFormat(
+                                          'MMM dd, yyyy',
+                                        ).format(_selectedDate!),
+                                  style: AppTypography.body(
+                                    color: _selectedDate == null
+                                        ? theme.textColor.withValues(alpha: 0.3)
+                                        : theme.textColor,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (_selectedTime != null)
-                              GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedTime = null),
+                            if (_selectedDate != null)
+                              SemanticTap(
+                                label: 'Clear date',
+                                minTapTarget: 24,
+                                onTap: () => setState(() {
+                                  _selectedDate = null;
+                                  _selectedTime = null;
+                                }),
                                 child: Icon(
                                   Icons.clear,
                                   size: 18,
@@ -297,11 +257,84 @@ class _AddBucketItemSheetState extends ConsumerState<AddBucketItemSheet> {
                               )
                             else
                               Icon(
-                                Icons.access_time_rounded,
+                                Icons.calendar_month,
                                 size: 18,
                                 color: theme.textColor.withValues(alpha: 0.7),
                               ),
                           ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_selectedDate != null) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Semantics(
+                      container: true,
+                      button: true,
+                      label: _selectedTime == null
+                          ? 'Set time'
+                          : 'Time, ${_selectedTime!.format(context)}',
+                      onTap: () => _pickTime(context, theme),
+                      child: InkWell(
+                        excludeFromSemantics: true,
+                        onTap: () => _pickTime(context, theme),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.textColor.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: theme.textColor.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: ExcludeSemantics(
+                                  child: Text(
+                                    _selectedTime == null
+                                        ? 'Set Time'
+                                        : _selectedTime!.format(context),
+                                    style: AppTypography.body(
+                                      color: _selectedTime == null
+                                          ? theme.textColor.withValues(
+                                              alpha: 0.3,
+                                            )
+                                          : theme.textColor,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              if (_selectedTime != null)
+                                SemanticTap(
+                                  label: 'Clear time',
+                                  minTapTarget: 24,
+                                  onTap: () =>
+                                      setState(() => _selectedTime = null),
+                                  child: Icon(
+                                    Icons.clear,
+                                    size: 18,
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.38,
+                                    ),
+                                  ),
+                                )
+                              else
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 18,
+                                  color: theme.textColor.withValues(alpha: 0.7),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

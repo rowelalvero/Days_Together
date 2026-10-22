@@ -60,56 +60,61 @@ class CalendarEventCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
       ),
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: colorFor(event.type, theme).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                emojiFor(event.type),
-                style: AppTypography.body(fontSize: 18),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onTap,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colorFor(event.type, theme).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    emojiFor(event.type),
+                    style: AppTypography.body(fontSize: 18),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: AppTypography.body(
+                          color: theme.textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (event.description?.isNotEmpty ?? false)
+                        Text(
+                          event.description!,
+                          style: AppTypography.caption(
+                            color: theme.secondaryTextColor,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                if (event.time != null)
                   Text(
-                    event.title,
-                    style: AppTypography.body(
-                      color: theme.textColor,
+                    event.time!.format(context),
+                    style: AppTypography.caption(
+                      color: theme.accentTextColor,
                       fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   ),
-                  if (event.description?.isNotEmpty ?? false)
-                    Text(
-                      event.description!,
-                      style: AppTypography.caption(
-                        color: theme.textColor.withValues(alpha: 0.6),
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
+              ],
             ),
-            if (event.time != null)
-              Text(
-                event.time!.format(context),
-                style: AppTypography.caption(
-                  color: theme.accentColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );

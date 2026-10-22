@@ -52,72 +52,80 @@ class WrappedYearCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.only(bottom: 14),
-        child: GestureDetector(
-          onTap: onTap,
-          child: GlassContainer(
-            borderRadius: 20,
-            opacity: 0.03,
-            padding: EdgeInsets.zero,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    _color.withValues(alpha: 0.15),
-                    _color.withValues(alpha: 0.05),
-                  ],
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _color.withValues(alpha: 0.15),
-                      border: Border.all(
-                        color: _color.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(_emoji, style: const TextStyle(fontSize: 24)),
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Wrapped $year',
-                          style: AppTypography.heading(
-                            fontSize: 20,
-                            color: theme.textColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Your year in review',
-                          style: AppTypography.body(
-                            fontSize: 13,
-                            color: theme.textColor.withValues(alpha: 0.45),
-                          ),
-                        ),
+        child: MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: GestureDetector(
+              onTap: onTap,
+              child: GlassContainer(
+                borderRadius: 20,
+                opacity: 0.03,
+                padding: EdgeInsets.zero,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _color.withValues(alpha: 0.15),
+                        _color.withValues(alpha: 0.05),
                       ],
                     ),
                   ),
-                  Icon(
-                    Icons.play_arrow_rounded,
-                    color: theme.textColor.withValues(alpha: 0.4),
-                    size: 28,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _color.withValues(alpha: 0.15),
+                          border: Border.all(
+                            color: _color.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _emoji,
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Wrapped $year',
+                              style: AppTypography.heading(
+                                fontSize: 20,
+                                color: theme.textColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Your year in review',
+                              style: AppTypography.body(
+                                fontSize: 13,
+                                color: theme.secondaryTextColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.play_arrow_rounded,
+                        color: theme.textColor.withValues(alpha: 0.4),
+                        size: 28,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

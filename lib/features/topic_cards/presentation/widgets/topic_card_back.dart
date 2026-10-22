@@ -117,14 +117,15 @@ class TopicCardBack extends StatelessWidget {
                         style: AppTypography.caption(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: theme.accentColor,
+                          color: theme.accentTextColor,
                         ),
                       ),
                     ),
                     if (card.isCustom)
+                      // Default IconButton constraints keep the 48dp minimum
+                      // tap target; the icon itself stays 20px.
                       IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
+                        tooltip: 'Delete card',
                         icon: const Icon(
                           Icons.delete_outline_rounded,
                           color: Colors.redAccent,
@@ -155,6 +156,7 @@ class TopicCardBack extends StatelessWidget {
                   children: [
                     // Share Button
                     IconButton(
+                      tooltip: 'Share topic',
                       icon: Icon(
                         Icons.share_outlined,
                         color: theme.textColor.withValues(alpha: 0.6),
@@ -169,6 +171,9 @@ class TopicCardBack extends StatelessWidget {
 
                     // Like/Favorite Toggle Button
                     IconButton(
+                      tooltip: card.isLiked
+                          ? 'Remove from favorites'
+                          : 'Add to favorites',
                       icon: Icon(
                         card.isLiked
                             ? Icons.favorite_rounded

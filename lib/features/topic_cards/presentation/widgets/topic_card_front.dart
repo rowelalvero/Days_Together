@@ -129,7 +129,7 @@ class TopicCardFront extends StatelessWidget {
                       style: AppTypography.caption(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: theme.textColor.withValues(alpha: 0.6),
+                        color: theme.secondaryTextColor,
                       ).copyWith(letterSpacing: 1.5),
                     ),
                   ),

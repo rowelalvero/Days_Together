@@ -25,46 +25,51 @@ class AvatarPickerCircle extends StatelessWidget {
     final hasAvatar = avatarPath != null && File(avatarPath!).existsSync();
 
     return Center(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: theme.textColor.withValues(alpha: 0.05),
-            border: Border.all(
-              color: theme.accentColor.withValues(alpha: 0.3),
-              width: 3,
-            ),
-            image: hasAvatar
-                ? DecorationImage(
-                    image: FileImage(File(avatarPath!)),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-          ),
-          child: hasAvatar
-              ? null
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.camera_alt_rounded,
-                      color: theme.accentColor,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Add Photo',
-                      style: AppTypography.caption(
-                        color: theme.accentColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.textColor.withValues(alpha: 0.05),
+                border: Border.all(
+                  color: theme.accentColor.withValues(alpha: 0.3),
+                  width: 3,
                 ),
+                image: hasAvatar
+                    ? DecorationImage(
+                        image: FileImage(File(avatarPath!)),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: hasAvatar
+                  ? null
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_rounded,
+                          color: theme.accentColor,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Add Photo',
+                          style: AppTypography.caption(
+                            color: theme.accentTextColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
         ),
       ),
     );

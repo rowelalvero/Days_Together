@@ -227,31 +227,41 @@ class _MilestoneCardState extends State<MilestoneCard> {
                     final target = _getTargetDaysForMilestone(item, startDate);
                     final isSelected = selectedIndex == index;
 
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedMilestoneIndex = index;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? widget.theme.textColor.withValues(alpha: 0.1)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '$target',
-                          style: AppTypography.button(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected
-                                ? widget.theme.textColor
-                                : widget.theme.textColor.withValues(alpha: 0.3),
+                    return MergeSemantics(
+                      child: Semantics(
+                        button: true,
+                        selected: isSelected,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMilestoneIndex = index;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? widget.theme.textColor.withValues(
+                                      alpha: 0.1,
+                                    )
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '$target',
+                              style: AppTypography.button(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: isSelected
+                                    ? widget.theme.textColor
+                                    : widget.theme.textColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -331,9 +341,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                             'days remain',
                             style: AppTypography.body(
                               fontSize: 12,
-                              color: widget.theme.textColor.withValues(
-                                alpha: 0.4,
-                              ),
+                              color: widget.theme.secondaryTextColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -344,7 +352,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                       'Target: ${NumberFormat('#,###').format(targetDays)} days total',
                       style: AppTypography.caption(
                         fontSize: 10,
-                        color: widget.theme.textColor.withValues(alpha: 0.4),
+                        color: widget.theme.secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -438,7 +446,7 @@ class _MilestoneCardState extends State<MilestoneCard> {
                     : 'You are $percentComplete% of the way there',
                 style: AppTypography.button(
                   fontSize: 10.5,
-                  color: widget.theme.textColor.withValues(alpha: 0.6),
+                  color: widget.theme.secondaryTextColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),

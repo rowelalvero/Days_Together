@@ -10,6 +10,8 @@ import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/shared/widgets/cached_avatar.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// A premium, warm inline section replacing the Sidebar Chat.
 /// Displays thoughts, letters, and reflections about a specific memory.
 class MemoryNotesSection extends ConsumerStatefulWidget {
@@ -141,7 +143,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                 child: Text(
                   '${sortedNotes.length}',
                   style: AppTypography.caption(
-                    color: theme.accentColor,
+                    color: theme.accentTextColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
                   ),
@@ -314,7 +316,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                         color: note.isPinned
-                                            ? theme.accentColor
+                                            ? theme.accentTextColor
                                             : theme.textColor,
                                       ),
                                     ),
@@ -333,7 +335,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                                 _getRelativeTimestamp(note.date),
                                 style: AppTypography.caption(
                                   fontSize: 11,
-                                  color: theme.textColor.withValues(alpha: 0.4),
+                                  color: theme.secondaryTextColor,
                                 ),
                               ),
                             ],
@@ -475,7 +477,9 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
                     ),
                   ),
                 )
-              : GestureDetector(
+              : SemanticTap(
+                  label: 'Post note',
+                  minTapTarget: 48,
                   onTap: () => _submitNote(provider, yourName),
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 2, right: 2),
@@ -591,7 +595,7 @@ class _MemoryNotesSectionState extends ConsumerState<MemoryNotesSection> {
             Text(
               'Leave the first heartfelt note and make this memory even more meaningful.',
               style: AppTypography.body(
-                color: theme.textColor.withValues(alpha: 0.45),
+                color: theme.secondaryTextColor,
                 fontSize: 12.5,
               ),
               textAlign: TextAlign.center,

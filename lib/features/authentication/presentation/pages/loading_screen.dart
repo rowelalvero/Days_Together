@@ -5,6 +5,7 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/features/relationship/session_controller.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:days_together/shared/widgets/reduced_motion.dart';
 
 class LoadingScreen extends ConsumerStatefulWidget {
   const LoadingScreen({super.key});
@@ -28,7 +29,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
     _checkConnectivity();
     _startTimeout();
@@ -74,6 +75,12 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
     }
 
     _startTimeout();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pulseController.repeatUnlessReducedMotion(context, reverse: true);
   }
 
   @override
@@ -138,7 +145,7 @@ class _LoadingScreenState extends ConsumerState<LoadingScreen>
                                   : 'Taking longer than expected...',
                               style: AppTypography.body(
                                 fontSize: 13,
-                                color: theme.textColor.withValues(alpha: 0.5),
+                                color: theme.secondaryTextColor,
                               ),
                               textAlign: TextAlign.center,
                             ),

@@ -98,4 +98,86 @@ void main() {
       expect(theme.textColor, ThemeContrast.lightInk);
     });
   });
+
+  group('text tokens', () {
+    // The surfaces text sits on: the page and a translucent card over it.
+    List<Color> surfaces(LoveStoryTheme t) => [
+      t.backgroundColor,
+      Color.alphaBlend(t.cardColor, t.backgroundColor),
+    ];
+    double worst(Color ink, LoveStoryTheme t) => surfaces(t)
+        .map((s) => ThemeContrast.ratio(Color.alphaBlend(ink, s), s))
+        .reduce((a, b) => a < b ? a : b);
+
+    final all = {
+      for (final e in ThemeManager.themes.entries) e.key.name: e.value,
+      'custom (default)': ThemeManager.buildCustomTheme(AppSettings()),
+      'custom (light, pale accent)': ThemeManager.buildCustomTheme(
+        AppSettings(
+          customPrimaryColor: 0xFFFFF0F5,
+          customSecondaryColor: 0xFFFFE4EC,
+          customBackgroundColor: 0xFFFFF8FA,
+          customAccentColor: 0xFFFFC4D6,
+          customIsDark: false,
+        ),
+      ),
+    };
+
+    for (final MapEntry(key: name, value: theme) in all.entries) {
+      test('$name: secondary and accent text meet 4.5:1 on page and card', () {
+        expect(
+          worst(theme.secondaryTextColor, theme),
+          greaterThanOrEqualTo(ThemeContrast.minBodyText),
+        );
+        expect(
+          worst(theme.accentTextColor, theme),
+          greaterThanOrEqualTo(ThemeContrast.minBodyText),
+        );
+        // Still visibly secondary: never the full-strength text color.
+        expect(theme.secondaryTextColor.a, lessThan(1.0));
+      });
+    }
+
+    test('dark themes keep the 0.6 opacity they already read at', () {
+      for (final type in [
+        ThemeType.midnightRose,
+        ThemeType.liquidGlass,
+        ThemeType.deepPurple,
+      ]) {
+        final t = ThemeManager.getTheme(type);
+        expect(t.secondaryTextColor.a, closeTo(0.6, 0.001), reason: type.name);
+      }
+    });
+
+    test('an accent that already reads is left exactly as designed', () {
+      final midnight = ThemeManager.getTheme(ThemeType.midnightRose);
+      expect(midnight.accentTextColor, midnight.accentColor);
+    });
+
+    test('Lovely Off-White deepens its rose accent and secondary text', () {
+      final t = ThemeManager.getTheme(ThemeType.offWhite);
+      // Measured 3.3:1 as designed; the token must differ to reach 4.5.
+      expect(worst(t.accentColor, t), lessThan(ThemeContrast.minBodyText));
+      expect(t.accentTextColor, isNot(t.accentColor));
+      expect(t.secondaryTextColor.a, greaterThan(0.6));
+    });
+
+    test('dimmed and readable fall back to full strength when nothing less '
+        'qualifies', () {
+      const grey = Color(0xFF777777);
+      expect(ThemeContrast.dimmed(grey, const [Color(0xFF888888)]).a, 1.0);
+      const surface = [Color(0xFF888888)];
+      // A target that never reaches 4.5:1 itself is returned as-is...
+      const target = Color(0xFF666666);
+      expect(ThemeContrast.readable(grey, surface, toward: target), target);
+      // ...otherwise it stops at the first mix that qualifies, short of the
+      // target, keeping as much of the original color as it can.
+      final mixed = ThemeContrast.readable(grey, surface, toward: Colors.black);
+      expect(
+        ThemeContrast.ratio(mixed, surface.single),
+        greaterThanOrEqualTo(ThemeContrast.minBodyText),
+      );
+      expect(mixed, isNot(Colors.black));
+    });
+  });
 }

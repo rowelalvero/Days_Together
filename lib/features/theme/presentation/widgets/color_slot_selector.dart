@@ -87,7 +87,7 @@ class ColorSlotSelector extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                       color: isActive
-                          ? theme.accentColor
+                          ? theme.accentTextColor
                           : theme.textColor.withValues(alpha: 0.75),
                     ),
                   ),

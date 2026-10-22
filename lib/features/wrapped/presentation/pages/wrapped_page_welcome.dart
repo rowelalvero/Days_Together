@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
+import 'package:days_together/shared/widgets/reduced_motion.dart';
 
 class WrappedPageWelcome extends StatefulWidget {
   final WrappedData data;
@@ -20,7 +21,13 @@ class _WrappedPageWelcomeState extends State<WrappedPageWelcome>
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pulse.repeatUnlessReducedMotion(context, reverse: true);
   }
 
   @override

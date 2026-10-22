@@ -5,6 +5,8 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/features/bucket_list/domain/entities/bucket_list_model.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// One row in [BucketListScreen]'s reorderable list -- the completion
 /// toggle, title/scheduled-date, and edit/delete/drag actions (including
 /// the delete confirm dialog). Extracted from the screen's
@@ -54,7 +56,7 @@ class BucketListItemTile extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               'Delete',
-              style: AppTypography.button(color: theme.accentColor),
+              style: AppTypography.button(color: theme.accentTextColor),
             ),
           ),
         ],
@@ -82,7 +84,10 @@ class BucketListItemTile extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: GestureDetector(
+        leading: SemanticTap(
+          label: item.title,
+          checked: item.isCompleted,
+          minTapTarget: 48,
           key: ValueKey('bucket-item-toggle-${item.id}'),
           onTap: onToggle,
           child: Container(
@@ -113,7 +118,7 @@ class BucketListItemTile extends StatelessWidget {
               style:
                   AppTypography.body(
                     color: item.isCompleted
-                        ? theme.textColor.withValues(alpha: 0.54)
+                        ? theme.secondaryTextColor
                         : theme.textColor,
                     fontSize: 16,
                     fontWeight: item.isCompleted
@@ -152,6 +157,7 @@ class BucketListItemTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              tooltip: 'Edit item',
               icon: Icon(
                 Icons.edit_outlined,
                 color: theme.textColor.withValues(alpha: 0.38),
@@ -159,6 +165,7 @@ class BucketListItemTile extends StatelessWidget {
               onPressed: onEdit,
             ),
             IconButton(
+              tooltip: 'Delete item',
               icon: Icon(
                 Icons.delete_outline_rounded,
                 color: theme.textColor.withValues(alpha: 0.38),

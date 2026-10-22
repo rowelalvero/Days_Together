@@ -29,44 +29,56 @@ class AuthModeToggle extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                decoration: BoxDecoration(
-                  color: !isSignUp ? theme.accentColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Log In',
-                  style: AppTypography.button(
-                    color: !isSignUp
-                        ? Colors.white
-                        : theme.textColor.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.bold,
+            child: MergeSemantics(
+              child: Semantics(
+                button: true,
+                selected: !isSignUp,
+                child: GestureDetector(
+                  onTap: () => onChanged(false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    decoration: BoxDecoration(
+                      color: !isSignUp ? theme.accentColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Log In',
+                      style: AppTypography.button(
+                        color: !isSignUp
+                            ? Colors.white
+                            : theme.secondaryTextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
           Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                decoration: BoxDecoration(
-                  color: isSignUp ? theme.accentColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Sign Up',
-                  style: AppTypography.button(
-                    color: isSignUp
-                        ? Colors.white
-                        : theme.textColor.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.bold,
+            child: MergeSemantics(
+              child: Semantics(
+                button: true,
+                selected: isSignUp,
+                child: GestureDetector(
+                  onTap: () => onChanged(true),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    decoration: BoxDecoration(
+                      color: isSignUp ? theme.accentColor : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Sign Up',
+                      style: AppTypography.button(
+                        color: isSignUp
+                            ? Colors.white
+                            : theme.secondaryTextColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),

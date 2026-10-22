@@ -29,6 +29,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: NavItem(
+              label: 'Home',
               activeIcon: Icons.home_rounded,
               inactiveIcon: Icons.home_outlined,
               isSelected: true,
@@ -51,6 +52,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: NavItem(
+              label: 'Home',
               activeIcon: Icons.home_rounded,
               inactiveIcon: Icons.home_outlined,
               isSelected: false,
@@ -71,6 +73,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: NavItem(
+              label: 'Home',
               activeIcon: Icons.home_rounded,
               inactiveIcon: Icons.home_outlined,
               isSelected: false,
@@ -83,6 +86,78 @@ void main() {
 
       await tester.tap(find.byType(NavItem));
       expect(tapped, isTrue);
+    });
+
+    testWidgets('announces its label, button role and selected state', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      Future<void> pump(bool selected) => tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NavItem(
+              label: 'Home',
+              activeIcon: Icons.home_rounded,
+              inactiveIcon: Icons.home_outlined,
+              isSelected: selected,
+              theme: _theme,
+              onTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      await pump(true);
+      expect(
+        tester.getSemantics(find.byType(NavItem)),
+        matchesSemantics(
+          label: 'Home',
+          isButton: true,
+          hasSelectedState: true,
+          isSelected: true,
+          hasTapAction: true,
+        ),
+      );
+
+      await pump(false);
+      expect(
+        tester.getSemantics(find.byType(NavItem)),
+        matchesSemantics(
+          label: 'Home',
+          isButton: true,
+          hasSelectedState: true,
+          isSelected: false,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('has at least a 48x48 tap target around the 40px-tall pill', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: NavItem(
+                label: 'Home',
+                activeIcon: Icons.home_rounded,
+                inactiveIcon: Icons.home_outlined,
+                isSelected: false,
+                theme: _theme,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final size = tester.getSize(find.byType(NavItem));
+      expect(size.width, greaterThanOrEqualTo(NavItem.minTapTarget));
+      expect(size.height, greaterThanOrEqualTo(NavItem.minTapTarget));
+      // The visible pill is unchanged: 24px icon + 8px vertical padding.
+      expect(tester.getSize(find.byType(AnimatedContainer)).height, 40);
     });
   });
 
@@ -112,6 +187,38 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.palette_outlined));
       expect(selected, 3);
+    });
+
+    testWidgets('every tab is labeled and meets tap-target guidelines', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: UnifiedFloatingBar(
+              currentIndex: 0,
+              onIndexSelected: (_) {},
+              scrubberRow: null,
+              theme: _theme,
+            ),
+          ),
+        ),
+      );
+
+      for (final label in [
+        'Home',
+        'Timeline',
+        'Together',
+        'Studio',
+        'Settings',
+      ]) {
+        expect(find.bySemanticsLabel(label), findsOneWidget, reason: label);
+      }
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      handle.dispose();
     });
 
     testWidgets(

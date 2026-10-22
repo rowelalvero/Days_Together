@@ -48,27 +48,38 @@ class MemoryPicker extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: theme.textColor.withValues(alpha: 0.1)),
         ),
-        child: InkWell(
-          key: const ValueKey('memory-picker-field'),
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _open(context),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                if (selected != null) ...[
-                  Text(selected!.mood, style: AppTypography.body(fontSize: 20)),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: Text(
-                    selected?.title ?? 'Choose a memory',
-                    style: AppTypography.body(color: theme.textColor),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+        child: MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              key: const ValueKey('memory-picker-field'),
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => _open(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
                 ),
-                Icon(Icons.arrow_drop_down, color: theme.textColor),
-              ],
+                child: Row(
+                  children: [
+                    if (selected != null) ...[
+                      Text(
+                        selected!.mood,
+                        style: AppTypography.body(fontSize: 20),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Text(
+                        selected?.title ?? 'Choose a memory',
+                        style: AppTypography.body(color: theme.textColor),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(Icons.arrow_drop_down, color: theme.textColor),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

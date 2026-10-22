@@ -164,9 +164,7 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: AppTypography.button(
-                color: theme.textColor.withValues(alpha: 0.5),
-              ),
+              style: AppTypography.button(color: theme.secondaryTextColor),
             ),
           ),
           TextButton(
@@ -178,7 +176,7 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
             },
             child: Text(
               'Save',
-              style: AppTypography.button(color: theme.accentColor),
+              style: AppTypography.button(color: theme.accentTextColor),
             ),
           ),
         ],
@@ -273,18 +271,23 @@ class TimelineTabState extends ConsumerState<TimelineTab> {
                             flexibleSpace: FlexibleSpaceBar(
                               centerTitle: true,
                               collapseMode: CollapseMode.parallax,
-                              title: GestureDetector(
-                                onTap: () => _showEditTitleDialog(
-                                  context,
-                                  storyTitle,
-                                  theme,
-                                ),
-                                child: Text(
-                                  storyTitle,
-                                  style: AppTypography.display(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.textColor,
-                                    fontSize: 24,
+                              title: MergeSemantics(
+                                child: Semantics(
+                                  button: true,
+                                  child: GestureDetector(
+                                    onTap: () => _showEditTitleDialog(
+                                      context,
+                                      storyTitle,
+                                      theme,
+                                    ),
+                                    child: Text(
+                                      storyTitle,
+                                      style: AppTypography.display(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.textColor,
+                                        fontSize: 24,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

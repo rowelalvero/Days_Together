@@ -114,7 +114,7 @@ class _LiveStopwatchCardState extends State<LiveStopwatchCard>
                 style: AppTypography.cardCategory(
                   fontSize: 8.5,
                   fontWeight: FontWeight.w800,
-                  color: widget.theme.textColor.withValues(alpha: 0.4),
+                  color: widget.theme.secondaryTextColor,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -136,7 +136,7 @@ class _LiveStopwatchCardState extends State<LiveStopwatchCard>
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: widget.theme.textColor.withValues(alpha: 0.4),
+                      color: widget.theme.secondaryTextColor,
                     ),
                   ),
                   _buildUnit(minStr, 'Minutes'),
@@ -145,7 +145,7 @@ class _LiveStopwatchCardState extends State<LiveStopwatchCard>
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: widget.theme.textColor.withValues(alpha: 0.4),
+                      color: widget.theme.secondaryTextColor,
                     ),
                   ),
                   _buildUnit(secStr, 'Seconds'),

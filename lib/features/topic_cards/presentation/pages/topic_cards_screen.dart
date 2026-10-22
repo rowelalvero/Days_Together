@@ -208,11 +208,13 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
+            tooltip: 'Add topic card',
             icon: Icon(
               Icons.add_circle_outline_rounded,
               color: theme.textColor,
@@ -241,41 +243,49 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                     final isSelected = cardsState.activeCategory == cat;
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: InkWell(
-                        onTap: () {
-                          cardsNotifier.setCategory(cat);
-                          setState(() {
-                            _isFlipped = false;
-                            _flipRotation = 0.0;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? theme.accentColor
-                                : theme.textColor.withValues(alpha: 0.05),
+                      child: MergeSemantics(
+                        child: Semantics(
+                          button: true,
+                          selected: isSelected,
+                          child: InkWell(
+                            onTap: () {
+                              cardsNotifier.setCategory(cat);
+                              setState(() {
+                                _isFlipped = false;
+                                _flipRotation = 0.0;
+                              });
+                            },
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? theme.accentColor
-                                  : theme.textColor.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              cat,
-                              style: AppTypography.caption(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? Colors.white
-                                    : theme.textColor.withValues(alpha: 0.8),
+                                    ? theme.accentColor
+                                    : theme.textColor.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? theme.accentColor
+                                      : theme.textColor.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  cat,
+                                  style: AppTypography.caption(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : theme.textColor.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -327,6 +337,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
                     children: [
                       // Previous Button
                       TopicCardRoundButton(
+                        label: 'Previous topic',
                         icon: Icons.skip_previous_rounded,
                         color: theme.textColor.withValues(alpha: 0.1),
                         iconColor: theme.textColor,
@@ -342,6 +353,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
 
                       // Shuffle Button
                       TopicCardRoundButton(
+                        label: 'Shuffle deck',
                         icon: Icons.shuffle_rounded,
                         color: theme.textColor.withValues(alpha: 0.1),
                         iconColor: theme.textColor,
@@ -359,6 +371,7 @@ class _TopicCardsScreenState extends ConsumerState<TopicCardsScreen>
 
                       // Next Button
                       TopicCardRoundButton(
+                        label: 'Next topic',
                         icon: Icons.skip_next_rounded,
                         color: theme.accentColor,
                         iconColor: Colors.white,

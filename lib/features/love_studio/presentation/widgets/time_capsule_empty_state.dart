@@ -44,7 +44,7 @@ class TimeCapsuleEmptyState extends StatelessWidget {
               'Seal a letter today to be unlocked on a special date or milestone in your future.',
               textAlign: TextAlign.center,
               style: AppTypography.spectral(
-                color: theme.textColor.withValues(alpha: 0.5),
+                color: theme.secondaryTextColor,
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),

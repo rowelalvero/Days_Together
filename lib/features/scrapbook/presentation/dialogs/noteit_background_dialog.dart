@@ -173,7 +173,7 @@ class _NoteitBackgroundDialogState extends State<NoteitBackgroundDialog> {
           child: Text(
             'Done',
             style: AppTypography.button(
-              color: theme.accentColor,
+              color: theme.accentTextColor,
               fontWeight: FontWeight.bold,
             ),
           ),

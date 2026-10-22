@@ -25,6 +25,7 @@ class EditItemAppBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: 'Close',
             onPressed: () => Navigator.pop(context),
             icon: Icon(Icons.close_rounded, color: theme.textColor, size: 28),
           ),
@@ -37,6 +38,7 @@ class EditItemAppBar extends StatelessWidget {
             ),
           ),
           IconButton(
+            tooltip: 'Save changes',
             onPressed: isSaving ? null : onSave,
             icon: isSaving
                 ? const SizedBox(

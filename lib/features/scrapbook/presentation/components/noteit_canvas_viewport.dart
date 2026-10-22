@@ -72,6 +72,7 @@ class NoteitCanvasViewport extends StatelessWidget {
     final selectedObj = controller.value.selectedObjectDrawable;
 
     return GestureDetector(
+      excludeFromSemantics: true,
       behavior: HitTestBehavior.translucent,
       onTap: () {
         if (isInlineEditing) return;
@@ -155,6 +156,7 @@ class NoteitCanvasViewport extends StatelessWidget {
             right: 0,
             // Absorbs taps so they don't reach the deselect handler above.
             child: GestureDetector(
+              excludeFromSemantics: true,
               onTap: () {},
               child: bottomConfigurationSheets,
             ),
@@ -167,11 +169,17 @@ class NoteitCanvasViewport extends StatelessWidget {
   List<Widget> _inlineEditor() {
     return [
       Positioned.fill(
-        child: GestureDetector(
+        child: Semantics(
+          button: true,
+          label: 'Finish editing',
           onTap: onFinishInlineEditing,
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-            child: Container(color: Colors.black.withValues(alpha: 0.4)),
+          child: GestureDetector(
+            excludeFromSemantics: true,
+            onTap: onFinishInlineEditing,
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+              child: Container(color: Colors.black.withValues(alpha: 0.4)),
+            ),
           ),
         ),
       ),
@@ -258,25 +266,30 @@ class _OverlayPill extends StatelessWidget {
       color: background,
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: foreground),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTypography.button(
-                  color: foreground,
-                  fontWeight: FontWeight.bold,
-                ),
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18, color: foreground),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: AppTypography.button(
+                      color: foreground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -308,6 +321,7 @@ class _SelectionBar extends StatelessWidget {
     final iconColor = theme.textColor.withValues(alpha: 0.9);
     final selected = this.selected;
     return GestureDetector(
+      excludeFromSemantics: true,
       // Absorbs taps so they don't reach the deselect handler.
       onTap: () {},
       child: Container(

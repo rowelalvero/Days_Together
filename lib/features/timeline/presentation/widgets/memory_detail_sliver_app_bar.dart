@@ -29,6 +29,7 @@ class MemoryDetailSliverAppBar extends StatelessWidget {
       pinned: true,
       backgroundColor: Colors.transparent,
       leading: IconButton(
+        tooltip: 'Close',
         icon: Icon(Icons.close_rounded, color: theme.textColor),
         onPressed: () => Navigator.pop(context),
       ),

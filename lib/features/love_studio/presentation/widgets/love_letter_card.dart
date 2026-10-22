@@ -31,6 +31,7 @@ class LoveLetterCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
+                tooltip: 'Copy letter',
                 icon: Icon(
                   Icons.copy_rounded,
                   color: theme.textColor.withValues(alpha: 0.7),
@@ -43,6 +44,7 @@ class LoveLetterCard extends StatelessWidget {
                 },
               ),
               IconButton(
+                tooltip: 'Share letter',
                 icon: Icon(
                   Icons.share_rounded,
                   color: theme.textColor.withValues(alpha: 0.7),

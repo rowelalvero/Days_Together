@@ -4,6 +4,7 @@ import 'package:days_together/features/wrapped/domain/wrapped_data.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/wrapped/presentation/widgets/wrapped_milestone_tile.dart';
 import 'package:days_together/features/wrapped/presentation/widgets/wrapped_milestones_empty_state.dart';
+import 'package:days_together/shared/widgets/reduced_motion.dart';
 
 /// Its inline milestone tile and empty state were extracted into widgets
 /// under `presentation/widgets/` (Migration audit item 6).
@@ -24,7 +25,7 @@ class _WrappedPageMilestonesState extends State<WrappedPageMilestones> {
     _confetti = ConfettiController(duration: const Duration(seconds: 4));
     if (widget.data.milestonesAchievedThisYear.isNotEmpty) {
       Future.delayed(const Duration(milliseconds: 600), () {
-        if (mounted) _confetti.play();
+        if (mounted && !prefersReducedMotion(context)) _confetti.play();
       });
     }
   }

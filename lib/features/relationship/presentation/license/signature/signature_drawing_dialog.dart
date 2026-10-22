@@ -62,6 +62,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
         elevation: 0,
 
         leading: IconButton(
+          tooltip: 'Close',
           icon: Icon(Icons.close, color: widget.theme.textColor),
 
           onPressed: () => Navigator.pop(context),
@@ -100,7 +101,7 @@ class _SignatureDrawingDialogState extends State<SignatureDrawingDialog> {
 
                 style: AppTypography.body(
                   fontSize: 14,
-                  color: widget.theme.textColor.withValues(alpha: 0.6),
+                  color: widget.theme.secondaryTextColor,
                 ),
               ),
 

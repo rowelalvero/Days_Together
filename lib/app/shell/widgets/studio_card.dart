@@ -28,81 +28,86 @@ class StudioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.textColor.withValues(alpha: 0.05),
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isPremium && !isUnlocked
-                ? Colors.amber.withValues(alpha: 0.2)
-                : theme.textColor.withValues(alpha: 0.1),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    (isPremium && !isUnlocked
-                            ? Colors.amber
-                            : theme.accentColor)
-                        .withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.textColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
                 color: isPremium && !isUnlocked
-                    ? Colors.amber
-                    : theme.accentColor,
-                size: 28,
+                    ? Colors.amber.withValues(alpha: 0.2)
+                    : theme.textColor.withValues(alpha: 0.1),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color:
+                        (isPremium && !isUnlocked
+                                ? Colors.amber
+                                : theme.accentColor)
+                            .withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isPremium && !isUnlocked
+                        ? Colors.amber
+                        : theme.accentColor,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          if (isPremium) ...[
+                            const SizedBox(width: 8),
+                            Icon(
+                              isUnlocked
+                                  ? Icons.star_rounded
+                                  : Icons.lock_outline_rounded,
+                              color: isUnlocked
+                                  ? Colors.amber
+                                  : theme.textColor.withValues(alpha: 0.54),
+                              size: 16,
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
                       Text(
-                        title,
-                        style: AppTypography.body(
-                          color: theme.textColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        desc,
+                        style: AppTypography.bodyMedium(
+                          color: theme.secondaryTextColor,
+                          fontSize: 12,
                         ),
                       ),
-                      if (isPremium) ...[
-                        const SizedBox(width: 8),
-                        Icon(
-                          isUnlocked
-                              ? Icons.star_rounded
-                              : Icons.lock_outline_rounded,
-                          color: isUnlocked
-                              ? Colors.amber
-                              : theme.textColor.withValues(alpha: 0.54),
-                          size: 16,
-                        ),
-                      ],
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    desc,
-                    style: AppTypography.bodyMedium(
-                      color: theme.textColor.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

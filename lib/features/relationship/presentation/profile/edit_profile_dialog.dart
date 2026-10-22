@@ -11,6 +11,8 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// The bottom sheet for editing your (and, if paired, your partner's)
 /// display name and avatar. Extracted out of
 /// `RelationshipProfileScreen._editProfileDialog` (per
@@ -105,7 +107,7 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
                     child: Text(
                       'Discard Changes',
                       style: AppTypography.body(
-                        color: theme.textColor.withValues(alpha: 0.54),
+                        color: theme.secondaryTextColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -159,7 +161,8 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
     LoveStoryTheme theme,
     bool isYou,
   ) {
-    return GestureDetector(
+    return SemanticTap(
+      label: isYou ? 'Change your photo' : "Change partner's photo",
       onTap: () => _pickAvatar(context, ref, isYou),
       child: Stack(
         children: [

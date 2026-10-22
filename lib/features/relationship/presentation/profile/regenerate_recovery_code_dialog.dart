@@ -85,7 +85,7 @@ class RegenerateRecoveryCodeDialog extends ConsumerWidget {
               'Regenerating your recovery code will permanently invalidate all previously issued recovery codes. You will only be shown the new code once.',
               style: AppTypography.body(
                 fontSize: 14,
-                color: theme.textColor.withValues(alpha: 0.6),
+                color: theme.secondaryTextColor,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -99,7 +99,7 @@ class RegenerateRecoveryCodeDialog extends ConsumerWidget {
                     child: Text(
                       'Cancel',
                       style: AppTypography.body(
-                        color: theme.textColor.withValues(alpha: 0.4),
+                        color: theme.secondaryTextColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

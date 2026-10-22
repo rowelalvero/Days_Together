@@ -38,7 +38,7 @@ class TogetherTab extends ConsumerWidget {
               'Every moment shared is a memory.',
               style: AppTypography.body(
                 fontSize: 14,
-                color: theme.textColor.withValues(alpha: 0.6),
+                color: theme.secondaryTextColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -144,47 +144,52 @@ class TogetherTab extends ConsumerWidget {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassContainer(
-        padding: const EdgeInsets.all(20),
-        borderRadius: 28,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Text(emoji, style: AppTypography.body(fontSize: 24)),
-            ),
-            Column(
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: GlassContainer(
+            padding: const EdgeInsets.all(20),
+            borderRadius: 28,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: AppTypography.title(
-                    color: theme.textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(18),
                   ),
+                  child: Text(emoji, style: AppTypography.body(fontSize: 24)),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: AppTypography.caption(
-                    color: theme.textColor.withValues(alpha: 0.5),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 2,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.title(
+                        color: theme.textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: AppTypography.caption(
+                        color: theme.secondaryTextColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );

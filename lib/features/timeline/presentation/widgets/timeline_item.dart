@@ -127,7 +127,7 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget>
               DateFormat('MMM dd, yyyy • h:mm a').format(widget.item.date),
               style: AppTypography.bodyLarge(
                 fontSize: 11,
-                color: theme.accentColor,
+                color: theme.accentTextColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -140,7 +140,7 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget>
               DateFormat('MMM dd, yyyy • h:mm a').format(widget.item.date),
               style: AppTypography.bodyLarge(
                 fontSize: 11,
-                color: theme.accentColor,
+                color: theme.accentTextColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -244,15 +244,20 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget>
       closedShape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
       ),
-      closedBuilder: (context, action) => GestureDetector(
-        onTap: action,
-        child: GlassContainer(
-          padding: const EdgeInsets.all(12),
-          borderRadius: 24,
-          opacity: 0.1,
-          child: widget.item.isImageCard
-              ? _buildImageContent(theme)
-              : _buildTextContent(theme),
+      closedBuilder: (context, action) => MergeSemantics(
+        child: Semantics(
+          button: true,
+          child: GestureDetector(
+            onTap: action,
+            child: GlassContainer(
+              padding: const EdgeInsets.all(12),
+              borderRadius: 24,
+              opacity: 0.1,
+              child: widget.item.isImageCard
+                  ? _buildImageContent(theme)
+                  : _buildTextContent(theme),
+            ),
+          ),
         ),
       ),
       openBuilder: (context, action) => MemoryDetailScreen(item: widget.item),
@@ -319,7 +324,7 @@ class _TimelineItemWidgetState extends ConsumerState<TimelineItemWidget>
           widget.item.description,
           style: AppTypography.bodyMedium(
             fontSize: 11,
-            color: theme.textColor.withValues(alpha: 0.6),
+            color: theme.secondaryTextColor,
             height: 1.4,
           ),
           maxLines: 2,

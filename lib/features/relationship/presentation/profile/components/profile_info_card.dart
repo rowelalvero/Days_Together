@@ -171,7 +171,7 @@ class _BentoSection extends StatelessWidget {
             style: AppTypography.captionMono(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: theme.accentColor,
+              color: theme.accentTextColor,
             ).copyWith(letterSpacing: 1.5),
           ),
         ),
@@ -214,54 +214,59 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassContainer(
-        width: isFullWidth ? double.infinity : null,
-        padding: const EdgeInsets.all(20),
-        borderRadius: 20,
-        opacity: 0.05,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: GlassContainer(
+            width: isFullWidth ? double.infinity : null,
+            padding: const EdgeInsets.all(20),
+            borderRadius: 20,
+            opacity: 0.05,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: theme.accentColor, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.captionMono(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textColor.withValues(alpha: 0.4),
-                    ).copyWith(letterSpacing: 0.5),
-                  ),
+                Row(
+                  children: [
+                    Icon(icon, color: theme.accentColor, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        label.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.captionMono(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: theme.secondaryTextColor,
+                        ).copyWith(letterSpacing: 0.5),
+                      ),
+                    ),
+                    if (onTap != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.edit_rounded,
+                        color: theme.accentColor.withValues(alpha: 0.5),
+                        size: 14,
+                      ),
+                    ],
+                  ],
                 ),
-                if (onTap != null) ...[
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.edit_rounded,
-                    color: theme.accentColor.withValues(alpha: 0.5),
-                    size: 14,
+                const SizedBox(height: 12),
+                Text(
+                  value,
+                  style: AppTypography.body(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textColor,
                   ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: AppTypography.body(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: theme.textColor,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          ),
         ),
       ),
     );

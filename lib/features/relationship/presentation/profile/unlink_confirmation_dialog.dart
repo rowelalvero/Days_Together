@@ -88,7 +88,7 @@ class UnlinkConfirmationDialog extends ConsumerWidget {
                   : 'Are you sure you want to cancel? This will deactivate your current connection code.',
               style: AppTypography.body(
                 fontSize: 14,
-                color: theme.textColor.withValues(alpha: 0.6),
+                color: theme.secondaryTextColor,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -102,7 +102,7 @@ class UnlinkConfirmationDialog extends ConsumerWidget {
                     child: Text(
                       'Stay Connected',
                       style: AppTypography.body(
-                        color: theme.textColor.withValues(alpha: 0.4),
+                        color: theme.secondaryTextColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

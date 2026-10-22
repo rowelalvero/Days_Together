@@ -32,8 +32,12 @@ class NotificationSwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onChanged != null;
+    // Disabled rows stay deliberately faint (WCAG exempts disabled controls);
+    // an enabled subtitle uses the contrast-safe secondary token.
     final titleAlpha = isEnabled ? 1.0 : 0.35;
-    final subtitleAlpha = isEnabled ? 0.45 : 0.2;
+    final subtitleColor = isEnabled
+        ? theme.secondaryTextColor
+        : theme.textColor.withValues(alpha: 0.2);
 
     return SwitchListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -59,10 +63,7 @@ class NotificationSwitchTile extends StatelessWidget {
       ),
       subtitle: Text(
         subtitle,
-        style: AppTypography.caption(
-          fontSize: 12,
-          color: theme.textColor.withValues(alpha: subtitleAlpha),
-        ),
+        style: AppTypography.caption(fontSize: 12, color: subtitleColor),
       ),
       value: value,
       onChanged: onChanged,

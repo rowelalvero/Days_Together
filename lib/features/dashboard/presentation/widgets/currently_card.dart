@@ -16,6 +16,7 @@ import 'package:days_together/features/currently/currently_state.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
 import 'package:days_together/shared/widgets/storage_image.dart';
+import 'package:days_together/shared/widgets/reduced_motion.dart';
 
 class CurrentlyCard extends ConsumerStatefulWidget {
   const CurrentlyCard({super.key});
@@ -73,7 +74,13 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pulseController.repeatUnlessReducedMotion(context, reverse: true);
   }
 
   @override
@@ -103,7 +110,8 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
 
     notifier.sendLoveTap().then((_) {
       if (ref.read(currentlyControllerProvider).state == LoveTapState.mutual) {
-        _celebrationController.forward(from: 0.0);
+        if (!mounted) return;
+        _celebrationController.playUnlessReducedMotion(context, from: 0.0);
       }
     });
   }
@@ -147,10 +155,10 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                   decoration: InputDecoration(
                     hintText: 'e.g. ☕ Making coffee...',
                     hintStyle: AppTypography.body(
-                      color: theme.textColor.withValues(alpha: 0.4),
+                      color: theme.secondaryTextColor,
                     ),
                     counterStyle: AppTypography.caption(
-                      color: theme.textColor.withValues(alpha: 0.4),
+                      color: theme.secondaryTextColor,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
@@ -206,7 +214,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                       child: Text(
                         'Cancel',
                         style: AppTypography.body(
-                          color: theme.textColor.withValues(alpha: 0.6),
+                          color: theme.secondaryTextColor,
                         ),
                       ),
                     ),
@@ -279,7 +287,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
     if (currently.state == LoveTapState.mutual &&
         !_celebrationController.isAnimating &&
         _celebrationController.value == 0) {
-      _celebrationController.forward();
+      _celebrationController.playUnlessReducedMotion(context);
     }
 
     return AnimatedBuilder(
@@ -379,7 +387,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                             isOnline ? 'Online • Just now' : 'Offline',
                             style: AppTypography.caption(
                               fontSize: 10,
-                              color: theme.textColor.withValues(alpha: 0.5),
+                              color: theme.secondaryTextColor,
                             ),
                           ),
                         ],
@@ -417,38 +425,45 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Self status edit trigger
-                    GestureDetector(
-                      onTap: () => _showEditActivitySheet(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.textColor.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.edit_note_rounded,
-                              size: 14,
-                              color: theme.accentColor,
+                    MergeSemantics(
+                      child: Semantics(
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () => _showEditActivitySheet(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              (presence.yourActivity == null ||
-                                      presence.yourActivity!.trim().isEmpty)
-                                  ? "Share what you're doing..."
-                                  : presence.yourActivity!,
-                              style: AppTypography.caption(
-                                fontSize: 11,
-                                color: theme.textColor.withValues(alpha: 0.7),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            decoration: BoxDecoration(
+                              color: theme.textColor.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_note_rounded,
+                                  size: 14,
+                                  color: theme.accentColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  (presence.yourActivity == null ||
+                                          presence.yourActivity!.trim().isEmpty)
+                                      ? "Share what you're doing..."
+                                      : presence.yourActivity!,
+                                  style: AppTypography.caption(
+                                    fontSize: 11,
+                                    color: theme.textColor.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -476,7 +491,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                         'Tap to connect today ❤️',
                         style: AppTypography.caption(
                           fontSize: 10,
-                          color: theme.textColor.withValues(alpha: 0.4),
+                          color: theme.secondaryTextColor,
                         ),
                       ),
                   ],
@@ -502,7 +517,7 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
                           style: AppTypography.caption(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: theme.accentColor,
+                            color: theme.accentTextColor,
                           ),
                         ),
                       ),
@@ -595,7 +610,9 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
             style: AppTypography.body(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: theme.textColor.withValues(alpha: active ? 0.9 : 0.6),
+              color: active
+                  ? theme.textColor.withValues(alpha: 0.9)
+                  : theme.secondaryTextColor,
             ),
           ),
         ],
@@ -606,9 +623,15 @@ class _CurrentlyCardState extends ConsumerState<CurrentlyCard>
       scale: Tween<double>(begin: 1.0, end: 1.2).animate(
         CurvedAnimation(parent: _heartController, curve: Curves.elasticOut),
       ),
-      child: GestureDetector(
-        onTap: active ? () => _triggerTap(currently, notifier) : null,
-        child: buttonContent,
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          enabled: active,
+          child: GestureDetector(
+            onTap: active ? () => _triggerTap(currently, notifier) : null,
+            child: buttonContent,
+          ),
+        ),
       ),
     );
 

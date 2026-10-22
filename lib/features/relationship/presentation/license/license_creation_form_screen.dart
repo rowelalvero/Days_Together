@@ -47,6 +47,7 @@ class LicenseCreationFormScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          tooltip: 'Cancel',
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.textColor),
           onPressed: onCancel,
         ),

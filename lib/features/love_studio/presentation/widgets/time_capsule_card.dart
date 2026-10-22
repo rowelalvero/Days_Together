@@ -55,7 +55,7 @@ class TimeCapsuleCard extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               'Delete',
-              style: AppTypography.button(color: theme.accentColor),
+              style: AppTypography.button(color: theme.accentTextColor),
             ),
           ),
         ],
@@ -131,9 +131,7 @@ class TimeCapsuleCard extends StatelessWidget {
                       ? 'Ready to open now!'
                       : 'Unlocks: $formattedOpenDate ($daysLeft days)'),
             style: AppTypography.bodyMedium(
-              color: isOpenable
-                  ? Colors.green
-                  : theme.textColor.withValues(alpha: 0.6),
+              color: isOpenable ? Colors.green : theme.secondaryTextColor,
               fontSize: 12,
             ),
           ),
@@ -143,6 +141,7 @@ class TimeCapsuleCard extends StatelessWidget {
           children: [
             if (isOpenable || capsule.isOpened)
               IconButton(
+                tooltip: 'Open capsule',
                 icon: Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: theme.textColor.withValues(alpha: 0.7),
@@ -157,6 +156,7 @@ class TimeCapsuleCard extends StatelessWidget {
                 size: 18,
               ),
             IconButton(
+              tooltip: 'Delete capsule',
               icon: Icon(
                 Icons.delete_outline_rounded,
                 color: theme.textColor.withValues(alpha: 0.38),

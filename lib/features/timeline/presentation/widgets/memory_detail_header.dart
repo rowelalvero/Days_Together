@@ -96,7 +96,7 @@ class MemoryDetailHeader extends StatelessWidget {
               Text(
                 item.location!,
                 style: AppTypography.body(
-                  color: theme.textColor.withValues(alpha: 0.54),
+                  color: theme.secondaryTextColor,
                   fontSize: 14,
                 ),
               ),

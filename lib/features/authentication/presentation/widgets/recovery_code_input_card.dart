@@ -106,7 +106,7 @@ class RecoveryCodeInputCard extends StatelessWidget {
               ),
               hintText: 'XXXXXX-XXXX-XXXX-XXXX-XXXX',
               hintStyle: AppTypography.bodyMono(
-                color: theme.textColor.withValues(alpha: 0.4),
+                color: theme.secondaryTextColor,
                 fontSize: 14,
               ),
               errorStyle: AppTypography.body(color: error, fontSize: 13),

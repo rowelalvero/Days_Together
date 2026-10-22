@@ -132,53 +132,61 @@ class CalendarMonthGrid extends ConsumerWidget {
                   hasBucket ||
                   hasGift;
 
-              return GestureDetector(
-                onTap: () => onDaySelected(date),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.accentColor
-                        : (isToday
-                              ? theme.accentColor.withValues(alpha: 0.2)
-                              : Colors.transparent),
-                    borderRadius: BorderRadius.circular(12),
-                    border: isToday && !isSelected
-                        ? Border.all(
-                            color: theme.accentColor.withValues(alpha: 0.5),
-                          )
-                        : null,
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Text(
-                        '$dayNum',
-                        style: AppTypography.body(
-                          color: isSelected
-                              ? Colors.white
-                              : (isToday
-                                    ? theme.accentColor
-                                    : theme.textColor.withValues(alpha: 0.7)),
-                          fontWeight: (isSelected || isToday)
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
+              return MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  selected: isSelected,
+                  child: GestureDetector(
+                    onTap: () => onDaySelected(date),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? theme.accentColor
+                            : (isToday
+                                  ? theme.accentColor.withValues(alpha: 0.2)
+                                  : Colors.transparent),
+                        borderRadius: BorderRadius.circular(12),
+                        border: isToday && !isSelected
+                            ? Border.all(
+                                color: theme.accentColor.withValues(alpha: 0.5),
+                              )
+                            : null,
                       ),
-                      if (hasAnyEvent && !isSelected)
-                        Positioned(
-                          bottom: 4,
-                          child: Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: isAnniversary
-                                  ? Colors.pinkAccent
-                                  : theme.accentColor,
-                              shape: BoxShape.circle,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Text(
+                            '$dayNum',
+                            style: AppTypography.body(
+                              color: isSelected
+                                  ? Colors.white
+                                  : (isToday
+                                        ? theme.accentColor
+                                        : theme.textColor.withValues(
+                                            alpha: 0.7,
+                                          )),
+                              fontWeight: (isSelected || isToday)
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
-                        ),
-                    ],
+                          if (hasAnyEvent && !isSelected)
+                            Positioned(
+                              bottom: 4,
+                              child: Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: isAnniversary
+                                      ? Colors.pinkAccent
+                                      : theme.accentColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               );

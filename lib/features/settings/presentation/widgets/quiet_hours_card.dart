@@ -69,7 +69,7 @@ class QuietHoursCard extends StatelessWidget {
           style: AppTypography.body(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: theme.accentColor,
+            color: theme.accentTextColor,
           ),
         ),
       ),

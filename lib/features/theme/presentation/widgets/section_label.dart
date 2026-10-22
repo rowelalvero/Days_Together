@@ -19,7 +19,7 @@ class SectionLabel extends StatelessWidget {
       style: AppTypography.caption(
         fontSize: 11,
         fontWeight: FontWeight.w800,
-        color: theme.textColor.withValues(alpha: 0.6),
+        color: theme.secondaryTextColor,
       ).copyWith(letterSpacing: 1.5),
     );
   }

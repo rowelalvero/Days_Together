@@ -34,6 +34,7 @@ class DurationHeroAppBar extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: IconButton(
+          tooltip: 'Back',
           icon: Icon(
             Icons.arrow_back_rounded,
             color: theme.textColor,
@@ -80,7 +81,7 @@ class DurationHeroAppBar extends StatelessWidget {
                       style: AppTypography.cardCategory(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: theme.textColor.withValues(alpha: 0.6),
+                        color: theme.secondaryTextColor,
                         letterSpacing: 2.0,
                       ),
                     ),

@@ -78,7 +78,7 @@ class FirstMemoryHighlightCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyMedium(
                     fontSize: 12,
-                    color: theme.textColor.withValues(alpha: 0.5),
+                    color: theme.secondaryTextColor,
                     height: 1.4,
                   ),
                 ),
@@ -163,7 +163,7 @@ class FirstMemoryHighlightCard extends StatelessWidget {
                         style: AppTypography.cardCategory(
                           fontSize: 8.5,
                           fontWeight: FontWeight.w800,
-                          color: theme.accentColor,
+                          color: theme.accentTextColor,
                         ),
                       ),
                     ),
@@ -171,7 +171,7 @@ class FirstMemoryHighlightCard extends StatelessWidget {
                       formattedDate,
                       style: AppTypography.caption(
                         fontSize: 11,
-                        color: theme.textColor.withValues(alpha: 0.4),
+                        color: theme.secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

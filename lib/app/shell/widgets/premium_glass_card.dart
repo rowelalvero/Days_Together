@@ -50,7 +50,7 @@ class PremiumGlassCard extends StatelessWidget {
         subtitle: Text(
           'Unlock exclusive liquid glass themes',
           style: AppTypography.caption(
-            color: theme.textColor.withValues(alpha: 0.54),
+            color: theme.secondaryTextColor,
             fontSize: 11,
           ),
         ),

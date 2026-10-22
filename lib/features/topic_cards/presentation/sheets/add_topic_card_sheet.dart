@@ -94,6 +94,7 @@ class _AddTopicCardSheetState extends State<AddTopicCardSheet> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Close',
                     icon: Icon(Icons.close, color: theme.textColor),
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -105,7 +106,7 @@ class _AddTopicCardSheetState extends State<AddTopicCardSheet> {
                 style: AppTypography.caption(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: theme.textColor.withValues(alpha: 0.6),
+                  color: theme.secondaryTextColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -147,7 +148,7 @@ class _AddTopicCardSheetState extends State<AddTopicCardSheet> {
                 style: AppTypography.caption(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: theme.textColor.withValues(alpha: 0.6),
+                  color: theme.secondaryTextColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -165,7 +166,7 @@ class _AddTopicCardSheetState extends State<AddTopicCardSheet> {
                   hintText:
                       "e.g., What is a dream you've always wanted to share with me?",
                   hintStyle: AppTypography.body(
-                    color: theme.textColor.withValues(alpha: 0.4),
+                    color: theme.secondaryTextColor,
                   ),
                   filled: true,
                   fillColor: theme.textColor.withValues(alpha: 0.05),

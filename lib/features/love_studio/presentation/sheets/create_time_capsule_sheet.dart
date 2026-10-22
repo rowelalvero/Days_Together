@@ -112,6 +112,7 @@ class _CreateTimeCapsuleSheetState
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Close',
                   icon: Icon(
                     Icons.close,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -146,39 +147,46 @@ class _CreateTimeCapsuleSheetState
               ),
             ),
             const SizedBox(height: 16),
-            InkWell(
-              onTap: () => _pickDate(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.textColor.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _selectedDate == null
-                          ? 'Select Unlock Date'
-                          : DateFormat('MMMM dd, yyyy').format(_selectedDate!),
-                      style: AppTypography.body(
-                        color: _selectedDate == null
-                            ? theme.textColor.withValues(alpha: 0.4)
-                            : theme.textColor,
-                        fontSize: 16,
+            MergeSemantics(
+              child: Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: () => _pickDate(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.textColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: theme.textColor.withValues(alpha: 0.1),
                       ),
                     ),
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      color: theme.textColor.withValues(alpha: 0.7),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedDate == null
+                              ? 'Select Unlock Date'
+                              : DateFormat(
+                                  'MMMM dd, yyyy',
+                                ).format(_selectedDate!),
+                          style: AppTypography.body(
+                            color: _selectedDate == null
+                                ? theme.secondaryTextColor
+                                : theme.textColor,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          color: theme.textColor.withValues(alpha: 0.7),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -60,7 +60,7 @@ class _HexColorInputState extends State<HexColorInput> {
                 style: AppTypography.bodyMono(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: theme.accentColor,
+                  color: theme.accentTextColor,
                 ),
               ),
               const SizedBox(width: 8),
@@ -80,7 +80,7 @@ class _HexColorInputState extends State<HexColorInput> {
                     hintText: 'Enter hex (e.g. FF4D6D)',
                     hintStyle: AppTypography.bodyMono(
                       fontSize: 14,
-                      color: theme.textColor.withValues(alpha: 0.5),
+                      color: theme.secondaryTextColor,
                     ),
                     border: InputBorder.none,
                   ),

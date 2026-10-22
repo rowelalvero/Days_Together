@@ -73,36 +73,40 @@ class LicenseSelector extends ConsumerWidget {
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive ? theme.accentColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: theme.accentColor.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
-        ),
-        child: Center(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.body(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isActive
-                  ? Colors.white
-                  : theme.textColor.withValues(alpha: 0.6),
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        selected: isActive,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: isActive ? theme.accentColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: theme.accentColor.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Center(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.body(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: isActive ? Colors.white : theme.secondaryTextColor,
+                ),
+              ),
             ),
           ),
         ),

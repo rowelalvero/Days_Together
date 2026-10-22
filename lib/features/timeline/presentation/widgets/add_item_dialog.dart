@@ -113,6 +113,7 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            tooltip: 'Close',
             onPressed: () => Navigator.pop(context),
             icon: Icon(Icons.close_rounded, color: theme.textColor, size: 28),
           ),
@@ -125,6 +126,7 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
             ),
           ),
           IconButton(
+            tooltip: 'Save memory',
             onPressed: _isSaving ? null : _saveItem,
             icon: _isSaving
                 ? SizedBox(
@@ -220,7 +222,7 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
                       ? 'Description...'
                       : _descriptionController.text,
                   style: AppTypography.bodyMedium(
-                    color: theme.textColor.withValues(alpha: 0.6),
+                    color: theme.secondaryTextColor,
                     fontSize: 11,
                   ),
                   maxLines: 2,
@@ -280,100 +282,114 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
         Row(
           children: [
             Expanded(
-              child: GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.fromSeed(
-                            seedColor: theme.accentColor,
-                            brightness: theme.isDark
-                                ? Brightness.dark
-                                : Brightness.light,
-                          ),
-                        ),
-                        child: child!,
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.fromSeed(
+                                seedColor: theme.accentColor,
+                                brightness: theme.isDark
+                                    ? Brightness.dark
+                                    : Brightness.light,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
+                      if (picked != null) {
+                        setState(() => _selectedDate = picked);
+                      }
                     },
-                  );
-                  if (picked != null) setState(() => _selectedDate = picked);
-                },
-                child: GlassContainer(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 18,
-                        color: theme.accentColor,
+                    child: GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        DateFormat('MMM dd, yyyy').format(_selectedDate),
-                        style: AppTypography.body(
-                          color: theme.textColor,
-                          fontSize: 13,
-                        ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: theme.accentColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            DateFormat('MMM dd, yyyy').format(_selectedDate),
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: GestureDetector(
-                onTap: () async {
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: _selectedTime,
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.fromSeed(
-                            seedColor: theme.accentColor,
-                            brightness: theme.isDark
-                                ? Brightness.dark
-                                : Brightness.light,
-                          ),
-                        ),
-                        child: child!,
+              child: MergeSemantics(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: ColorScheme.fromSeed(
+                                seedColor: theme.accentColor,
+                                brightness: theme.isDark
+                                    ? Brightness.dark
+                                    : Brightness.light,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
                       );
+                      if (picked != null) {
+                        setState(() => _selectedTime = picked);
+                      }
                     },
-                  );
-                  if (picked != null) setState(() => _selectedTime = picked);
-                },
-                child: GlassContainer(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: 18,
-                        color: theme.accentColor,
+                    child: GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _selectedTime.format(context),
-                        style: AppTypography.body(
-                          color: theme.textColor,
-                          fontSize: 13,
-                        ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 18,
+                            color: theme.accentColor,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            _selectedTime.format(context),
+                            style: AppTypography.body(
+                              color: theme.textColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -425,26 +441,34 @@ class _AddItemDialogState extends ConsumerState<AddItemDialog> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: _moods.map((m) {
             final isSelected = _selectedMood == m;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedMood = m),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  // Selection reads as an accent-coloured ring rather than a
-                  // solid accent fill, so the emoji stays legible against the
-                  // sheet's own background instead of sitting on a saturated
-                  // disc.
-                  color: isSelected
-                      ? Colors.transparent
-                      : theme.textColor.withValues(alpha: 0.05),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? theme.accentColor : Colors.transparent,
-                    width: 2,
+            return MergeSemantics(
+              child: Semantics(
+                button: true,
+                selected: isSelected,
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedMood = m),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      // Selection reads as an accent-coloured ring rather than a
+                      // solid accent fill, so the emoji stays legible against the
+                      // sheet's own background instead of sitting on a saturated
+                      // disc.
+                      color: isSelected
+                          ? Colors.transparent
+                          : theme.textColor.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? theme.accentColor
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(m, style: AppTypography.body(fontSize: 24)),
                   ),
                 ),
-                child: Text(m, style: AppTypography.body(fontSize: 24)),
               ),
             );
           }).toList(),

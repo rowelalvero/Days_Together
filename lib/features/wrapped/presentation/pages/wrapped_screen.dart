@@ -128,6 +128,8 @@ class _WrappedScreenState extends State<WrappedScreen> {
                   WrappedProgressBar(
                     totalPages: _totalPages,
                     currentPage: _currentPage,
+                    onNext: _goNext,
+                    onPrevious: _goPrevious,
                   ),
                 ],
               ),
@@ -136,20 +138,21 @@ class _WrappedScreenState extends State<WrappedScreen> {
             Positioned(
               top: MediaQuery.of(context).padding.top + 8,
               right: 16,
-              child: GestureDetector(
-                onTap: _skip,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    color: Colors.white54,
-                    size: 20,
-                  ),
+              // An IconButton (was a bare 36px GestureDetector): labeled for
+              // screen readers via the tooltip, 48dp tap target, same look.
+              child: IconButton(
+                tooltip: 'Close Wrapped',
+                onPressed: _skip,
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.12),
+                  fixedSize: const Size.square(36),
+                  minimumSize: const Size.square(36),
+                ),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white54,
+                  size: 20,
                 ),
               ),
             ),

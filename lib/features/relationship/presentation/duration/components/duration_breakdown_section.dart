@@ -56,7 +56,7 @@ class DurationBreakdownSection extends StatelessWidget {
                 style: AppTypography.caption(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: theme.textColor.withValues(alpha: 0.4),
+                  color: theme.secondaryTextColor,
                 ),
               ),
             ],

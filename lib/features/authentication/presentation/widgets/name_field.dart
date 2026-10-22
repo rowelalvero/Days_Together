@@ -27,7 +27,7 @@ class NameField extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: AppTypography.caption(
-            color: theme.textColor.withValues(alpha: 0.6),
+            color: theme.secondaryTextColor,
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ).copyWith(letterSpacing: 1.5),

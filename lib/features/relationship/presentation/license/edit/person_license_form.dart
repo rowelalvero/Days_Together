@@ -101,42 +101,53 @@ class PersonLicenseForm extends StatelessWidget {
           // Birthdate Field
           _buildFieldLabel('Birthdate'),
 
-          InkWell(
-            onTap: onBirthdateTap,
-
-            borderRadius: BorderRadius.circular(12),
-
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
+          MergeSemantics(
+            child: Semantics(
+              button: true,
+              child: InkWell(
+                onTap: onBirthdateTap,
 
                 borderRadius: BorderRadius.circular(12),
 
-                border: Border.all(
-                  color: theme.textColor.withValues(alpha: 0.1),
-                ),
-              ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
 
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
 
-                children: [
-                  Text(
-                    birthdate != null
-                        ? DateFormat('MMMM dd, yyyy').format(birthdate!)
-                        : 'Select Birthdate',
+                    borderRadius: BorderRadius.circular(12),
 
-                    style: AppTypography.body(
-                      color: birthdate != null
-                          ? theme.textColor
-                          : theme.textColor.withValues(alpha: 0.5),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.1),
                     ),
                   ),
 
-                  Icon(Icons.calendar_month_rounded, color: theme.accentColor),
-                ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                    children: [
+                      Text(
+                        birthdate != null
+                            ? DateFormat('MMMM dd, yyyy').format(birthdate!)
+                            : 'Select Birthdate',
+
+                        style: AppTypography.body(
+                          color: birthdate != null
+                              ? theme.textColor
+                              : theme.secondaryTextColor,
+                        ),
+                      ),
+
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        color: theme.accentColor,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -217,42 +228,53 @@ class PersonLicenseForm extends StatelessWidget {
           // Date Issued
           _buildFieldLabel('Date Issued'),
 
-          InkWell(
-            onTap: onDateIssuedTap,
-
-            borderRadius: BorderRadius.circular(12),
-
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
+          MergeSemantics(
+            child: Semantics(
+              button: true,
+              child: InkWell(
+                onTap: onDateIssuedTap,
 
                 borderRadius: BorderRadius.circular(12),
 
-                border: Border.all(
-                  color: theme.textColor.withValues(alpha: 0.1),
-                ),
-              ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
 
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  decoration: BoxDecoration(
+                    color: theme.textColor.withValues(alpha: 0.05),
 
-                children: [
-                  Text(
-                    dateIssued != null
-                        ? DateFormat('MMMM dd, yyyy').format(dateIssued!)
-                        : 'Default (Relationship Date)',
+                    borderRadius: BorderRadius.circular(12),
 
-                    style: AppTypography.body(
-                      color: dateIssued != null
-                          ? theme.textColor
-                          : theme.textColor.withValues(alpha: 0.5),
+                    border: Border.all(
+                      color: theme.textColor.withValues(alpha: 0.1),
                     ),
                   ),
 
-                  Icon(Icons.calendar_month_rounded, color: theme.accentColor),
-                ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                    children: [
+                      Text(
+                        dateIssued != null
+                            ? DateFormat('MMMM dd, yyyy').format(dateIssued!)
+                            : 'Default (Relationship Date)',
+
+                        style: AppTypography.body(
+                          color: dateIssued != null
+                              ? theme.textColor
+                              : theme.secondaryTextColor,
+                        ),
+                      ),
+
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        color: theme.accentColor,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -262,69 +284,79 @@ class PersonLicenseForm extends StatelessWidget {
           // Signature
           _buildFieldLabel('Signature'),
 
-          GestureDetector(
+          Semantics(
+            container: true,
+            button: true,
+            label: signatureStr.isEmpty ? 'Draw signature' : 'Redraw signature',
             onTap: onSignatureTap,
+            child: GestureDetector(
+              excludeFromSemantics: true,
+              onTap: onSignatureTap,
 
-            child: Container(
-              width: double.infinity,
+              child: Container(
+                width: double.infinity,
 
-              height: 100,
+                height: 100,
 
-              decoration: BoxDecoration(
-                color: theme.textColor.withValues(alpha: 0.05),
+                decoration: BoxDecoration(
+                  color: theme.textColor.withValues(alpha: 0.05),
 
-                borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12),
 
-                border: Border.all(
-                  color: theme.textColor.withValues(alpha: 0.1),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.1),
+                  ),
                 ),
-              ),
 
-              child: Stack(
-                alignment: Alignment.center,
+                child: Stack(
+                  alignment: Alignment.center,
 
-                children: [
-                  Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
+                  children: [
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
 
-                      child: CustomPaint(
-                        painter: ScaleSignaturePainter(
-                          strokes: SignatureCodec.decode(signatureStr),
+                        child: CustomPaint(
+                          painter: ScaleSignaturePainter(
+                            strokes: SignatureCodec.decode(signatureStr),
 
-                          color: theme.accentColor,
+                            color: theme.accentColor,
 
-                          strokeWidth: 2.5,
+                            strokeWidth: 2.5,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  if (signatureStr.isEmpty)
-                    Text(
-                      'Tap to draw signature',
+                    if (signatureStr.isEmpty)
+                      ExcludeSemantics(
+                        child: Text(
+                          'Tap to draw signature',
 
-                      style: AppTypography.body(
-                        color: theme.textColor.withValues(alpha: 0.4),
-                        fontSize: 14,
+                          style: AppTypography.body(
+                            color: theme.secondaryTextColor,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-                    ),
 
-                  if (signatureStr.isNotEmpty)
-                    Positioned(
-                      top: 4,
+                    if (signatureStr.isNotEmpty)
+                      Positioned(
+                        top: 4,
 
-                      right: 4,
+                        right: 4,
 
-                      child: IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
+                        child: IconButton(
+                          tooltip: 'Clear signature',
+                          icon: const Icon(Icons.clear, size: 18),
 
-                        color: Colors.redAccent,
+                          color: Colors.redAccent,
 
-                        onPressed: onSignatureClear,
+                          onPressed: onSignatureClear,
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -416,7 +448,7 @@ class PersonLicenseForm extends StatelessWidget {
         style: AppTypography.body(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: theme.textColor.withValues(alpha: 0.6),
+          color: theme.secondaryTextColor,
         ).copyWith(letterSpacing: 1),
       ),
     );
@@ -430,55 +462,63 @@ class PersonLicenseForm extends StatelessWidget {
     final isSelected = current == value;
 
     return Expanded(
-      child: InkWell(
-        onTap: () => onChanged(value),
-
-        borderRadius: BorderRadius.circular(12),
-
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.accentColor.withValues(alpha: 0.1)
-                : theme.textColor.withValues(alpha: 0.05),
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          selected: isSelected,
+          child: InkWell(
+            onTap: () => onChanged(value),
 
             borderRadius: BorderRadius.circular(12),
 
-            border: Border.all(
-              color: isSelected
-                  ? theme.accentColor
-                  : theme.textColor.withValues(alpha: 0.1),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
 
-              width: 1.5,
-            ),
-          ),
-
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-
-            children: [
-              Icon(
-                value == 'Male' ? Icons.male_rounded : Icons.female_rounded,
-
+              decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.accentColor
-                    : theme.textColor.withValues(alpha: 0.5),
+                    ? theme.accentColor.withValues(alpha: 0.1)
+                    : theme.textColor.withValues(alpha: 0.05),
 
-                size: 20,
-              ),
+                borderRadius: BorderRadius.circular(12),
 
-              const SizedBox(width: 8),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.1),
 
-              Text(
-                value,
-
-                style: AppTypography.body(
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? theme.accentColor : theme.textColor,
+                  width: 1.5,
                 ),
               ),
-            ],
+
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+
+                children: [
+                  Icon(
+                    value == 'Male' ? Icons.male_rounded : Icons.female_rounded,
+
+                    color: isSelected
+                        ? theme.accentColor
+                        : theme.textColor.withValues(alpha: 0.5),
+
+                    size: 20,
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  Text(
+                    value,
+
+                    style: AppTypography.body(
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? theme.accentTextColor
+                          : theme.textColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -489,9 +529,7 @@ class PersonLicenseForm extends StatelessWidget {
     return InputDecoration(
       hintText: hint,
 
-      hintStyle: AppTypography.body(
-        color: theme.textColor.withValues(alpha: 0.4),
-      ),
+      hintStyle: AppTypography.body(color: theme.secondaryTextColor),
 
       filled: true,
 

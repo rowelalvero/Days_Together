@@ -135,6 +135,7 @@ class _RelationshipInsightsScreenState
       child: Row(
         children: [
           IconButton(
+            tooltip: 'Back',
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               color: theme.textColor,

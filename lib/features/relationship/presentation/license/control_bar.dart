@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// The you/both toggle shown above the license card. Extracted out of
 /// `RelationshipLicenseScreenState._buildControlBar` (Migration Phase 8).
 class ControlBar extends StatelessWidget {
@@ -28,12 +30,14 @@ class ControlBar extends StatelessWidget {
         children: [
           _miniToggleButton(
             icon: Icons.person_rounded,
+            label: 'Show one license',
             isActive: !showBoth,
             onTap: () => onShowBothChanged(false),
           ),
           const SizedBox(width: 12),
           _miniToggleButton(
             icon: Icons.people_rounded,
+            label: 'Show both licenses',
             isActive: showBoth,
             onTap: () => onShowBothChanged(true),
           ),
@@ -44,10 +48,14 @@ class ControlBar extends StatelessWidget {
 
   Widget _miniToggleButton({
     required IconData icon,
+    required String label,
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return SemanticTap(
+      label: label,
+      selected: isActive,
+      minTapTarget: 48,
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

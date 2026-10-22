@@ -147,9 +147,7 @@ class MilestonesAchievedTimeline extends StatelessWidget {
                                     formattedDate,
                                     style: AppTypography.caption(
                                       fontSize: 10.5,
-                                      color: theme.textColor.withValues(
-                                        alpha: 0.4,
-                                      ),
+                                      color: theme.secondaryTextColor,
                                     ),
                                   ),
                                 ],
@@ -171,7 +169,7 @@ class MilestonesAchievedTimeline extends StatelessWidget {
                                 style: AppTypography.captionMono(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
-                                  color: theme.textColor.withValues(alpha: 0.6),
+                                  color: theme.secondaryTextColor,
                                 ),
                               ),
                             ),

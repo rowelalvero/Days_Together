@@ -63,7 +63,7 @@ class ModeChip extends StatelessWidget {
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
-                      ? theme.accentColor
+                      ? theme.accentTextColor
                       : theme.textColor.withValues(alpha: 0.75),
                 ),
               ),

@@ -54,7 +54,7 @@ class SettingsTile extends StatelessWidget {
         subtitle: Text(
           subtitle,
           style: AppTypography.caption(
-            color: theme.textColor.withValues(alpha: 0.4),
+            color: theme.secondaryTextColor,
             fontSize: 12,
           ),
         ),

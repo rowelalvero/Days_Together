@@ -29,7 +29,7 @@ class LicenseActionButtons extends StatelessWidget {
           style: AppTypography.body(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: theme.textColor.withValues(alpha: 0.5),
+            color: theme.secondaryTextColor,
           ),
         ),
         const SizedBox(height: 16),

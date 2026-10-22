@@ -67,7 +67,7 @@ class TopicCardsEmptyState extends StatelessWidget {
                 : 'Add your own custom prompts to personalize your deck!',
             style: AppTypography.body(
               fontSize: 14,
-              color: theme.textColor.withValues(alpha: 0.6),
+              color: theme.secondaryTextColor,
               height: 1.5,
             ),
             textAlign: TextAlign.center,

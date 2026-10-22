@@ -92,7 +92,7 @@ class _NewRecoveryCodeDialogState extends ConsumerState<NewRecoveryCodeDialog> {
                 child: SelectableText(
                   _recoveryCode ?? '—',
                   style: AppTypography.body(
-                    color: theme.accentColor,
+                    color: theme.accentTextColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),

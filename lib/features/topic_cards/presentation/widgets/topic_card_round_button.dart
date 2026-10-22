@@ -6,9 +6,14 @@ import 'package:days_together/app/theme/theme_manager.dart';
 /// bottom of [TopicCardsScreen]. Extracted from that screen's
 /// `_buildRoundButton` (Migration audit item 6) -- purely a render of its
 /// constructor arguments, no state of its own.
+///
+/// Icon-only, so [label] is its screen-reader name and long-press tooltip.
+/// These buttons are also the non-swipe way through the deck, which the
+/// card itself only offers as a horizontal drag.
 class TopicCardRoundButton extends StatelessWidget {
   const TopicCardRoundButton({
     super.key,
+    required this.label,
     required this.icon,
     required this.color,
     required this.iconColor,
@@ -16,6 +21,7 @@ class TopicCardRoundButton extends StatelessWidget {
     required this.onPressed,
   });
 
+  final String label;
   final IconData icon;
   final Color color;
   final Color iconColor;
@@ -24,24 +30,36 @@ class TopicCardRoundButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Semantics(
+      container: true,
+      button: true,
+      label: label,
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: theme.textColor.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+      excludeSemantics: true,
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: InkWell(
+          onTap: onPressed,
+          excludeFromSemantics: true,
+          borderRadius: BorderRadius.circular(30),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.textColor.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
+            child: Icon(icon, color: iconColor, size: 26),
+          ),
         ),
-        child: Icon(icon, color: iconColor, size: 26),
       ),
     );
   }

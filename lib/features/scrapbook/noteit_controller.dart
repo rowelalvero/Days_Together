@@ -27,30 +27,10 @@ import 'package:days_together/core/storage/scoped_json_cache.dart';
 /// the `love_notes` table and its realtime subscription -- see both
 /// controllers' shared doc note on the "collision" below).
 ///
-/// **`NoteitSyncManager` ownership is deliberately NOT transferred to this
-/// controller yet.** `NoteitSyncManager` is a singleton holding a single
-/// `NoteitProvider? _provider` reference (`noteit_sync_manager.dart:70`),
-/// set via `initialize(provider)` -- currently called only from
-/// `NoteitProvider.updateSession` (`noteit_provider.dart:51-56`). Since
-/// Phase 6a doesn't convert any UI, the old `NoteitProvider` is still what
-/// `noteit_screen.dart` reads and writes through, and it's still alive in
-/// `main.dart`'s `MultiProvider` tree, reacting to the same `CoupleSession`
-/// changes this controller's own bridge reacts to. If this controller also
-/// called `NoteitSyncManager.instance.initialize(this)` from its
-/// `updateSession`, both it and the old provider would race to claim the
-/// singleton's one `_provider` slot on every pairing event -- and since
-/// nothing reads this controller's state yet, "winning" that race would
-/// only ever cost the *old* provider (the one actually in use) its sync
-/// status updates, a real regression to the live UI for zero benefit today.
-/// So [sendDrawing]/[sendText]/[sendPhoto]/[sendCanvas] still call
-/// `NoteitSyncManager.instance.enqueue(...)` (the actual Supabase
-/// upload/upsert still happens correctly regardless of which provider
-/// "owns" the manager), but this controller's own `updateItemSyncStatus`
-/// won't be reached by the queue's status callbacks until Phase 6b retires
-/// `NoteitProvider` and this controller becomes the sole `initialize()`
-/// caller. Until then, an item created directly through this controller
-/// (nothing does today) would visibly stay "sending" forever in its own
-/// state, even though the underlying data synced fine.
+/// Owns `NoteitSyncManager`'s offline upload queue as its [NoteitSyncHost]:
+/// [updateSession] binds the queue to the current couple (a no-op unless
+/// the couple changed) and [purgeCache] resets it, so pending notes never
+/// outlive the relationship they were written in.
 ///
 /// Paged: when paired, notes load [pageSize] at a time, newest first
 /// ([loadMore], driven by the history grid's scroll), so the doodles' stroke
@@ -58,7 +38,8 @@ import 'package:days_together/core/storage/scoped_json_cache.dart';
 /// elsewhere loads on its own via [ensureLoaded]; a Wrapped year via
 /// [ensureRangeLoaded].
 class NoteitController extends Notifier<NoteitState>
-    with SupabaseLifecycleNotifier<NoteitState> {
+    with SupabaseLifecycleNotifier<NoteitState>
+    implements NoteitSyncHost {
   static const ScopedJsonCache _cache = ScopedJsonCache('love_notes_items');
   static const int pageSize = 20;
   static const int _maxResyncWindow = 200;
@@ -151,6 +132,7 @@ class NoteitController extends Notifier<NoteitState>
 
   @override
   Future<void> purgeCache() async {
+    NoteitSyncManager.instance.reset();
     _cursor = null;
     _pagedCount = 0;
     _countDebounce?.cancel();
@@ -577,6 +559,7 @@ class NoteitController extends Notifier<NoteitState>
     _loadFromCache();
   }
 
+  @override
   void updateItemSyncStatus(String id, SyncStatus status) {
     final idx = state.notes.indexWhere((n) => n.id == id);
     if (idx == -1) return;

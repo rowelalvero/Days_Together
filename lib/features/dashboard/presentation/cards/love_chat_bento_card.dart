@@ -33,112 +33,117 @@ class LoveChatBentoCard extends StatelessWidget {
           footerText = 'Last active: ${_formatRelativeTime(latest.createdAt)}';
         }
 
-        return InkWell(
-          onTap: () => context.push(Routes.chat),
-          borderRadius: BorderRadius.circular(24),
-          child: GlassContainer(
-            padding: const EdgeInsets.all(20),
-            borderRadius: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => context.push(Routes.chat),
+              borderRadius: BorderRadius.circular(24),
+              child: GlassContainer(
+                padding: const EdgeInsets.all(20),
+                borderRadius: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'CHAT',
-                        style: AppTypography.cardCategory(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w800,
-                          color: theme.accentColor,
-                        ).copyWith(letterSpacing: 0.5),
-                      ),
-                    ),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: theme.accentColor.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          color: theme.accentColor,
-                          size: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Chat Space',
-                  style: AppTypography.title(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: theme.textColor,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: theme.textColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: _buildLoveChatContent(context, chat),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        footerText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(
-                          fontSize: 10,
-                          color: theme.textColor.withValues(alpha: 0.35),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Chat Now',
-                          style: AppTypography.button(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: theme.accentColor,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'CHAT',
+                            style: AppTypography.cardCategory(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              color: theme.accentTextColor,
+                            ).copyWith(letterSpacing: 0.5),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 9,
-                          color: theme.accentColor,
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.accentColor.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              color: theme.accentColor,
+                              size: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Chat Space',
+                      style: AppTypography.title(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: theme.textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: theme.textColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: _buildLoveChatContent(context, chat),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            footerText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.captionMono(
+                              fontSize: 10,
+                              color: theme.textColor.withValues(alpha: 0.35),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'Chat Now',
+                              style: AppTypography.button(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: theme.accentTextColor,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 9,
+                              color: theme.accentColor,
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -183,7 +188,7 @@ class LoveChatBentoCard extends StatelessWidget {
                 style: AppTypography.caption(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: theme.textColor.withValues(alpha: 0.54),
+                  color: theme.secondaryTextColor,
                 ),
               ),
               Text(

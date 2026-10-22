@@ -49,7 +49,7 @@ class TodayMoodSummaryCard extends StatelessWidget {
                 icon: const Icon(Icons.edit, size: 16),
                 label: Text(
                   'Update',
-                  style: AppTypography.button(color: theme.accentColor),
+                  style: AppTypography.button(color: theme.accentTextColor),
                 ),
                 style: TextButton.styleFrom(foregroundColor: theme.accentColor),
               ),
@@ -80,7 +80,7 @@ class TodayMoodSummaryCard extends StatelessWidget {
                       moodLabelFor(todayMood.moodScore.toDouble()),
                       style: AppTypography.body(
                         fontSize: 14,
-                        color: theme.accentColor,
+                        color: theme.accentTextColor,
                       ),
                     ),
                   ],

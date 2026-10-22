@@ -33,9 +33,7 @@ class NoMemoriesState extends StatelessWidget {
             Text(
               'Share a memory in the Timeline first, and we\'ll help you turn it into a beautiful love letter.',
               textAlign: TextAlign.center,
-              style: AppTypography.body(
-                color: theme.textColor.withValues(alpha: 0.54),
-              ),
+              style: AppTypography.body(color: theme.secondaryTextColor),
             ),
           ],
         ),

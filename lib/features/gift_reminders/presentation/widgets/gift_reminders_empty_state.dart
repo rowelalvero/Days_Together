@@ -44,7 +44,7 @@ class GiftRemindersEmptyState extends StatelessWidget {
               'Add birthdays, anniversaries, or special surprise counters.',
               textAlign: TextAlign.center,
               style: AppTypography.spectral(
-                color: theme.textColor.withValues(alpha: 0.5),
+                color: theme.secondaryTextColor,
                 fontSize: 15,
                 fontStyle: FontStyle.italic,
               ),

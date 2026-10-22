@@ -44,6 +44,7 @@ class _GenesisScreenState extends ConsumerState<GenesisScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton(
+                  tooltip: 'Back',
                   onPressed: () => Navigator.pop(context),
                   icon: Icon(
                     Icons.arrow_back_ios_new_rounded,
@@ -73,7 +74,7 @@ class _GenesisScreenState extends ConsumerState<GenesisScreen> {
                   'You can always adjust this date later in settings.',
                   style: AppTypography.spectral(
                     fontSize: 13,
-                    color: theme.textColor.withValues(alpha: 0.5),
+                    color: theme.secondaryTextColor,
                   ),
                 ),
                 const SizedBox(height: 40),

@@ -212,7 +212,7 @@ class RelationshipStatistics extends ConsumerWidget {
                       style: AppTypography.caption(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: theme.textColor.withValues(alpha: 0.54),
+                        color: theme.secondaryTextColor,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

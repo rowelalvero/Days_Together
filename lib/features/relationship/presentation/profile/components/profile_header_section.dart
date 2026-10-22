@@ -86,7 +86,7 @@ class ProfileHeaderSection extends StatelessWidget {
                 'CONNECTED & IN LOVE',
                 style: AppTypography.captionMono(
                   fontSize: 9,
-                  color: theme.accentColor,
+                  color: theme.accentTextColor,
                   fontWeight: FontWeight.w800,
                 ).copyWith(letterSpacing: 1),
               ),
@@ -106,7 +106,7 @@ class ProfileHeaderSection extends StatelessWidget {
               'Waiting for your partner to connect...',
               style: AppTypography.body(
                 fontSize: 14,
-                color: theme.textColor.withValues(alpha: 0.5),
+                color: theme.secondaryTextColor,
                 fontWeight: FontWeight.w500,
               ),
             ),

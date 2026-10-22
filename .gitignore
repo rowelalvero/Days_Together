@@ -60,3 +60,6 @@ service-account.json
 # Local MCP config: references credential paths on this machine only.
 .mcp.json
 .metadata
+
+# graphify knowledge graph output (any level)
+graphify-out/

@@ -375,10 +375,15 @@ class OpenContainerWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.push(Routes.memory(item.id)),
-      borderRadius: BorderRadius.circular(24),
-      child: child,
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: () => context.push(Routes.memory(item.id)),
+          borderRadius: BorderRadius.circular(24),
+          child: child,
+        ),
+      ),
     );
   }
 }

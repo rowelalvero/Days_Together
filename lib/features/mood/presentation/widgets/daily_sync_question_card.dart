@@ -138,7 +138,7 @@ class DailySyncQuestionCard extends StatelessWidget {
                   Text(
                     'Your Answer:',
                     style: AppTypography.caption(
-                      color: theme.textColor.withValues(alpha: 0.54),
+                      color: theme.secondaryTextColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -181,7 +181,7 @@ class DailySyncQuestionCard extends StatelessWidget {
                     Text(
                       '⏳ Waiting for partner to reply...',
                       style: AppTypography.body(
-                        color: theme.textColor.withValues(alpha: 0.5),
+                        color: theme.secondaryTextColor,
                         fontSize: 13,
                       ).copyWith(fontStyle: FontStyle.italic),
                     ),

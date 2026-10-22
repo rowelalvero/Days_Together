@@ -107,7 +107,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                     style: AppTypography.captionMono(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
-                      color: theme.accentColor,
+                      color: theme.accentTextColor,
                     ).copyWith(letterSpacing: 1.5),
                   ),
                 ],
@@ -117,7 +117,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                 'Let your partner enter this code on their device to connect.',
                 style: AppTypography.body(
                   fontSize: 13,
-                  color: theme.textColor.withValues(alpha: 0.6),
+                  color: theme.secondaryTextColor,
                   height: 1.4,
                 ),
               ),
@@ -149,6 +149,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                       children: [
                         _buildIconButton(
                           icon: Icons.copy_rounded,
+                          tooltip: 'Copy code',
                           onTap: () {
                             Clipboard.setData(ClipboardData(text: code));
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -162,6 +163,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                         const SizedBox(width: 8),
                         _buildIconButton(
                           icon: Icons.share_rounded,
+                          tooltip: 'Share code',
                           onTap: () {
                             Share.share(
                               "Let's connect our Love Story! Here is my invitation code: $code 💕",
@@ -195,7 +197,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                     style: AppTypography.captionMono(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
-                      color: theme.accentColor,
+                      color: theme.accentTextColor,
                     ).copyWith(letterSpacing: 1.5),
                   ),
                 ],
@@ -205,7 +207,7 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
                 'Enter the 8-character connection code sent by your partner to link immediately.',
                 style: AppTypography.body(
                   fontSize: 13,
-                  color: theme.textColor.withValues(alpha: 0.6),
+                  color: theme.secondaryTextColor,
                   height: 1.4,
                 ),
               ),
@@ -318,21 +320,24 @@ class _PairingOptionsSectionState extends ConsumerState<PairingOptionsSection> {
     );
   }
 
+  /// A real IconButton (not a bare GestureDetector) so it gets a screen
+  /// reader label from [tooltip], ripple feedback, and the 48dp tap target
+  /// around its 34px circle.
   Widget _buildIconButton({
     required IconData icon,
+    required String tooltip,
     required VoidCallback onTap,
     required LoveStoryTheme theme,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: theme.accentColor.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: theme.accentColor, size: 18),
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onTap,
+      padding: const EdgeInsets.all(8),
+      style: IconButton.styleFrom(
+        backgroundColor: theme.accentColor.withValues(alpha: 0.1),
+        minimumSize: const Size.square(34),
       ),
+      icon: Icon(icon, color: theme.accentColor, size: 18),
     );
   }
 }

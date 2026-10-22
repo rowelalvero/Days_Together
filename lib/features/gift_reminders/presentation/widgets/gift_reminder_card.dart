@@ -54,7 +54,7 @@ class GiftReminderCard extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               'Delete',
-              style: AppTypography.button(color: theme.accentColor),
+              style: AppTypography.button(color: theme.accentTextColor),
             ),
           ),
         ],
@@ -138,7 +138,7 @@ class GiftReminderCard extends StatelessWidget {
                         '$dateStr${reminder.date.hour != 0 || reminder.date.minute != 0 ? ' at ${DateFormat.jm().format(reminder.date)}' : ''} (Next: ${DateFormat('MMMM dd, yyyy').format(reminder.nextOccurrence)})',
                         style: AppTypography.caption(
                           color: reminder.isEnabled
-                              ? theme.textColor.withValues(alpha: 0.6)
+                              ? theme.secondaryTextColor
                               : theme.textColor.withValues(alpha: 0.24),
                           fontSize: 12,
                         ),
@@ -189,6 +189,7 @@ class GiftReminderCard extends StatelessWidget {
                 Row(
                   children: [
                     IconButton(
+                      tooltip: 'Edit reminder',
                       icon: Icon(
                         Icons.edit_outlined,
                         color: theme.textColor.withValues(alpha: 0.38),
@@ -196,6 +197,7 @@ class GiftReminderCard extends StatelessWidget {
                       onPressed: onEdit,
                     ),
                     IconButton(
+                      tooltip: 'Delete reminder',
                       icon: Icon(
                         Icons.delete_outline_rounded,
                         color: theme.textColor.withValues(alpha: 0.38),

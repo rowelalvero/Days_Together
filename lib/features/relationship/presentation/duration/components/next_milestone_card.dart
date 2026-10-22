@@ -53,7 +53,7 @@ class NextMilestoneCard extends StatelessWidget {
                     style: AppTypography.cardCategory(
                       fontSize: 9.5,
                       fontWeight: FontWeight.w800,
-                      color: theme.accentColor,
+                      color: theme.accentTextColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -86,7 +86,7 @@ class NextMilestoneCard extends StatelessWidget {
                       style: AppTypography.captionMono(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: theme.accentColor,
+                        color: theme.accentTextColor,
                       ),
                     ),
                   );
@@ -119,7 +119,7 @@ class NextMilestoneCard extends StatelessWidget {
                 '$currentDays / $target Days',
                 style: AppTypography.caption(
                   fontSize: 11,
-                  color: theme.textColor.withValues(alpha: 0.4),
+                  color: theme.secondaryTextColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -127,7 +127,7 @@ class NextMilestoneCard extends StatelessWidget {
                 '${next.daysUntil} days remaining',
                 style: AppTypography.caption(
                   fontSize: 11,
-                  color: theme.accentColor,
+                  color: theme.accentTextColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -141,7 +141,7 @@ class NextMilestoneCard extends StatelessWidget {
               style: AppTypography.captionMono(
                 fontSize: 10.5,
                 fontWeight: FontWeight.bold,
-                color: theme.textColor.withValues(alpha: 0.6),
+                color: theme.secondaryTextColor,
               ),
             ),
             const SizedBox(height: 10),
@@ -175,7 +175,7 @@ class NextMilestoneCard extends StatelessWidget {
                         'in ${milestone.daysUntil} days',
                         style: AppTypography.caption(
                           fontSize: 11,
-                          color: theme.textColor.withValues(alpha: 0.45),
+                          color: theme.secondaryTextColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

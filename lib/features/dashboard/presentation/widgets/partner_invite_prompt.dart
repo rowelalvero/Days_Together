@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// Shown inside [CurrentlyCard] in place of its live-presence layout while
 /// `session.partnerId` is still null.
 ///
@@ -73,7 +75,7 @@ class PartnerInvitePrompt extends StatelessWidget {
           textAlign: TextAlign.center,
           style: AppTypography.caption(
             fontSize: 12,
-            color: theme.textColor.withValues(alpha: 0.5),
+            color: theme.secondaryTextColor,
           ),
         ),
         const SizedBox(height: 16),
@@ -96,7 +98,7 @@ class PartnerInvitePrompt extends StatelessWidget {
                       style: AppTypography.caption(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        color: theme.textColor.withValues(alpha: 0.4),
+                        color: theme.secondaryTextColor,
                       ).copyWith(letterSpacing: 1.5),
                     ),
                     const SizedBox(height: 2),
@@ -175,7 +177,9 @@ class _CopyCodeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    return GestureDetector(
+    return SemanticTap(
+      label: copied ? 'Code copied' : 'Copy code',
+      minTapTarget: 48,
       onTap: onTap,
       child: Container(
         width: 46,
@@ -208,7 +212,9 @@ class _SendCodeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    return GestureDetector(
+    return SemanticTap(
+      label: 'Share code',
+      minTapTarget: 48,
       onTap: onTap,
       child: Container(
         width: 46,

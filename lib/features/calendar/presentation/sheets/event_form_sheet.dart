@@ -256,6 +256,7 @@ class _EventFormSheetState extends ConsumerState<EventFormSheet> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Close',
                   icon: Icon(
                     Icons.close,
                     color: theme.textColor.withValues(alpha: 0.7),
@@ -265,32 +266,37 @@ class _EventFormSheetState extends ConsumerState<EventFormSheet> {
               ],
             ),
             const SizedBox(height: 16),
-            InkWell(
-              onTap: () => _pickDate(theme),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.textColor.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.1),
+            MergeSemantics(
+              child: Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: () => _pickDate(theme),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.textColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: theme.textColor.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Date: ${DateFormat('MMMM dd, yyyy').format(_eventDate)}',
+                          style: AppTypography.body(color: theme.textColor),
+                        ),
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          color: theme.textColor.withValues(alpha: 0.7),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Date: ${DateFormat('MMMM dd, yyyy').format(_eventDate)}',
-                      style: AppTypography.body(color: theme.textColor),
-                    ),
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      color: theme.textColor.withValues(alpha: 0.7),
-                    ),
-                  ],
                 ),
               ),
             ),
@@ -357,38 +363,43 @@ class _EventFormSheetState extends ConsumerState<EventFormSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            InkWell(
-              onTap: () => _pickTime(theme),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.textColor.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: theme.textColor.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _selectedTime == null
-                          ? 'Set Time (Optional)'
-                          : _selectedTime!.format(context),
-                      style: AppTypography.body(
-                        color: _selectedTime == null
-                            ? theme.textColor.withValues(alpha: 0.3)
-                            : theme.textColor,
+            MergeSemantics(
+              child: Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: () => _pickTime(theme),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.textColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: theme.textColor.withValues(alpha: 0.1),
                       ),
                     ),
-                    Icon(
-                      Icons.access_time_rounded,
-                      color: theme.textColor.withValues(alpha: 0.7),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _selectedTime == null
+                              ? 'Set Time (Optional)'
+                              : _selectedTime!.format(context),
+                          style: AppTypography.body(
+                            color: _selectedTime == null
+                                ? theme.textColor.withValues(alpha: 0.3)
+                                : theme.textColor,
+                          ),
+                        ),
+                        Icon(
+                          Icons.access_time_rounded,
+                          color: theme.textColor.withValues(alpha: 0.7),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

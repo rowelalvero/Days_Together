@@ -64,114 +64,123 @@ class _DoodleNotesBentoCardState extends State<DoodleNotesBentoCard> {
           footerText = '$senderName • ${_formatRelativeTime(latest.createdAt)}';
         }
 
-        return InkWell(
-          onTap: () => context.push(Routes.notes),
-          borderRadius: BorderRadius.circular(24),
-          child: GlassContainer(
-            padding: const EdgeInsets.all(20),
-            borderRadius: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => context.push(Routes.notes),
+              borderRadius: BorderRadius.circular(24),
+              child: GlassContainer(
+                padding: const EdgeInsets.all(20),
+                borderRadius: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: widget.theme.accentColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'SCRAPBOOK',
-                        style: AppTypography.cardCategory(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w800,
-                          color: widget.theme.accentColor,
-                        ).copyWith(letterSpacing: 0.5),
-                      ),
-                    ),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: widget.theme.accentColor.withValues(
-                            alpha: 0.3,
-                          ),
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.draw_outlined,
-                          color: widget.theme.accentColor,
-                          size: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Scrapbook',
-                  style: AppTypography.title(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: widget.theme.textColor,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: widget.theme.textColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: _buildNoteItContent(context, noteit),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        footerText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(
-                          fontSize: 10,
-                          color: widget.theme.textColor.withValues(alpha: 0.35),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Draw & Write',
-                          style: AppTypography.button(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: widget.theme.accentColor,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: widget.theme.accentColor.withValues(
+                              alpha: 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'SCRAPBOOK',
+                            style: AppTypography.cardCategory(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              color: widget.theme.accentTextColor,
+                            ).copyWith(letterSpacing: 0.5),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 9,
-                          color: widget.theme.accentColor,
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: widget.theme.accentColor.withValues(
+                                alpha: 0.3,
+                              ),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.draw_outlined,
+                              color: widget.theme.accentColor,
+                              size: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Scrapbook',
+                      style: AppTypography.title(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: widget.theme.textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: widget.theme.textColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: _buildNoteItContent(context, noteit),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            footerText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.captionMono(
+                              fontSize: 10,
+                              color: widget.theme.textColor.withValues(
+                                alpha: 0.35,
+                              ),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'Draw & Write',
+                              style: AppTypography.button(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: widget.theme.accentTextColor,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 9,
+                              color: widget.theme.accentColor,
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         );

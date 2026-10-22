@@ -363,20 +363,26 @@ class ChatBubble extends StatelessWidget {
           ],
 
           // Bubble Wrapper
-          GestureDetector(
-            onTap: () {
-              if (isScrapbook && scrapbookItem != null) {
-                showDialog(
-                  context: context,
-                  builder: (ctx) =>
-                      EnlargedNoteDialog(item: scrapbookItem, theme: theme),
-                );
-              } else {
-                onToggleReveal();
-              }
-            },
-            onLongPress: onLongPress,
-            child: bubbleContent,
+          MergeSemantics(
+            child: Semantics(
+              onTapHint: isScrapbook ? 'open note' : 'show time sent',
+              onLongPressHint: 'message options',
+              child: GestureDetector(
+                onTap: () {
+                  if (isScrapbook && scrapbookItem != null) {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) =>
+                          EnlargedNoteDialog(item: scrapbookItem, theme: theme),
+                    );
+                  } else {
+                    onToggleReveal();
+                  }
+                },
+                onLongPress: onLongPress,
+                child: bubbleContent,
+              ),
+            ),
           ),
 
           // Tapped revealed timestamp

@@ -54,7 +54,7 @@ class MoodLoggerCard extends StatelessWidget {
             moodLabelFor(currentScore),
             style: AppTypography.body(
               fontSize: 16,
-              color: theme.accentColor,
+              color: theme.accentTextColor,
               fontWeight: FontWeight.w600,
             ),
           ),

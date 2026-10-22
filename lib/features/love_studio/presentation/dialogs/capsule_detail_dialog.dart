@@ -45,9 +45,7 @@ class CapsuleDetailDialog extends StatelessWidget {
           children: [
             Text(
               'Created: ${DateFormat('MMMM dd, yyyy').format(capsule.createdAt)}',
-              style: AppTypography.bodyMedium(
-                color: theme.textColor.withValues(alpha: 0.54),
-              ),
+              style: AppTypography.bodyMedium(color: theme.secondaryTextColor),
             ),
             const SizedBox(height: 16),
             Text(
@@ -66,7 +64,7 @@ class CapsuleDetailDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
           child: Text(
             'Close',
-            style: AppTypography.button(color: theme.accentColor),
+            style: AppTypography.button(color: theme.accentTextColor),
           ),
         ),
       ],

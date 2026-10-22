@@ -9,6 +9,8 @@ import 'package:days_together/core/security/key_management_service.dart';
 import 'package:days_together/core/security/photo_encryption_service.dart';
 import 'package:days_together/core/storage/storage_url_service.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// A dedicated disk cache, separate from `cached_network_image`'s
 /// `DefaultCacheManager`, for objects fetched via [StorageImageBuilder].
 ///
@@ -541,7 +543,10 @@ class StorageImage extends StatelessWidget {
   /// resolution ladder.
   Widget _defaultError(BuildContext context, VoidCallback? retry) {
     final scheme = Theme.of(context).colorScheme;
-    return GestureDetector(
+    return SemanticTap(
+      label: retry == null
+          ? 'Image unavailable'
+          : 'Image failed to load. Retry',
       onTap: retry,
       child: ColoredBox(
         color: scheme.surfaceContainerHighest,

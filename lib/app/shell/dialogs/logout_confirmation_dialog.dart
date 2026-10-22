@@ -52,7 +52,7 @@ class LogoutConfirmationDialog extends StatelessWidget {
           child: Text(
             'Keep Logged In',
             style: AppTypography.body(
-              color: theme.textColor.withValues(alpha: 0.54),
+              color: theme.secondaryTextColor,
               fontWeight: FontWeight.w600,
             ),
           ),

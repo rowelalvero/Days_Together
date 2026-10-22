@@ -30,6 +30,7 @@ class ChatHeader extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
+            tooltip: 'Back',
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
@@ -74,7 +75,7 @@ class ChatHeader extends StatelessWidget {
                           : 'Offline',
                       style: AppTypography.bodyMedium(
                         fontSize: 11,
-                        color: theme.textColor.withValues(alpha: 0.6),
+                        color: theme.secondaryTextColor,
                       ),
                     ),
                   ],

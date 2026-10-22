@@ -63,7 +63,7 @@ class StudioTab extends ConsumerWidget {
                   'Powered by AI',
                   style: AppTypography.spectral(
                     fontSize: 16,
-                    color: theme.textColor.withValues(alpha: 0.6),
+                    color: theme.secondaryTextColor,
                   ),
                 ),
                 const SizedBox(width: 6),

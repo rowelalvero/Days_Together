@@ -24,157 +24,162 @@ class EmotionalMapBentoCard extends StatelessWidget {
         final dailyMood = ref.watch(dailyMoodControllerProvider);
         final isPaired = ref.watch(sessionControllerProvider).isPaired;
 
-        return InkWell(
-          onTap: () => context.push(Routes.loveMeter),
-          borderRadius: BorderRadius.circular(24),
-          child: GlassContainer(
-            padding: const EdgeInsets.all(20),
-            borderRadius: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => context.push(Routes.loveMeter),
+              borderRadius: BorderRadius.circular(24),
+              child: GlassContainer(
+                padding: const EdgeInsets.all(20),
+                borderRadius: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'EMOTIONAL TREND',
-                        style: AppTypography.cardCategory(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w800,
-                          color: theme.accentColor,
-                        ).copyWith(letterSpacing: 0.5),
-                      ),
-                    ),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: theme.accentColor.withValues(alpha: 0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.trending_up_rounded,
-                          color: theme.accentColor,
-                          size: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Emotional Wave Map',
-                      style: AppTypography.title(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: theme.textColor,
-                      ),
-                    ),
-                    if (isPaired)
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: theme.accentColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'You',
-                            style: AppTypography.caption(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: theme.textColor.withValues(alpha: 0.6),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: theme.textColor.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Partner',
-                            style: AppTypography.caption(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: theme.textColor.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: theme.textColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: _buildEmotionalMapContent(context, dailyMood),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '30-Day Trend Analysis',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.captionMono(
-                          fontSize: 10,
-                          color: theme.textColor.withValues(alpha: 0.35),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'EMOTIONAL TREND',
+                            style: AppTypography.cardCategory(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w800,
+                              color: theme.accentTextColor,
+                            ).copyWith(letterSpacing: 0.5),
+                          ),
+                        ),
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.accentColor.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.trending_up_rounded,
+                              color: theme.accentColor,
+                              size: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'View Mood Map',
-                          style: AppTypography.button(
-                            fontSize: 10.5,
+                          'Emotional Wave Map',
+                          style: AppTypography.title(
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: theme.accentColor,
+                            color: theme.textColor,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 9,
-                          color: theme.accentColor,
+                        if (isPaired)
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: theme.accentColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'You',
+                                style: AppTypography.caption(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.secondaryTextColor,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: theme.textColor.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Partner',
+                                style: AppTypography.caption(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.secondaryTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: theme.textColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: _buildEmotionalMapContent(context, dailyMood),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '30-Day Trend Analysis',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.captionMono(
+                              fontSize: 10,
+                              color: theme.textColor.withValues(alpha: 0.35),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'View Mood Map',
+                              style: AppTypography.button(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: theme.accentTextColor,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 9,
+                              color: theme.accentColor,
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -297,7 +302,7 @@ class EmotionalMapBentoCard extends StatelessWidget {
                             label,
                             style: AppTypography.captionMono(
                               fontSize: 9,
-                              color: theme.textColor.withValues(alpha: 0.4),
+                              color: theme.secondaryTextColor,
                             ),
                           ),
                         );
@@ -345,7 +350,7 @@ class EmotionalMapBentoCard extends StatelessWidget {
                       '$label: $scoreEmoji ($score)',
                       TextStyle(
                         color: isUser
-                            ? theme.accentColor
+                            ? theme.accentTextColor
                             : theme.textColor.withValues(alpha: 0.7),
                         fontSize: 10.5,
                         fontWeight: FontWeight.bold,

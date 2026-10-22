@@ -69,7 +69,7 @@ class AnniversaryCountdownCard extends StatelessWidget {
                   style: AppTypography.cardCategory(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
-                    color: theme.textColor.withValues(alpha: 0.4),
+                    color: theme.secondaryTextColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -86,7 +86,7 @@ class AnniversaryCountdownCard extends StatelessWidget {
                   DateFormat('MMMM dd, yyyy').format(nextAnniversaryDate),
                   style: AppTypography.caption(
                     fontSize: 11,
-                    color: theme.textColor.withValues(alpha: 0.4),
+                    color: theme.secondaryTextColor,
                   ),
                 ),
               ],
@@ -115,7 +115,7 @@ class AnniversaryCountdownCard extends StatelessWidget {
                 style: AppTypography.caption(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: theme.textColor.withValues(alpha: 0.4),
+                  color: theme.secondaryTextColor,
                 ),
               ),
             ],

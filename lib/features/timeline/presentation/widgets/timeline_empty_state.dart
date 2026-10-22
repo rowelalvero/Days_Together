@@ -45,7 +45,7 @@ class TimelineEmptyState extends StatelessWidget {
             'Every date, every laugh, and every small moment is a chapter in your book. Start capturing your memories together.',
             textAlign: TextAlign.center,
             style: AppTypography.body(
-              color: theme.textColor.withValues(alpha: 0.5),
+              color: theme.secondaryTextColor,
               fontSize: 15,
               height: 1.6,
             ),

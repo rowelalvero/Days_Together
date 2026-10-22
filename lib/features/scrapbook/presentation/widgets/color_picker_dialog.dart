@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 class ColorPickerDialog extends StatefulWidget {
   final Color initialColor;
   final LoveStoryTheme theme;
@@ -122,7 +124,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
             Text(
               'Presets',
               style: AppTypography.caption(
-                color: widget.theme.textColor.withValues(alpha: 0.6),
+                color: widget.theme.secondaryTextColor,
                 fontSize: 12,
               ),
             ),
@@ -133,7 +135,10 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               children: _presetColors.map((color) {
                 final isSelected =
                     _selectedColor.toARGB32() == color.toARGB32();
-                return GestureDetector(
+                return SemanticTap(
+                  label:
+                      'Color #${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+                  selected: isSelected,
                   onTap: () {
                     setState(() {
                       _selectedColor = color;
@@ -169,7 +174,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
             Text(
               'Custom Color',
               style: AppTypography.caption(
-                color: widget.theme.textColor.withValues(alpha: 0.6),
+                color: widget.theme.secondaryTextColor,
                 fontSize: 12,
               ),
             ),
@@ -276,7 +281,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   child: Text(
                     'Cancel',
                     style: AppTypography.button(
-                      color: widget.theme.textColor.withValues(alpha: 0.6),
+                      color: widget.theme.secondaryTextColor,
                     ),
                   ),
                 ),

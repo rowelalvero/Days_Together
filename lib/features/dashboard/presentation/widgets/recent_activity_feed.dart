@@ -244,7 +244,7 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
                       'Your story is just beginning',
                       style: AppTypography.body(
                         fontSize: 13,
-                        color: theme.textColor.withValues(alpha: 0.4),
+                        color: theme.secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -410,87 +410,98 @@ class _RecentActivityFeedState extends ConsumerState<RecentActivityFeed> {
           const SizedBox(width: 8),
           // Log details card (wrapped in InkWell for interactivity)
           Expanded(
-            child: InkWell(
-              onTap: () => _navigateToFeature(context, activity),
-              borderRadius: BorderRadius.circular(16),
-              splashColor: featureColor.withValues(alpha: 0.1),
-              highlightColor: featureColor.withValues(alpha: 0.05),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8.0,
-                  horizontal: 8.0,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Icon badge
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          colors: [
-                            featureColor,
-                            featureColor.withValues(alpha: 0.7),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(icon, style: const TextStyle(fontSize: 18)),
-                      ),
+            child: MergeSemantics(
+              child: Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: () => _navigateToFeature(context, activity),
+                  borderRadius: BorderRadius.circular(16),
+                  splashColor: featureColor.withValues(alpha: 0.1),
+                  highlightColor: featureColor.withValues(alpha: 0.05),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 8.0,
                     ),
-                    const SizedBox(width: 12),
-                    // Log textual info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Icon badge
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              colors: [
+                                featureColor,
+                                featureColor.withValues(alpha: 0.7),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              icon,
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Log textual info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  activity.title,
-                                  style: AppTypography.body(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: theme.textColor,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      activity.title,
+                                      style: AppTypography.body(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: theme.textColor,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _formatRelativeTime(activity.timestamp),
+                                    style: AppTypography.caption(
+                                      fontSize: 9,
+                                      color: theme.textColor.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (activity.description.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  activity.description,
+                                  style: AppTypography.bodyMedium(
+                                    fontSize: 11,
+                                    color: theme.secondaryTextColor,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatRelativeTime(activity.timestamp),
-                                style: AppTypography.caption(
-                                  fontSize: 9,
-                                  color: theme.textColor.withValues(alpha: 0.3),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              ],
                             ],
                           ),
-                          if (activity.description.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              activity.description,
-                              style: AppTypography.bodyMedium(
-                                fontSize: 11,
-                                color: theme.textColor.withValues(alpha: 0.54),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

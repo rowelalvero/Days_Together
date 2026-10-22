@@ -145,6 +145,42 @@ abstract final class ThemeContrast {
   /// Whichever of [lightInk]/[darkInk] reads better on [surface].
   static Color onColor(Color surface) =>
       ratio(lightInk, surface) >= ratio(darkInk, surface) ? lightInk : darkInk;
+
+  /// [ink] at the lowest opacity, from [preferredAlpha] upward in 5% steps,
+  /// that still meets [minimum] once composited onto every one of
+  /// [surfaces] -- so secondary text dims for hierarchy only as far as it
+  /// stays readable. Fully opaque if no lower opacity qualifies.
+  static Color dimmed(
+    Color ink,
+    List<Color> surfaces, {
+    double preferredAlpha = 0.6,
+    double minimum = minBodyText,
+  }) {
+    for (var step = 0; preferredAlpha + step * 0.05 < 1; step++) {
+      final candidate = ink.withValues(alpha: preferredAlpha + step * 0.05);
+      final readable = surfaces.every(
+        (s) => ratio(Color.alphaBlend(candidate, s), s) >= minimum,
+      );
+      if (readable) return candidate;
+    }
+    return ink.withValues(alpha: 1);
+  }
+
+  /// [color] unchanged if it already meets [minimum] on every one of
+  /// [surfaces]; otherwise mixed toward [toward] in 5% steps until it does,
+  /// keeping as much of its hue as readability allows.
+  static Color readable(
+    Color color,
+    List<Color> surfaces, {
+    required Color toward,
+    double minimum = minBodyText,
+  }) {
+    for (var step = 0; step <= 20; step++) {
+      final candidate = Color.lerp(color, toward, step / 20)!;
+      if (minRatio(candidate, surfaces) >= minimum) return candidate;
+    }
+    return toward;
+  }
 }
 
 /// Spacing scale (Phase 7 of the architecture migration, design-system.md).
@@ -273,6 +309,27 @@ class LoveStoryTheme extends ThemeExtension<LoveStoryTheme> {
   /// accents are pastel (Azure, Rose Quartz, Neon Violet), where white
   /// sits below 2:1.
   Color get onAccentColor => ThemeContrast.onColor(accentColor);
+
+  /// The two surfaces text most often sits on: the page background and a
+  /// [cardColor] card over it (cards are translucent, so composited).
+  List<Color> get _textSurfaces => [
+    backgroundColor,
+    Color.alphaBlend(cardColor, backgroundColor),
+  ];
+
+  /// Muted text (captions, metadata, helper copy). Replaces ad-hoc
+  /// `textColor.withValues(alpha: 0.4-0.6)`, which measured as low as
+  /// 2.2:1 on Lovely Off-White and 3:1 on every dark theme at 0.4: this is
+  /// [textColor] dimmed only as far as 4.5:1 allows on both surfaces.
+  Color get secondaryTextColor =>
+      ThemeContrast.dimmed(textColor, _textSurfaces);
+
+  /// [accentColor] for text (links, highlighted labels, accented headings).
+  /// Unchanged where the accent already reads at 4.5:1; deepened toward
+  /// [textColor] where it doesn't (Lovely Off-White's rose measured 3.3:1).
+  /// Fills, icons and borders keep using [accentColor] itself.
+  Color get accentTextColor =>
+      ThemeContrast.readable(accentColor, _textSurfaces, toward: textColor);
 
   @override
   LoveStoryTheme copyWith({

@@ -59,7 +59,7 @@ class CalendarAnniversaryCard extends StatelessWidget {
                 Text(
                   'A very special day in our story.',
                   style: AppTypography.caption(
-                    color: theme.textColor.withValues(alpha: 0.6),
+                    color: theme.secondaryTextColor,
                     fontSize: 12,
                   ),
                 ),

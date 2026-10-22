@@ -88,31 +88,44 @@ class CreationLicenseForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _fieldLabel('Birthdate'),
-        InkWell(
-          onTap: onBirthdateTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: theme.textColor.withValues(alpha: 0.05),
+        MergeSemantics(
+          child: Semantics(
+            button: true,
+            child: InkWell(
+              onTap: onBirthdateTap,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  birthdate != null
-                      ? DateFormat('MMMM dd, yyyy').format(birthdate!)
-                      : 'Select Birthdate',
-                  style: AppTypography.body(
-                    color: birthdate != null
-                        ? theme.textColor
-                        : theme.textColor.withValues(alpha: 0.5),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.textColor.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.textColor.withValues(alpha: 0.1),
                   ),
                 ),
-                Icon(Icons.calendar_month_rounded, color: theme.accentColor),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      birthdate != null
+                          ? DateFormat('MMMM dd, yyyy').format(birthdate!)
+                          : 'Select Birthdate',
+                      style: AppTypography.body(
+                        color: birthdate != null
+                            ? theme.textColor
+                            : theme.secondaryTextColor,
+                      ),
+                    ),
+                    Icon(
+                      Icons.calendar_month_rounded,
+                      color: theme.accentColor,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -225,50 +238,60 @@ class CreationLicenseForm extends StatelessWidget {
   }
 
   Widget _buildSignatureBox() {
-    return GestureDetector(
+    return Semantics(
+      container: true,
+      button: true,
+      label: signatureStr.isEmpty ? 'Draw signature' : 'Redraw signature',
       onTap: onSignatureTap,
-      child: Container(
-        width: double.infinity,
-        height: 100,
-        decoration: BoxDecoration(
-          color: theme.textColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (signatureStr.isNotEmpty)
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CustomPaint(
-                    painter: ScaleSignaturePainter(
-                      strokes: SignatureCodec.decode(signatureStr),
-                      color: theme.accentColor,
+      child: GestureDetector(
+        excludeFromSemantics: true,
+        onTap: onSignatureTap,
+        child: Container(
+          width: double.infinity,
+          height: 100,
+          decoration: BoxDecoration(
+            color: theme.textColor.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.textColor.withValues(alpha: 0.1)),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (signatureStr.isNotEmpty)
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CustomPaint(
+                      painter: ScaleSignaturePainter(
+                        strokes: SignatureCodec.decode(signatureStr),
+                        color: theme.accentColor,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            if (signatureStr.isEmpty)
-              Text(
-                'Tap to draw signature',
-                style: AppTypography.body(
-                  color: theme.textColor.withValues(alpha: 0.4),
-                  fontSize: 14,
+              if (signatureStr.isEmpty)
+                ExcludeSemantics(
+                  child: Text(
+                    'Tap to draw signature',
+                    style: AppTypography.body(
+                      color: theme.secondaryTextColor,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
-              ),
-            if (signatureStr.isNotEmpty)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: IconButton(
-                  icon: const Icon(Icons.clear, size: 18),
-                  color: Colors.redAccent,
-                  onPressed: onSignatureClear,
+              if (signatureStr.isNotEmpty)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton(
+                    tooltip: 'Clear signature',
+                    icon: const Icon(Icons.clear, size: 18),
+                    color: Colors.redAccent,
+                    onPressed: onSignatureClear,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -277,9 +300,7 @@ class CreationLicenseForm extends StatelessWidget {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: AppTypography.body(
-        color: theme.textColor.withValues(alpha: 0.4),
-      ),
+      hintStyle: AppTypography.body(color: theme.secondaryTextColor),
       filled: true,
       fillColor: theme.textColor.withValues(alpha: 0.05),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -305,31 +326,37 @@ class CreationLicenseForm extends StatelessWidget {
   ) {
     final isSelected = current == value;
     return Expanded(
-      child: InkWell(
-        onTap: () => onChanged(value),
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.accentColor
-                : theme.textColor.withValues(alpha: 0.05),
+      child: MergeSemantics(
+        child: Semantics(
+          button: true,
+          selected: isSelected,
+          child: InkWell(
+            onTap: () => onChanged(value),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? theme.accentColor
-                  : theme.textColor.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Text(
-            value,
-            style: AppTypography.body(
-              fontWeight: FontWeight.bold,
-              color: isSelected
-                  ? Colors.white
-                  : theme.textColor.withValues(alpha: 0.8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? theme.accentColor
+                    : theme.textColor.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.accentColor
+                      : theme.textColor.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Text(
+                value,
+                style: AppTypography.body(
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? Colors.white
+                      : theme.textColor.withValues(alpha: 0.8),
+                ),
+              ),
             ),
           ),
         ),
@@ -345,7 +372,7 @@ class CreationLicenseForm extends StatelessWidget {
         style: AppTypography.body(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: theme.textColor.withValues(alpha: 0.6),
+          color: theme.secondaryTextColor,
         ).copyWith(letterSpacing: 1),
       ),
     );

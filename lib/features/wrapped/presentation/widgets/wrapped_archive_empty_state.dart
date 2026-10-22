@@ -36,7 +36,7 @@ class WrappedArchiveEmptyState extends StatelessWidget {
               'Once you\'ve played through your Wrapped at\nyear\'s end, it will be saved here for you\nto revisit anytime.',
               style: AppTypography.body(
                 fontSize: 15,
-                color: theme.textColor.withValues(alpha: 0.45),
+                color: theme.secondaryTextColor,
                 height: 1.6,
               ),
               textAlign: TextAlign.center,

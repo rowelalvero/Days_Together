@@ -37,20 +37,26 @@ class EditItemMoodSelector extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: moods.map((m) {
             final isSelected = selectedMood == m;
-            return GestureDetector(
-              onTap: () => onMoodSelected(m),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelected ? theme.accentColor : Colors.white10,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent,
-                    width: 2,
+            return MergeSemantics(
+              child: Semantics(
+                button: true,
+                selected: isSelected,
+                child: GestureDetector(
+                  onTap: () => onMoodSelected(m),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? theme.accentColor : Colors.white10,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.white : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(m, style: AppTypography.body(fontSize: 24)),
                   ),
                 ),
-                child: Text(m, style: AppTypography.body(fontSize: 24)),
               ),
             );
           }).toList(),

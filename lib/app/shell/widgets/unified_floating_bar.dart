@@ -97,6 +97,7 @@ class UnifiedFloatingBar extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   NavItem(
+                    label: 'Home',
                     activeIcon: Icons.home_rounded,
                     inactiveIcon: Icons.home_outlined,
                     isSelected: currentIndex == 0,
@@ -104,6 +105,7 @@ class UnifiedFloatingBar extends StatelessWidget {
                     onTap: () => onIndexSelected(0),
                   ),
                   NavItem(
+                    label: 'Timeline',
                     activeIcon: Icons.auto_awesome_motion_rounded,
                     inactiveIcon: Icons.auto_awesome_motion_outlined,
                     isSelected: currentIndex == 1,
@@ -111,6 +113,7 @@ class UnifiedFloatingBar extends StatelessWidget {
                     onTap: () => onIndexSelected(1),
                   ),
                   NavItem(
+                    label: 'Together',
                     activeIcon: Icons.favorite_rounded,
                     inactiveIcon: Icons.favorite_outline_rounded,
                     isSelected: currentIndex == 2,
@@ -118,6 +121,7 @@ class UnifiedFloatingBar extends StatelessWidget {
                     onTap: () => onIndexSelected(2),
                   ),
                   NavItem(
+                    label: 'Studio',
                     activeIcon: Icons.palette_rounded,
                     inactiveIcon: Icons.palette_outlined,
                     isSelected: currentIndex == 3,
@@ -125,6 +129,7 @@ class UnifiedFloatingBar extends StatelessWidget {
                     onTap: () => onIndexSelected(3),
                   ),
                   NavItem(
+                    label: 'Settings',
                     activeIcon: Icons.person_rounded,
                     inactiveIcon: Icons.person_outline_rounded,
                     isSelected: currentIndex == 4,

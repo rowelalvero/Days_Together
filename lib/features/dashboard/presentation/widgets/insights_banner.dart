@@ -116,7 +116,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
                   style: AppTypography.caption(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: widget.theme.accentColor,
+                    color: widget.theme.accentTextColor,
                   ).copyWith(letterSpacing: 1),
                 ),
                 const SizedBox(height: 2),
@@ -138,6 +138,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
             ),
           ),
           IconButton(
+            tooltip: 'Previous insight',
             icon: Icon(
               Icons.chevron_left_rounded,
               color: widget.theme.textColor.withValues(alpha: 0.3),
@@ -150,6 +151,7 @@ class _InsightsBannerState extends State<InsightsBanner> {
             },
           ),
           IconButton(
+            tooltip: 'Next insight',
             icon: Icon(
               Icons.chevron_right_rounded,
               color: widget.theme.textColor.withValues(alpha: 0.3),

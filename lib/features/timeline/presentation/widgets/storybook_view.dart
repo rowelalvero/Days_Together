@@ -268,89 +268,99 @@ class _StorybookViewState extends ConsumerState<StorybookView> {
                           // Comment Count Badge / Action
                           Align(
                             alignment: Alignment.centerRight,
-                            child: GestureDetector(
-                              onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  barrierColor: Colors.transparent,
-                                  builder: (context) => DraggableScrollableSheet(
-                                    initialChildSize: 0.8,
-                                    minChildSize: 0.4,
-                                    maxChildSize: 0.95,
-                                    builder: (_, controller) => GlassContainer(
-                                      borderRadius: 24,
-                                      opacity: 0.22,
-                                      blur: 25,
-                                      padding: const EdgeInsets.fromLTRB(
-                                        20,
-                                        10,
-                                        20,
-                                        20,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Container(
-                                            width: 40,
-                                            height: 5,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white24,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              controller: controller,
-                                              child: MemoryNotesSection(
-                                                item: item,
-                                                scrollController: controller,
+                            child: MergeSemantics(
+                              child: Semantics(
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      barrierColor: Colors.transparent,
+                                      builder: (context) => DraggableScrollableSheet(
+                                        initialChildSize: 0.8,
+                                        minChildSize: 0.4,
+                                        maxChildSize: 0.95,
+                                        builder: (_, controller) =>
+                                            GlassContainer(
+                                              borderRadius: 24,
+                                              opacity: 0.22,
+                                              blur: 25,
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    20,
+                                                    10,
+                                                    20,
+                                                    20,
+                                                  ),
+                                              child: Column(
+                                                children: [
+                                                  Container(
+                                                    width: 40,
+                                                    height: 5,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white24,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  Expanded(
+                                                    child: SingleChildScrollView(
+                                                      controller: controller,
+                                                      child: MemoryNotesSection(
+                                                        item: item,
+                                                        scrollController:
+                                                            controller,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ),
-                                        ],
                                       ),
+                                    );
+                                  },
+                                  child: GlassContainer(
+                                    borderRadius: 20,
+                                    opacity: 0.15,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.draw_rounded,
+                                          size: 16,
+                                          color: theme.accentColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${item.comments.length}',
+                                          style: AppTypography.bodyLarge(
+                                            color: cardTextColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item.comments.length == 1
+                                              ? 'note'
+                                              : 'notes',
+                                          style: AppTypography.bodyMedium(
+                                            color: cardSecondaryTextColor,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                );
-                              },
-                              child: GlassContainer(
-                                borderRadius: 20,
-                                opacity: 0.15,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.draw_rounded,
-                                      size: 16,
-                                      color: theme.accentColor,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${item.comments.length}',
-                                      style: AppTypography.bodyLarge(
-                                        color: cardTextColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      item.comments.length == 1
-                                          ? 'note'
-                                          : 'notes',
-                                      style: AppTypography.bodyMedium(
-                                        color: cardSecondaryTextColor,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ),
                             ),

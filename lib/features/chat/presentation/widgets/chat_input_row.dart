@@ -4,6 +4,8 @@ import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/app/theme/theme_manager.dart';
 import 'package:days_together/shared/widgets/glass_container.dart';
 
+import 'package:days_together/shared/widgets/semantic_tap.dart';
+
 /// The message text field and send button at the bottom of
 /// [LoveChatScreen]. Extracted from its `_buildInputRow` (Migration audit
 /// item 6). [controller]'s lifecycle (creation/disposal) stays owned by the
@@ -48,7 +50,9 @@ class ChatInputRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
+          SemanticTap(
+            label: 'Send message',
+            minTapTarget: 48,
             onTap: onSend,
             child: CircleAvatar(
               radius: 22,

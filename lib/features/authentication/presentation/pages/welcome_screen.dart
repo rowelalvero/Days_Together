@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:days_together/app/theme/app_typography.dart';
 import 'package:days_together/features/theme/theme_controller.dart';
 import 'package:days_together/app/router/route_names.dart';
+import 'package:days_together/shared/widgets/reduced_motion.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -24,7 +25,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
-    )..repeat(reverse: true);
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pulseController.repeatUnlessReducedMotion(context, reverse: true);
   }
 
   @override
@@ -129,7 +136,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       style: AppTypography.spectral(
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
-                        color: theme.textColor.withValues(alpha: 0.4),
+                        color: theme.secondaryTextColor,
                       ),
                     ),
                   ],
